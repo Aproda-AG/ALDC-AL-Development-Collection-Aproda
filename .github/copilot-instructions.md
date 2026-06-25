@@ -4,7 +4,7 @@
 
 ## Overview
 
-This workspace contains AL (Application Language) code for Microsoft Dynamics 365 Business Central. It uses the **ALDC Core v1.1** skills-based architecture: **4 agents + 11 skills + 6 workflows + 7 instructions**.
+This workspace contains AL (Application Language) code for Microsoft Dynamics 365 Business Central. It uses the **ALDC Core v1.2** skills-based architecture: **4 agents + 11 skills + 6 workflows + 7 instructions**.
 
 ## Core Principles
 
@@ -78,6 +78,10 @@ Project estimation?        → @AL Pre-Sales & Project Estimation Specialist
 | `skill-performance` | CPU profiling, FlowField optimization, set-based ops | al-developer, al-architect |
 | `skill-testing` | TDD, test strategy, AL Test Toolkit | al-architect, al-conductor |
 | `skill-estimation` | PERT estimation, complexity scoring, SWOT | al-presales |
+| `skill-aproda-test-loop` 🟦 | OnPrem build→deploy→run→review test-loop | al-developer, al-conductor |
+| `skill-aproda-aldc` 🟦 | Explain & extend the Aproda ALDC layer itself; entry to `site-profile.aproda.md` (infra) | any (meta) |
+
+> 🟦 = Aproda custom layer (`.aproda.` convention). See [`readme.aproda.md`](readme.aproda.md) + [`decisions.aproda.md`](decisions.aproda.md). These rows are deliberate in-place edits registered in `decisions.aproda.md` (D-7 / D-16).
 
 ## External Knowledge: BCQuality
 
@@ -183,7 +187,7 @@ Human-facing reference material — examples, workspace layout, links, troublesh
 
 ---
 
-**Framework**: ALDC Core v1.1 (Skills-Based Architecture)
+**Framework**: ALDC Core v1.2 (Skills-Based Architecture)
 **Version**: 1.1.0
 **Last Updated**: 2026-05-31
 **Workspace**: AL Development for Business Central

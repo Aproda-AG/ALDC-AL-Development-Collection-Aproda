@@ -1,4 +1,4 @@
-# ALDC Core Configuration v1.1
+# ALDC Core Configuration v1.2
 # Skills-based modularization with preserved orchestration + per-requirement contracts + global memory
 
 core:
@@ -6,6 +6,24 @@ core:
   specFile: "docs/framework/ALDC-Core-Spec-v1.2.md"
 
 toolkitRoot: "."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Aproda fork-layer metadata. THIS project CONSUMES the Aproda fork of ALDC; the
+# layer is pulled in / pushed out by the allowlist overlay syncer
+# (.github/tools/aproda-sync, D-18) — NOT git subtree. The canonical fork lives at
+# `fork` below. The live inventory ("what has Aproda added?") is
+# .github/readme.aproda.md; the rationale is .github/decisions.aproda.md
+# (D-17 for this versioning scheme). Layer version = <ALDC core.version>+aproda.<n>.
+# Single source of truth for the fork's version numbers (mirrors external.bcquality).
+# NOTE: toolkitRoot is ".github" here (consumer layout); the fork's aldc.yaml uses
+# ".". That one diverging line is why aldc.yaml is NOT auto-synced (D-18 follow-up).
+# ─────────────────────────────────────────────────────────────────────────────
+aproda:
+  layerVersion: "1.2.0+aproda.1"        # <ALDC core.version>+aproda.<revision>
+  fork: "https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda"
+  basePin: "a900263f51e416762cc7f85575deb9b30cd5b1e3"   # ALDC commit the fork sits on (upstream == fork, in sync 2026-06-25)
+  inventory: ".github/readme.aproda.md"
+  decisions: ".github/decisions.aproda.md"
 
 # External citable knowledge base, consumed by al-review-subagent (Step 0) as an
 # audit/citation layer. Does NOT replace instructions or skills.
@@ -22,10 +40,10 @@ external:
     # (microsoft/BCQuality). Override `url` to point at your own fork. The install
     # scripts read `url` / `ref` / `pinnedCommit` from here — this file is the single
     # source of truth.
-    url: "https://github.com/microsoft/BCQuality.git"
+    url: "https://github.com/Aproda-AG/BCQuality-Aproda.git"
     ref: "main"                           # branch/tag to track when pinnedCommit is empty
     pinnedCommit: ""                       # optional: set a 40-hex SHA for reproducible, pinned evidence
-    home: "../bcquality"                  # external clone location (override: $BCQUALITY_HOME); 2nd workspace root
+    home: "../../BCQuality-Aproda"        # external clone location (override: $BCQUALITY_HOME); 2nd workspace root
     entryPoint: "skills/entry.md"         # relative to `home`
     workspace: "aldc.code-workspace"      # multi-root workspace (this repo root + ../bcquality); see docs/bcquality.md
     consumedBy: ["agents/al-review-subagent.agent.md", "agents/dredd.agent.md", "agents/al-triage.agent.md"]

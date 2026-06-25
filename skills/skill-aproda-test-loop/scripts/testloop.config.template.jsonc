@@ -1,0 +1,64 @@
+// Aproda Test-Loop — per-project config TEMPLATE
+// COPY this file to <project>/testloop.config.jsonc and fill the few non-derivable values.
+// Empty / omitted values are AUTO-DERIVED from launch.json + each app.json.
+// JSONC: // comments are stripped by the engine before parsing.
+{
+    // --- Environment (auto-derived from launch.json if launchConfig is set) ---
+    // Name of the launch.json configuration to use. If empty, the engine picks the
+    // single "server"-type config, or asks (HITL) when several exist.
+    "launchConfig": "",
+    // Optional explicit overrides (leave empty to derive from launchConfig):
+    "server": "",
+    "serverInstance": "",
+    "tenant": "default",
+    // --- Apps in DEPENDENCY ORDER (REQUIRED) ---
+    // Project directories (relative to this config file), upstream first, TEST app LAST.
+    // name/version/publisher/id are read from each app.json.
+    "appsInOrder": [
+        // "..\\Base",
+        // "."          // <- the test app
+    ],
+    // --- Test run ---
+    // BASE folder for the AL test-runner support files. The engine uses a VERSION
+    // subfolder <runnerDir>/<major.minor> (e.g. _runner/28.0) matched to the target
+    // BC platform version. A flat <runnerDir> with DLLs still works (legacy) with a
+    // migrate-warning. Generate a new version with New-TestLoopRunner. REQUIRED.
+    "runnerDir": ".\\PowerShell\\_runner",
+    // Optional: pin the target BC platform version (e.g. "28.0"). Empty = derive from
+    // the live server (Get-NAVServerInstance). Used to pick/validate the runner subfolder.
+    "bcVersion": "",
+    // --- Runner client DLLs (the 4 version-pinned BC test-client DLLs) ---
+    // The runner needs: Microsoft.Dynamics.Framework.UI.Client, Microsoft.Internal.AntiSSRF,
+    // Newtonsoft.Json, System.ServiceModel.Primitives. Initialize-TestLoopRunner materializes
+    // them into <runnerDir>/<major.minor> on demand (idempotent; survives a wiped runner).
+    // The version-AGNOSTIC glue (ClientContext.ps1 / PsTestFunctions.ps1 / AprodaRunner.ps1)
+    // ships centrally with the skill (scripts/runner-glue) — NOT per project.
+    //
+    // PREFERRED (Aproda): derive the source from the BC product-DVD share. The DLLs live at
+    //   <bcDvdRoot>\<major>\<bcCountry>.<major>.<minor>\Applications\TestFramework\TestRunner\Internal
+    // Set bcDvdRoot + bcCountry once; the engine globs the HIGHEST minor for <major>.
+    "bcDvdRoot": "", // e.g. "K:\\59 Environments\\_ms"
+    "bcCountry": "", // e.g. "CH"
+    // ALTERNATIVE: pin the source folder explicitly (wins over the DVD derivation). Use the
+    // DVD's ...\\TestRunner\\Internal, or the BC Service folder (next to the Server .exe).
+    "runnerClientSource": "",
+    // Set true only when runnerClientSource is a SERVER-SIDE path reachable solely via remote
+    // PS (admin shares blocked) — DLLs are pulled with Copy-Item -FromSession. Default false.
+    "runnerClientFromServer": false,
+    // Company used for the headless run (REQUIRED for a deterministic run; pinned into the
+    // web-client URL as /cs?tenant=<t>&company=<c>). e.g. "CRONUS (Schweiz) AG".
+    "companyName": "",
+    // Leave empty to derive from the test app's idRanges; or pin explicitly e.g. "59000..59003".
+    "testCodeunitRange": "",
+    "testSuite": "DEFAULT",
+    // --- Tool paths (machine/server specific) ---
+    // alc.exe: leave empty to auto-detect the latest ms-dynamics-smb.al extension.
+    "alcPath": "",
+    // Server-side Management DLL, used INSIDE the remote session. REQUIRED for deploy.
+    // e.g. "D:\\28\\STRAUB_MEDICAL_AG_28_CH_FKO\\Management\\Microsoft.Dynamics.Nav.Management.dll"
+    "mgmtDllPath": "",
+    // --- Behaviour ---
+    "runTimeoutMs": 360000,
+    // If the BC service is unreachable: "warn-buildonly" (default) | "abort".
+    "onServiceUnavailable": "warn-buildonly"
+}

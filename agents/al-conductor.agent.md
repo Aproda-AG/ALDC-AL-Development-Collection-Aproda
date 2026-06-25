@@ -211,6 +211,16 @@ Act on the resulting verdict:
 - **NEEDS_REVISION** → return to 2A. Build the revision task from `findings[]` where `actionable: true` (this **includes `minor`** — Q1), authoring it for the implement-subagent from each finding's `message`, `location`, `fix-hint`, and `references`. The implementer's contract is unchanged — you still author the task; you now author it from the structured findings instead of re-parsed prose.
 - **FAILED** → stop and consult user.
 
+#### 2B-bis. Runtime Test-Loop Gate (🟦 Aproda — per phase, when a BC service is reachable)
+
+After the review verdict allows proceeding (APPROVED / APPROVED_WITH_RECOMMENDATIONS), **runtime-verify the phase** before commit. This binds the MEDIUM/HIGH trigger to the existing phase boundary: a phase is **not complete** until its tests are green against a live service (or a real blocker is acknowledged).
+
+1. **Load `skill-aproda-test-loop`** and follow its loop (build → deploy → run → review).
+2. **Preflight (HITL, once per spec)**: on the **first** publish of the run, the skill asks the user which `launch.json` environment to use and records the acknowledgement; subsequent phases reuse it without re-prompting. Deploy writes to a **shared OnPrem server** — never skip this gate.
+3. **Service unavailable** → the skill warns (differentiating "no service" vs "no Test Toolkit") and offers **build-only**; record the acknowledgement in the phase-complete file and proceed without runtime verification. Never hard-block.
+4. **Loop discipline**: fix → deploy → run → review until all tests pass **or** a genuine blocker (service down, spec contradiction). Do **not** brute-force the same fix; on a real blocker, stop and consult the user. Failures route back to **2A** (author the fix task for the implement-subagent).
+5. **Surface one line** in the checkpoint evidence row: `🧪 {X/X ✅ | build-only — no service}`.
+
 #### 2C. Phase Completion & Commit
 
 1. **Render the Checkpoint card** for the user from the Review-Report JSON — completion slots, short, for the HITL gate. The `🔎` row consumes the BCQuality one-liner + the implementer's symbolic skills line; surface the top actionable finding inline so the user can decide without opening the JSON:
@@ -235,6 +245,7 @@ Act on the resulting verdict:
 
 4. **🚨 HARD GATE — PHASE COMMIT**:
    - You MUST have written the phase-complete.md file BEFORE presenting the checkpoint
+   - You MUST have run the **2B-bis runtime test-loop gate** (green, or build-only with the service-unavailable acknowledgement recorded)
    - You MUST show the Checkpoint card's `💾` commit gate (the **commit & next-step** question) and WAIT for user response
    - You MUST NOT invoke al-implement-subagent for next phase until user confirms
    - Proceeding without confirmation is a Core v1.1 violation
@@ -492,6 +503,7 @@ DO NOT proceed past these points without explicit user confirmation.
 | Before starting: no specification | `@workspace use al-spec.create` |
 | After completion: simple adjustments | `@al-developer` for quick changes |
 | After completion: PR preparation | `@workspace use al-pr-prepare` |
+| After completion: refresh module docs (Aproda D-14) | `@workspace use al-doc-update` (before PR, if a documented module changed) |
 | During: persistent bugs | `@al-developer` loads `skill-debug` (after review cycle) |
 | During: performance issues | `@al-developer` loads `skill-performance` |
 
@@ -502,6 +514,7 @@ DO NOT proceed past these points without explicit user confirmation.
 This agent draws on skills from `.github/skills/`. They are **not** auto-loaded — **load the `SKILL.md` on demand** (read it) when you need it:
 
 - **skill-testing** — orchestrating TDD cycles when test strategy is needed
+- **skill-aproda-test-loop** 🟦 (Aproda) — the per-phase runtime verification gate (build → deploy → run → review); load it at step 2B-bis when a BC service is reachable
 
 (Per phase, the implement/review subagents load their own domain skills — you pass them as *hints*, see §"Passing Context to Subagents".)
 

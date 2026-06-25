@@ -1,0 +1,110 @@
+{
+    // ─────────────────────────────────────────────────────────────────────────
+    // Aproda layer sync manifest — the ALLOWLIST (D-18).
+    //
+    // Default = SAFE: a path NOT matched here is invisible to the syncer in BOTH
+    // directions. AL-Go system files, plans/, documentation/, app code and any
+    // future unknown file are therefore never overwritten (pull) and can never be
+    // uploaded to the fork (push) — without needing to be listed anywhere.
+    //
+    // The layer is self-identifying (D-4): the convention globs grow automatically
+    // as new .aproda.* / skill-aproda-* artifacts are added — no manifest edit.
+    // The only manual upkeep is `inPlaceEdits`, which mirrors the D-7 register in
+    // decisions.aproda.md (kept redundant here ON PURPOSE — explicit beats parsing
+    // a markdown table; you already update the register for governance, D-7).
+    //
+    // Consumed by Sync-AprodaLayer.ps1. Paths are repo-root-relative, '/' style.
+    // ─────────────────────────────────────────────────────────────────────────
+    // LAYOUT PROFILES — the distilled mapping from ALDC's VS Code extension
+    // (javierarmestogonzalez.al-development-collection 4.2.0, extension.js): the
+    // toolkit primitives live at the REPO ROOT in the fork (agents/, skills/,
+    // instructions/, prompts/, tools/, docs/) but under .github/ in a project.
+    // Only a few files stay under .github/ on BOTH sides (copilot-instructions.md
+    // and our companion docs). All logical paths below are written in the PROJECT
+    // layout (relative to .github/); the syncer translates to the fork layout.
+    //   project  .github/<x>   <->   fork  <x>            (default remap)
+    //   project  .github/<x>   <->   fork  .github/<x>    (when <x> in dotGithub)
+    "layouts": {
+        "project": {
+            "base": ".github"
+        },
+        "fork": {
+            "base": ".",
+            // Exceptions that stay under .github/ on the fork side too:
+            "dotGithub": [
+                "copilot-instructions.md",
+                "decisions.aproda.md",
+                "readme.aproda.md",
+                "site-profile.aproda.md",
+                "plans/**"
+            ]
+        }
+    },
+    // DUAL-VARIANT files (D-18, dual-variant rewrite — implemented): files that
+    // exist at the SAME physical path on BOTH sides but whose CONTENT must diverge
+    // on a few lines. They live at the repo ROOT (not under .github/), so they
+    // bypass the logical-path machinery above and are handled by a dedicated copy
+    // + per-side line-rewrite step. aldc.yaml is the sole case: everything is
+    // copied verbatim EXCEPT the `toolkitRoot` line, which is rewritten to the
+    // destination side's value (project => ".github", fork => "."). This is why
+    // aldc.yaml is no longer manually maintained.
+    "dualVariant": [
+        {
+            "path": "aldc.yaml",
+            "rewrites": [
+                {
+                    "match": "^toolkitRoot:\\s*\".*\"\\s*$",
+                    "project": "toolkitRoot: \".github\"",
+                    "fork": "toolkitRoot: \".\""
+                }
+            ]
+        }
+    ],
+    "includeGlobs": [
+        "**/*.aproda.*", // every net-new Aproda file (infix convention)
+        "skills/skill-aproda-*/**" // every Aproda skill folder
+    ],
+    // 2) NAMED net-new files that do NOT carry the .aproda. infix (historical /
+    //    fixed-name artifacts). Keep explicit.
+    "includeFiles": [
+        "readme.aproda.md",
+        "decisions.aproda.md",
+        "site-profile.aproda.md",
+        "tools/aproda-sync/aproda-sync.json",
+        "tools/aproda-sync/Sync-AprodaLayer.ps1",
+        "tools/aproda-sync/Start-AprodaPull.ps1",
+        "tools/aproda-sync/Start-AprodaPush.ps1"
+    ],
+    // 3) IN-PLACE Upstream edits — Upstream-owned files we modified (the D-7
+    //    register). REDUNDANT with decisions.aproda.md by design. These sync so the
+    //    fork carries our edited variants; on a project they are overwritten by the
+    //    fork's edited variant (that is the point — the edit lives in the fork).
+    "inPlaceEdits": [
+        "copilot-instructions.md",
+        "agents/al-developer.agent.md",
+        "agents/al-conductor.agent.md",
+        "tools/aldc-validate/index.js"
+    ],
+    // 4) ALDC framework files. When true, the syncer additionally treats the
+    //    required/optional entries from aldc.yaml as part of the layer (the base
+    //    framework ships from the fork too). Set false to sync ONLY Aproda net-new
+    //    + in-place edits (leaner; framework then comes via the AL-Go/ALDC route).
+    "includeAldcFramework": true,
+    "aldcYaml": "aldc.yaml",
+    // 5) HARD DENY — belt-and-suspenders. Even if some glob above accidentally
+    //    matched one of these, never touch them. The allowlist already protects
+    //    these (they are simply not listed); this is a redundant tripwire only.
+    "neverTouch": [
+        "plans/**",
+        "documentation/**",
+        "workflows/**", // AL-Go owns workflows; Aproda's own CI is named below as an exception
+        "AL-Go-Settings.json",
+        ".AL-Go/**",
+        "*.code-workspace"
+    ],
+    // Exceptions to neverTouch: Aproda-owned files that happen to live under a
+    // denied folder (e.g. our BCQuality evidence workflow under workflows/).
+    "neverTouchExceptions": [
+        "workflows/bcquality-evidence.yaml"
+    ]
+}
