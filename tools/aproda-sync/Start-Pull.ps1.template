@@ -1,33 +1,37 @@
 # Aproda Sync — Pull starter (machine-local, git-ignored)
-# SETUP: Copy this file to Start-Pull.ps1 (same folder), fill in the two paths, save.
-#        Do NOT commit Start-Pull.ps1 — it is in .gitignore (machine-specific paths).
+# SETUP: Copy this file to Start-Pull.ps1 (same folder), fill in the ONE fork path, save.
+#        APRODA_SYNC_SCRIPTDIR is self-located (this file lives in the project's
+#        .github/tools/aproda-sync) — leave it empty unless you need an override.
+#        Do NOT commit Start-Pull.ps1 — it is in .gitignore (machine-specific path).
 # RUN:   Select All → PowerShell: Run Selection  (SRP-safe, no path-based execution)
 
-$env:APRODA_SYNC_SCRIPTDIR = 'I:\[Your Path]\.github\tools\aproda-sync'
-# Example: 'C:\MyWorkspace\MyProject\.github\tools\aproda-sync'
+# ── SCRIPTDIR: leave EMPTY to self-locate; set only for special-case overrides ──
+# Self-location covers both ways the PS extension can run this file:
+#   1) $PSScriptRoot           — set when run as a file (F5 / Run File)
+#   2) $psEditor current file  — set under "Run Selection" in the Integrated Console
+# This file sits directly in <project>/.github/tools/aproda-sync, so the resolved
+# self-path IS the scriptdir (no level-walk needed).
+$env:APRODA_SYNC_SCRIPTDIR = ''
+if ([string]::IsNullOrWhiteSpace($env:APRODA_SYNC_SCRIPTDIR)) {
+    $selfPath = $null
+    if ($PSScriptRoot) { $selfPath = $PSScriptRoot }
+    elseif ($psEditor) { try { $selfPath = Split-Path -Parent $psEditor.GetEditorContext().CurrentFile.Path } catch { } }
+    if ([string]::IsNullOrWhiteSpace($selfPath)) {
+        Write-Host 'Could not self-locate APRODA_SYNC_SCRIPTDIR. Open THIS file and use "Run Selection", or set it manually above.'
+        return
+    }
+    $env:APRODA_SYNC_SCRIPTDIR = $selfPath
+}
 
+# ── Fill once: the fork clone (a separate repo — cannot be self-located) ───────
 $env:APRODA_FORK_PATH = 'I:\[Your Path]\ALDC-AL-Development-Collection-Aproda'
 # Example: 'C:\MyWorkspace\ALDC-AL-Development-Collection-Aproda'
 
-# ── SRP-safe engine call (no path-based execution) ───────────────────────────
+# ── 1) Pull the layer (SRP-safe: content-load, no path-based execution) ───────
 $src = Get-Content "$env:APRODA_SYNC_SCRIPTDIR\Sync-AprodaLayer.ps1" -Raw
 & ([ScriptBlock]::Create($src)) -Direction pull -ForkPath $env:APRODA_FORK_PATH
 
-
-# ── Init: create plans/memory.md if not yet present (first pull only) ────────
-# The project-local memory.md is never synced back to the fork (plans/** is
-# neverTouch for the syncer). This block seeds it once from the ALDC template.
-$projectRoot  = Split-Path (Split-Path (Split-Path $env:APRODA_SYNC_SCRIPTDIR))
-$memoryTarget = Join-Path $projectRoot 'plans\memory.md'
-$memorySource = Join-Path $projectRoot 'docs\templates\memory-template.md'
-if (-not (Test-Path $memoryTarget)) {
-    if (Test-Path $memorySource) {
-        New-Item -ItemType Directory -Force (Split-Path $memoryTarget) | Out-Null
-        Copy-Item $memorySource $memoryTarget
-        Write-Host "Init: plans/memory.md created from template."
-    } else {
-        Write-Warning "Memory template not found at $memorySource — skipping init."
-    }
-} else {
-    Write-Host "Init: plans/memory.md already exists — skipped."
-}
+# ── 2) Initialize project-local artifacts (memory seed, .gitignore, workspace) ─
+# Kept in its own script so this starter stays thin. SRP-safe: content-load too.
+$initSrc = Get-Content "$env:APRODA_SYNC_SCRIPTDIR\Initialize-AprodaProject.ps1" -Raw
+& ([ScriptBlock]::Create($initSrc))

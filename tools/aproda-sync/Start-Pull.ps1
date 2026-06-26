@@ -1,0 +1,35 @@
+# Aproda Sync — Pull starter (machine-local, git-ignored)
+# SETUP: Copy this file to Start-Pull.ps1 (same folder), fill in the two paths, save.
+#        Do NOT commit Start-Pull.ps1 — it is in .gitignore (machine-specific paths).
+# RUN:   Select All → PowerShell: Run Selection  (SRP-safe, no path-based execution)
+
+$env:APRODA_SYNC_SCRIPTDIR = 'C:\_EphemeralWorkspace\Florian Köll\Straub Medical AG Base\Base\.github\tools\aproda-sync'
+# Example: 'C:\MyWorkspace\MyProject\.github\tools\aproda-sync'
+
+$env:APRODA_FORK_PATH = 'C:\_EphemeralWorkspace\Florian Köll\ALDC-AL-Development-Collection-Aproda'
+# Example: 'C:\MyWorkspace\ALDC-AL-Development-Collection-Aproda'
+
+# ── SRP-safe engine call (no path-based execution) ───────────────────────────
+$src = Get-Content "$env:APRODA_SYNC_SCRIPTDIR\Sync-AprodaLayer.ps1" -Raw
+& ([ScriptBlock]::Create($src)) -Direction pull -ForkPath $env:APRODA_FORK_PATH
+
+
+# ── Init: create plans/memory.md if not yet present (first pull only) ────────
+# The project-local memory.md is never synced back to the fork (plans/** is
+# neverTouch for the syncer). This block seeds it once from the ALDC template.
+$projectRoot = Split-Path (Split-Path (Split-Path $env:APRODA_SYNC_SCRIPTDIR))
+$memoryTarget = Join-Path $projectRoot 'plans\memory.md'
+$memorySource = Join-Path $projectRoot 'docs\templates\memory-template.md'
+if (-not (Test-Path $memoryTarget)) {
+    if (Test-Path $memorySource) {
+        New-Item -ItemType Directory -Force (Split-Path $memoryTarget) | Out-Null
+        Copy-Item $memorySource $memoryTarget
+        Write-Host "Init: plans/memory.md created from template."
+    }
+    else {
+        Write-Warning "Memory template not found at $memorySource — skipping init."
+    }
+}
+else {
+    Write-Host "Init: plans/memory.md already exists — skipped."
+}

@@ -75,8 +75,23 @@ if ([string]::IsNullOrWhiteSpace($scriptDir)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
-    # .github/tools/aproda-sync -> up 3 -> repo root
-    $ProjectRoot = (Resolve-Path (Join-Path $scriptDir '..\..\..')).Path
+    # Anchor at the REAL git root by walking up until a .git entry is found. This is
+    # encoding-safe (pure path ops) — parsing `git rev-parse` stdout mangles non-ASCII
+    # path segments (e.g. umlauts) under non-UTF-8 consoles. Robust for multi-app repos
+    # where .github sits at the repo root next to several app folders. Fall back to the
+    # structural "scriptDir up 3" only when no .git is found (off-git).
+    $gitRoot = $null
+    $dir = Get-Item -LiteralPath $scriptDir
+    while ($null -ne $dir) {
+        if (Test-Path -LiteralPath (Join-Path $dir.FullName '.git')) { $gitRoot = $dir.FullName; break }
+        $dir = $dir.Parent
+    }
+    if ($gitRoot) {
+        $ProjectRoot = $gitRoot
+    }
+    else {
+        $ProjectRoot = (Resolve-Path (Join-Path $scriptDir '..\..\..')).Path
+    }
 }
 
 $manifestPath = Join-Path $scriptDir 'aproda-sync.json'

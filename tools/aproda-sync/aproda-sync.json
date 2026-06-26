@@ -72,6 +72,8 @@
         "site-profile.aproda.md",
         "tools/aproda-sync/aproda-sync.json",
         "tools/aproda-sync/Sync-AprodaLayer.ps1",
+        "tools/aproda-sync/Initialize-AprodaProject.ps1",
+        "tools/aproda-sync/Bootstrap-AprodaProject.ps1",
         "tools/aproda-sync/Start-Push.ps1.template",
         "tools/aproda-sync/Start-Pull.ps1.template",
         "documentation/README.md"
