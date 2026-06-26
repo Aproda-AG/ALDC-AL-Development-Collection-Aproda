@@ -123,7 +123,7 @@ Progress is by **phase** (N/Total), a real value — never invent per-task perce
 
 6. **🚨 HARD GATE — PLAN APPROVAL**: STOP and WAIT for explicit user approval. DO NOT start implementation until user confirms. If `test-plan.md` doesn't exist for this requirement, CREATE IT from template during planning. Verify requirement set: `.spec.md` + `.architecture.md` + `.test-plan.md`.
 
-7. **Write Plan File**: Once approved, write `.github/plans/<task-name>/<task-name>-plan.md`.
+7. **Write Plan File**: Once approved, write `.github/plans/<task-name>/<task-name>-plan.md`. If the requirement originates from an ADO work item, load **`skill-ado`** to derive `<task-name>` and embed the ADO header.
 
 8. **Create Phase 1 Completion File** (MANDATORY): Write `.github/plans/<task-name>/<task-name>-phase-1-complete.md` with:
    - Planning findings summary (from al-planning-subagent)
