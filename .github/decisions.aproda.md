@@ -57,8 +57,17 @@ New Aproda files live in the **same default folders** as Upstream, named with an
 ### D-5 — No `.vscode` discovery registration needed
 Direct consequence of D-4 + F-2/F-3/F-4: every Aproda file sits at a default-discovered location with a valid type suffix, so **no settings registration is required**. (If we ever move custom files out of default folders, D-5 must be revisited.)
 
-### D-6 — Upgrade is automatable because the conflict set is minimal
-`.aproda.` files **never** conflict (D-4). Therefore the only conflicts on `subtree pull` are the **deliberate in-place edits** from D-2 — small, predictable, review-worthy. Pipeline: `subtree pull` → conflicts (if any) only at our edits → **GitHub Copilot coding agent** resolves them in a PR → `aldc-validate` CI gate → green = adopt, uncertain/red = human. Pin the adopted Upstream ref (analogous to the BCQuality SHA pin) and log it below.
+### D-6 — Upstream sync via aproda-sync tool (not subtree pull)
+`git subtree pull` was **rejected**: it causes conflicts in `.github/` shared with AL-Go system files and other project infrastructure that are outside the Aproda layer. The sync mechanism is the **allowlist-based overlay tool** (`tools/aproda-sync/Sync-AprodaLayer.ps1` + manifest `aproda-sync.json`, D-18).
+
+Upgrade pipeline:
+1. `git checkout main && git merge upstream/main --ff-only` — keep `main` as clean upstream mirror
+2. `git checkout aproda && git merge main` — rebase Aproda layer on top of new upstream
+3. Conflicts arise **only** at deliberate in-place edits (D-2 / D-7 register) — small, predictable, review-worthy
+4. Resolve conflicts manually (keep Aproda additions, adopt upstream improvements)
+5. `git push origin aproda`
+
+`.aproda.` files **never** conflict (D-4). Distribution to projects happens via `Start-AprodaPull.ps1` (D-18) — not git subtree.
 
 ### D-7 — One accepted Upstream touch-point: `copilot-instructions.md`
 `copilot-instructions.md` is always loaded and fixed at `.github/copilot-instructions.md`. To surface Aproda skills/agents in its routing/skills tables we make **one additive, in-place edit** (a Skills-table row). This is a conscious D-2 merge-point (chosen over the alternative of only `@`-calling Aproda agents and leaving the file untouched). Kept additive and minimal to stay merge-light.
