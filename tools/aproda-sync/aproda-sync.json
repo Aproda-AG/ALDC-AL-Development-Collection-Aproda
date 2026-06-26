@@ -72,8 +72,9 @@
         "site-profile.aproda.md",
         "tools/aproda-sync/aproda-sync.json",
         "tools/aproda-sync/Sync-AprodaLayer.ps1",
-        "tools/aproda-sync/Start-AprodaPull.ps1",
-        "tools/aproda-sync/Start-AprodaPush.ps1"
+        "tools/aproda-sync/Start-Push.ps1.template",
+        "tools/aproda-sync/Start-Pull.ps1.template",
+        "documentation/README.md"
     ],
     // 3) IN-PLACE Upstream edits — Upstream-owned files we modified (the D-7
     //    register). REDUNDANT with decisions.aproda.md by design. These sync so the
@@ -105,6 +106,7 @@
     // Exceptions to neverTouch: Aproda-owned files that happen to live under a
     // denied folder (e.g. our BCQuality evidence workflow under workflows/).
     "neverTouchExceptions": [
-        "workflows/bcquality-evidence.yaml"
+        "workflows/bcquality-evidence.yaml",
+        "documentation/README.md"
     ]
 }
