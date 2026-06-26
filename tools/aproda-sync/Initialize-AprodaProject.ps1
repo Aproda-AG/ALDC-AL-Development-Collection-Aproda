@@ -60,18 +60,24 @@ $githubRoot = Join-Path $projectRoot '.github'
 
 # ── Init 1: seed plans/memory.md if not yet present (first pull only) ─────────
 # The project-local memory.md is never synced back to the fork (plans/** is
-# neverTouch for the syncer). This block seeds it once from the ALDC template.
+# neverTouch for the syncer). This block seeds it once with a minimal stub that
+# tells the AI agent to initialize it properly on first use.
 $memoryTarget = Join-Path $githubRoot 'plans\memory.md'
-$memorySource = Join-Path $githubRoot 'docs\templates\memory-template.md'
 if (-not (Test-Path $memoryTarget)) {
-    if (Test-Path $memorySource) {
-        New-Item -ItemType Directory -Force (Split-Path $memoryTarget) | Out-Null
-        Copy-Item $memorySource $memoryTarget
-        Write-Host "Init: plans/memory.md created from template."
-    }
-    else {
-        Write-Warning "Memory template not found at $memorySource — skipping init."
-    }
+    New-Item -ItemType Directory -Force (Split-Path $memoryTarget) | Out-Null
+    $memoryStub = @'
+<!-- ALDC — UNINITIALIZED PROJECT MEMORY
+     AI: When first working on this project, initialize this file using
+     the template at .github/docs/templates/memory-template.md and the actual
+     project context (app.json, repo URL, first requirement).
+     Do not preserve this comment block after initialization. -->
+
+# Project Memory (Global)
+
+> **Status**: UNINITIALIZED — fill on first use.
+'@
+    [System.IO.File]::WriteAllText($memoryTarget, $memoryStub, [System.Text.UTF8Encoding]::new($false))
+    Write-Host "Init: plans/memory.md created (uninitialized stub)."
 }
 else {
     Write-Host "Init: plans/memory.md already exists — skipped."
