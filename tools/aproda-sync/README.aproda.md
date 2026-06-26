@@ -28,10 +28,15 @@ point for a human or an AI agent that needs to understand or extend it.
 2. **Commit everything in the target repo first** — safety net. The bootstrap
    overlays files into it; a clean working tree makes the change reviewable (and
    trivially revertible) via `git status` / `git diff`.
-3. In the **fork clone**, open `tools/aproda-sync/Start-InitNewProject.ps1` →
-   **PowerShell: Run Selection** → pick the target repo folder.
+3. In the **fork clone**, trigger the VS Code task **`Aproda: Init New Project`**
+   (`Ctrl+Shift+P → Tasks: Run Task → Aproda: Init New Project`) → pick the
+   target repo from the list → done.
    → pull + framework settle-pull + init run automatically, and a filled
    `Start-Pull.ps1` is left in the target. **Ready.**
+
+   *Fallback (no task / SRP-safe manual run):* open
+   `tools/aproda-sync/Start-InitNewProject-SRP-Safe.ps1` → `Ctrl+A` →
+   **PowerShell: Run Selection**.
 
 ### Recurring: pull the latest layer into a project
 
@@ -66,7 +71,8 @@ self-locates. (See *Two ways `Start-Pull.ps1` comes to exist* below.)
 | `Bootstrap-AprodaProject.ps1` | **Zero-seed onboarding** of a FRESH repo from a fork clone: pull → settle-pull (framework) → init → generate a filled `Start-Pull.ps1`. `-ProjectRoot` (mandatory), `-ForkPath` (optional), `-Force`, `-WhatIf`. |
 | `Start-Pull.ps1.template` | Recurring **pull** launcher. Self-locates `APRODA_SYNC_SCRIPTDIR`; only `APRODA_FORK_PATH` is filled. Copy → `Start-Pull.ps1` (git-ignored). |
 | `Start-Push.ps1.template` | Recurring **push** launcher (same self-location; one path to fill). Copy → `Start-Push.ps1` (git-ignored). |
-| `Start-InitNewProject.ps1` | **Fork-only**, committed (not a template, not synced). Pick a target folder → bootstrap it. Self-locates the fork from its own path. |
+| `Start-InitNewProject.ps1` | **Fork-only**, committed (not a template, not synced). Pick a target folder → bootstrap it. Self-locates the fork from its own path. Triggered via the VS Code task (see below) or via `Start-InitNewProject-SRP-Safe.ps1`. |
+| `Start-InitNewProject-SRP-Safe.ps1` | **Fork-only** manual launcher for `Start-InitNewProject.ps1`. Open → `Ctrl+A` → **Run Selection**. Machine-agnostic (self-locating). Use when the VS Code task is unavailable. |
 
 ## How to run it (SRP-safe)
 
@@ -80,11 +86,11 @@ $src = Get-Content "$env:APRODA_SYNC_SCRIPTDIR\Sync-AprodaLayer.ps1" -Raw
 
 In practice you don't write that — you use a launcher:
 
-| You want to… | Run |
-|--------------|-----|
-| Pull the layer into this project | open `Start-Pull.ps1` → **PowerShell: Run Selection** |
-| Push local layer edits to the fork | open `Start-Push.ps1` → **Run Selection** |
-| Onboard a brand-new repo | open `Start-InitNewProject.ps1` **in the fork** → **Run Selection** → pick the target |
+| You want to… | Preferred | Fallback (SRP-safe manual) |
+|--------------|-----------|----------------------------|
+| Pull the layer into this project | open `Start-Pull.ps1` → **Run Selection** | — (self-locating, already SRP-safe) |
+| Push local layer edits to the fork | open `Start-Push.ps1` → **Run Selection** | — |
+| Onboard a brand-new repo (from fork) | `Ctrl+Shift+P` → **Tasks: Run Task** → **`Aproda: Init New Project`** | open `Start-InitNewProject-SRP-Safe.ps1` → `Ctrl+A` → **Run Selection** |
 
 > **Always dry-run first** when unsure: the engine supports `-WhatIf` (shows the
 > resolved file set and writes nothing).

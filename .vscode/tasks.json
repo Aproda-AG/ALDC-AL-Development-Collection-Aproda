@@ -1,0 +1,28 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Aproda: Init New Project",
+            "type": "shell",
+            "command": "& ([ScriptBlock]::Create((Get-Content '${workspaceFolder}/tools/aproda-sync/Start-InitNewProject.ps1' -Raw)))",
+            "options": {
+                "shell": {
+                    "executable": "pwsh",
+                    "args": [
+                        "-NoProfile",
+                        "-Command"
+                    ]
+                },
+                "env": {
+                    "APRODA_SYNC_SCRIPTDIR": "${workspaceFolder}/tools/aproda-sync"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}
