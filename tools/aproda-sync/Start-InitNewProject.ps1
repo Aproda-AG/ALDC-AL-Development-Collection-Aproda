@@ -23,11 +23,14 @@ if ([string]::IsNullOrWhiteSpace($forkPath)) {
     if ($PSScriptRoot) {
         $selfPath = $PSScriptRoot
     }
+    elseif ($env:APRODA_SYNC_SCRIPTDIR) {
+        $selfPath = $env:APRODA_SYNC_SCRIPTDIR
+    }
     elseif ($psEditor) {
         try { $selfPath = Split-Path -Parent $psEditor.GetEditorContext().CurrentFile.Path } catch { }
     }
     if ([string]::IsNullOrWhiteSpace($selfPath)) {
-        Write-Host 'Could not self-locate the fork. Open THIS file in the editor and use "Run Selection", or set $forkPath manually at the top.'
+        Write-Host 'Could not self-locate the fork. Set $env:APRODA_SYNC_SCRIPTDIR to the aproda-sync folder, or set $forkPath manually at the top.'
         return
     }
     # $selfPath = <fork>/tools/aproda-sync  ->  fork root is two levels up.
@@ -35,19 +38,52 @@ if ([string]::IsNullOrWhiteSpace($forkPath)) {
 }
 Write-Host "Init New Project -> fork: $forkPath"
 
-# ── Target repo: leave EMPTY to get a folder picker; or hardcode a path here ────
+# ── Target repo: leave EMPTY to get interactive selection; or hardcode a path here ────
 $targetRepo = ''
 # Example: 'C:\MyWorkspace\MyNewRepo'   (must already be a git work tree: run `git init` first)
 
-# ── Resolve the target via a Windows folder picker when not provided ───────────
-# Shell.Application BrowseForFolder is STA-independent (works in pwsh's default MTA),
-# unlike WinForms FolderBrowserDialog — chosen for reliability under Run Selection.
+# ── Resolve the target interactively when not provided ───────────────────────
 if ([string]::IsNullOrWhiteSpace($targetRepo)) {
-    $shell = New-Object -ComObject Shell.Application
-    $picked = $shell.BrowseForFolder(0, 'Select the target project repo folder (must already contain .git)', 0, 0)
-    if ($null -eq $picked) { Write-Host 'Cancelled — no target selected.'; return }
-    $targetRepo = $picked.Self.Path
-    if ([string]::IsNullOrWhiteSpace($targetRepo)) { Write-Host 'Could not resolve the selected folder path.'; return }
+    # Scan sibling folders of the fork for git repos (likely candidates).
+    $searchRoot = Split-Path -Parent $forkPath
+    $candidates = @(Get-ChildItem -Path $searchRoot -Directory -ErrorAction SilentlyContinue |
+        Where-Object { Test-Path (Join-Path $_.FullName '.git') } |
+        Select-Object -ExpandProperty FullName |
+        Sort-Object)
+
+    # TIER 1: Out-GridView (GUI, works in VS Code integrated terminal + standard PS)
+    if ($candidates.Count -gt 0 -and (Get-Command Out-GridView -ErrorAction SilentlyContinue)) {
+        Write-Host 'Select target repo from list (or cancel to enter path manually)...'
+        $picked = $candidates | Out-GridView -Title 'Select target project repo (must contain .git)' -OutputMode Single
+        if ($picked) { $targetRepo = $picked }
+    }
+
+    # TIER 2: Console fallback — show candidates + Read-Host
+    if ([string]::IsNullOrWhiteSpace($targetRepo)) {
+        Write-Host ''
+        Write-Host '=== Available git repos ===' -ForegroundColor Cyan
+        if ($candidates.Count -gt 0) {
+            for ($i = 0; $i -lt $candidates.Count; $i++) {
+                Write-Host "[$i] $($candidates[$i])" -ForegroundColor Yellow
+            }
+            Write-Host ''
+            $sel = Read-Host "Enter index (0-$($candidates.Count-1)) or full path"
+            if ($sel -match '^\d+$' -and [int]$sel -lt $candidates.Count) {
+                $targetRepo = $candidates[[int]$sel]
+            }
+            else {
+                $targetRepo = $sel.Trim()
+            }
+        }
+        else {
+            $targetRepo = (Read-Host 'No repos found. Enter full path to target repo').Trim()
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($targetRepo)) { Write-Host 'Cancelled — no target selected.'; return }
+    if (-not (Test-Path (Join-Path $targetRepo '.git'))) {
+        Write-Host "No .git folder found in: $targetRepo  — run 'git init' first."; return
+    }
 }
 Write-Host "Init New Project -> target: $targetRepo"
 

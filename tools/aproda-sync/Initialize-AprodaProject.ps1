@@ -166,7 +166,14 @@ else {
         foreach ($root in $requiredRoots) {
             $present = $existingPaths | Where-Object { $_ -match $root.match }
             if (-not $present) {
-                $json.folders = @($json.folders) + ([pscustomobject]@{ name = $root.name; path = $root.path })
+                $entry = [pscustomobject]@{ name = $root.name; path = $root.path }
+                # .github must always be the first workspace folder.
+                if ($root.path -eq '.github') {
+                    $json.folders = @($entry) + @($json.folders)
+                }
+                else {
+                    $json.folders = @($json.folders) + @($entry)
+                }
                 $added += $root.path
             }
         }
