@@ -326,6 +326,20 @@ Create `/reports/pr-draft.md` with this structure:
 - Document decisions
 - Keep security visible
 
+## Aproda: Documentation Update (D-13 / D-14)
+
+Before finalizing the PR, refresh the durable per-module documentation:
+
+```
+@workspace use al-doc-update
+```
+
+This updates `.github/documentation/<Module>/`:
+- `<Module>.reference.md` — technical reference (English)
+- `<Module>.Handbuch.de-CH.md` — user handbook (de-CH)
+
+Run once per affected module at the delivery boundary (all UAT issues DONE, spec frozen). Mandatory alongside `al-pr-prepare` (D-14).
+
 ## Next Steps
 
 **For final validation:**

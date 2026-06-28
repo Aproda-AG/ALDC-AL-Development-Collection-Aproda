@@ -230,6 +230,7 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `agents/al-conductor.agent.md` | Added skill to Domain Skills + new step **2B-bis** runtime test-loop gate + 2C hard-gate clause (MEDIUM/HIGH trigger: per phase) | D-2 / D-9 | 2026-06-24 |
 | `agents/al-developer.agent.md` | Workflow step 4 "Before PR" clause: run `al-doc-update` at delivery if a documented module changed | D-2 / D-14 | 2026-06-24 |
 | `agents/al-conductor.agent.md` | Post-completion recommendation table: added `al-doc-update` row next to `al-pr-prepare` | D-2 / D-14 | 2026-06-24 |
+| `prompts/al-pr-prepare.prompt.md` | Added «Aproda: Documentation Update (D-13 / D-14)» section before Next Steps: reminds agent to run `al-doc-update` at delivery boundary | D-2 / D-14 | 2026-06-28 |
 | `copilot-instructions.md` | Drift-fix: "ALDC Core v1.1" → "v1.2" (lines 7 + footer), matches `core.version: 1.2.0` | D-17 | 2026-06-25 |
 | `tools/aldc-validate/index.js` | Drift-fix: compliance banner "v1.1" → "v1.2" | D-17 | 2026-06-25 |
 
