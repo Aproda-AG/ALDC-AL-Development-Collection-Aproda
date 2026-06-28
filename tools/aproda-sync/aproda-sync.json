@@ -76,6 +76,8 @@
         "tools/aproda-sync/Bootstrap-AprodaProject.ps1",
         "tools/aproda-sync/Start-Push.ps1.template",
         "tools/aproda-sync/Start-Pull.ps1.template",
+        "tools/aproda-sync/templates/memory.seed.md",
+        "tools/aproda-sync/templates/gitignore-block.txt",
         "documentation/README.md"
     ],
     // 3) IN-PLACE Upstream edits — Upstream-owned files we modified (the D-7

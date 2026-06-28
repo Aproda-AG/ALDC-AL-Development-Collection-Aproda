@@ -1,0 +1,40 @@
+# Aproda ALDC Tool - BEGIN
+# WARNING: All changes within "Aproda ALDC Tool BEGIN/END" will be overwritten by updating the Aproda-ALDC via Aproda-Sync Pull
+.github/tools/aproda-sync/Start-Push.ps1
+.github/tools/aproda-sync/Start-Pull.ps1
+**/PowerShell/_temp/
+**/PowerShell/_runner/
+
+/aldc.yaml
+.github/README.md
+.github/copilot-instructions.md
+.github/decisions.aproda.md
+.github/readme.aproda.md
+.github/site-profile.aproda.md
+.github/agents/
+.github/docs/
+.github/instructions/
+.github/prompts/
+.github/tools/
+Base/tools/bcquality/
+# Skills: ignore framework + Aproda skills individually so that NEW project-specific can be added
+.github/skills/index.md
+.github/skills/skill-agent-instructions/
+.github/skills/skill-agent-task-patterns/
+.github/skills/skill-agent-toolkit/
+.github/skills/skill-api/
+.github/skills/skill-aproda-aldc/
+.github/skills/skill-aproda-test-loop/
+.github/skills/skill-contribution-assistant/
+.github/skills/skill-copilot/
+.github/skills/skill-debug/
+.github/skills/skill-estimation/
+.github/skills/skill-events/
+.github/skills/skill-manifest/
+.github/skills/skill-migrate/
+.github/skills/skill-pages/
+.github/skills/skill-performance/
+.github/skills/skill-permissions/
+.github/skills/skill-testing/
+.github/skills/skill-translate/
+# Aproda ALDC Tool - END

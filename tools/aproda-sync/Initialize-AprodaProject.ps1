@@ -57,6 +57,7 @@ else {
     $projectRoot = (Resolve-Path (Join-Path $scriptDir '..\..\..')).Path
 }
 $githubRoot = Join-Path $projectRoot '.github'
+$templatesDir = Join-Path $scriptDir 'templates'
 
 # ── Init 1: seed plans/memory.md if not yet present (first pull only) ─────────
 # The project-local memory.md is never synced back to the fork (plans/** is
@@ -65,17 +66,7 @@ $githubRoot = Join-Path $projectRoot '.github'
 $memoryTarget = Join-Path $githubRoot 'plans\memory.md'
 if (-not (Test-Path $memoryTarget)) {
     New-Item -ItemType Directory -Force (Split-Path $memoryTarget) | Out-Null
-    $memoryStub = @'
-<!-- ALDC — UNINITIALIZED PROJECT MEMORY
-     AI: When first working on this project, initialize this file using
-     the template at .github/docs/templates/memory-template.md and the actual
-     project context (app.json, repo URL, first requirement).
-     Do not preserve this comment block after initialization. -->
-
-# Project Memory (Global)
-
-> **Status**: UNINITIALIZED — fill on first use.
-'@
+    $memoryStub = [System.IO.File]::ReadAllText((Join-Path $templatesDir 'memory.seed.md'))
     [System.IO.File]::WriteAllText($memoryTarget, $memoryStub, [System.Text.UTF8Encoding]::new($false))
     Write-Host "Init: plans/memory.md created (uninitialized stub)."
 }
@@ -90,17 +81,7 @@ else {
 $gitignorePath = Join-Path $projectRoot '.gitignore'
 $beginMarker = '# Aproda ALDC Tool - BEGIN'
 $endMarker = '# Aproda ALDC Tool - END'
-$blockLines = @(
-    $beginMarker,
-    '# Local start scripts (machine-specific paths — copy from *.template and fill in)',
-    '.github/tools/aproda-sync/Start-Push.ps1',
-    '.github/tools/aproda-sync/Start-Pull.ps1',
-    '# Test-loop scratch / probe / run output (throwaway work)',
-    '**/PowerShell/_temp/',
-    '# Test-loop runner — materialized from BC Service DLLs (Microsoft binaries), never source',
-    '**/PowerShell/_runner/',
-    $endMarker
-)
+$blockLines = @(Get-Content (Join-Path $templatesDir 'gitignore-block.txt'))
 # Wrap the whole conditional in @(...): a bare `else { @() }` would be enumerated to
 # zero pipeline items and collapse to $null (PowerShell gotcha), crashing IndexOf on a
 # fresh repo that has no .gitignore yet. @( if (...) { ... } ) yields a real empty array.
