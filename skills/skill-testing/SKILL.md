@@ -19,6 +19,35 @@ This skill should be loaded when:
 - Test data builders or library codeunits need to be created
 - Test failures need analysis or coverage gaps need to be addressed
 
+## Standard Microsoft Test Libraries (use FIRST — do not hand-build records)
+
+Microsoft ships test libraries that create almost all master and document data. **Default to them; build records by hand only when no library covers the table.** Add custom fields on top of the created record. Pick by domain:
+
+| Library codeunit | Domain — what it creates | Key procedures |
+|---|---|---|
+| `Library - Sales` | Customers, sales quotes/orders/invoices/credit-memos | `CreateCustomer`, `CreateSalesHeader`, `CreateSalesLine`, `CreateSalesDocumentWithItem`, `ReleaseSalesDocument`, `PostSalesDocument` |
+| `Library - Purchase` | Vendors, purchase orders/invoices | `CreateVendor`, `CreatePurchaseHeader`, `CreatePurchaseLine`, `PostPurchaseDocument` |
+| `Library - Inventory` | Items, locations, item journals | `CreateItem`, `CreateItemWithUnitPriceAndUnitCost`, `CreateLocation`, `CreateItemJournalLine` |
+| `Library - Manufacturing` | Prod. BOM, routing, work/machine centers, prod. orders | `CreateProductionBOMHeader`, `CreateRoutingHeader`, `CreateWorkCenter`, `CreateProductionOrder` |
+| `Library - Warehouse` | Warehouse setup, bins, whse. documents | `CreateBin`, `CreateLocationWithInventoryPostingSetup`, `CreateWhseReceipt` |
+| `Library - ERM` | G/L accounts, posting groups, no. series, dimensions, currencies | `CreateGLAccount`, `CreateGeneralPostingSetup`, `CreateVATPostingSetup`, `CreateNoSeries`, `FindDimensionValue` |
+| `Library - Job` / `Library - Resource` | Jobs, job tasks, resources | `CreateJob`, `CreateJobTask`, `CreateResource` |
+| `Library - Random` | Randomized but reproducible numbers/text | `RandInt`, `RandDec`, `RandDecInRange` |
+| `Library Assert` | Assertions | `AreEqual`, `AreNotEqual`, `IsTrue`, `ExpectedError`, `ExpectedErrorCode` |
+| `Any` | Random primitives | `IntegerInRange`, `DecimalInRange`, `AlphabeticText` |
+
+**Rule:** create base data via the library, then set custom fields and `Modify(true)`. Wrap recurring extension-specific setup in your own `Library - <Feature>` codeunit that *delegates* to the MS library — never re-implement record creation by hand.
+
+### Discovering libraries before you invent helpers
+
+Before writing a hand-built `CreateX`, confirm whether a library exists — resolve facts from symbols, not memory:
+
+- `al_symbolsearch` / `al-symbols-mcp` against `.alpackages/` for `"Library - "` → lists installed test libraries and their procedures (authoritative).
+- `al_symbolrelations` / `bclsp_findReferences` to see how a library procedure is used.
+- Fallback: a `.app` is a ZIP — rename + extract to read its `.al`/symbol `.json` for procedure signatures when a symbol query is inconclusive.
+
+If no library covers the table, hand-build the record — and note it. Never guess a procedure signature; resolve it.
+
 ## Core Patterns
 
 ### Pattern 1: Given/When/Then Test Structure
@@ -435,6 +464,10 @@ end;
 - [Handler Functions](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-creating-handler-methods-in-tests)
 - [AI Test Toolkit](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-ai-test-toolkit)
 - [Library Assert](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-library-assert)
+
+## Evidencing
+
+When tests are written or changed, emit `🧠 skill-testing·MSLibraries` (plus other applied tags) in the skills line — this is the mandatory proof the standard-library rule was honored. A test change without this token is incomplete.
 
 ## Constraints
 

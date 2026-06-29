@@ -39,8 +39,10 @@ Before writing any test code:
 - Read the full `.github/plans/{req_name}/{req_name}.spec.md`, `.architecture.md`, or `.test-plan.md` **only if** a detail referenced in the excerpt is missing (the Conductor includes the paths for this) — do not re-read them wholesale by default
 
 ### Step 2: Create TEST Files FIRST (RED State)
+- **MANDATORY**: before writing any test, load `skill-testing` (read its `SKILL.md`) — it carries the standard MS test-library reference and the symbol-discovery recipe. This is not optional whenever tests are created or changed.
 - Create test codeunit(s) in the test project directory
 - Write `[Test]` procedures following Given/When/Then pattern
+- Create master/document data via the standard MS libraries (`Library - Sales`/`Inventory`/`Manufacturing`/`ERM`); hand-build records only for custom fields or uncovered tables
 - Tests MUST fail at this point (objects under test don't exist yet)
 - Use `Subtype = Test` and `[TestPermissions(TestPermissions::Disabled)]`
 
@@ -108,9 +110,9 @@ end;
 
 ### Test Helpers
 
-- **Library Assert** for assertions
-- **Library Random** for test data
-- `CreateCustomer`/`CreateSalesDocument` helper procedures
+- **Library Assert** for assertions, **Library Random** for randomized data
+- **Create base data via standard MS libraries first** — `Library - Sales` (CreateCustomer/CreateSalesDocument), `Library - Inventory` (CreateItem), `Library - Manufacturing` (CreateProductionBOMHeader/CreateRoutingHeader), `Library - ERM` (posting setup, no. series). Do NOT re-implement record creation by hand.
+- Own `CreateX` helpers only to set custom fields on a library-created record, or when no library covers the table
 - Test isolation: each test creates own data, cleans up after
 
 </al_development_capabilities>
@@ -161,6 +163,7 @@ In the **Phase Implementation Summary**, emit **one symbolic line** — a cheap 
 
 **Rules:**
 - Only list a skill you genuinely **read** (`SKILL.md`) **and applied** — this line is the Conductor's coverage signal; padding it with unread skills is the evidencing-theater we are removing.
+- If this phase **wrote or changed tests**, `🧠 skill-testing·MSLibraries` is **required** — its absence means the standard-library rule was skipped → phase incomplete.
 - Folder name, not file. One token per skill.
 
 <common_al_test_pitfalls>

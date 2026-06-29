@@ -166,6 +166,7 @@ Invoke **AL Implementation Subagent** (💻) via `#runSubagent` with:
 - Test requirements following AL-Go structure (`test/` project)
 - AL-specific patterns (SetLoadFields, error handling, naming ≤26 chars)
 - Explicit TDD instruction: tests first (failing), minimal code, tests pass, lint/format
+- **Mandatory testing skill**: any phase that writes/changes tests MUST load `skill-testing` and build master/document data via the standard MS libraries (`Library - Sales`/`Inventory`/`Manufacturing`/`ERM`) — the proof token `🧠 skill-testing·MSLibraries` must appear in the phase summary; if it's absent, REJECT the phase
 - **The 7 always-on instruction micro-rules inline** + **domain skill hints** for this phase (per §"Passing Context to Subagents" — the subagent loads the `SKILL.md` on demand, not you)
 - Instruction: work autonomously, only ask user on critical implementation decisions
 - **NOT** to proceed to next phase or write completion files (you handle this)
