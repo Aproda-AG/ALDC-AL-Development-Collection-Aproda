@@ -1,0 +1,44 @@
+{
+    // Multi-root workspace for an Aproda AL project.
+    // Created by Initialize-AprodaProject.ps1 (Init-3).
+    //
+    // Roots (in order):
+    //   1) .github        — ALDC toolkit (copilot-instructions, instructions/, prompts/, agents/)
+    //                       Must be FIRST so VS Code / Copilot discover customizations immediately.
+    //   2) <App>          — Main AL extension (compiled by AL Language extension).
+    //                       Rename / duplicate this entry for each app in your repo
+    //                       (e.g. Base, App, Module, …). Paths are relative to the git root.
+    //   3) <Test>         — Test AL extension (compiled separately; adjust name & path).
+    //   4) ../bcquality   — BCQuality knowledge base (NOT compiled; consumed by al-review-subagent
+    //                       and Dredd only). Cloned outside the AL project so its .al files
+    //                       never pollute the error list. Run: tools/bcquality/install.sh
+    //
+    // Edit the placeholder entries (marked "TODO") to match your project layout, then
+    // commit the file. The Init script will patch it on future pulls to keep .github and
+    // BCQuality present — your app roots are never touched.
+    "folders": [
+        {
+            "name": ".github",
+            "path": ".github"
+        },
+        {
+            // TODO: rename and duplicate for each AL app folder in this repo
+            "name": "App",
+            "path": "App"
+        },
+        {
+            // TODO: rename / remove if your test app lives inside the same folder
+            "name": "Test",
+            "path": "Test"
+        },
+        {
+            "name": "BCQuality (knowledge — not compiled)",
+            "path": "../bcquality"
+        }
+    ],
+    "settings": {
+        // Let Copilot walk up to the git root to find .github customizations even when
+        // only a single app folder (e.g. App/ or Test/) is opened directly.
+        "chat.useCustomizationsInParentRepositories": true
+    }
+}

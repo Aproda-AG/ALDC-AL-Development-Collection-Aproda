@@ -127,13 +127,27 @@ $requiredRoots = @(
 $parentCustomizationsKey = 'chat.useCustomizationsInParentRepositories'
 $wsFiles = Get-ChildItem -Path $projectRoot -Filter '*.code-workspace' -File -ErrorAction SilentlyContinue
 if (-not $wsFiles) {
+    # No workspace file found — create one from the seed template.
+    # The seed (templates/workspace.seed.jsonc) is the canonical reference; here we
+    # produce a clean JSON equivalent (comments stripped so ConvertFrom-Json can
+    # round-trip it on future pulls). App folder placeholders ("App", "Test") are
+    # included so the developer knows where to add real entries.
     $ws = [ordered]@{
-        folders  = @($requiredRoots | ForEach-Object { [ordered]@{ name = $_.name; path = $_.path } })
-        settings = [ordered]@{ $parentCustomizationsKey = $true }
+        folders  = @(
+            [ordered]@{ name = '.github'; path = '.github' },
+            [ordered]@{ name = 'App'; path = 'App' },
+            [ordered]@{ name = 'Test'; path = 'Test' },
+            [ordered]@{ name = 'BCQuality (knowledge — not compiled)'; path = '../bcquality' }
+        )
+        settings = [ordered]@{
+            $parentCustomizationsKey = $true
+        }
     }
     $target = Join-Path $projectRoot 'aldc.code-workspace'
     $ws | ConvertTo-Json -Depth 10 | Set-Content -Path $target -Encoding UTF8
-    Write-Host "Init: aldc.code-workspace created (.github + BCQuality roots, parent customizations on)."
+    Write-Host "Init: aldc.code-workspace created from seed (.github + App + Test + BCQuality roots, parent customizations on)."
+    Write-Host "      -> Edit app folder names/paths to match your project layout before committing."
+    Write-Host "      -> Reference: tools/aproda-sync/templates/workspace.seed.jsonc"
 }
 else {
     foreach ($wsFile in $wsFiles) {

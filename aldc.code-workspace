@@ -20,6 +20,6 @@
     }
   ],
   "settings": {
-    "git.detectSubmodules": false
+    "chat.useCustomizationsInParentRepositories": true
   }
 }
