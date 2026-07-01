@@ -15,6 +15,7 @@ What the Aproda layer adds on top of upstream ALDC:
 
 | Feature | Description |
 |---------|-------------|
+| **ADO work item integration** | `skill-ado` — maps ADO work items (Bug/Task/US/Feature) to `req_name`, plans folder, and document headers; URL-based linking, no API fetch |
 | **OnPrem test-loop** | `skill-aproda-test-loop` — publish → sync → deploy → run → review cycle for on-premises BC instances (VALIDATED, 27/27 green) |
 | **UAT-loop instruction** | Auto-applied guardrail that wires the test-loop into the UAT phase |
 | **Layer meta-skill** | `skill-aproda-aldc` — explains and extends the Aproda customization layer itself; entry to `site-profile.aproda.md` |
