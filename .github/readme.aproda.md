@@ -54,31 +54,81 @@ flowchart LR
 > **After init:** open the target project folder in VS Code and work normally with Copilot.
 > For future layer updates, run `Start-Pull.ps1` inside the target project.
 
-### Fallback — if self-location fails
+### Fallback — target repo not in the selection list
 
-`Start-InitNewProject-SRP-Safe.ps1` auto-detects its own path in three tiers: `$PSScriptRoot` (F5 / Run File), `$psEditor` (PS Extension Run Selection), then `$env:APRODA_SYNC_SCRIPTDIR`. If all three fail, choose one of:
+The script scans sibling folders of the fork for git repos. If the target project isn't found there (different drive, nested path, etc.):
 
-**Option A** — fill in the override variable **at the top of the file** (line 6) and re-run:
+**Option A — type the path at the console prompt** (no file edit needed):
+When the grid is empty or you cancel/close it, the terminal falls back to a `Read-Host` prompt. Type the full path to the target repo and press Enter.
+
+**Option B — pre-fill `$targetRepo` in the launcher** (line 9) and re-run:
 ```powershell
-$selfDir = 'C:\path\to\clone\tools\aproda-sync'
+$targetRepo = 'C:\MyWorkspace\MyNewProject'
 ```
-
-**Option B** — set the env var **in the terminal** before running:
-```powershell
-$env:APRODA_SYNC_SCRIPTDIR = 'C:\path\to\clone\tools\aproda-sync'
-# then re-run the launcher (Select All → Run Selection)
-```
-
-**Option C** — invoke `Start-InitNewProject.ps1` directly from a terminal (content-load, SRP-safe):
-```powershell
-$env:APRODA_SYNC_SCRIPTDIR = 'C:\path\to\clone\tools\aproda-sync'
-$p = Join-Path $env:APRODA_SYNC_SCRIPTDIR 'Start-InitNewProject.ps1'
-& ([ScriptBlock]::Create((Get-Content $p -Raw)))
-```
+The selection dialog is skipped entirely.
 
 ---
 
-## TL;DR — the two rules
+## Aproda process extensions
+
+### ADO work item integration
+
+Requirements, bugs, and tasks are tracked in Azure DevOps and flow directly into the ALDC planning structure via `skill-ado`:
+
+- **Type-ID pattern** — the `req_name` (plans folder name) is derived as `{type}-{id}` (e.g. `bug-36370`, `us-99001`, `task-12345`). No descriptive slug — the title lives in ADO.
+- **ADO header** — every plan document gets an `**ADO**: [Bug 36370](…)` link at the top so context is never lost.
+- **Process** — the agent reads the work item description/acceptance criteria from the chat prompt (no API fetch). The planner creates `.github/plans/{type}-{id}/` with spec, architecture, and test-plan files using the ADO ID as the anchor throughout.
+
+See `skill-ado` for the full naming and URL construction rules (`org = alphasol`, project from `aldc.yaml → ado.project`).
+
+---
+
+### Aproda Test-loop
+
+The Aproda Test-loop (`skill-aproda-test-loop`) is the technical CI surrogate for on-premises BC: it runs a full **deploy → run-tests → review → optimize** cycle against a live NST instance after every implementation increment.
+
+- Publishes the `.app` to the target NST, syncs and installs it, then executes the AL test suite.
+- On failure: surfaces the exact error with AL stack trace, feeds it back to the implementation agent for a fix, then re-runs — loop until green.
+- On success: the app stays deployed in the **ASINST environment** and is immediately available for manual testing.
+
+This loop is wired into both `al-developer` and `al-conductor` as a pre-PR gate.
+
+---
+
+### UAT loop
+
+After the Test-loop is green, the feature moves to **user acceptance testing (UAT)**. The goal is to validate the implementation against real business scenarios — either in a customer development environment or in the **ASINST environment** (the most recent app build is already deployed there from the Test-loop and ready to test immediately).
+
+**When UAT feedback arrives:**
+
+Negative test results or user feedback are collected and handed to the implementation agent either as:
+- a Markdown file with issue descriptions, or
+- a direct chat prompt describing what failed.
+
+The agent creates or updates a `{req_name}-uat-issues.md` file in `.github/plans/{req_name}/`. Each issue gets a global, monotonic ID (`I-1`, `I-2`, …) and a `Status` field (`TODO` / `DONE`). The agent works through open issues one at a time (Status = TODO), runs the Test-loop after each fix, and marks the issue `DONE`. Multiple feedback rounds append a new `## Loop N` section — the file is never split.
+
+**The `uat-loop.aproda.instructions.md` instruction** governs this contract: the spec is the target-state reference, not a checklist — only `uat-issues.md` status fields drive what is still to do.
+
+**When UAT is successful:**
+
+Run `/al-pr-prepare` (see next section). This closes the current UAT loop and the entire plan folder for this requirement. Any further changes or fixes — even small follow-ups — start as a **new** `.github/plans/{new-req-name}/` folder.
+
+---
+
+### PR preparation — living documentation
+
+When running `/al-pr-prepare` (or the equivalent conductor phase), two documentation artifacts are **created or updated** as part of every PR:
+
+| Artifact | What it contains |
+|----------|-----------------|
+| **Module Requirement** (technical documentation) | Complete specification of the entire module in its current state — object model, business logic, integration points, permissions. Not a delta; always the full picture. |
+| **Handbuch DE-CH** (user manual) | End-user guide for the whole module in Swiss German, updated to reflect the current feature set. Again a full-module view, not a change log. |
+
+Both artifacts live in the project's `documentation/` folder and are committed together with the code changes in the PR. This ensures that documentation is never left behind and always matches what is deployed.
+
+---
+
+## TL;DR — Extend Aproda ALDC — the two rules
 
 1. **Net-new things** (our own skills, agents, prompts, instructions) → live in the **same Upstream folders** with an **`.aproda.` infix** (files) or **`skill-aproda-*`** prefix (skill folders). They never collide with Upstream → the overlay syncer (D-18) always merges them cleanly.
 2. **Changes to Upstream behaviour** → edit the **original file in place**. The resulting **conflict on the next Upstream merge is the signal** ("Upstream changed something I also touched — review it"). We deliberately accept conflicts as a change-log rather than hiding edits in a shadow layer.
