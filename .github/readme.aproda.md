@@ -9,6 +9,75 @@ This file (and its sibling [`decisions.aproda.md`](decisions.aproda.md)) documen
 
 ---
 
+## Features
+
+What the Aproda layer adds on top of upstream ALDC:
+
+| Feature | Description |
+|---------|-------------|
+| **OnPrem test-loop** | `skill-aproda-test-loop` — publish → sync → deploy → run → review cycle for on-premises BC instances (VALIDATED, 27/27 green) |
+| **UAT-loop instruction** | Auto-applied guardrail that wires the test-loop into the UAT phase |
+| **Layer meta-skill** | `skill-aproda-aldc` — explains and extends the Aproda customization layer itself; entry to `site-profile.aproda.md` |
+| **Steward guardrail** | HITL instruction that triggers on any proposed layer edit — all changes require explicit confirmation |
+| **Doc-update workflow** | `/al-doc-update` — updates living documentation after implementation; integrated into `al-developer` and `al-conductor` |
+| **Overlay sync tool** | `tools/aproda-sync/` — allowlist-driven syncer to push/pull the layer between fork and projects (`Start-InitNewProject`, `Start-Pull`, `Start-Push`) |
+| **Site profile** | `.github/site-profile.aproda.md` — concrete infrastructure facts (K: drive, NST servers, SRP, remote-PS) |
+
+---
+
+## Quickstart — initialize a new project
+
+**Prerequisites:** a local clone of the fork + a target project repo already initialized with `git init`.
+
+```mermaid
+flowchart LR
+    A["Clone fork\ngit clone …Aproda-AG/…"] --> B["Open fork in VS Code\nFile → Open Folder"]
+    B --> C["Open\ntools/aproda-sync/\nStart-InitNewProject-SRP-Safe.ps1"]
+    C --> D["Select All (Ctrl+A)\n→ Run Selection\n(PS Extension terminal)"]
+    D --> E["Repo-selection window\npicks target project"]
+    E --> F["Layer written to\n.github/ of target\nStart-Pull.ps1 materialized"]
+```
+
+### Steps
+
+1. **Clone the fork** (one-time, keep it on your workstation):
+   ```
+   git clone https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda
+   ```
+2. **Open the fork in VS Code** (`File → Open Folder`).
+3. **Open** `tools/aproda-sync/Start-InitNewProject-SRP-Safe.ps1` in the editor.
+4. **Run it SRP-safe:** Select All (`Ctrl+A`) → right-click → *Run Selection* in the PowerShell Extension terminal (or `Shift+F8` / *PowerShell: Run Selection*).
+5. **Select the target repo** from the pop-up grid view (or type the path at the console prompt if the GUI is unavailable).
+   > **Skip the dialog:** set `$targetRepo` at the top of the launcher (line 9) to a fixed path and the selection step is bypassed entirely.
+6. The entire layer is written into `.github/` of the target. A `Start-Pull.ps1` is materialized there for future updates.
+
+> **After init:** open the target project folder in VS Code and work normally with Copilot.
+> For future layer updates, run `Start-Pull.ps1` inside the target project.
+
+### Fallback — if self-location fails
+
+`Start-InitNewProject-SRP-Safe.ps1` auto-detects its own path in three tiers: `$PSScriptRoot` (F5 / Run File), `$psEditor` (PS Extension Run Selection), then `$env:APRODA_SYNC_SCRIPTDIR`. If all three fail, choose one of:
+
+**Option A** — fill in the override variable **at the top of the file** (line 6) and re-run:
+```powershell
+$selfDir = 'C:\path\to\clone\tools\aproda-sync'
+```
+
+**Option B** — set the env var **in the terminal** before running:
+```powershell
+$env:APRODA_SYNC_SCRIPTDIR = 'C:\path\to\clone\tools\aproda-sync'
+# then re-run the launcher (Select All → Run Selection)
+```
+
+**Option C** — invoke `Start-InitNewProject.ps1` directly from a terminal (content-load, SRP-safe):
+```powershell
+$env:APRODA_SYNC_SCRIPTDIR = 'C:\path\to\clone\tools\aproda-sync'
+$p = Join-Path $env:APRODA_SYNC_SCRIPTDIR 'Start-InitNewProject.ps1'
+& ([ScriptBlock]::Create((Get-Content $p -Raw)))
+```
+
+---
+
 ## TL;DR — the two rules
 
 1. **Net-new things** (our own skills, agents, prompts, instructions) → live in the **same Upstream folders** with an **`.aproda.` infix** (files) or **`skill-aproda-*`** prefix (skill folders). They never collide with Upstream → the overlay syncer (D-18) always merges them cleanly.

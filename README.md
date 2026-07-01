@@ -2,9 +2,13 @@
 
 <img src="docs/assets/images/NewALDCbanner.png" alt="ALDC — AL Development Collection — blueprint" width="760">
 
-# ALDC — AL Development Collection
+# ALDC — AL Development Collection — extended by Aproda
 
 **Skills-based, spec-driven, TDD-orchestrated development framework for Microsoft Dynamics 365 Business Central.**
+
+> `##################################################`
+> [ Liest das Aproda Readme! (Click me)](.github/readme.aproda.md)
+> `##################################################`
 
 _From vibe coding to controlled engineering._
 
