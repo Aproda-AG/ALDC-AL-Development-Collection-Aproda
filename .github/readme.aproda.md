@@ -79,6 +79,15 @@ Requirements, bugs, and tasks are tracked in Azure DevOps and flow directly into
 - **ADO header** — every plan document gets an `**ADO**: [Bug 36370](…)` link at the top so context is never lost.
 - **Process** — the agent reads the work item description/acceptance criteria from the chat prompt (no API fetch). The planner creates `.github/plans/{type}-{id}/` with spec, architecture, and test-plan files using the ADO ID as the anchor throughout.
 
+**How to start:**
+
+1. **Review the work item in ADO** — check title, description, and acceptance criteria. Add technical details, edge cases, or test scenarios directly in ADO if they are missing. The richer the work item, the better the generated spec.
+2. **Copy the work item URL and paste it into the chat prompt** — e.g.:
+   ```
+   https://dev.azure.com/alphasol/GustavGerigAG/_workitems/edit/36370
+   ```
+   Hand it to the appropriate agent (`@al-architect` for MEDIUM/HIGH, or start with `/al-spec.create` for LOW). The agent derives the `req_name`, creates the `.github/plans/{type}-{id}/` folder, and uses the work item content as the spec seed.
+
 See `skill-ado` for the full naming and URL construction rules (`org = alphasol`, project from `aldc.yaml → ado.project`).
 
 ---
