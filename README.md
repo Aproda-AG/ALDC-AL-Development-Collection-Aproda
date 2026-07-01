@@ -7,7 +7,7 @@
 
 > `##################################################`
 >
-> [Liest das Aproda Readme! (Click me)](.github/readme.aproda.md)
+> [Read the Aproda Readme! (Click me)](.github/readme.aproda.md)
 >
 > `##################################################`
 
