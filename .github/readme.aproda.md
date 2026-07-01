@@ -55,6 +55,16 @@ flowchart LR
 > **After init:** open the target project folder in VS Code and work normally with Copilot.
 > For future layer updates, run `Start-Pull.ps1` inside the target project.
 
+### BCQuality knowledge base (one-time, per workstation)
+
+The generated workspace file expects a BCQuality clone as a sibling of the project repo at `../bcquality`. Clone it once alongside your projects:
+
+```
+git clone https://github.com/Aproda-AG/BCQuality-Aproda bcquality
+```
+
+The folder must sit **next to** (not inside) the project repo so its `.al` files never enter the AL compiler's scope. Once cloned, it is available to all projects on the same workstation — no per-project setup needed. It is consumed read-only by `@dredd` and the review subagent for citation-backed quality checks.
+
 ### Fallback — target repo not in the selection list
 
 The script scans sibling folders of the fork for git repos. If the target project isn't found there (different drive, nested path, etc.):
