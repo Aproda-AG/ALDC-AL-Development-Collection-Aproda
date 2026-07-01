@@ -82,7 +82,7 @@ Requirements, bugs, and tasks are tracked in Azure DevOps and flow directly into
 **How to start:**
 
    > **Tip:** You can also attach a technical specification document to the chat prompt — the agent will incorporate it when generating the plan.
-   > **Planned:** direct ADO read-out (likely via ADO MCP) will eliminate the manual copy step in a future version.
+   > ⚠️ **Planned:** direct ADO read-out (likely via ADO MCP) will eliminate the manual copy step in a future version.
 
 1. **Review the work item in ADO** — check title, description, and acceptance criteria. Add technical details, edge cases, or test scenarios directly in ADO if they are missing. The richer the work item, the better the generated spec.
 2. **Copy the work item URL and the relevant content into the chat prompt** — the agent cannot fetch ADO directly (no auth), so paste both:
