@@ -25,7 +25,7 @@ What the Aproda layer adds on top of upstream ALDC:
 
 ---
 
-## Quickstart — initialize a new project
+## Quickstart — initialize Aproda Aldc to a existing or new project repo
 
 **Prerequisites:** a local clone of the fork + a target project repo already initialized with `git init`.
 
