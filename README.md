@@ -7,7 +7,9 @@
 **Skills-based, spec-driven, TDD-orchestrated development framework for Microsoft Dynamics 365 Business Central.**
 
 > `##################################################`
+>
 > [ Liest das Aproda Readme! (Click me)](.github/readme.aproda.md)
+>
 > `##################################################`
 
 _From vibe coding to controlled engineering._
