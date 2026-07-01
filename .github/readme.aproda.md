@@ -93,7 +93,7 @@ Requirements, bugs, and tasks are tracked in Azure DevOps and flow directly into
      ```
    - the work item content: title, description, acceptance criteria — everything the agent should use as the spec seed.
 
-   Hand it to the appropriate agent (`@al-architect` for MEDIUM/HIGH, or start with `/al-spec.create` for LOW). The agent confirms the derived `req_name` before creating any files.
+   Hand it to the appropriate agent (`@al-architect` for MEDIUM/HIGH complexity, or start with `/al-spec.create` for LOW). The agent confirms the derived `req_name` before creating any files.
 
 
 See `skill-ado` for the full naming and URL construction rules (`org = alphasol`, project from `aldc.yaml → ado.project`).
@@ -105,7 +105,7 @@ See `skill-ado` for the full naming and URL construction rules (`org = alphasol`
 The Aproda Test-loop (`skill-aproda-test-loop`) is the technical CI surrogate for on-premises BC: it runs a full **deploy → run-tests → review → optimize** cycle against a live NST instance after every implementation increment.
 
 - Publishes the `.app` to the target NST, syncs and installs it, then executes the AL test suite.
-- On failure: surfaces the exact error with AL stack trace, feeds it back to the implementation agent for a fix, then re-runs — loop until green.
+- On failure: surfaces the exact error with AL stack trace, feeds it back to the implementation agent for a fix, then re-runs — loop until green (`@al-developer` for direct implementation, `@al-conductor` for orchestrated TDD cycles).
 - On success: the app stays deployed in the **ASINST environment** and is immediately available for manual testing.
 
 This loop is wired into both `al-developer` and `al-conductor` as a pre-PR gate.
@@ -118,7 +118,7 @@ After the Test-loop is green, the feature moves to **user acceptance testing (UA
 
 **When UAT feedback arrives:**
 
-Negative test results or user feedback are collected and handed to the implementation agent either as:
+Negative test results or user feedback are collected and handed to the implementation agent (`@al-developer` for direct fixes, `@al-conductor` for orchestrated TDD cycles) either as:
 - a Markdown file with issue descriptions, or
 - a direct chat prompt describing what failed.
 
