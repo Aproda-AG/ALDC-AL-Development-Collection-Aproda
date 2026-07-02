@@ -9,9 +9,9 @@
     //                       Rename / duplicate this entry for each app in your repo
     //                       (e.g. Base, App, Module, …). Paths are relative to the git root.
     //   3) <Test>         — Test AL extension (compiled separately; adjust name & path).
-    //   4) ../bcquality   — BCQuality knowledge base (NOT compiled; consumed by al-review-subagent
-    //                       and Dredd only). Cloned outside the AL project so its .al files
-    //                       never pollute the error list. Run: tools/bcquality/install.sh
+    //   4) ../bcquality-aproda   — BCQuality knowledge base (NOT compiled; consumed by al-review-subagent
+    //                             and Dredd only). Cloned outside the AL project so its .al files
+    //                             never pollute the error list. Run: tools/bcquality/install.sh
     //
     // Edit the placeholder entries (marked "TODO") to match your project layout, then
     // commit the file. The Init script will patch it on future pulls to keep .github and
@@ -33,7 +33,7 @@
         },
         {
             "name": "BCQuality (knowledge — not compiled)",
-            "path": "../bcquality"
+            "path": "../bcquality-aproda"
         }
     ],
     "settings": {

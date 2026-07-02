@@ -48,6 +48,17 @@ Before writing a hand-built `CreateX`, confirm whether a library exists — reso
 
 If no library covers the table, hand-build the record — and note it. Never guess a procedure signature; resolve it.
 
+## Project structure
+
+The Test app uses two top-level folders — keep them separate:
+
+| Folder | Purpose |
+|---|---|
+| `Test/TestCases/` | `[Test]` codeunits (`Subtype = Test`) — the scenarios. One codeunit per feature/module. |
+| `Test/TestLibrary/` | Reusable helper/library codeunits (`Library - <Feature>`) — shared setup, data builders, handlers. Delegate to MS libraries; stateless. |
+
+**Rule:** a helper used by **2+ test codeunits** (Enable/Disable setup, shared `MessageHandler`, `CreateTestX`) belongs in `TestLibrary`, not copied into each TestCase. Single-use, scenario-local helpers may stay in the TestCase.
+
 ## Core Patterns
 
 ### Pattern 1: Given/When/Then Test Structure
@@ -145,7 +156,7 @@ codeunit 50200 "Library - Contoso Sales"
 - Always delegate to standard BC library codeunits (`Library - Sales`, `Library - Inventory`, `Library - ERM`, `Library - Random`) for base data creation
 - Add extension-specific fields on top
 - Keep helpers stateless — no global variables in library codeunits
-- Place in `Test/src/Libraries/` folder
+- Place reusable helpers/fixtures in `Test/TestLibrary/`; `[Test]` codeunits stay in `Test/TestCases/` (see Project structure)
 
 ### Pattern 3: Test Data Builder (Fluent API)
 

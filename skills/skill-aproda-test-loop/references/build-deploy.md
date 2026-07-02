@@ -29,6 +29,18 @@
 ✅ **Proven sequence** (`_Cycle.ps1` / `_Deploy.ps1`):
 uninstall Test → uninstall Base → unpublish both → publish/sync/install **Base** → publish/sync/install **Test**.
 
+### MS test-library prerequisite chain ✅ (live-verified 2026-06-29)
+
+A Test app that depends on `Tests-TestLibraries` / `Application Test Library` will **not deploy** unless the full MS test-library chain is installed on the tenant first, in dependency order:
+
+`Test Runner` → `Any` → `Library Assert` → `Library Variable Storage` → `System Application Test Library` → `Business Foundation Test Libraries` → `Application Test Library` (**new in BC28**) → `Tests-TestLibraries`.
+
+**Hang symptom (no error):** `Publish-/Sync-NAVApp` **blocks silently** (no PS error, no timeout) when a dependency is missing. The real cause appears **only in the Windows Event Log** (source `MicrosoftDynamicsNavServer$<instance>`, event 701): `error AL1024: …'Application Test Library'… could not be loaded` / `…'Business Foundation Test Libraries'… could not be found in the database`.
+
+**Diagnose before publish:** `(Get-NAVAppInfo -Path <app>).Dependencies` lists what each package needs. `.app` sources are on the K: DVD (see `site-profile.aproda.md → MS test-library .app sources`). Already-installed apps return harmless *"already published"* warnings; publish only the missing links.
+
+> `Application Test Library` (BC28, 42 CUs) holds the standard cross-app libs — `Library - Inventory/Sales/Purchase/Manufacturing/Warehouse/ERM/Job/Random/Utility/Assert`. `Tests-TestLibraries` (128 CUs) is specialized: mocks, `…OnPrem` libs, .NET-bound CRM/Graph/SMTP/Azure AD/XML, permissions, job-queue samples — only needed if your tests touch those.
+
 Key cmdlet flags (✅ verified):
 - `Publish-NAVApp -SkipVerification -Scope Tenant -Tenant default`
 - `Sync-NAVApp -Mode Add`

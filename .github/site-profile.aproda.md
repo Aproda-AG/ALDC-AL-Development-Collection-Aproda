@@ -49,6 +49,20 @@ K:\59 Environments\_ms\<major>\<Country>.<major>.<minor>\
 - The 4 version-pinned client DLLs there: `Microsoft.Dynamics.Framework.UI.Client.dll`, `Newtonsoft.Json.dll`, `System.ServiceModel.Primitives.dll`, `Microsoft.Internal.AntiSSRF.dll` (optional).
 - Current site values: `bcDvdRoot = K:\59 Environments\_ms`, `bcCountry = CH`; highest BC 28 minor = `CH.28.2` (BC client `28.0.50938.0`).
 
+### MS test-library `.app` sources on the DVD (deterministic)
+The Microsoft test-library `.app` packages needed to deploy a Test extension are also on the DVD under `…\<Country>.<major>.<minor>\Applications\`:
+
+| App | Source path (relative to `…\Applications\`) |
+|-----|----------------------------------------------|
+| Test Runner | `TestFramework\TestRunner\Microsoft_Test Runner.app` |
+| Any | `TestFramework\TestLibraries\Any\Microsoft_Any.app` |
+| Library Assert | `TestFramework\TestLibraries\Assert\Microsoft_Library Assert.app` |
+| Library Variable Storage | `TestFramework\TestLibraries\Variable Storage\Microsoft_Library Variable Storage.app` |
+| System Application Test Library | `System Application\Test\Microsoft_System Application Test Library.app` |
+| Business Foundation Test Libraries | `BusinessFoundation\Test\Microsoft_Business Foundation Test Libraries.app` |
+| Application Test Library (**new in BC28**; the standard cross-app libs — Library - Inventory/Sales/Purchase/Manufacturing/Warehouse/ERM/Job/Random/Utility/Assert…) | `Application Test Library\Source\Microsoft_Application Test Library.app` |
+| Tests-TestLibraries (specialized: mocks, OnPrem-only libs `…OnPrem`, .NET-bound CRM/Graph/SMTP/Azure AD/XML, permissions, job-queue samples) | `BaseApp\Test\Microsoft_Tests-TestLibraries.app` |
+
 ## BC web client (headless test runner)
 
 - The client-driven test runner connects to the **web client** URL on **port 80**: `http://<server>/<instance>/cs?tenant=<tenant>&company=<company>` — **not** the NetTcp port (8929) and **not** the DeveloperServices port (8930).

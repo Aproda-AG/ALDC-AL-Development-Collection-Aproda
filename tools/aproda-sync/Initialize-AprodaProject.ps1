@@ -114,12 +114,12 @@ else {
 #   1) the .github root — the toolkit (copilot-instructions, instructions/, prompts/,
 #      agents/) lives here; surfacing it as a folder keeps it editable/visible.
 #   2) the BCQuality knowledge base — consumed multi-root from OUTSIDE the project
-#      (../bcquality) so its example .al files never enter compilation.
+#      (../bcquality-aproda) so its example .al files never enter compilation.
 # Both are added only when missing (idempotent). JSONC that does not parse is left
 # untouched with a manual hint.
 $requiredRoots = @(
     @{ name = '.github'; path = '.github'; match = '^\.github$' },
-    @{ name = 'BCQuality (knowledge — not compiled)'; path = '../bcquality'; match = 'bcquality' }
+    @{ name = 'BCQuality (knowledge — not compiled)'; path = '../bcquality-aproda'; match = 'bcquality-aproda' }
 )
 # Settings ALDC needs surfaced in every workspace. parentCustomizations lets Copilot
 # walk up to the .git root and pick up the repo-root .github customizations even when
@@ -137,7 +137,7 @@ if (-not $wsFiles) {
             [ordered]@{ name = '.github'; path = '.github' },
             [ordered]@{ name = 'App'; path = 'App' },
             [ordered]@{ name = 'Test'; path = 'Test' },
-            [ordered]@{ name = 'BCQuality (knowledge — not compiled)'; path = '../bcquality' }
+            [ordered]@{ name = 'BCQuality (knowledge — not compiled)'; path = '../bcquality-aproda' }
         )
         settings = [ordered]@{
             $parentCustomizationsKey = $true
