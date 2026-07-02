@@ -13,13 +13,13 @@ toolkitRoot: "."
 # (.github/tools/aproda-sync, D-18) — NOT git subtree. The canonical fork lives at
 # `fork` below. The live inventory ("what has Aproda added?") is
 # .github/readme.aproda.md; the rationale is .github/decisions.aproda.md
-# (D-17 for this versioning scheme). Layer version = <ALDC core.version>+aproda.<n>.
+# (D-17 for this versioning scheme). Layer version = <ALDC core.version>_aproda.<n>.
 # Single source of truth for the fork's version numbers (mirrors external.bcquality).
 # NOTE: toolkitRoot is ".github" here (consumer layout); the fork's aldc.yaml uses
 # ".". That one diverging line is why aldc.yaml is NOT auto-synced (D-18 follow-up).
 # ─────────────────────────────────────────────────────────────────────────────
 aproda:
-  layerVersion: "1.2.0+aproda.1"        # <ALDC core.version>+aproda.<revision>
+  layerVersion: "1.2.0_aproda.2"        # <ALDC core.version>_aproda.<revision>
   fork: "https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda"
   basePin: "a900263f51e416762cc7f85575deb9b30cd5b1e3"   # ALDC commit the fork sits on (upstream == fork, in sync 2026-06-25)
   inventory: ".github/readme.aproda.md"
