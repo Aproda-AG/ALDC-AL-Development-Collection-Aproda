@@ -9,7 +9,7 @@
 >
 > 🚀 **Neu hier?** → [Aproda ALDC Onboarding](.github/onboarding.aproda.md)
 >
-> 🔧 **Layer-Details & Maintainer-Infos** → [Aproda README](.github/readme.aproda.md)
+> 🔧 **Detailierte Doku und Feature-, Layer-, Maintainer-Infos** → [Aproda README](.github/readme.aproda.md)
 >
 > `##################################################`
 
