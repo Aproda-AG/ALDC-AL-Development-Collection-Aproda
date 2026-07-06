@@ -16,7 +16,7 @@ When you implement AL changes for a requirement that has a `*-uat-issues.md` fil
 2. **Take the next issue with `Status = TODO`**, respecting any stated implementation order.
 3. **Load only that issue's detail block** — do not read `DONE` blocks (token-efficient).
 4. **Implement** the fix/extension/adjustment for that one issue.
-5. **Run the test-loop** (`skill-aproda-test-loop`) before considering the issue resolved.
+5. **Run the Deploy-Run-Verify Cycle** (`skill-aproda-test-loop`) before considering the issue resolved.
 6. **Set that issue's `Status = DONE`** (and update the Loop roll-up) in the `uat-issues.md`.
 
 Rules:

@@ -1,6 +1,6 @@
 # Aproda ALDC Layer — README
 
-> **Version:** `1.2.0_aproda.2` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17).
+> **Version:** `1.2.0_aproda.3` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17).
 > Aproda's customization layer on top of **ALDC** (AL Development Collection).
 > Fork: <https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda>
 > Upstream: ALDC Core (tracked via `upstream` remote).
@@ -16,8 +16,8 @@ What the Aproda layer adds on top of upstream ALDC:
 | Feature | Description |
 |---------|-------------|
 | **ADO work item integration** | `skill-ado` — maps ADO work items (Bug/Task/US/Feature) to `req_name`, plans folder, and document headers; URL-based linking, no API fetch |
-| **OnPrem test-loop** | `skill-aproda-test-loop` — publish → sync → deploy → run → review cycle for on-premises BC instances (VALIDATED, 27/27 green) |
-| **UAT-loop instruction** | Auto-applied guardrail that wires the test-loop into the UAT phase |
+| **Deploy-Run-Verify Cycle** | `skill-aproda-test-loop` — publish → sync → deploy → run → review cycle for on-premises BC instances (VALIDATED, 27/27 green) |
+| **HITL Validation instruction** | Auto-applied guardrail that wires the Deploy-Run-Verify Cycle into the HITL Validation phase |
 | **Layer meta-skill** | `skill-aproda-aldc` — explains and extends the Aproda customization layer itself; entry to `site-profile.aproda.md` |
 | **Steward guardrail** | HITL instruction that triggers on any proposed layer edit — all changes require explicit confirmation |
 | **Doc-update workflow** | `/al-doc-update` — updates living documentation after implementation; integrated into `al-developer` and `al-conductor` |
@@ -117,9 +117,9 @@ See `skill-ado` for the full naming and URL construction rules (`org = alphasol`
 
 ---
 
-### Aproda Test-loop
+### Deploy-Run-Verify Cycle
 
-The Aproda Test-loop (`skill-aproda-test-loop`) is the technical CI surrogate for on-premises BC: it runs a full **deploy → run-tests → review → optimize** cycle against a live NST instance after every implementation increment.
+The Deploy-Run-Verify Cycle (`skill-aproda-test-loop`) is the technical CI surrogate for on-premises BC: it runs a full **deploy → run-tests → review → optimize** cycle against a live NST instance after every implementation increment.
 
 - Publishes the `.app` to the target NST, syncs and installs it, then executes the AL test suite.
 - On failure: surfaces the exact error with AL stack trace, feeds it back to the implementation agent for a fix, then re-runs — loop until green (`@al-developer` for direct implementation, `@al-conductor` for orchestrated TDD cycles).
@@ -129,23 +129,23 @@ This loop is wired into both `al-developer` and `al-conductor` as a pre-PR gate.
 
 ---
 
-### UAT loop (User Test Loops before Pull Request)
+### HITL Validation
 
-After the Test-loop is green, the feature moves to **user acceptance testing (UAT)**. The goal is to validate the implementation against real business scenarios — either in a customer development environment or in the **ASINST environment** (the most recent app build is already deployed there from the Test-loop and ready to test immediately).
+After the Deploy-Run-Verify Cycle is green, the feature moves to **HITL Validation** — human verification against real business scenarios, either in the **ASINST environment** (the most recent app build is already deployed there from the Deploy-Run-Verify Cycle and ready to test immediately) or in a customer development environment.
 
-**When UAT feedback arrives:**
+**When HITL Validation feedback arrives:**
 
 Negative test results or user feedback are collected and handed to the implementation agent (`@al-developer` for direct fixes, `@al-conductor` for orchestrated TDD cycles) either as:
 - a Markdown file with issue descriptions, or
 - a direct chat prompt describing what failed.
 
-The agent creates or updates a `{req_name}-uat-issues.md` file in `.github/plans/{req_name}/`. Each issue gets a global, monotonic ID (`I-1`, `I-2`, …) and a `Status` field (`TODO` / `DONE`). The agent works through open issues one at a time (Status = TODO), runs the Test-loop after each fix, and marks the issue `DONE`. Multiple feedback rounds append a new `## Loop N` section — the file is never split.
+The agent creates or updates a `{req_name}-uat-issues.md` file in `.github/plans/{req_name}/`. Each issue gets a global, monotonic ID (`I-1`, `I-2`, …) and a `Status` field (`TODO` / `DONE`). The agent works through open issues one at a time (Status = TODO), runs the Deploy-Run-Verify Cycle after each fix, and marks the issue `DONE`. Multiple feedback rounds append a new `## Loop N` section — the file is never split.
 
 **The `uat-loop.aproda.instructions.md` instruction** governs this contract: the spec is the target-state reference, not a checklist — only `uat-issues.md` status fields drive what is still to do.
 
-**When UAT is successful:**
+**When HITL Validation is successful:**
 
-Run `/al-pr-prepare` (see next section). This closes the current UAT loop and the entire plan folder for this requirement. Any further changes or fixes — even small follow-ups — start as a **new** `.github/plans/{new-req-name}/` folder.
+Run `/al-pr-prepare` (see next section). This closes the current HITL Validation and the entire plan folder for this requirement. Any further changes or fixes — even small follow-ups — start as a **new** `.github/plans/{new-req-name}/` folder.
 
 ---
 
@@ -196,10 +196,10 @@ This table **is** the Aproda index (D-17) — the one place to answer "what has 
 | This README (= the inventory/index) | `.github/readme.aproda.md` | D-1 | live |
 | Design decisions | `.github/decisions.aproda.md` | D-1 | live (D-1…D-18) |
 | Site profile (infra facts) | `.github/site-profile.aproda.md` | D-16 | live |
-| Test-loop skill | `.github/skills/skill-aproda-test-loop/` | D-8, D-15 | **VALIDATED** (27/27 green) |
+| Deploy-Run-Verify Cycle skill | `.github/skills/skill-aproda-test-loop/` | D-8, D-15 | **VALIDATED** (27/27 green) |
 | Meta-skill (explain + extend the layer) | `.github/skills/skill-aproda-aldc/` | D-16 | live |
 | Steward guardrail (HITL on layer edits) | `.github/instructions/aproda-aldc-steward.aproda.instructions.md` | D-16 | live |
-| UAT-loop instruction | `.github/instructions/uat-loop.aproda.instructions.md` | D-11 | live |
+| HITL Validation instruction | `.github/instructions/uat-loop.aproda.instructions.md` | D-11 | live |
 | Doc-update workflow | `.github/prompts/al-doc-update.aproda.prompt.md` | D-14 | live |
 | Layer sync (allowlist manifest + overlay script) | `.github/tools/aproda-sync/` | D-18 | live |
 
@@ -210,8 +210,8 @@ Exact diffs in the [Upstream edits register](decisions.aproda.md).
 | File | Why | Decision |
 |------|-----|----------|
 | `copilot-instructions.md` | Skills-table rows for the 2 Aproda skills + v1.1→v1.2 drift-fix | D-7 / D-16 / D-17 |
-| `agents/al-developer.agent.md` | Test-loop + `al-doc-update` wiring (LOW trigger) | D-9 / D-14 |
-| `agents/al-conductor.agent.md` | Test-loop gate + `al-doc-update` row (MEDIUM/HIGH) | D-9 / D-14 |
+| `agents/al-developer.agent.md` | Deploy-Run-Verify Cycle + `al-doc-update` wiring (LOW trigger) | D-9 / D-14 |
+| `agents/al-conductor.agent.md` | Deploy-Run-Verify Cycle gate + `al-doc-update` row (MEDIUM/HIGH) | D-9 / D-14 |
 | `tools/aldc-validate/index.js` | v1.1→v1.2 banner drift-fix | D-17 |
 
 ### Personal fallback (not synced)
@@ -252,8 +252,8 @@ The ALDC base is **pinned** in `aldc.yaml → aproda.basePin` (analogous to the 
 
 On every version bump (Upstream upgrade **or** Aproda-layer change), create a Git tag on the fork:
 ```
-git tag v1.2.0_aproda.2
-git push origin v1.2.0_aproda.2
+git tag v1.2.0_aproda.3
+git push origin v1.2.0_aproda.3
 ```
 The tag name matches the composite version string exactly. This makes the exact fork state reproducible and lets projects record which layer version they pulled.
 
@@ -281,7 +281,7 @@ The layer is **not** distributed by `git subtree`. A project's `.github/` has **
 
 ## Upstream touch-points (kept minimal)
 
-We touch Upstream files in-place only where additive discovery requires it — currently **three** behaviour files plus a cosmetic drift-fix: `copilot-instructions.md` (Skills-table rows so Aproda skills show in routing) and the two agents `al-developer` / `al-conductor` (wiring the test-loop + `al-doc-update` triggers); the `aldc-validate` banner was corrected for the v1.2 drift. Each is a *deliberate* merge-point — the full list with exact diffs is the [Upstream edits register](decisions.aproda.md). Everything else is net-new `.aproda.` / `skill-aproda-*` and never conflicts.
+We touch Upstream files in-place only where additive discovery requires it — currently **three** behaviour files plus a cosmetic drift-fix: `copilot-instructions.md` (Skills-table rows so Aproda skills show in routing) and the two agents `al-developer` / `al-conductor` (wiring the Deploy-Run-Verify Cycle + `al-doc-update` triggers); the `aldc-validate` banner was corrected for the v1.2 drift. Each is a *deliberate* merge-point — the full list with exact diffs is the [Upstream edits register](decisions.aproda.md). Everything else is net-new `.aproda.` / `skill-aproda-*` and never conflicts.
 
 ---
 
@@ -290,4 +290,4 @@ We touch Upstream files in-place only where additive discovery requires it — c
 - [`decisions.aproda.md`](decisions.aproda.md) — the **why** behind this structure (full decision record D-1…D-18).
 - [`site-profile.aproda.md`](site-profile.aproda.md) — concrete infrastructure facts (K:, NST servers, SRP, remote-PS).
 - [`skills/skill-aproda-aldc/SKILL.md`](skills/skill-aproda-aldc/SKILL.md) — meta-skill: explain & extend this layer.
-- [`skills/skill-aproda-test-loop/SKILL.md`](skills/skill-aproda-test-loop/SKILL.md) — OnPrem test-loop (VALIDATED, 27/27).
+- [`skills/skill-aproda-test-loop/SKILL.md`](skills/skill-aproda-test-loop/SKILL.md) — Deploy-Run-Verify Cycle (VALIDATED, 27/27).

@@ -212,7 +212,7 @@ Act on the resulting verdict:
 - **NEEDS_REVISION** → return to 2A. Build the revision task from `findings[]` where `actionable: true` (this **includes `minor`** — Q1), authoring it for the implement-subagent from each finding's `message`, `location`, `fix-hint`, and `references`. The implementer's contract is unchanged — you still author the task; you now author it from the structured findings instead of re-parsed prose.
 - **FAILED** → stop and consult user.
 
-#### 2B-bis. Runtime Test-Loop Gate (🟦 Aproda — per phase, when a BC service is reachable)
+#### 2B-bis. Runtime Deploy-Run-Verify Cycle Gate (🟦 Aproda — per phase, when a BC service is reachable)
 
 After the review verdict allows proceeding (APPROVED / APPROVED_WITH_RECOMMENDATIONS), **runtime-verify the phase** before commit. This binds the MEDIUM/HIGH trigger to the existing phase boundary: a phase is **not complete** until its tests are green against a live service (or a real blocker is acknowledged).
 
@@ -246,7 +246,7 @@ After the review verdict allows proceeding (APPROVED / APPROVED_WITH_RECOMMENDAT
 
 4. **🚨 HARD GATE — PHASE COMMIT**:
    - You MUST have written the phase-complete.md file BEFORE presenting the checkpoint
-   - You MUST have run the **2B-bis runtime test-loop gate** (green, or build-only with the service-unavailable acknowledgement recorded)
+   - You MUST have run the **2B-bis runtime Deploy-Run-Verify Cycle gate** (green, or build-only with the service-unavailable acknowledgement recorded)
    - You MUST show the Checkpoint card's `💾` commit gate (the **commit & next-step** question) and WAIT for user response
    - You MUST NOT invoke al-implement-subagent for next phase until user confirms
    - Proceeding without confirmation is a Core v1.1 violation
@@ -515,7 +515,7 @@ DO NOT proceed past these points without explicit user confirmation.
 This agent draws on skills from `.github/skills/`. They are **not** auto-loaded — **load the `SKILL.md` on demand** (read it) when you need it:
 
 - **skill-testing** — orchestrating TDD cycles when test strategy is needed
-- **skill-aproda-test-loop** 🟦 (Aproda) — the per-phase runtime verification gate (build → deploy → run → review); load it at step 2B-bis when a BC service is reachable
+- **skill-aproda-test-loop** 🟦 (Aproda) — the per-phase runtime Deploy-Run-Verify Cycle gate (build → deploy → run → review); load it at step 2B-bis when a BC service is reachable
 
 (Per phase, the implement/review subagents load their own domain skills — you pass them as *hints*, see §"Passing Context to Subagents".)
 

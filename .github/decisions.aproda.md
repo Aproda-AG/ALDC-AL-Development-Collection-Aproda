@@ -73,32 +73,32 @@ Upgrade pipeline:
 `copilot-instructions.md` is always loaded and fixed at `.github/copilot-instructions.md`. To surface Aproda skills/agents in its routing/skills tables we make **one additive, in-place edit** (a Skills-table row). This is a conscious D-2 merge-point (chosen over the alternative of only `@`-calling Aproda agents and leaving the file untouched). Kept additive and minimal to stay merge-light.
 
 ### D-8 — Reusable scripts: immutable engine in the skill + project-local config
-The test-loop scripts are packaged as a **parameter-driven engine** under `skills/skill-aproda-test-loop/scripts/` (`AprodaTestLoop.psm1` + thin entry + `testloop.config.template.jsonc`). The **engine is immutable** — the agent never edits it per project; it copies the config template and fills the few non-derivable values (apps in dependency order, runner dir, server-side Mgmt DLL). Everything else auto-derives from `launch.json` + each `app.json`. This is the reusable-across-projects goal: new project = a ~3-line config, not a rebuilt script.
+The Deploy-Run-Verify Cycle scripts are packaged as a **parameter-driven engine** under `skills/skill-aproda-test-loop/scripts/` (`AprodaTestLoop.psm1` + thin entry + `testloop.config.template.jsonc`). The **engine is immutable** — the agent never edits it per project; it copies the config template and fills the few non-derivable values (apps in dependency order, runner dir, server-side Mgmt DLL). Everything else auto-derives from `launch.json` + each `app.json`. This is the reusable-across-projects goal: new project = a ~3-line config, not a rebuilt script.
 **Origin:** generalized from the proven project-local `Test/PowerShell/_Cycle.ps1` + `_RunTests.ps1` (Audit Trail 26/26), which stay in place as the validated reference (single-source-of-truth; the engine is their parameterized form, not a duplicate). Environment-specific scripts are **not** put under `.github/` — only the generic engine is; concrete instances stay project-local.
 
 ### D-9 — Agents must be wired in-place to actually apply the skill ("Voll A")
 A global row in `copilot-instructions.md` (D-7) is **not enough**: each agent follows its **own** skill table, so the skill must be added to the agents that use it. Chosen approach: **Voll A — both agents edited in-place** (not an additive instruction), because the conductor change is a **flow change** (a phase gate), which F-5 says stacking cannot achieve.
 - **al-developer**: `skill-aproda-test-loop` added to the Domain-skills table + workflow step 4 — **LOW-complexity trigger: run once, after implementation, before PR.**
-- **al-conductor**: skill added + new **step 2B-bis runtime test-loop gate** + 2C hard-gate clause — **MEDIUM/HIGH trigger: run per phase**, bound to the existing phase boundary (a phase is not complete until green or a service blocker is acknowledged).
+- **al-conductor**: skill added + new **step 2B-bis runtime Deploy-Run-Verify Cycle gate** + 2C hard-gate clause — **MEDIUM/HIGH trigger: run per phase**, bound to the existing phase boundary (a phase is not complete until green or a service blocker is acknowledged).
 - **Trigger policy** is deliberately bound to the existing LOW / MEDIUM-HIGH complexity tiers, not a new heuristic (matches the skill's `When to Load`).
 - **Cost accepted:** the Upstream-touch register grows from 1 to 3 files (more D-2 merge-points). Justified because soft stacking could not enforce the conductor phase gate (F-5).
 
 ### D-10 — Delivery boundary defines pre- vs post-delivery handling
 The **delivery boundary** is the moment a requirement is **accepted** (UAT sign-off / merge+deploy to the target environment). It splits the change lifecycle in two regimes with different document rules (D-11) and change-classification (D-12):
-- **Pre-delivery** = still iterating toward first acceptance. Many UAT loops are normal and expected.
+- **Pre-delivery** = still iterating toward first acceptance. Many HITL Validation rounds are normal and expected.
 - **Post-delivery** = the requirement was accepted; any further change is a *new* effort.
 
 ALDC itself has **no** post-delivery amendment workflow (verified: reactive tier routes unknown bugs via `@AL Triage`, but there is no patch/amendment spec type). D-10..D-13 fill that gap for Aproda **without** touching Upstream — they are documentation/convention only, enforced by a stacking instruction (D-4), not by editing ALDC agents.
 
 ### D-11 — Pre-delivery: spec edited in-place + a separate `uat-issues.md` work-item
-While pre-delivery, the requirement's `{req}.spec.md` is a **draft** and stays the **single source of truth for the target state** — it is **edited in-place** each UAT loop (git history is the change log). The spec describes *how the system should be*; it carries **no status and no checklist**.
+While pre-delivery, the requirement's `{req}.spec.md` is a **draft** and stays the **single source of truth for the target state** — it is **edited in-place** each HITL Validation round (git history is the change log). The spec describes *how the system should be*; it carries **no status and no checklist**.
 
 *What is still to do* lives in a **separate** `{req}-uat-issues.md` work-item, NOT in the spec:
 - A **Status-Board** (index table) at the top: `ID | Title | Loop | Priority | Type | Status`.
 - One **detail block** per issue below, each with a `Status:` field (`TODO` / `IN-PROGRESS` / `DONE`).
-- **UAT loops are headers within the one file** (`## Loop 1 — <date>`), **not** separate `loop1.md`, `loop2.md` files — one file = one work-source for the agent.
+- **HITL Validation rounds are headers within the one file** (`## Loop 1 — <date>`), **not** separate `loop1.md`, `loop2.md` files — one file = one work-source for the agent.
 - **Issue numbers are global and monotonic** (I-1, I-2, … I-n) across all loops, never reset per loop, so every git/commit reference stays unique.
-- **Agent contract**: *read the Status-Board → take the next `TODO` (respect implementation order) → load only that issue's detail block (token-efficient) → fix → run the test-loop → set `DONE`.* The agent only fixes/extends/adjusts; the spec is the target reference, never a checklist.
+- **Agent contract**: *read the Status-Board → take the next `TODO` (respect implementation order) → load only that issue's detail block (token-efficient) → fix → run the Deploy-Run-Verify Cycle → set `DONE`.* The agent only fixes/extends/adjusts; the spec is the target reference, never a checklist.
 
 **Rejected**: (a) a second sibling spec per loop (two specs = no source of truth); (b) one file per loop (splits the work-source, breaks global numbering, clutters the folder); (c) a spec `git diff` as the to-do signal (mixes typo-fixes with behaviour changes, and "already implemented" is not in the diff). An explicit `Status:` field beats an implicit diff.
 
@@ -118,23 +118,23 @@ Two distinct lifecycles get two distinct homes:
   - `<Module>.reference.md` — technical module reference (**English**). Lean: links to the `.al` files + the module SKILL as source-of-truth, never mirrors IDs/paths.
   - `<Module>.Handbuch.de-CH.md` — user handbook (**de-CH**, Aproda standard for end-user docs).
 
-`.github/documentation/` is **distinct from** `.github/docs/` (the latter is ALDC framework templates + schema — not module content). Module docs reflect the **target state**; while related UAT issues are still `TODO`, the reference may describe the soll-state ahead of the code — acceptable for a reference, by design.
+`.github/documentation/` is **distinct from** `.github/docs/` (the latter is ALDC framework templates + schema — not module content). Module docs reflect the **target state**; while related HITL Validation issues are still `TODO`, the reference may describe the soll-state ahead of the code — acceptable for a reference, by design.
 
-> **Agent awareness of D-11**: agents do not know this convention natively. It is surfaced additively via a stacking instruction (`instructions/*.aproda.instructions.md`, D-4) — **not** by in-place agent edits (D-9), because the UAT-loop rule is purely additive ("additionally, when a `uat-issues.md` exists, consume it this way"), which Stacking can express (F-5). The `uat-issues.md` file is also self-describing (carries the agent contract in its header) as a second, redundant safeguard.
+> **Agent awareness of D-11**: agents do not know this convention natively. It is surfaced additively via a stacking instruction (`instructions/*.aproda.instructions.md`, D-4) — **not** by in-place agent edits (D-9), because the HITL Validation instruction (`uat-loop.aproda.instructions.md`) is purely additive ("additionally, when a `uat-issues.md` exists, consume it this way"), which Stacking can express (F-5). The `uat-issues.md` file is also self-describing (carries the agent contract in its header) as a second, redundant safeguard.
 
 ### D-14 — Module documentation maintenance: a workflow, not a doc-agent
 The durable per-module docs (D-13: `<Module>.reference.md` EN + `<Module>.Handbuch.de-CH.md`) are kept current by a **net-new `.aproda.` workflow** `al-doc-update` (`prompts/al-doc-update.aproda.prompt.md`, D-4 — no Upstream conflict), **not** by a dedicated documentation agent.
 
 **Why a workflow, not an agent**: generating docs is a **deterministic procedure** (read code/spec → render → write the two files), not a role with judgment. ALDC models such procedures as *workflows* (`al-context.create`, `al-memory.create`), not agents. A doc-agent would be a persona with nothing to decide — overkill. Rejected.
 
-**Trigger — the delivery boundary (D-10)**, alongside `al-pr-prepare`: docs should mirror the **final** target state, so regenerating them per individual UAT fix is waste; the spec only stabilizes at acceptance. Wiring (extends the **existing** D-9 touch-points, so the register does not grow new *files*):
+**Trigger — the delivery boundary (D-10)**, alongside `al-pr-prepare`: docs should mirror the **final** target state, so regenerating them per individual HITL Validation fix is waste; the spec only stabilizes at acceptance. Wiring (extends the **existing** D-9 touch-points, so the register does not grow new *files*):
 - **al-developer**: the workflow-step-4 "Before handing off for PR" sentence gains a delivery-boundary clause — *if a documented module changed, run `al-doc-update`.* (LOW trigger.)
 - **al-conductor**: the post-completion recommendation table gains an `al-doc-update` row next to `al-pr-prepare`. (MEDIUM/HIGH trigger.)
 
 The workflow is **documentation-only**: it must not edit `.al`, the spec, or the `uat-issues.md`, and must not duplicate IDs/paths/signatures (D-13 — link, don't mirror). It does not commit (that is `al-pr-prepare`).
 
-### D-15 — Test-loop standardized on the own engine: central glue + DVD-materialized runner DLLs + SRP-safe loading
-The test-loop is standardized on the **own engine** (D-8); `jamespearson/al-test-runner` is **fallback only** (its Newtonsoft.Json fix lives outside the workspace, unversioned — the instability that motivated this). Validated end-to-end: **27/27 green** via the engine against BC 28 OnPrem. Three refinements to D-8, all **skill-internal** (no new Upstream touch-points, register unchanged):
+### D-15 — Deploy-Run-Verify Cycle standardized on the own engine: central glue + DVD-materialized runner DLLs + SRP-safe loading
+The Deploy-Run-Verify Cycle is standardized on the **own engine** (D-8); `jamespearson/al-test-runner` is **fallback only** (its Newtonsoft.Json fix lives outside the workspace, unversioned — the instability that motivated this). Validated end-to-end: **27/27 green** via the engine against BC 28 OnPrem. Three refinements to D-8, all **skill-internal** (no new Upstream touch-points, register unchanged):
 
 - **Central glue.** The 3 version-agnostic glue scripts (`ClientContext.ps1`, `PsTestFunctions.ps1` — MS canonical, MIT; `AprodaRunner.ps1` — Aproda wrapper) ship **once** in `scripts/runner-glue/`, not per project, not per runner version. The engine resolves `glueDir` from its own module location. `New-TestLoopRunner` is **DLL-only**.
 - **Runner DLLs materialized from the K: BC DVD.** `Initialize-TestLoopRunner` + `Resolve-TestLoopClientSource` derive the 4 version-pinned client DLLs from the deterministic DVD layout `<bcDvdRoot>\<major>\<bcCountry>.<major>.<minor>\Applications\TestFramework\TestRunner\Internal` (config `bcDvdRoot` + `bcCountry`; highest minor wins). Alternatives: explicit `runnerClientSource` (wins) or `runnerClientFromServer` (remote-PS pull, fallback). The **whole `_runner/` folder is git-ignored** — nothing under it is committed.
@@ -151,7 +151,7 @@ The layer must carry **its own infrastructure facts** and **its own how-to-exten
 **Distribution (the user's decision):** everything ships to **every project** via the subtree; **reading/applying** happens everywhere, **changing** happens where the need arises (with live validation), and the change is only adopted once it is **pushed back to the aproda-aldc fork** — the inverse direction of the D-6 upgrade pull. Fork = source of truth; project copies = working copies.
 
 ### D-17 — Sub-versioning the fork: `<ALDC core.version>_aproda.<n>` + a recorded base pin
-The Aproda layer had **no version of its own** and the ALDC base it sits on was an unfilled placeholder — so "how far is the fork from Upstream?" was unanswerable. Adopted a composite version: `<ALDC core.version>_aproda.<revision>` (current: `1.2.0_aproda.2`), URL-safe and unambiguous; where the left side is the adopted ALDC `core.version` and the right side is the Aproda revision counter, bumped each time the layer is pushed to the fork. The **ALDC base commit** is pinned in `aldc.yaml → aproda.basePin` and echoed in the Version/pin changelog (current: `a900263f51e416762cc7f85575deb9b30cd5b1e3`; at this SHA upstream == fork, i.e. all our `.aproda.` work is the working-tree delta on top of a synced base). Single source of truth for the numbers = `aldc.yaml → aproda` (mirrors the `external.bcquality` pin pattern). The drift where `copilot-instructions.md` (and the `aldc-validate` banner) still said "ALDC Core v1.1" against `core.version: 1.2.0` was corrected at the same time — a candidate for an upstream PR, registered below.
+The Aproda layer had **no version of its own** and the ALDC base it sits on was an unfilled placeholder — so "how far is the fork from Upstream?" was unanswerable. Adopted a composite version: `<ALDC core.version>_aproda.<revision>` (current: `1.2.0_aproda.3`), URL-safe and unambiguous; where the left side is the adopted ALDC `core.version` and the right side is the Aproda revision counter, bumped each time the layer is pushed to the fork. The **ALDC base commit** is pinned in `aldc.yaml → aproda.basePin` and echoed in the Version/pin changelog (current: `a900263f51e416762cc7f85575deb9b30cd5b1e3`; at this SHA upstream == fork, i.e. all our `.aproda.` work is the working-tree delta on top of a synced base). Single source of truth for the numbers = `aldc.yaml → aproda` (mirrors the `external.bcquality` pin pattern). The drift where `copilot-instructions.md` (and the `aldc-validate` banner) still said "ALDC Core v1.1" against `core.version: 1.2.0` was corrected at the same time — a candidate for an upstream PR, registered below.
 
 **Index, not a new file:** the question "does the fork need an index?" resolves to **no new artifact** — the existing `readme.aproda.md` inventory table ("What lives here") **is** the Aproda index. It is refreshed to list every net-new primitive with live status. Upstream per-type `index.md` files are deliberately **not** touched (would multiply merge-points, against D-7).
 
@@ -207,8 +207,8 @@ Bringing the layer into a repo that does **not** yet have it hits a chicken-and-
 
 | Intent | Mechanism | Touches Upstream? |
 |--------|-----------|-------------------|
-| "Additionally always do X" (e.g. run test-loop before PR) | **Stacking**: a new `.aproda.instructions.md` whose `applyTo` matches | ❌ no |
-| New capability (test-loop, new agent, **site profile, meta-skill**) | **Net-new** `.aproda.` file / `skill-aproda-*` folder | ❌ no |
+| "Additionally always do X" (e.g. run Deploy-Run-Verify Cycle before PR) | **Stacking**: a new `.aproda.instructions.md` whose `applyTo` matches | ❌ no |
+| New capability (Deploy-Run-Verify Cycle, new agent, **site profile, meta-skill**) | **Net-new** `.aproda.` file / `skill-aproda-*` folder | ❌ no |
 | Guard an edit to the Aproda layer itself (HITL stop + surface the D-entry) | **Stacking** guardrail instruction matching the layer's globs (D-16) | ❌ no |
 | Sync the layer in/out of a project that also has AL-Go + project files | **Allowlist manifest** + overlay sync (D-18), not subtree | ❌ no |
 | Reroute an agent to a custom skill/step | **Indirection** (edit the agent in place) | ✅ yes (D-2 conflict) |
@@ -227,7 +227,7 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `copilot-instructions.md` | Added Skills-table row for `skill-aproda-test-loop` | D-7 | 2026-06-24 |
 | `copilot-instructions.md` | Added Skills-table row for `skill-aproda-aldc` (meta-skill) | D-7 / D-16 | 2026-06-25 |
 | `agents/al-developer.agent.md` | Added `skill-aproda-test-loop` to Domain-skills table + workflow step 4 (LOW trigger: once before PR) | D-2 / D-9 | 2026-06-24 |
-| `agents/al-conductor.agent.md` | Added skill to Domain Skills + new step **2B-bis** runtime test-loop gate + 2C hard-gate clause (MEDIUM/HIGH trigger: per phase) | D-2 / D-9 | 2026-06-24 |
+| `agents/al-conductor.agent.md` | Added skill to Domain Skills + new step **2B-bis** runtime Deploy-Run-Verify Cycle gate + 2C hard-gate clause (MEDIUM/HIGH trigger: per phase) | D-2 / D-9 | 2026-06-24 |
 | `agents/al-developer.agent.md` | Workflow step 4 "Before PR" clause: run `al-doc-update` at delivery if a documented module changed | D-2 / D-14 | 2026-06-24 |
 | `agents/al-conductor.agent.md` | Post-completion recommendation table: added `al-doc-update` row next to `al-pr-prepare` | D-2 / D-14 | 2026-06-24 |
 | `prompts/al-pr-prepare.prompt.md` | Added «Aproda: Documentation Update (D-13 / D-14)» section before Next Steps: reminds agent to run `al-doc-update` at delivery boundary | D-2 / D-14 | 2026-06-28 |
@@ -243,3 +243,4 @@ The few places where we touched Upstream files in-place. This is the list the up
 | 2026-06-24 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.1` | Initial Aproda layer set up; ALDC base recorded retroactively (D-17) |
 | 2026-06-25 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.1` | Versioning scheme adopted (D-17); upstream == fork at this SHA (in sync) |
 | 2026-07-02 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.2` | BCQuality clone folder renamed `bcquality` → `bcquality-aproda`; scheme separator changed `+` → `_` (URL-safe); tagging rule added |
+| 2026-07-06 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.3` | Terminology: "Test-Loop" → "Deploy-Run-Verify Cycle", "UAT loop" → "HITL Validation" across all docs, agents, skills, instructions (display names only; technical identifiers unchanged) |

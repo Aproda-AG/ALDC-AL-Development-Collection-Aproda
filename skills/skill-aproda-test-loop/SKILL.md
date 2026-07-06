@@ -1,9 +1,9 @@
 ---
 name: skill-aproda-test-loop
-description: "Aproda OnPrem test-loop for Business Central: build → deploy → run → review, looped until green or a real blocker. Use when validating an AL extension end-to-end against a live BC service (publish app + test app, run the AL test runner, triage failures, fix, re-deploy). Aproda custom skill (see readme.aproda.md)."
+description: "Aproda Deploy-Run-Verify Cycle for Business Central: build → deploy → run → review, looped until green or a real blocker. Use when validating an AL extension end-to-end against a live BC service (publish app + test app, run the AL test runner, triage failures, fix, re-deploy). Aproda custom skill (see readme.aproda.md)."
 ---
 
-# Skill: Aproda Test-Loop (Build → Deploy → Run → Review)
+# Skill: Deploy-Run-Verify Cycle (Build → Deploy → Run → Review)
 
 > **Aproda custom skill** — part of the Aproda ALDC layer. See [`../../readme.aproda.md`](../../readme.aproda.md) and [`../../decisions.aproda.md`](../../decisions.aproda.md).
 > **Status: VALIDATED.** The engine runs the full build → deploy → materialize-runner → run → parse cycle end-to-end against the live BC 28 OnPrem service (27/27 green on the Audit Trail extension). The falsifiable lessons below are proven by failing-then-passing tests.

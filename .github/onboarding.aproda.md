@@ -8,9 +8,9 @@
 
 ## Was ist Aproda ALDC?
 
-ALDC ersetzt ad-hoc KI-Codegenerierung durch kontrollierten Engineering-Prozess in Form von **Spec-Driven Development** und nutzt Test-Driven-Development-Prinzipien: Spec → Architektur → Tests → Code → Review. Aproda ergänzt das Framework um echte AL-Test-Ausführung (Test-Loop gegen ASINST-Umgebung), strukturiertes UAT-Issue-Tracking, automatische Modul-Dokumentation und ADO-Integration.
+ALDC ersetzt ad-hoc KI-Codegenerierung durch kontrollierten Engineering-Prozess in Form von **Spec-Driven Development** und nutzt Test-Driven-Development-Prinzipien: Spec → Architektur → Tests → Code → Review. Aproda ergänzt das Framework um echte AL-Test-Ausführung (Deploy-Run-Verify Cycle gegen ASINST-Umgebung), strukturiertes HITL-Validation-Issue-Tracking, automatische Modul-Dokumentation und ADO-Integration.
 
-Das Framework arbeitet mit **spezialisierten Agent-Persönlichkeiten** je nach Aufgabe und Komplexität: der **Architekt** für komplexe Anforderungen (Lösungsdesign, Datenmodell), der **Conductor** als Umsetzungs-Orchestrator (orchestriert Planung → Implementierung → Review, bei mittlerer/hoher Komplexität oder arbeitet Issues aus dem UAT ab.), der **Implementation Specialist** für direktes Codieren (eigenständig bei einfachen Aufgaben, oder angewiesen vom Conductor). Ergänzend: der **Triage-Agent** für Problemanalyse und Diagnose, der **Pre-Sales-Agent** für Aufwandschätzungen, und **Dredd** — der unabhängige Auditor, der bestehende Lösungen via BCQuality auf Security, Performance, Guidelines und Patterns prüft und bewertet.
+Das Framework arbeitet mit **spezialisierten Agent-Persönlichkeiten** je nach Aufgabe und Komplexität: der **Architekt** für komplexe Anforderungen (Lösungsdesign, Datenmodell), der **Conductor** als Umsetzungs-Orchestrator (orchestriert Planung → Implementierung → Review, bei mittlerer/hoher Komplexität oder arbeitet Issues aus der HITL Validation ab.), der **Implementation Specialist** für direktes Codieren (eigenständig bei einfachen Aufgaben, oder angewiesen vom Conductor). Ergänzend: der **Triage-Agent** für Problemanalyse und Diagnose, der **Pre-Sales-Agent** für Aufwandschätzungen, und **Dredd** — der unabhängige Auditor, der bestehende Lösungen via BCQuality auf Security, Performance, Guidelines und Patterns prüft und bewertet.
 
 **Beispielprozess (Komplexity MEDIUM/HIGH):**
 
@@ -18,9 +18,9 @@ Das Framework arbeitet mit **spezialisierten Agent-Persönlichkeiten** je nach A
 ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 → Architekt             → Lösungsdesign (optional, bei komplexen Features)
 → al-spec.create        → Spec-Dokument als Vertrag für die KI
-→ Conductor             → Implementierung + Test-Loop (deploy → run → fix → grün, je Phase)
-→ UAT (Human Tests)     → Entwickler prüft in ASINST; ggf. Kunden-Sandbox; ggf. Berater/Kunde
-                          Befunde werden in uat-issues.md getrackt → KI arbeitet nach, Test-Loop läuft erneut
+→ Conductor             → Implementierung + Deploy-Run-Verify Cycle (deploy → run → fix → grün, je Phase)
+→ HITL Validation       → Entwickler prüft in ASINST; ggf. Kunden-Sandbox; ggf. Berater/Kunde
+                          Befunde werden in uat-issues.md getrackt → KI arbeitet nach, Deploy-Run-Verify Cycle läuft erneut
 → al-pr-prepare         → PR + Technische Modul-Doku & Handbuch.de-CH aktualisiert (repo-weit)
 ```
 > Pro Work Item/Anforderung entsteht ein eigener `plans/{req}/`-Ordner (Spec, Architektur, Test-Plan, UAT-Issues). Doku und Handbuch gelten **repo-weit** — immer Vollstand, nicht nur Delta des letzten Work Items.
@@ -38,7 +38,7 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 | Vibe Coding — Ergebnis unvorhersehbar | Spec-getrieben — KI arbeitet gegen einen Vertrag |
 | Tests zuletzt (oder nie) | Integriertes Test Driven Development Enforcement |
 | Reviews: „sieht gut aus" | BCQuality-zitierte Prüfungen |
-| Kein OnPrem-Gate | Aproda Test-Loop: deploy → tests-run → fix → green (Echte Test-Runs) |
+| Kein OnPrem-Gate | Deploy-Run-Verify Cycle: deploy → run → fix → grün (echte Test-Runs gegen ASINST) |
 
 
 ---
@@ -60,9 +60,9 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 
 | Feature | Beschreibung |
 |---------|--------------|
-| **OnPrem-Env Test-Loop** | `skill-aproda-test-loop` — publish → sync → run-tests → review gegen ASINST-Umgebung (später Container); loop bis grün |
+| **Deploy-Run-Verify Cycle** | `skill-aproda-test-loop` — publish → sync → run-tests → review gegen ASINST-Umgebung (später Container); loop bis grün |
 | **ADO-Integration** | `skill-ado` — `req_name = {type}-{id}` (z.B. `bug-36370`), ADO-URL in jedem Plan-Dokument |
-| **UAT-Loop** | Strukturiertes Issue-Tracking in `{req}-uat-issues.md` über mehrere Pre-PR Feedback-Runden ([Bitte Lesen](readme.aproda.md#uat-loop)) |
+| **HITL Validation** | Strukturiertes Issue-Tracking in `{req}-uat-issues.md` über mehrere Pre-PR Feedback-Runden ([Bitte Lesen](readme.aproda.md#hitl-validation)) |
 | **Modul-Doku** | `al-doc-update`-Workflow — `<Modul>.reference.md` (EN) + `<Modul>.Handbuch.de-CH.md` |
 
 ### Workflows (`@workspace use <name>`)
@@ -127,9 +127,9 @@ Im Zweifel: `@AL Architecture & Design Specialist` fragen — er bewertet die Ko
 3. Agent bestimmt req_name = {type}-{id}, legt .github/plans/{type}-{id}/ an
 ```
 
-### 4 — Test-Loop (OnPrem Gate)
+### 4 — Deploy-Run-Verify Cycle (OnPrem Gate)
 
-Nach jeder Implementierungsphase läuft der Test-Loop automatisch:
+Nach jeder Implementierungsphase läuft der Deploy-Run-Verify Cycle automatisch:
 - `al-developer` → einmal vor PR (LOW)
 - `al-conductor` → nach jeder Phase (MEDIUM/HIGH)
 
@@ -140,7 +140,7 @@ Konfiguration: `Test/testloop.config.jsonc` + `launch.json` im Projekt.
 ```
 @workspace use al-pr-prepare
 ```
-Erzeugt Modul-Doku (`al-doc-update`) und PR-Beschreibung. Erst nach grünem Test-Loop und UAT-Sign-off ausführen.
+Erzeugt Modul-Doku (`al-doc-update`) und PR-Beschreibung. Erst nach grünem Deploy-Run-Verify Cycle und HITL Validation Sign-off ausführen.
 
 ---
 
@@ -152,7 +152,7 @@ Erzeugt Modul-Doku (`al-doc-update`) und PR-Beschreibung. Erst nach grünem Test
 | Warum ist es so strukturiert? | [decisions.aproda.md](decisions.aproda.md) (D-1…D-18) |
 | Infra-Details (K:, NST, SRP, Remote-PS) | [site-profile.aproda.md](site-profile.aproda.md) |
 | ALDC-Framework-Spec | [docs/framework/ALDC-Core-Spec-v1.2.md](../docs/framework/ALDC-Core-Spec-v1.2.md) |
-| Test-Loop Technisches | [skills/skill-aproda-test-loop/SKILL.md](../skills/skill-aproda-test-loop/SKILL.md) |
+| Deploy-Run-Verify Cycle – Technisches | [skills/skill-aproda-test-loop/SKILL.md](../skills/skill-aproda-test-loop/SKILL.md) |
 | Layer selbst erweitern | [readme.aproda.md — TL;DR](readme.aproda.md#tldr--extend-aproda-aldc--the-two-rules) |
 
 ---
