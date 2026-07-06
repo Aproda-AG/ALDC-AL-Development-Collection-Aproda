@@ -5,13 +5,13 @@
 # ALDC — AL Development Collection 
 # extended by Aproda AG
 
-> `##################################################`
+> `#######################################################################`
 >
-> ### 🚀 **Neu hier?** → [Aproda ALDC Onboarding](.github/onboarding.aproda.md)
+> ## 🚀 **Neu hier?** → [Aproda ALDC Onboarding](.github/onboarding.aproda.md)
 >
-> ### 🔧 **Detailierte Doku und Feature-, Layer-, Maintainer-Infos** → [Aproda README](.github/readme.aproda.md)
+> ## 🔧 **Detailierte Doku und Feature-, Layer-, Maintainer-Infos** → [Aproda README](.github/readme.aproda.md)
 >
-> `##################################################`
+> `#######################################################################`
 
 **Skills-based, spec-driven, TDD-orchestrated development framework for Microsoft Dynamics 365 Business Central.**
 
