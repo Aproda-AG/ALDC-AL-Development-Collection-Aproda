@@ -7,7 +7,9 @@
 
 > `##################################################`
 >
-> [Read the Aproda Readme! (Click me)](.github/readme.aproda.md)
+> 🚀 **Neu hier?** → [Aproda ALDC Onboarding](.github/onboarding.aproda.md)
+>
+> 🔧 **Layer-Details & Maintainer-Infos** → [Aproda README](.github/readme.aproda.md)
 >
 > `##################################################`
 
