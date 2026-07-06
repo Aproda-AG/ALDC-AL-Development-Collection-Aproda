@@ -352,36 +352,22 @@ if ($WhatIfPreference) {
     Write-Host "DRY-RUN complete — $($selected.Count) file(s) + $(@($manifest.dualVariant).Count) dual-variant would sync. No changes made." -ForegroundColor Yellow
 }
 else {
-    Write-Host "Done — $copied file(s) copied + $dualCount dual-variant ($Direction)." -ForegroundColor Green    if ($Direction -eq 'pull') {
+    Write-Host "Done — $copied file(s) copied + $dualCount dual-variant ($Direction)." -ForegroundColor Green
+    if ($Direction -eq 'pull') {
         # ── Stale-file cleanup: remove paths renamed in the layer ────────────────
         # The syncer writes the NEW name but cannot delete the OLD one. Each entry
         # here is a one-time tombstone; add new renames with a version comment.
+        # Paths are toolkit-relative (logical); we prefix with $projectBase (.github)
+        # because the dst is the PROJECT repo root, not the toolkit root.
         $staleCleanup = [ordered]@{
             # v1.2.0_aproda.4
             'instructions\uat-loop.aproda.instructions.md' = 'renamed to hitl-validation.aproda.instructions.md'
             # v1.2.0_aproda.4
             'skills\skill-aproda-test-loop'                = 'renamed to skill-aproda-deploy-run-verify'
         }
+        $cleanupBase = Join-Path $dstRepo $projectBase
         foreach ($kv in $staleCleanup.GetEnumerator()) {
-            $stalePath = Join-Path $dstRepo $kv.Key
-            if (Test-Path $stalePath) {
-                Remove-Item $stalePath -Recurse -Force
-                Write-Host "Cleanup: removed stale '$($kv.Key)' ($($kv.Value))." -ForegroundColor DarkYellow
-            }
-        }
-    }    if ($Direction -eq 'pull') {
-        # ── Stale-file cleanup: remove old paths that were renamed in the layer ────
-        # The syncer writes the NEW name but cannot delete the OLD one (it never knew
-        # it existed in the project). Each entry here is a one-time tombstone;
-        # add new renamed artifacts here with a version comment.
-        $stale = [ordered]@{
-            # v1.2.0_aproda.4
-            'instructions\uat-loop.aproda.instructions.md' = 'renamed to hitl-validation.aproda.instructions.md'
-            # v1.2.0_aproda.4
-            'skills\skill-aproda-test-loop'                = 'renamed to skill-aproda-deploy-run-verify'
-        }
-        foreach ($kv in $stale.GetEnumerator()) {
-            $stalePath = Join-Path $dstRepo $kv.Key
+            $stalePath = Join-Path $cleanupBase $kv.Key
             if (Test-Path $stalePath) {
                 Remove-Item $stalePath -Recurse -Force
                 Write-Host "Cleanup: removed stale '$($kv.Key)' ($($kv.Value))." -ForegroundColor DarkYellow
