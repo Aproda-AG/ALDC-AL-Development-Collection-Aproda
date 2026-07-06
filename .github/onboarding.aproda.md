@@ -13,7 +13,7 @@ ALDC ersetzt ad-hoc KI-Codegenerierung durch **kontrollierten Engineering-Prozes
 > [!IMPORTANT]
 > - Wichtigster Grundsatz: **Qualitative Spezifikation → Qualitatives Ergebnis**
 > - Genauere Beschreibungen im [readme.aproda.md](readme.aproda.md) und [README.md](../README.md)
-> - (Noch) nicht kompatibel mit ACT (Aproda Copilot Template) von Antionio. **Nicht getestet und nicht empfohlen, beides gleichzeitig in einem Repo zu verwenden**
+> - ⚠️ (Noch) nicht kompatibel mit ACT (Aproda Copilot Template) von Antionio. **Nicht getestet und nicht empfohlen, beides gleichzeitig in einem Repo zu verwenden**
 
 | Ohne Aproda ALDC | Mit Aproda ALDC |
 |------------------|-----------------|

@@ -28,6 +28,9 @@ What the Aproda layer adds on top of upstream ALDC:
 
 ## Quickstart — initialize Aproda Aldc to a existing or new project repo
 
+> [!IMPORTANT]
+> - ⚠️ (Noch) nicht kompatibel mit ACT (Aproda Copilot Template) von Antionio. **Nicht getestet und nicht empfohlen, beides gleichzeitig in einem Repo zu verwenden**
+
 **Prerequisites:** a local clone of the fork + a target project repo already initialized with `git init`.
 
 ```mermaid
