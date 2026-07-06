@@ -57,6 +57,8 @@ flowchart LR
 
 ### BCQuality knowledge base (one-time, per workstation)
 
+**BCQuality** ist Microsofts kuratierte, zitierbare BC-Wissensbasis — atomare Guidance-Dateien, die `@Dredd` und der Review-Subagent beim Code-Review nach Pfad zitieren. Sie wird als zweites Workspace-Root read-only eingebunden und nie in die AL-Extension kompiliert.
+
 The generated workspace file expects a BCQuality clone as a sibling of the project repo at `../bcquality`. Clone it once alongside your projects:
 
 ```
@@ -82,7 +84,7 @@ The selection dialog is skipped entirely.
 
 ## Aproda process extensions
 
-### ADO work item integration
+### ADO work item integration (in work ⚠️)
 
 Requirements, bugs, and tasks are tracked in Azure DevOps and flow directly into the ALDC planning structure via `skill-ado`:
 
