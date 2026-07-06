@@ -1,4 +1,4 @@
-# Reference: Build & Deploy (BC OnPrem)
+﻿# Reference: Build & Deploy (BC OnPrem)
 
 > Loaded on demand by [`../SKILL.md`](../SKILL.md). **SKELETON** — verified facts are marked ✅; `TODO` items need finishing/generalizing (current values are from the Audit Trail validation environment and must be parameterized).
 
@@ -83,6 +83,6 @@ catch {                                                        # 2) ForceSync th
 
 ## TODO
 
-- Parameterize server/instance/tenant/DLL path from `launch.json` (server/instance/tenant: done via the engine config; Mgmt DLL path still per-project in `testloop.config.jsonc`).
+- Parameterize server/instance/tenant/DLL path from `launch.json` (server/instance/tenant: done via the engine config; Mgmt DLL path still per-project in `deploy-run-verify.config.jsonc`).
 
 > Hygiene (resolved): the whole `_runner/` folder is git-ignored (DLLs materialized from the K: BC DVD, glue central) and scratch work lives in `Test/PowerShell/_temp/`; the `_runner` `TestResults.xml` AL1025 warning is harmless. See [`runner.md`](runner.md) → *Hygiene* + *versioned subfolders*.

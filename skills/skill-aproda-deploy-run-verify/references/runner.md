@@ -1,10 +1,10 @@
-# Reference: Test Runner (headless, web client)
+﻿# Reference: Test Runner (headless, web client)
 
-> Loaded on demand by [`../SKILL.md`](../SKILL.md). Describes the **standardized Aproda test-loop engine** (`scripts/AprodaTestLoop.psm1`). ✅ = verified end-to-end.
+> Loaded on demand by [`../SKILL.md`](../SKILL.md). Describes the **standardized Aproda Deploy-Run-Verify engine** (`scripts/AprodaDeployRunVerify.psm1`). ✅ = verified end-to-end.
 
 ## Standard path: the Aproda engine ✅
 
-The test-loop runs on the **own engine** — `scripts/AprodaTestLoop.psm1`, driven by `scripts/Invoke-AprodaTestLoop.ps1`. It is self-contained: build → deploy → **materialize runner** → run → parse. The `jamespearson/al-test-runner` VS Code extension is a **fallback only** (see "Fallback" below).
+The test-loop runs on the **own engine** — `scripts/AprodaDeployRunVerify.psm1`, driven by `scripts/Invoke-AprodaDeployRunVerify.ps1`. It is self-contained: build → deploy → **materialize runner** → run → parse. The `jamespearson/al-test-runner` VS Code extension is a **fallback only** (see "Fallback" below).
 
 Validated end-to-end against `STRAUB_MEDICAL_AG_28_CH_FKO` (BC 28, web client port 80): **27/27 green** via this engine.
 
@@ -30,16 +30,16 @@ The client-driven runner has `GuiAllowed() = true`. Therefore:
 `Microsoft.Dynamics.Framework.UI.Client.dll` (and its 3 sibling DLLs) are **pinned to the BC platform version** of the target server. A runner built for BC 27 will not reliably drive a BC 28 service. Therefore:
 
 - **Convention**: `<runnerDir>/<major.minor>/` — e.g. `Test/PowerShell/_runner/28.0/`. Multiple BC versions coexist side by side.
-- `Resolve-TestLoopRunner` resolves the **target** version from (in order): config `bcVersion` override → live server (`Get-NAVServerInstance … .Version`) → whatever DLL is already present.
+- `Resolve-DeployRunVerifyRunner` resolves the **target** version from (in order): config `bcVersion` override → live server (`Get-NAVServerInstance … .Version`) → whatever DLL is already present.
 - It then **validates**: the runner client DLL `major.minor` MUST equal the target. On mismatch it **throws** (never silently drives the wrong client).
 
 ## Runner DLLs — materialized from the BC product DVD (K:) ✅
 
-The 4 version-pinned client DLLs are **materialized on demand** by `Initialize-TestLoopRunner`; they are **not committed**. The whole `_runner/` folder is git-ignored.
+The 4 version-pinned client DLLs are **materialized on demand** by `Initialize-DeployRunVerifyRunner`; they are **not committed**. The whole `_runner/` folder is git-ignored.
 
 ### Preferred source — the K: DVD share (deterministic)
 
-`Resolve-TestLoopClientSource` derives the source from the unpacked BC product DVD:
+`Resolve-DeployRunVerifyClientSource` derives the source from the unpacked BC product DVD:
 
 ```
 <bcDvdRoot>\<major>\<bcCountry>.<major>.<minor>\Applications\TestFramework\TestRunner\Internal\
@@ -54,7 +54,7 @@ The 4 version-pinned client DLLs are **materialized on demand** by `Initialize-T
 | Config | Effect |
 |--------|--------|
 | `runnerClientSource` (explicit path) | Wins over DVD derivation. Searched recursively for the 4 DLLs. |
-| `runnerClientFromServer=true` (+ explicit `runnerClientSource`) | Opt-in: pull the DLLs from a remote BC Service folder via remote PowerShell (`Copy-TestLoopRunnerFromServer`). Fallback for when K: is unreachable. |
+| `runnerClientFromServer=true` (+ explicit `runnerClientSource`) | Opt-in: pull the DLLs from a remote BC Service folder via remote PowerShell (`Copy-DeployRunVerifyRunnerFromServer`). Fallback for when K: is unreachable. |
 
 ### The 4 version-pinned DLLs
 
@@ -77,7 +77,7 @@ scripts/runner-glue/
 ```
 
 - The engine resolves `glueDir` from the module location (`<module-parent>/runner-glue`) and validates the 3 files exist.
-- `New-TestLoopRunner` is **DLL-only** — it never copies glue into `_runner/`.
+- `New-DeployRunVerifyRunner` is **DLL-only** — it never copies glue into `_runner/`.
 
 ## SRP — content-based script loading is mandatory ✅
 
@@ -88,7 +88,7 @@ On this estate a **Software Restriction Policy / Group Policy blocks path-based 
 ```
 
 Consequences baked into the engine:
-- `Invoke-AprodaTestLoop.ps1` loads the engine via `[ScriptBlock]::Create($engineSrc)` (stripping `Export-ModuleMember`), never `Import-Module`.
+- `Invoke-AprodaDeployRunVerify.ps1` loads the engine via `[ScriptBlock]::Create($engineSrc)` (stripping `Export-ModuleMember`), never `Import-Module`.
 - The run bootstrap loads all 3 glue files content-based via `[ScriptBlock]::Create`, and **neutralizes** `PsTestFunctions.ps1`'s internal `. $clientContextScriptPath` path dot-source (regex) — `ClientContext.ps1` is loaded separately.
 - **Order matters**: the 4 client DLLs are `Add-Type`'d **before** the `ClientContext` scriptblock is created, because `class ClientContext` references `Microsoft.Dynamics.Framework.UI.Client.*` types at **parse time** of its method bodies. `Get-Content` (reading) is not SRP-blocked; only path-based *execution* is.
 

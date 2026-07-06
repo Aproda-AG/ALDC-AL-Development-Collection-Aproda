@@ -1,4 +1,4 @@
-# GitHub Copilot Instructions for AL Development
+﻿# GitHub Copilot Instructions for AL Development
 
 <!-- Workspace-specific custom instructions for Copilot. Reference: https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
 
@@ -78,7 +78,7 @@ Project estimation?        → @AL Pre-Sales & Project Estimation Specialist
 | `skill-performance` | CPU profiling, FlowField optimization, set-based ops | al-developer, al-architect |
 | `skill-testing` | TDD, test strategy, AL Test Toolkit | al-architect, al-conductor |
 | `skill-estimation` | PERT estimation, complexity scoring, SWOT | al-presales |
-| `skill-aproda-test-loop` 🟦 | OnPrem Deploy-Run-Verify Cycle (build→deploy→run→review) | al-developer, al-conductor |
+| `skill-aproda-deploy-run-verify` 🟦 | OnPrem Deploy-Run-Verify Cycle (build→deploy→run→review) | al-developer, al-conductor |
 | `skill-aproda-aldc` 🟦 | Explain & extend the Aproda ALDC layer itself; entry to `site-profile.aproda.md` (infra) | any (meta) |
 
 > 🟦 = Aproda custom layer (`.aproda.` convention). See [`readme.aproda.md`](readme.aproda.md) + [`decisions.aproda.md`](decisions.aproda.md). These rows are deliberate in-place edits registered in `decisions.aproda.md` (D-7 / D-16).

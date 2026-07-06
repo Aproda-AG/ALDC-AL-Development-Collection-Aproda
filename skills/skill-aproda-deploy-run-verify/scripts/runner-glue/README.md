@@ -19,7 +19,7 @@ version-pinned and materialized per project under `<project>/.../_runner/<major.
 
 ## How the engine consumes them
 
-The run bootstrap in `AprodaTestLoop.psm1` (`Invoke-TestLoopRun`) dot-sources, in order:
+The run bootstrap in `AprodaDeployRunVerify.psm1` (`Invoke-DeployRunVerifyRun`) dot-sources, in order:
 
 ```powershell
 . (Join-Path $glueDir 'PsTestFunctions.ps1') `

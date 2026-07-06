@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   AprodaRunner — thin wrapper exposing `Run-AlTests` over Microsoft's canonical
   PsTestFunctions.ps1 (`New-ClientContext` + `Run-Tests`).
@@ -18,7 +18,7 @@
   Mirrors the exact call shape proven by the AL Test Runner's Invoke-RunTestsViaUrl
   (testPage 130455, testRunnerCodeunitId 130450, culture '' , connectFromHost).
 .NOTES
-  Aproda ALDC — skill-aproda-test-loop. Version-agnostic; ships centrally with the skill.
+  Aproda ALDC — skill-aproda-deploy-run-verify. Version-agnostic; ships centrally with the skill.
 #>
 
 function Run-AlTests {

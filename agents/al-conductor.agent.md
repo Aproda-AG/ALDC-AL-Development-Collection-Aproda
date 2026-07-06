@@ -1,4 +1,4 @@
----
+﻿---
 name: AL Development Conductor
 description: 'AL Conductor Agent - Orchestrates Planning → Implementation → Review → Commit cycle for AL Development. Enforces TDD and quality gates for Business Central extensions.'
 tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, agent, edit, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, todo]
@@ -216,7 +216,7 @@ Act on the resulting verdict:
 
 After the review verdict allows proceeding (APPROVED / APPROVED_WITH_RECOMMENDATIONS), **runtime-verify the phase** before commit. This binds the MEDIUM/HIGH trigger to the existing phase boundary: a phase is **not complete** until its tests are green against a live service (or a real blocker is acknowledged).
 
-1. **Load `skill-aproda-test-loop`** and follow its loop (build → deploy → run → review).
+1. **Load `skill-aproda-deploy-run-verify`** and follow its loop (build → deploy → run → review).
 2. **Preflight (HITL, once per spec)**: on the **first** publish of the run, the skill asks the user which `launch.json` environment to use and records the acknowledgement; subsequent phases reuse it without re-prompting. Deploy writes to a **shared OnPrem server** — never skip this gate.
 3. **Service unavailable** → the skill warns (differentiating "no service" vs "no Test Toolkit") and offers **build-only**; record the acknowledgement in the phase-complete file and proceed without runtime verification. Never hard-block.
 4. **Loop discipline**: fix → deploy → run → review until all tests pass **or** a genuine blocker (service down, spec contradiction). Do **not** brute-force the same fix; on a real blocker, stop and consult the user. Failures route back to **2A** (author the fix task for the implement-subagent).
@@ -515,7 +515,7 @@ DO NOT proceed past these points without explicit user confirmation.
 This agent draws on skills from `.github/skills/`. They are **not** auto-loaded — **load the `SKILL.md` on demand** (read it) when you need it:
 
 - **skill-testing** — orchestrating TDD cycles when test strategy is needed
-- **skill-aproda-test-loop** 🟦 (Aproda) — the per-phase runtime Deploy-Run-Verify Cycle gate (build → deploy → run → review); load it at step 2B-bis when a BC service is reachable
+- **skill-aproda-deploy-run-verify** 🟦 (Aproda) — the per-phase runtime Deploy-Run-Verify Cycle gate (build → deploy → run → review); load it at step 2B-bis when a BC service is reachable
 
 (Per phase, the implement/review subagents load their own domain skills — you pass them as *hints*, see §"Passing Context to Subagents".)
 

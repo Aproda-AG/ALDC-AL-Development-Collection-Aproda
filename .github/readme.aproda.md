@@ -1,6 +1,6 @@
-# Aproda ALDC Layer — README
+﻿# Aproda ALDC Layer — README
 
-> **Version:** `1.2.0_aproda.3` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17).
+> **Version:** `1.2.0_aproda.4` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17).
 > Aproda's customization layer on top of **ALDC** (AL Development Collection).
 > Fork: <https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda>
 > Upstream: ALDC Core (tracked via `upstream` remote).
@@ -16,7 +16,7 @@ What the Aproda layer adds on top of upstream ALDC:
 | Feature | Description |
 |---------|-------------|
 | **ADO work item integration** | `skill-ado` — maps ADO work items (Bug/Task/US/Feature) to `req_name`, plans folder, and document headers; URL-based linking, no API fetch |
-| **Deploy-Run-Verify Cycle** | `skill-aproda-test-loop` — publish → sync → deploy → run → review cycle for on-premises BC instances (VALIDATED, 27/27 green) |
+| **Deploy-Run-Verify Cycle** | `skill-aproda-deploy-run-verify` — publish → sync → deploy → run → review cycle for on-premises BC instances (VALIDATED, 27/27 green) |
 | **HITL Validation instruction** | Auto-applied guardrail that wires the Deploy-Run-Verify Cycle into the HITL Validation phase |
 | **Layer meta-skill** | `skill-aproda-aldc` — explains and extends the Aproda customization layer itself; entry to `site-profile.aproda.md` |
 | **Steward guardrail** | HITL instruction that triggers on any proposed layer edit — all changes require explicit confirmation |
@@ -119,7 +119,7 @@ See `skill-ado` for the full naming and URL construction rules (`org = alphasol`
 
 ### Deploy-Run-Verify Cycle
 
-The Deploy-Run-Verify Cycle (`skill-aproda-test-loop`) is the technical CI surrogate for on-premises BC: it runs a full **deploy → run-tests → review → optimize** cycle against a live NST instance after every implementation increment.
+The Deploy-Run-Verify Cycle (`skill-aproda-deploy-run-verify`) is the technical CI surrogate for on-premises BC: it runs a full **deploy → run-tests → review → optimize** cycle against a live NST instance after every implementation increment.
 
 - Publishes the `.app` to the target NST, syncs and installs it, then executes the AL test suite.
 - On failure: surfaces the exact error with AL stack trace, feeds it back to the implementation agent for a fix, then re-runs — loop until green (`@al-developer` for direct implementation, `@al-conductor` for orchestrated TDD cycles).
@@ -139,9 +139,9 @@ Negative test results or user feedback are collected and handed to the implement
 - a Markdown file with issue descriptions, or
 - a direct chat prompt describing what failed.
 
-The agent creates or updates a `{req_name}-uat-issues.md` file in `.github/plans/{req_name}/`. Each issue gets a global, monotonic ID (`I-1`, `I-2`, …) and a `Status` field (`TODO` / `DONE`). The agent works through open issues one at a time (Status = TODO), runs the Deploy-Run-Verify Cycle after each fix, and marks the issue `DONE`. Multiple feedback rounds append a new `## Loop N` section — the file is never split.
+The agent creates or updates a `{req_name}-hitl-validation-issues.md` file in `.github/plans/{req_name}/`. Each issue gets a global, monotonic ID (`I-1`, `I-2`, …) and a `Status` field (`TODO` / `DONE`). The agent works through open issues one at a time (Status = TODO), runs the Deploy-Run-Verify Cycle after each fix, and marks the issue `DONE`. Multiple feedback rounds append a new `## Loop N` section — the file is never split.
 
-**The `uat-loop.aproda.instructions.md` instruction** governs this contract: the spec is the target-state reference, not a checklist — only `uat-issues.md` status fields drive what is still to do.
+**The `hitl-validation.aproda.instructions.md` instruction** governs this contract: the spec is the target-state reference, not a checklist — only `hitl-validation-issues.md` status fields drive what is still to do.
 
 **When HITL Validation is successful:**
 
@@ -178,7 +178,7 @@ There is **no separate `aproda/` override folder, no agent clones, and no `.vsco
 | Prompt / Workflow | `prompts/al-build.prompt.md` | `prompts/al-build.aproda.prompt.md` | ends in `.prompt.md` → Default discovery still finds it; sorts next to original |
 | Instruction | `instructions/al-events.instructions.md` | `instructions/al-deploy.aproda.instructions.md` | ends in `.instructions.md` → `applyTo` glob still fires |
 | Agent | `agents/al-developer.agent.md` | `agents/aproda-test-runner.aproda.agent.md` | ends in `.agent.md` → discoverable; `@`-callable |
-| Skill (new) | `skills/skill-testing/` | `skills/skill-aproda-test-loop/` | folder namespace; agents read it by path |
+| Skill (new) | `skills/skill-testing/` | `skills/skill-aproda-deploy-run-verify/` | folder namespace; agents read it by path |
 | Skill (extend existing) | — | `skills/skill-testing/aproda-extra-patterns.md` | new file in existing folder merges conflict-free |
 
 **Key property:** the `.aproda.` infix keeps the **type suffix intact** (`.prompt.md`, `.instructions.md`, `.agent.md`), so VS Code's default discovery and `applyTo` matching keep working **without any `.vscode/settings.json` registration**.
@@ -196,10 +196,10 @@ This table **is** the Aproda index (D-17) — the one place to answer "what has 
 | This README (= the inventory/index) | `.github/readme.aproda.md` | D-1 | live |
 | Design decisions | `.github/decisions.aproda.md` | D-1 | live (D-1…D-18) |
 | Site profile (infra facts) | `.github/site-profile.aproda.md` | D-16 | live |
-| Deploy-Run-Verify Cycle skill | `.github/skills/skill-aproda-test-loop/` | D-8, D-15 | **VALIDATED** (27/27 green) |
+| Deploy-Run-Verify Cycle skill | `.github/skills/skill-aproda-deploy-run-verify/` | D-8, D-15 | **VALIDATED** (27/27 green) |
 | Meta-skill (explain + extend the layer) | `.github/skills/skill-aproda-aldc/` | D-16 | live |
 | Steward guardrail (HITL on layer edits) | `.github/instructions/aproda-aldc-steward.aproda.instructions.md` | D-16 | live |
-| HITL Validation instruction | `.github/instructions/uat-loop.aproda.instructions.md` | D-11 | live |
+| HITL Validation instruction | `.github/instructions/hitl-validation.aproda.instructions.md` | D-11 | live |
 | Doc-update workflow | `.github/prompts/al-doc-update.aproda.prompt.md` | D-14 | live |
 | Layer sync (allowlist manifest + overlay script) | `.github/tools/aproda-sync/` | D-18 | live |
 
@@ -252,8 +252,8 @@ The ALDC base is **pinned** in `aldc.yaml → aproda.basePin` (analogous to the 
 
 On every version bump (Upstream upgrade **or** Aproda-layer change), create a Git tag on the fork:
 ```
-git tag v1.2.0_aproda.3
-git push origin v1.2.0_aproda.3
+git tag v1.2.0_aproda.4
+git push origin v1.2.0_aproda.4
 ```
 The tag name matches the composite version string exactly. This makes the exact fork state reproducible and lets projects record which layer version they pulled.
 
@@ -290,4 +290,4 @@ We touch Upstream files in-place only where additive discovery requires it — c
 - [`decisions.aproda.md`](decisions.aproda.md) — the **why** behind this structure (full decision record D-1…D-18).
 - [`site-profile.aproda.md`](site-profile.aproda.md) — concrete infrastructure facts (K:, NST servers, SRP, remote-PS).
 - [`skills/skill-aproda-aldc/SKILL.md`](skills/skill-aproda-aldc/SKILL.md) — meta-skill: explain & extend this layer.
-- [`skills/skill-aproda-test-loop/SKILL.md`](skills/skill-aproda-test-loop/SKILL.md) — Deploy-Run-Verify Cycle (VALIDATED, 27/27).
+- [`skills/skill-aproda-deploy-run-verify/SKILL.md`](skills/skill-aproda-deploy-run-verify/SKILL.md) — Deploy-Run-Verify Cycle (VALIDATED, 27/27).

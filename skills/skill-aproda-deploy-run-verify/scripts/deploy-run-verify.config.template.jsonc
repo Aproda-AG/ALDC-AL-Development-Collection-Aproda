@@ -1,5 +1,5 @@
-// Aproda Test-Loop — per-project config TEMPLATE
-// COPY this file to <project>/testloop.config.jsonc and fill the few non-derivable values.
+﻿// Aproda Test-Loop — per-project config TEMPLATE
+// COPY this file to <project>/deploy-run-verify.config.jsonc and fill the few non-derivable values.
 // Empty / omitted values are AUTO-DERIVED from launch.json + each app.json.
 // JSONC: // comments are stripped by the engine before parsing.
 {
@@ -22,14 +22,14 @@
     // BASE folder for the AL test-runner support files. The engine uses a VERSION
     // subfolder <runnerDir>/<major.minor> (e.g. _runner/28.0) matched to the target
     // BC platform version. A flat <runnerDir> with DLLs still works (legacy) with a
-    // migrate-warning. Generate a new version with New-TestLoopRunner. REQUIRED.
+    // migrate-warning. Generate a new version with New-DeployRunVerifyRunner. REQUIRED.
     "runnerDir": ".\\PowerShell\\_runner",
     // Optional: pin the target BC platform version (e.g. "28.0"). Empty = derive from
     // the live server (Get-NAVServerInstance). Used to pick/validate the runner subfolder.
     "bcVersion": "",
     // --- Runner client DLLs (the 4 version-pinned BC test-client DLLs) ---
     // The runner needs: Microsoft.Dynamics.Framework.UI.Client, Microsoft.Internal.AntiSSRF,
-    // Newtonsoft.Json, System.ServiceModel.Primitives. Initialize-TestLoopRunner materializes
+    // Newtonsoft.Json, System.ServiceModel.Primitives. Initialize-DeployRunVerifyRunner materializes
     // them into <runnerDir>/<major.minor> on demand (idempotent; survives a wiped runner).
     // The version-AGNOSTIC glue (ClientContext.ps1 / PsTestFunctions.ps1 / AprodaRunner.ps1)
     // ships centrally with the skill (scripts/runner-glue) — NOT per project.

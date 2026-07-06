@@ -1,8 +1,8 @@
-# Aproda Site Profile — Infrastructure Facts
+﻿# Aproda Site Profile — Infrastructure Facts
 
-> **Aproda ALDC layer — site profile.** Concrete, organization-wide infrastructure facts for Aproda BC/AL development. Referenced on demand by the Aproda skills (`skill-aproda-test-loop`, `skill-aproda-aldc`); **not** auto-loaded. Source of truth = the aproda-aldc fork; distributed into every project via the `.github/` subtree (see [`decisions.aproda.md`](decisions.aproda.md) D-6).
+> **Aproda ALDC layer — site profile.** Concrete, organization-wide infrastructure facts for Aproda BC/AL development. Referenced on demand by the Aproda skills (`skill-aproda-deploy-run-verify`, `skill-aproda-aldc`); **not** auto-loaded. Source of truth = the aproda-aldc fork; distributed into every project via the `.github/` subtree (see [`decisions.aproda.md`](decisions.aproda.md) D-6).
 >
-> These are **site/environment** facts (stable across projects). **Project-specific** values (instance name, company, app IDs) live in each project's `Test/testloop.config.jsonc` + `launch.json` — never duplicate them here.
+> These are **site/environment** facts (stable across projects). **Project-specific** values (instance name, company, app IDs) live in each project's `Test/deploy-run-verify.config.jsonc` + `launch.json` — never duplicate them here.
 
 ## Topology
 

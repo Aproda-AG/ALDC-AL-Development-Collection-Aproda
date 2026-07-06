@@ -1,35 +1,35 @@
-# Aproda Test-Loop — Reusable Scripts
+﻿# Aproda Test-Loop — Reusable Scripts
 
-> Part of `skill-aproda-test-loop`. **Immutable templates** — copy/run, never edit the engine.
+> Part of `skill-aproda-deploy-run-verify`. **Immutable templates** — copy/run, never edit the engine.
 > The engine is parameter-driven; everything project/environment-specific is **auto-derived** from `launch.json` + each `app.json`, with a tiny per-project config for the few non-derivable bits.
 
 ## Files
 
 | File | Role | Edit? |
 |------|------|-------|
-| `AprodaTestLoop.psm1` | Engine: Resolve-Config, Build, Deploy, materialize Runner, Run, full Loop | ❌ never |
-| `Invoke-AprodaTestLoop.ps1` | Thin entry point (run via `Get-Content … -Raw \| iex`) | ❌ never |
+| `AprodaDeployRunVerify.psm1` | Engine: Resolve-Config, Build, Deploy, materialize Runner, Run, full Loop | ❌ never |
+| `Invoke-AprodaDeployRunVerify.ps1` | Thin entry point (run via `Get-Content … -Raw \| iex`) | ❌ never |
 | `runner-glue/` | The 3 version-agnostic glue scripts (central, shared by all projects/versions) | ❌ never |
-| `testloop.config.template.jsonc` | Per-project config — **copy** to the project, fill a few values | ✅ the copy only |
+| `deploy-run-verify.config.template.jsonc` | Per-project config — **copy** to the project, fill a few values | ✅ the copy only |
 
 ## Mini-effort usage (per project)
 
-1. **Copy** `testloop.config.template.jsonc` → `<project>/testloop.config.jsonc`.
+1. **Copy** `deploy-run-verify.config.template.jsonc` → `<project>/deploy-run-verify.config.jsonc`.
 2. Fill the few non-derivable values (apps in dependency order, runner dir, `companyName`, server-side Mgmt DLL path, and the runner-DLL source — preferably `bcDvdRoot` + `bcCountry`). Most other fields can stay empty → auto-derived.
 3. Run:
 
 ```powershell
 # Set the three env hints, then dot-load the entry via iex (SRP-safe; no Import-Module).
-$env:APRODA_TESTLOOP_CONFIG = '<project>/Test/testloop.config.jsonc'
-$env:APRODA_TESTLOOP_MODULE = '<skillpath>/scripts/AprodaTestLoop.psm1'
-$env:APRODA_TESTLOOP_MODE   = 'full'   # 'full' (default) | 'buildonly' | 'skipbuild'
-Get-Content '<skillpath>/scripts/Invoke-AprodaTestLoop.ps1' -Raw | Invoke-Expression
+$env:APRODA_DEPLOY_RUN_VERIFY_CONFIG = '<project>/Test/deploy-run-verify.config.jsonc'
+$env:APRODA_DEPLOY_RUN_VERIFY_MODULE = '<skillpath>/scripts/AprodaDeployRunVerify.psm1'
+$env:APRODA_DEPLOY_RUN_VERIFY_MODE   = 'full'   # 'full' (default) | 'buildonly' | 'skipbuild'
+Get-Content '<skillpath>/scripts/Invoke-AprodaDeployRunVerify.ps1' -Raw | Invoke-Expression
 ```
 
-> **Why `iex` + `APRODA_TESTLOOP_MODULE`?** Some machines block `.psm1` import via Software
+> **Why `iex` + `APRODA_DEPLOY_RUN_VERIFY_MODULE`?** Some machines block `.psm1` import via Software
 > Restriction Policy / Group Policy, so the entry point does **not** use `Import-Module`; it
 > dot-sources the engine content (SRP-safe). When dot-loaded via `iex`, `$PSCommandPath` is
-> empty, so the module path must come from `$env:APRODA_TESTLOOP_MODULE`.
+> empty, so the module path must come from `$env:APRODA_DEPLOY_RUN_VERIFY_MODULE`.
 
 > The agent only ever touches the **config copy**, never the engine. New project = new 3-line config.
 
@@ -39,7 +39,7 @@ A brand-new project needs **exactly one** project-local file — the config copy
 
 1. **Prerequisite — `launch.json`**: the test project has `.vscode/launch.json` with a `server`-type configuration (server/instance/tenant). The engine derives the ServiceUrl from it. If several exist, set `launchConfig` to the one to use.
 2. **Prerequisite — runner DLL source reachable**: either the K: BC DVD share (`bcDvdRoot` + `bcCountry`) **or** an explicit `runnerClientSource`. No DLLs are committed.
-3. **Copy** `testloop.config.template.jsonc` → `<project>/testloop.config.jsonc`; fill `appsInOrder`, `runnerDir`, `companyName`, `mgmtDllPath`, and the runner-DLL source.
+3. **Copy** `deploy-run-verify.config.template.jsonc` → `<project>/deploy-run-verify.config.jsonc`; fill `appsInOrder`, `runnerDir`, `companyName`, `mgmtDllPath`, and the runner-DLL source.
 4. **`.gitignore`** (git root): ignore the generated runner + scratch dirs — nothing under them is committed:
    ```gitignore
    **/PowerShell/_runner/
@@ -81,7 +81,7 @@ The engine calls a preflight before the first publish: it pings the service and 
 
 > **Status:** Engine **fully live-verified** end-to-end against Straub Medical AG Base + Test (BC 28, server `apd-svw-nst05`): config resolution, preflight, server/runner-version validation, build of both apps, **deploy** (uninstall → unpublish → publish → sync → install), **runner materialization from the K: BC DVD**, and the **test run → 27/27 passed** — all via the entry point. Issues found and fixed during verification:
 > 1. JSONC comment stripper destroyed `http://` URLs in `launch.json` → `(?<!:)` lookbehind.
-> 2. Entry point used `Import-Module`, blocked by SRP on the target machine → SRP-safe dot-sourcing (needs `$env:APRODA_TESTLOOP_MODULE`).
+> 2. Entry point used `Import-Module`, blocked by SRP on the target machine → SRP-safe dot-sourcing (needs `$env:APRODA_DEPLOY_RUN_VERIFY_MODULE`).
 > 3. Same-version redeploy with a changed table set: `Install-NAVApp` refuses against the stale synced schema → **ForceSync → Install** fallback (drops data for changed tables — expected in a dev loop).
 > 4. `Sync -Mode Add` emits a benign non-terminating error on redeploy that leaked to the `ErrorAction=Stop` caller and aborted before the run → silenced + `$Error.Clear()`.
 > 5. Install failures were masked (loop ran tests against a half-deployed server) → **fail-loud**: deploy verifies `IsInstalled` and throws `DEPLOY INCOMPLETE` otherwise.

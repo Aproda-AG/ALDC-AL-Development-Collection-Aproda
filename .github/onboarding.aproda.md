@@ -1,4 +1,4 @@
-# Aproda ALDC — Developer Onboarding
+﻿# Aproda ALDC — Developer Onboarding
 
 > **Aproda ALDC** ist Aprodas angepasste Version des quelloffenen [ALDC (AL Development Collection)](https://github.com/javiarmesto/AL-Development-Collection-for-GitHub-Copilot) Frameworks — ein strukturiertes, spec-getriebenes KI-Entwicklungsframework für Microsoft Dynamics 365 Business Central.
 >
@@ -20,10 +20,10 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 → al-spec.create        → Spec-Dokument als Vertrag für die KI
 → Conductor             → Implementierung + Deploy-Run-Verify Cycle (deploy → run → fix → grün, je Phase)
 → HITL Validation       → Entwickler prüft in ASINST; ggf. Kunden-Sandbox; ggf. Berater/Kunde
-                          Befunde werden in uat-issues.md getrackt → KI arbeitet nach, Deploy-Run-Verify Cycle läuft erneut
+                          Befunde werden in hitl-validation-issues.md getrackt → KI arbeitet nach, Deploy-Run-Verify Cycle läuft erneut
 → al-pr-prepare         → PR + Technische Modul-Doku & Handbuch.de-CH aktualisiert (repo-weit)
 ```
-> Pro Work Item/Anforderung entsteht ein eigener `plans/{req}/`-Ordner (Spec, Architektur, Test-Plan, UAT-Issues). Doku und Handbuch gelten **repo-weit** — immer Vollstand, nicht nur Delta des letzten Work Items.
+> Pro Work Item/Anforderung entsteht ein eigener `plans/{req}/`-Ordner (Spec, Architektur, Test-Plan, HITL-Validation-Issues). Doku und Handbuch gelten **repo-weit** — immer Vollstand, nicht nur Delta des letzten Work Items.
 
 **LOW** (einfache Änderung, ein Objekt): Direkt `@AL Implementation Specialist` — kein Architekt, kein Conductor. Details: [Routing](#2--routing-komplexität-bestimmt-den-einstieg)
 
@@ -60,9 +60,9 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 
 | Feature | Beschreibung |
 |---------|--------------|
-| **Deploy-Run-Verify Cycle** | `skill-aproda-test-loop` — publish → sync → run-tests → review gegen ASINST-Umgebung (später Container); loop bis grün |
+| **Deploy-Run-Verify Cycle** | `skill-aproda-deploy-run-verify` — publish → sync → run-tests → review gegen ASINST-Umgebung (später Container); loop bis grün |
 | **ADO-Integration** | `skill-ado` — `req_name = {type}-{id}` (z.B. `bug-36370`), ADO-URL in jedem Plan-Dokument |
-| **HITL Validation** | Strukturiertes Issue-Tracking in `{req}-uat-issues.md` über mehrere Pre-PR Feedback-Runden ([Bitte Lesen](readme.aproda.md#hitl-validation)) |
+| **HITL Validation** | Strukturiertes Issue-Tracking in `{req}-hitl-validation-issues.md` über mehrere Pre-PR Feedback-Runden ([Bitte Lesen](readme.aproda.md#hitl-validation)) |
 | **Modul-Doku** | `al-doc-update`-Workflow — `<Modul>.reference.md` (EN) + `<Modul>.Handbuch.de-CH.md` |
 
 ### Workflows (`@workspace use <name>`)
@@ -133,7 +133,7 @@ Nach jeder Implementierungsphase läuft der Deploy-Run-Verify Cycle automatisch:
 - `al-developer` → einmal vor PR (LOW)
 - `al-conductor` → nach jeder Phase (MEDIUM/HIGH)
 
-Konfiguration: `Test/testloop.config.jsonc` + `launch.json` im Projekt.
+Konfiguration: `Test/deploy-run-verify.config.jsonc` + `launch.json` im Projekt.
 
 ### 5 — PR vorbereiten
 
@@ -152,7 +152,7 @@ Erzeugt Modul-Doku (`al-doc-update`) und PR-Beschreibung. Erst nach grünem Depl
 | Warum ist es so strukturiert? | [decisions.aproda.md](decisions.aproda.md) (D-1…D-18) |
 | Infra-Details (K:, NST, SRP, Remote-PS) | [site-profile.aproda.md](site-profile.aproda.md) |
 | ALDC-Framework-Spec | [docs/framework/ALDC-Core-Spec-v1.2.md](../docs/framework/ALDC-Core-Spec-v1.2.md) |
-| Deploy-Run-Verify Cycle – Technisches | [skills/skill-aproda-test-loop/SKILL.md](../skills/skill-aproda-test-loop/SKILL.md) |
+| Deploy-Run-Verify Cycle – Technisches | [skills/skill-aproda-deploy-run-verify/SKILL.md](../skills/skill-aproda-deploy-run-verify/SKILL.md) |
 | Layer selbst erweitern | [readme.aproda.md — TL;DR](readme.aproda.md#tldr--extend-aproda-aldc--the-two-rules) |
 
 ---

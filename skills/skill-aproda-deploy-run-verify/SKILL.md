@@ -1,6 +1,6 @@
----
-name: skill-aproda-test-loop
-description: "Aproda Deploy-Run-Verify Cycle for Business Central: build → deploy → run → review, looped until green or a real blocker. Use when validating an AL extension end-to-end against a live BC service (publish app + test app, run the AL test runner, triage failures, fix, re-deploy). Aproda custom skill (see readme.aproda.md)."
+﻿---
+name: skill-aproda-deploy-run-verify
+description: "Aproda Deploy-Run-Verify Cycle for Business Central (formerly: Aproda test-loop): build → deploy → run → review, looped until green or a real blocker. Use when validating an AL extension end-to-end against a live BC service (publish app + test app, run the AL test runner, triage failures, fix, re-deploy). Aproda custom skill (see readme.aproda.md)."
 ---
 
 # Skill: Deploy-Run-Verify Cycle (Build → Deploy → Run → Review)
@@ -67,15 +67,15 @@ Run the loop at **each phase boundary** as the quality gate. The conductor alrea
 
 The skill ships an **immutable, parameter-driven engine** so the agent never rebuilds the loop from scratch — it only supplies a tiny per-project config.
 
-- [`scripts/AprodaTestLoop.psm1`](scripts/AprodaTestLoop.psm1) — engine. Key functions: `Resolve-TestLoopConfig` (also resolves central `glueDir` + the K: DVD source), `Invoke-TestLoopBuild`, `Invoke-TestLoopDeploy`, `Resolve-TestLoopClientSource` (derives the runner DLL source from the BC DVD), `Initialize-TestLoopRunner` (idempotently materializes the 4 client DLLs), `Invoke-TestLoopRun`, `Get-TestLoopSummary`, `Invoke-AprodaTestLoop`. **Never edit per project.**
-- [`scripts/Invoke-AprodaTestLoop.ps1`](scripts/Invoke-AprodaTestLoop.ps1) — thin entry (run via `Get-Content … -Raw | iex`). Loads the engine **content-based** (`[ScriptBlock]::Create`) because SRP blocks path-based execution.
+- [`scripts/AprodaDeployRunVerify.psm1`](scripts/AprodaDeployRunVerify.psm1) — engine. Key functions: `Resolve-DeployRunVerifyConfig` (also resolves central `glueDir` + the K: DVD source), `Invoke-DeployRunVerifyBuild`, `Invoke-DeployRunVerifyDeploy`, `Resolve-DeployRunVerifyClientSource` (derives the runner DLL source from the BC DVD), `Initialize-DeployRunVerifyRunner` (idempotently materializes the 4 client DLLs), `Invoke-DeployRunVerifyRun`, `Get-DeployRunVerifySummary`, `Invoke-AprodaDeployRunVerify`. **Never edit per project.**
+- [`scripts/Invoke-AprodaDeployRunVerify.ps1`](scripts/Invoke-AprodaDeployRunVerify.ps1) — thin entry (run via `Get-Content … -Raw | iex`). Loads the engine **content-based** (`[ScriptBlock]::Create`) because SRP blocks path-based execution.
 - [`scripts/runner-glue/`](scripts/runner-glue/) — the 3 **version-agnostic** glue scripts (`ClientContext.ps1`, `PsTestFunctions.ps1` — MS canonical; `AprodaRunner.ps1` — Aproda wrapper). Central, shared by all projects/versions; never copied into `_runner/`.
-- [`scripts/testloop.config.template.jsonc`](scripts/testloop.config.template.jsonc) — **copy** to `<project>/testloop.config.jsonc`. Fill apps in dependency order, runner dir, `companyName`, server-side Mgmt DLL, and the runner-DLL source: preferably `bcDvdRoot` + `bcCountry` (K: BC DVD), else `runnerClientSource`. The rest auto-derives from `launch.json` + each `app.json`.
+- [`scripts/deploy-run-verify.config.template.jsonc`](scripts/deploy-run-verify.config.template.jsonc) — **copy** to `<project>/deploy-run-verify.config.jsonc`. Fill apps in dependency order, runner dir, `companyName`, server-side Mgmt DLL, and the runner-DLL source: preferably `bcDvdRoot` + `bcCountry` (K: BC DVD), else `runnerClientSource`. The rest auto-derives from `launch.json` + each `app.json`.
 - [`scripts/README.md`](scripts/README.md) — full usage + what auto-derives + the **New project / repo bootstrap** checklist.
 
 **First run in a NEW project/repo** → follow [`scripts/README.md` → *New project / repo bootstrap*](scripts/README.md): (1) ensure `.vscode/launch.json` has a `server` config, (2) ensure the runner-DLL source is reachable (`bcDvdRoot`+`bcCountry` or `runnerClientSource`), (3) copy the config template + fill the few non-derivable values, (4) add `**/PowerShell/_runner/` and `**/PowerShell/_temp/` to `.gitignore`, (5) run the entry point — the **first run materializes** `_runner/<ver>/` from the DVD (later runs reuse it). **Subsequent runs** are just the entry point.
 
-Mini-effort per project: copy the config, fill a few values, run the entry point. The 4 version-pinned client DLLs are **materialized on demand** from the K: BC DVD (`<bcDvdRoot>\<major>\<bcCountry>.<major>.<minor>\Applications\TestFramework\TestRunner\Internal`); the whole `_runner/` folder is git-ignored. Results: `<runnerDir>/<version>/TestResults.xml` (XUnit-style) → `Get-TestLoopSummary` returns pass/fail counts + failed names.
+Mini-effort per project: copy the config, fill a few values, run the entry point. The 4 version-pinned client DLLs are **materialized on demand** from the K: BC DVD (`<bcDvdRoot>\<major>\<bcCountry>.<major>.<minor>\Applications\TestFramework\TestRunner\Internal`); the whole `_runner/` folder is git-ignored. Results: `<runnerDir>/<version>/TestResults.xml` (XUnit-style) → `Get-DeployRunVerifySummary` returns pass/fail counts + failed names.
 
 > **SRP**: this estate blocks path-based PowerShell execution (Group Policy) — engine and glue are always loaded **content-based** via `[ScriptBlock]::Create((Get-Content -Raw))`. See `references/runner.md`. Canonical infra facts (SRP, K: DVD, NST servers, remote-PS): [`../../site-profile.aproda.md`](../../site-profile.aproda.md).
 

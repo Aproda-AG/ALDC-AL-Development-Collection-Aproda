@@ -13,7 +13,7 @@ Refresh the **durable, per-module** documentation so it reflects the module's **
 
 ## When to run
 
-- **At the delivery boundary** (D-10): the requirement is accepted, the `{req}.spec.md` is frozen, all `uat-issues.md` issues are `DONE`. This is the moment the docs should mirror the final state.
+- **At the delivery boundary** (D-10): the requirement is accepted, the `{req}.spec.md` is frozen, all `hitl-validation-issues.md` issues are `DONE`. This is the moment the docs should mirror the final state.
 - Invoked by `@al-developer` (LOW) before PR hand-off, and by `@al-conductor` (MEDIUM/HIGH) at plan completion — both at the delivery point, alongside `al-pr-prepare`.
 - May also be run **manually** anytime: `@workspace use al-doc-update` for a module.
 
@@ -38,7 +38,7 @@ If the folder/files do not exist, create them; otherwise **update in place** (th
 
 - Read the module's `.al` files under `SRC/<Module>/` (or wherever the objects live) to learn the **current** object set, lifecycle, and behaviour.
 - Read the module's `SKILL.md` (`.github/skills/<module-skill>/SKILL.md`) if one exists — it is the AI-canonical contract.
-- Read the requirement's frozen `{req}.spec.md` and the `uat-issues.md` (for the accepted target behaviour).
+- Read the requirement’s frozen `{req}.spec.md` and the `hitl-validation-issues.md` (for the accepted target behaviour).
 - Read any `Doc/<Module>-OpenItems.md` for on-hold / not-yet-active features.
 
 > **Source-of-truth rule (D-13)**: the reference is a *lean overview*. It **links** to the `.al` files + SKILL as the source of truth and must **never mirror object IDs, file paths, or exact signatures** (they drift). Capture purpose, scope, lifecycle, building blocks, extension pointer, translations note.
@@ -59,5 +59,5 @@ User-facing, **de-CH**, task-oriented: what the feature does, the core workflow 
 ## Guardrails
 
 - Persisted artifacts language rule: `reference.md` = **English**; `Handbuch.de-CH.md` = **de-CH**. Never mix.
-- Do not edit `.al` code, the spec, or the `uat-issues.md` from this workflow — it is documentation-only.
+- Do not edit `.al` code, the spec, or the `hitl-validation-issues.md` from this workflow — it is documentation-only.
 - Do not duplicate IDs/paths/signatures (D-13). Link instead.

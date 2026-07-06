@@ -16,7 +16,7 @@ Load this skill when the task is **about the Aproda layer**, not about the BC ex
 - **Extend / change**: add a new Aproda skill/agent/instruction/workflow; change an existing Upstream behaviour; reroute an agent; decide stacking vs in-place edit; record a decision; maintain the Upstream-touch register; plan a `subtree pull`/`push`.
 - **Infra lookup**: as the entry point to [`../../site-profile.aproda.md`](../../site-profile.aproda.md) (K: DVD, NST servers, SRP, remote-PS, paste mangling).
 
-> This skill is **not** loaded for normal AL development. Building the BC extension uses the domain skills (`skill-api`, `skill-events`, …) and `skill-aproda-test-loop`. This one is meta — it changes/explains the **framework**, not the product.
+> This skill is **not** loaded for normal AL development. Building the BC extension uses the domain skills (`skill-api`, `skill-events`, …) and `skill-aproda-deploy-run-verify`. This one is meta — it changes/explains the **framework**, not the product.
 
 ## Knowledge map (where the truth lives — link, don't duplicate)
 
@@ -25,7 +25,7 @@ Load this skill when the task is **about the Aproda layer**, not about the BC ex
 | *How* does the layer extend ALDC? (conventions, naming, no override folder) | [`readme.aproda.md`](../../readme.aproda.md) |
 | *Why* is it built this way? (every design decision, D-1..D-15) | [`decisions.aproda.md`](../../decisions.aproda.md) |
 | What infra do we run on? (K:, NST servers, SRP, remote-PS) | [`site-profile.aproda.md`](../../site-profile.aproda.md) |
-| How is the runtime test-loop standardized? | [`skill-aproda-test-loop`](../skill-aproda-test-loop/SKILL.md) |
+| How is the runtime Deploy-Run-Verify Cycle standardized? | [`skill-aproda-deploy-run-verify`](../skill-aproda-deploy-run-verify/SKILL.md) |
 | Which Upstream files did we touch in place? | `decisions.aproda.md` → *Upstream edits register* |
 
 This skill **orchestrates and links** those; it never copies their content.
@@ -71,7 +71,7 @@ Use the `readme.aproda.md` "Stacking vs. changing" table:
 - If you touched an Upstream file in place, add a row to the **Upstream-edits register** (file / change / decision / date) — this is the list the upgrade reviewer diffs against (D-6/D-7).
 
 ### Step 4 — Validate where you are, then flow back to the fork
-- You are almost always editing a **working copy** of the layer inside a concrete project (so you can validate live — e.g. run `skill-aproda-test-loop`). That is fine and encouraged.
+- You are almost always editing a **working copy** of the layer inside a concrete project (so you can validate live — e.g. run `skill-aproda-deploy-run-verify`). That is fine and encouraged.
 - **The change is only "real" once it flows back to the aproda-aldc fork** (`subtree push` / PR). Until then, the next `subtree pull` in any project will overwrite or conflict with the local-only edit, and project copies drift.
 - Direction: **fork = source of truth**; projects = working copies that read+apply and may edit+validate, then push the change upstream to the fork.
 
@@ -86,7 +86,7 @@ project repo A / B / C  ── read + apply (many) ── edit + validate (few) 
 
 - **Everything in this layer ships to every project** via the `.github/` subtree (skills, instructions, site-profile, this meta-skill).
 - **Reading/applying** happens in every project; **changing** happens where the need arises (with live validation), then **must** flow back to the fork.
-- A repo that does **not** carry the full subtree relies on the personal **user-memory** summary of the infra facts as a fallback (redundant by design, like the self-describing `uat-issues.md`, D-11).
+- A repo that does **not** carry the full subtree relies on the personal **user-memory** summary of the infra facts as a fallback (redundant by design, like the self-describing `hitl-validation-issues.md`, D-11).
 
 ## Constraints
 
