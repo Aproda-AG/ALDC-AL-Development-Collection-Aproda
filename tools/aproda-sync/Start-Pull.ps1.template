@@ -1,4 +1,4 @@
-# Aproda Sync — Pull starter (machine-local, git-ignored)
+﻿# Aproda Sync — Pull starter (machine-local, git-ignored)
 # SETUP: Copy this file to Start-Pull.ps1 (same folder), fill in the ONE fork path, save.
 #        APRODA_SYNC_SCRIPTDIR is self-located (this file lives in the project's
 #        .github/tools/aproda-sync) — leave it empty unless you need an override.

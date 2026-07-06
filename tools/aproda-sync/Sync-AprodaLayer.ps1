@@ -213,7 +213,7 @@ if ($manifest.includeAldcFramework) {
         # required:/optional:. We only need the file paths, not full YAML semantics.
         $yamlLines = Get-Content -LiteralPath $aldcYamlPath
         foreach ($line in $yamlLines) {
-            $m = [regex]::Match($line, '^\s*-\s*"([^"]+\.(md|py|sh|js))"\s*$')
+            $m = [regex]::Match($line, '^\s*-\s*"([^"]+\.(md|py|sh|js|json))"\s*$')
             if ($m.Success) { $frameworkFiles += $m.Groups[1].Value }
         }
         $frameworkFiles = $frameworkFiles | Sort-Object -Unique
@@ -224,11 +224,17 @@ if ($manifest.includeAldcFramework) {
 }
 
 function Test-Allowed([string] $logical) {
+    # For framework skill entries like "skills/skill-foo/SKILL.md", also allow the
+    # entire skill folder (AUTHORS.md, CHANGELOG.md, references/, examples/, etc.).
+    $frameworkFolderMatch = $frameworkFiles | Where-Object {
+        $_ -match '/SKILL\.md$' -and $logical.StartsWith(($_ -replace '/SKILL\.md$', '/'))
+    }
     return (
         (Test-AnyGlob $logical $includeGlobs) -or
         ($includeFiles -contains $logical) -or
         ($inPlaceEdits -contains $logical) -or
-        ($frameworkFiles -contains $logical)
+        ($frameworkFiles -contains $logical) -or
+        ($null -ne $frameworkFolderMatch -and @($frameworkFolderMatch).Count -gt 0)
     )
 }
 
@@ -346,7 +352,42 @@ if ($WhatIfPreference) {
     Write-Host "DRY-RUN complete — $($selected.Count) file(s) + $(@($manifest.dualVariant).Count) dual-variant would sync. No changes made." -ForegroundColor Yellow
 }
 else {
-    Write-Host "Done — $copied file(s) copied + $dualCount dual-variant ($Direction)." -ForegroundColor Green
+    Write-Host "Done — $copied file(s) copied + $dualCount dual-variant ($Direction)." -ForegroundColor Green    if ($Direction -eq 'pull') {
+        # ── Stale-file cleanup: remove paths renamed in the layer ────────────────
+        # The syncer writes the NEW name but cannot delete the OLD one. Each entry
+        # here is a one-time tombstone; add new renames with a version comment.
+        $staleCleanup = [ordered]@{
+            # v1.2.0_aproda.4
+            'instructions\uat-loop.aproda.instructions.md' = 'renamed to hitl-validation.aproda.instructions.md'
+            # v1.2.0_aproda.4
+            'skills\skill-aproda-test-loop'                = 'renamed to skill-aproda-deploy-run-verify'
+        }
+        foreach ($kv in $staleCleanup.GetEnumerator()) {
+            $stalePath = Join-Path $dstRepo $kv.Key
+            if (Test-Path $stalePath) {
+                Remove-Item $stalePath -Recurse -Force
+                Write-Host "Cleanup: removed stale '$($kv.Key)' ($($kv.Value))." -ForegroundColor DarkYellow
+            }
+        }
+    }    if ($Direction -eq 'pull') {
+        # ── Stale-file cleanup: remove old paths that were renamed in the layer ────
+        # The syncer writes the NEW name but cannot delete the OLD one (it never knew
+        # it existed in the project). Each entry here is a one-time tombstone;
+        # add new renamed artifacts here with a version comment.
+        $stale = [ordered]@{
+            # v1.2.0_aproda.4
+            'instructions\uat-loop.aproda.instructions.md' = 'renamed to hitl-validation.aproda.instructions.md'
+            # v1.2.0_aproda.4
+            'skills\skill-aproda-test-loop'                = 'renamed to skill-aproda-deploy-run-verify'
+        }
+        foreach ($kv in $stale.GetEnumerator()) {
+            $stalePath = Join-Path $dstRepo $kv.Key
+            if (Test-Path $stalePath) {
+                Remove-Item $stalePath -Recurse -Force
+                Write-Host "Cleanup: removed stale '$($kv.Key)' ($($kv.Value))." -ForegroundColor DarkYellow
+            }
+        }
+    }
     if ($Direction -eq 'push') {
         Write-Host "Next: in the fork clone, review 'git status', commit, open a PR. The change is only adopted once merged into the fork (D-16)." -ForegroundColor Cyan
     }

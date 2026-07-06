@@ -1,4 +1,5 @@
 ---
+# author: "[Flobi-Wan-Kenobi (Florian Köll)](https://github.com/Flobi-Wan-Kenobi)"
 description: >
   Aproda guardrail (D-16): when you edit any Aproda ALDC layer file (a .aproda.*
   file or anything under a skill-aproda-* folder), STOP first — surface the relevant

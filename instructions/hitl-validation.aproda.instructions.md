@@ -1,4 +1,5 @@
 ---
+# author: "[Flobi-Wan-Kenobi (Florian Köll)](https://github.com/Flobi-Wan-Kenobi)"
 description: >
   Aproda convention (D-11): when a requirement under .github/plans/ has a
   '{req}-hitl-validation-issues.md' work-item, consume it via its Status-Board and per-issue

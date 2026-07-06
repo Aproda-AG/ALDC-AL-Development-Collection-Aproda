@@ -121,6 +121,11 @@ required:
       - "skills/skill-translate/SKILL.md"
       - "skills/skill-estimation/SKILL.md"
 
+  catalog:
+    - "skills/index.md"
+    - "prompts/index.md"
+    - "prompts/README.md"
+
   instructions:
     - "instructions/al-guidelines.instructions.md"
     - "instructions/al-code-style.instructions.md"
@@ -131,6 +136,7 @@ required:
     - "instructions/al-testing.instructions.md"
     - "instructions/copilot-instructions.md"
     - "instructions/index.md"
+    - "instructions/README.md"
 
   templates:
     - "docs/templates/spec-template.md"
@@ -161,6 +167,7 @@ optional:
   tools:
     - "tools/bc-agents/scaffold_agent.py"
     - "tools/bc-agents/validate_agent_config.sh"
+    - "tools/aldc-validate/package.json"
 
 validation:
   rules:
