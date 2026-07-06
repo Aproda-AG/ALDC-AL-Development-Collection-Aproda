@@ -2,13 +2,15 @@
 
 > **Aproda ALDC** ist Aprodas angepasste Version des quelloffenen [ALDC (AL Development Collection)](https://github.com/javiarmesto/AL-Development-Collection-for-GitHub-Copilot) Frameworks — ein strukturiertes, spec-getriebenes KI-Entwicklungsframework für Microsoft Dynamics 365 Business Central.
 >
-> Weiterlesen: [Aproda-README](.github/readme.aproda.md) · [ALDC Quickstart](docs/quick-start-en.md)
+> Weiterlesen: [Aproda-README](readme.aproda.md) · [ALDC Quickstart](../docs/quick-start-en.md)
 
 ---
 
 ## Was ist Aproda ALDC?
 
-ALDC ersetzt ad-hoc KI-Codegenerierung durch **kontrollierten Engineering-Prozess**: Spec → Architektur → Tests → Code → Review. Aproda erweitert das Framework um Aproda-spezifische Infrastruktur (ASINST-Env-Test-Loop, SRP, ADO).
+ALDC ersetzt ad-hoc KI-Codegenerierung durch kontrollierten Engineering-Prozess in Form von **Spec-Driven Development** und nutzt Test-Driven-Development-Prinzipien: Spec → Architektur → Tests → Code → Review. Aproda ergänzt das Framework um echte AL-Test-Ausführung (Test-Loop gegen ASINST-Umgebung), strukturiertes UAT-Issue-Tracking, automatische Modul-Dokumentation und ADO-Integration.
+
+Das Framework arbeitet mit **spezialisierten Agent-Persönlichkeiten** je nach Aufgabe und Komplexität: der **Architekt** für komplexe Anforderungen (Lösungsdesign, Datenmodell), der **Conductor** als Umsetzungs-Orchestrator (orchestriert Planung → Implementierung → Review, bei mittlerer/hoher Komplexität oder arbeitet Issues aus dem ER-Testing ab.), der **Implementation Specialist** für direktes Codieren (eigenständig bei einfachen Aufgaben, oder angewiesen vom Conductor). Ergänzend: der **Triage-Agent** für Problemanalyse und Diagnose, der **Pre-Sales-Agent** für Aufwandschätzungen, und **Dredd** — der unabhängige Auditor, der bestehende Lösungen via BCQuality auf Security, Performance, Guidelines und Patterns prüft und bewertet.
 
 > [!IMPORTANT]
 > - Wichtigster Grundsatz: **Qualitative Spezifikation → Qualitatives Ergebnis**
@@ -34,6 +36,7 @@ ALDC ersetzt ad-hoc KI-Codegenerierung durch **kontrollierten Engineering-Prozes
 | `@AL Architecture & Design Specialist` | Neue Features (MEDIUM/HIGH) | Lösungsdesign, Datenmodell, Integrationsstrategie |
 | `@AL Implementation Specialist` | Implementieren, debuggen, fixen | Taktischer Code, direkte Änderungen |
 | `@AL Development Conductor` | Vollständiger TDD-Zyklus | Orchestriert Planung → Impl. → Review mit Subagents |
+| `@AL Triage — Reactive Diagnosis Specialist` | Bug, Fehler, Regression | Reproduzieren, Ursache lokalisieren, Fix-Empfehlung |
 | `@AL Pre-Sales & Project Estimation Specialist` | Aufwandschätzung | PERT, SWOT, Kostenaufstellung |
 | `@Dredd` | Unabhängiges Audit | BCQuality-zitierter statischer Review |
 
@@ -48,7 +51,15 @@ ALDC ersetzt ad-hoc KI-Codegenerierung durch **kontrollierten Engineering-Prozes
 
 ### Workflows (`@workspace use <name>`)
 
-`al-spec.create` · `al-build` · `al-pr-prepare` · `al-memory.create` · `al-context.create` · `al-initialize` · `al-doc-update` (🟦)
+| Workflow | Wann aufrufen | Was es tut |
+|----------|---------------|------------|
+| `al-spec.create` | Vor jeder Implementierung | Erstellt `{req}.spec.md` aus Anforderung + Architektur |
+| `al-build` | Nach Implementierung | Baut, paketiert und deployed die Extension |
+| `al-pr-prepare` | Vor dem PR | Erzeugt Modul-Doku + PR-Beschreibung |
+| `al-memory.create` | Nach langer Session | Aktualisiert `memory.md` für Session-Kontinuität |
+| `al-context.create` | Projektstart / neuer Kollege | Generiert `context.md` als KI-Kontext-Einführung |
+| `al-initialize` | Einmaliges Setup | Vollständiges Workspace- und Umgebungs-Setup |
+| `al-doc-update` 🟦 | Vor PR (Aproda) | Erstellt/aktualisiert `reference.md` + `Handbuch.de-CH.md` |
 
 ---
 
@@ -67,15 +78,15 @@ ALDC ersetzt ad-hoc KI-Codegenerierung durch **kontrollierten Engineering-Prozes
 ```
 
 > - Genauere Anleitung im [readme.aproda.md - Quickstart](readme.aproda.md#Quickstart-—-initialize-Aproda-Aldc-to-a-existing-or-new-project-repo)
-> - Repo nicht im Auswahlfenster? → [readme.aproda.md — Fallback](readme.aproda.md#fallback--target-repo-not-in-the-selection-list)
+> - Repo nicht im Auswahlfenster? → [readme.aproda.md — Fallback](readme.aproda.md#3-fallback--target-repo-not-in-the-selection-list)
 
 **BCQuality einmalig pro Workstation klonen** (neben das Projekt-Repo, nicht hinein):
-```
-git clone https://github.com/Aproda-AG/BCQuality-Aproda bcquality
-```
 
-> **BCQuality** — kuratierte, zitierbare BC-Wissensbasis von Microsoft; wird von `@Dredd` und dem Review-Subagent für belegte Qualitätsbefunde genutzt.
+[readme.aproda.md — BCQuality](readme.aproda.md#2-BCQuality-knowledge-base-one-time-per-workstation)
 
+```
+git clone https://github.com/Aproda-AG/BCQuality-Aproda bcquality-aproda
+```
 
 ### 2 — Routing: Komplexität bestimmt den Einstieg
 

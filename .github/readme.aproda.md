@@ -42,7 +42,7 @@ flowchart LR
     E --> F["Layer written to\n.github/ of target\nStart-Pull.ps1 materialized"]
 ```
 
-### Steps
+### 1) Steps
 
 1. **Clone the fork** (one-time, keep it on your workstation):
    ```
@@ -58,19 +58,21 @@ flowchart LR
 > **After init:** open the target project folder in VS Code and work normally with Copilot.
 > For future layer updates, run `Start-Pull.ps1` inside the target project.
 
-### BCQuality knowledge base (one-time, per workstation)
+### 2) BCQuality knowledge base (one-time, per workstation)
 
-**BCQuality** ist Microsofts kuratierte, zitierbare BC-Wissensbasis — atomare Guidance-Dateien, die `@Dredd` und der Review-Subagent beim Code-Review nach Pfad zitieren. Sie wird als zweites Workspace-Root read-only eingebunden und nie in die AL-Extension kompiliert.
+**[BCQuality](https://github.com/microsoft/BCQuality)** is the official, agent-readable MS BC knowledge base for BC Development. `@Dredd` and the Review Subagent can use it during code review. It is mounted as a second workspace root (read-only) and never compiled into the AL extension.
 
-The generated workspace file expects a BCQuality clone as a sibling of the project repo at `../bcquality`. Clone it once alongside your projects:
+BCQuality defines three layers: **MS** (official Microsoft guidelines), **Community** (supplementary patterns), and **Custom** (company-specific rules). The Aproda fork [`Aproda-AG/BCQuality-Aproda`](https://github.com/Aproda-AG/BCQuality-Aproda) populates the Custom layer with initial Aproda-specific additions.
+
+The generated workspace file expects a BCQuality clone as a sibling of the project repo at `../bcquality-aproda`. Clone it once alongside your projects:
 
 ```
-git clone https://github.com/Aproda-AG/BCQuality-Aproda bcquality
+git clone https://github.com/Aproda-AG/BCQuality-Aproda bcquality-aproda
 ```
 
-The folder must sit **next to** (not inside) the project repo so its `.al` files never enter the AL compiler's scope. Once cloned, it is available to all projects on the same workstation — no per-project setup needed. It is consumed read-only by `@dredd` and the review subagent for citation-backed quality checks.
+The folder must sit **next to** (not inside) the project repo so its `.al` files never enter the AL compiler's scope. Once cloned, it is available to all projects on the same workstation — no per-project setup needed. 
 
-### Fallback — target repo not in the selection list
+### 3) Fallback — target repo not in the selection list
 
 The script scans sibling folders of the fork for git repos. If the target project isn't found there (different drive, nested path, etc.):
 
