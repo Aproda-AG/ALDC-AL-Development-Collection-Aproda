@@ -129,7 +129,7 @@ This loop is wired into both `al-developer` and `al-conductor` as a pre-PR gate.
 
 ---
 
-### UAT loop
+### UAT loop (User Test Loops before Pull Request)
 
 After the Test-loop is green, the feature moves to **user acceptance testing (UAT)**. The goal is to validate the implementation against real business scenarios — either in a customer development environment or in the **ASINST environment** (the most recent app build is already deployed there from the Test-loop and ready to test immediately).
 

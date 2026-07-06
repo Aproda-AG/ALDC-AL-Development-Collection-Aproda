@@ -10,7 +10,23 @@
 
 ALDC ersetzt ad-hoc KI-Codegenerierung durch kontrollierten Engineering-Prozess in Form von **Spec-Driven Development** und nutzt Test-Driven-Development-Prinzipien: Spec → Architektur → Tests → Code → Review. Aproda ergänzt das Framework um echte AL-Test-Ausführung (Test-Loop gegen ASINST-Umgebung), strukturiertes UAT-Issue-Tracking, automatische Modul-Dokumentation und ADO-Integration.
 
-Das Framework arbeitet mit **spezialisierten Agent-Persönlichkeiten** je nach Aufgabe und Komplexität: der **Architekt** für komplexe Anforderungen (Lösungsdesign, Datenmodell), der **Conductor** als Umsetzungs-Orchestrator (orchestriert Planung → Implementierung → Review, bei mittlerer/hoher Komplexität oder arbeitet Issues aus dem ER-Testing ab.), der **Implementation Specialist** für direktes Codieren (eigenständig bei einfachen Aufgaben, oder angewiesen vom Conductor). Ergänzend: der **Triage-Agent** für Problemanalyse und Diagnose, der **Pre-Sales-Agent** für Aufwandschätzungen, und **Dredd** — der unabhängige Auditor, der bestehende Lösungen via BCQuality auf Security, Performance, Guidelines und Patterns prüft und bewertet.
+Das Framework arbeitet mit **spezialisierten Agent-Persönlichkeiten** je nach Aufgabe und Komplexität: der **Architekt** für komplexe Anforderungen (Lösungsdesign, Datenmodell), der **Conductor** als Umsetzungs-Orchestrator (orchestriert Planung → Implementierung → Review, bei mittlerer/hoher Komplexität oder arbeitet Issues aus dem UAT ab.), der **Implementation Specialist** für direktes Codieren (eigenständig bei einfachen Aufgaben, oder angewiesen vom Conductor). Ergänzend: der **Triage-Agent** für Problemanalyse und Diagnose, der **Pre-Sales-Agent** für Aufwandschätzungen, und **Dredd** — der unabhängige Auditor, der bestehende Lösungen via BCQuality auf Security, Performance, Guidelines und Patterns prüft und bewertet.
+
+**Beispielprozess (Komplexity MEDIUM/HIGH):**
+
+```
+ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
+→ Architekt             → Lösungsdesign (optional, bei komplexen Features)
+→ al-spec.create        → Spec-Dokument als Vertrag für die KI
+→ Conductor             → Implementierung + Test-Loop (deploy → run → fix → grün, je Phase)
+→ UAT (Human Tests)     → Entwickler prüft in ASINST; ggf. Kunden-Sandbox; ggf. Berater/Kunde
+                          Befunde werden in uat-issues.md getrackt → KI arbeitet nach, Test-Loop läuft erneut
+→ al-pr-prepare         → PR + Technische Modul-Doku & Handbuch.de-CH aktualisiert (repo-weit)
+```
+> Pro Work Item/Anforderung entsteht ein eigener `plans/{req}/`-Ordner (Spec, Architektur, Test-Plan, UAT-Issues). Doku und Handbuch gelten **repo-weit** — immer Vollstand, nicht nur Delta des letzten Work Items.
+
+**LOW** (einfache Änderung, ein Objekt): Direkt `@AL Implementation Specialist` — kein Architekt, kein Conductor. Details: [Routing](#2--routing-komplexität-bestimmt-den-einstieg)
+
 
 > [!IMPORTANT]
 > - Wichtigster Grundsatz: **Qualitative Spezifikation → Qualitatives Ergebnis**
@@ -34,8 +50,8 @@ Das Framework arbeitet mit **spezialisierten Agent-Persönlichkeiten** je nach A
 | Agent | Wann | Was |
 |-------|------|-----|
 | `@AL Architecture & Design Specialist` | Neue Features (MEDIUM/HIGH) | Lösungsdesign, Datenmodell, Integrationsstrategie |
-| `@AL Implementation Specialist` | Implementieren, debuggen, fixen | Taktischer Code, direkte Änderungen |
 | `@AL Development Conductor` | Vollständiger TDD-Zyklus | Orchestriert Planung → Impl. → Review mit Subagents |
+| `@AL Implementation Specialist` | Implementieren, debuggen, fixen | Taktischer Code, direkte Änderungen |
 | `@AL Triage — Reactive Diagnosis Specialist` | Bug, Fehler, Regression | Reproduzieren, Ursache lokalisieren, Fix-Empfehlung |
 | `@AL Pre-Sales & Project Estimation Specialist` | Aufwandschätzung | PERT, SWOT, Kostenaufstellung |
 | `@Dredd` | Unabhängiges Audit | BCQuality-zitierter statischer Review |
@@ -46,7 +62,7 @@ Das Framework arbeitet mit **spezialisierten Agent-Persönlichkeiten** je nach A
 |---------|--------------|
 | **OnPrem-Env Test-Loop** | `skill-aproda-test-loop` — publish → sync → run-tests → review gegen ASINST-Umgebung (später Container); loop bis grün |
 | **ADO-Integration** | `skill-ado` — `req_name = {type}-{id}` (z.B. `bug-36370`), ADO-URL in jedem Plan-Dokument |
-| **UAT-Loop** | Strukturiertes Issue-Tracking in `{req}-uat-issues.md` über mehrere Feedback-Runden |
+| **UAT-Loop** | Strukturiertes Issue-Tracking in `{req}-uat-issues.md` über mehrere Pre-PR Feedback-Runden ([Bitte Lesen](readme.aproda.md#uat-loop)) |
 | **Modul-Doku** | `al-doc-update`-Workflow — `<Modul>.reference.md` (EN) + `<Modul>.Handbuch.de-CH.md` |
 
 ### Workflows (`@workspace use <name>`)
