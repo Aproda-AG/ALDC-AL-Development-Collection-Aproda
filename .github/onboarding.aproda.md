@@ -11,7 +11,7 @@
 ALDC ersetzt ad-hoc KI-Codegenerierung durch **kontrollierten Engineering-Prozess**: Spec → Architektur → Tests → Code → Review. Aproda erweitert das Framework um Aproda-spezifische Infrastruktur (ASINST-Env-Test-Loop, SRP, ADO).
 
 > [!IMPORTANT]
-> - Wichtigster Grundsatz: *Qualitative Spezifikation → Qualitatives Ergebnis*
+> - Wichtigster Grundsatz: **Qualitative Spezifikation → Qualitatives Ergebnis**
 > - Genauere Beschreibungen im [readme.aproda.md](readme.aproda.md) und [README.md](../README.md)
 > - (Noch) nicht kompatibel mit ACT (Aproda Copilot Template) von Antionio. **Nicht getestet und nicht empfohlen, beides gleichzeitig in einem Repo zu verwenden**
 
