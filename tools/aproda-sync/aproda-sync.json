@@ -58,7 +58,7 @@
                     "fork": "toolkitRoot: \".\""
                 }
             ]
-        }
+        },
     ],
     "includeGlobs": [
         "**/*.aproda.*", // every net-new Aproda file (infix convention)
@@ -86,8 +86,15 @@
     //    fork's edited variant (that is the point — the edit lives in the fork).
     "inPlaceEdits": [
         "copilot-instructions.md",
-        "agents/al-developer.agent.md",
+        "README.md",
+        "agents/al-architect.agent.md",
         "agents/al-conductor.agent.md",
+        "agents/al-developer.agent.md",
+        "agents/al-implement-subagent.agent.md",
+        "agents/al-triage.agent.md",
+        "instructions/al-testing.instructions.md",
+        "prompts/al-pr-prepare.prompt.md",
+        "skills/skill-testing/SKILL.md",
         "tools/aldc-validate/index.js"
     ],
     // 4) ALDC framework files. When true, the syncer additionally treats the

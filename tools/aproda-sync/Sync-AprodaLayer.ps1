@@ -364,6 +364,8 @@ else {
             'instructions\uat-loop.aproda.instructions.md' = 'renamed to hitl-validation.aproda.instructions.md'
             # v1.2.0_aproda.4
             'skills\skill-aproda-test-loop'                = 'renamed to skill-aproda-deploy-run-verify'
+            # v1.2.0_aproda.5
+            'skills\skill-ado'                             = 'renamed to skill-aproda-ado'
         }
         $cleanupBase = Join-Path $dstRepo $projectBase
         foreach ($kv in $staleCleanup.GetEnumerator()) {
