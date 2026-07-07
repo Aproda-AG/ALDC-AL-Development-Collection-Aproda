@@ -61,7 +61,7 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 | Feature | Beschreibung |
 |---------|--------------|
 | **Deploy-Run-Verify Cycle** | `skill-aproda-deploy-run-verify` — publish → sync → run-tests → review gegen ASINST-Umgebung (später Container); loop bis grün |
-| **ADO-Integration** | `skill-ado` — `req_name = {type}-{id}` (z.B. `bug-36370`), ADO-URL in jedem Plan-Dokument |
+| **ADO-Integration** | `skill-aproda-ado` — `req_name = {type}-{id}` (z.B. `bug-36370`), ADO-URL in jedem Plan-Dokument |
 | **HITL Validation** | Strukturiertes Issue-Tracking in `{req}-hitl-validation-issues.md` über mehrere Pre-PR Feedback-Runden ([Bitte Lesen](readme.aproda.md#hitl-validation)) |
 | **Modul-Doku** | `al-doc-update`-Workflow — `<Modul>.reference.md` (EN) + `<Modul>.Handbuch.de-CH.md` |
 

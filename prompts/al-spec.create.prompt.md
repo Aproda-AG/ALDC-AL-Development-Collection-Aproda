@@ -355,6 +355,14 @@ page {ID} "{Prefix} {Entity} API"
 
 > The structure above is the single source of truth. Do not read `.github/docs/templates/spec-template.md` to obtain the layout — that file is a human reference; the prompt already encodes the contract.
 
+## Step 3 — Update memory.md
+
+After writing the spec file, update `.github/plans/memory.md`:
+
+- If the row for `${input:req_name}` exists: keep Status as `draft` (spec creation doesn\'t change the lifecycle status — implementation start does); update the Last Updated date.
+- If no row exists yet (LOW path, no prior architect step): add a new row with Status `draft`.
+- Do **not** create a new row if one already exists — update in-place.
+
 ## Next Steps
 
 **Complexity: ${input:Complexity}**
@@ -397,3 +405,4 @@ page {ID} "{Prefix} {Entity} API"
 - ✅ Every subscribed base-app event was symbol-verified to exist (unverifiable ones moved to Open Questions)
 - ✅ Test scenarios defined in Given/When/Then format
 - ✅ Handoff section points to correct next agent per complexity
+- ✅ `memory.md` → `## Active Requirements` row exists with Status `draft` and updated date

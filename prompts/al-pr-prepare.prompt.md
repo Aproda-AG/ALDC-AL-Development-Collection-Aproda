@@ -326,6 +326,17 @@ Create `/reports/pr-draft.md` with this structure:
 - Document decisions
 - Keep security visible
 
+## Aproda: memory.md Completion Update
+
+Before finalizing the PR, update `.github/plans/memory.md`:
+
+1. **Move the req row** from `## Active Requirements` to `## Completed Requirements`:
+   - Add row: `| {req_name} | {YYYY-MM-DD} | No |`
+   - Remove the row from Active Requirements table
+2. **Append Inter-Session Context** entry (date, who = al-pr-prepare, what = PR created, branch, PR number if known).
+
+> This is the only step that signals delivery acceptance to all agents. Without it, the req stays in `review` forever.
+
 ## Aproda: Documentation Update (D-13 / D-14)
 
 Before finalizing the PR, refresh the durable per-module documentation:

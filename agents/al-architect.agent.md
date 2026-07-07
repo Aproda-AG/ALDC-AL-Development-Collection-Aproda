@@ -92,13 +92,16 @@ Workflow: al-architect (DESIGN) → al-spec.create (DETAIL) → @al-conductor (I
 **TRIGGER**: Immediately after the user gives an **unambiguous affirmative** — e.g. "approved", "yes, proceed", "looks good", "go ahead". If the response is ambiguous (e.g. "ok", "interesting", "maybe", "sounds good"), do NOT treat it as approval — ask explicitly: "Do you approve this architecture for documentation?"
 
 **ACTIONS** (in order, automatic, no waiting for further request):
-1. **DERIVE `{req_name}`**: If the input references an ADO work item (Bug/Task/US/Feature + ID), load **`skill-ado`** and apply its Pattern 1 (e.g. Bug 36370 → `bug-36370`). Otherwise: lowercase, replace spaces and special characters with hyphens, collapse repeated hyphens, trim to ≤40 chars (e.g. "Customer VIP Program" → `customer-vip-program`). State the derived name and let the user correct it before file creation.
-2. **CHECK EXISTENCE** of `.github/plans/{req_name}/{req_name}.architecture.md`. If it already exists, do NOT overwrite: read it, report its `Status` (Proposed / Approved / Implemented / Superseded), and ask whether to (a) supersede with a new version, (b) update in place, or (c) choose a different `{req_name}`. Proceed only after the user decides.
+1. **DERIVE `{req_name}`**: If the input references an ADO work item (Bug/Task/US/Feature + ID), load **`skill-aproda-ado`** and apply its Pattern 1 (e.g. Bug 36370 → `bug-36370`). Otherwise: lowercase, replace spaces and special characters with hyphens, collapse repeated hyphens, trim to ≤40 chars (e.g. "Customer VIP Program" → `customer-vip-program`). State the derived name and let the user correct it before file creation.
+2. **NOTE ACTIVE WORK** — read `memory.md` → `## Active Requirements`. If any row has Status `in progress` or `review`, mention it briefly (e.g. "ℹ️ `{req}` is currently `{status}`") and continue — no hard stop, the user decides.
+3. **CHECK EXISTENCE** of `.github/plans/{req_name}/{req_name}.architecture.md`. If it already exists, do NOT overwrite: read it, report its `Status` (Proposed / Approved / Implemented / Superseded), and ask whether to (a) supersede with a new version, (b) update in place, or (c) choose a different `{req_name}`. Proceed only after the user decides.
 3. **COPY** `.github/docs/templates/architecture-template.md` → `.github/plans/{req_name}/{req_name}.architecture.md` (kebab-case)
 4. **POPULATE** with the approved architectural design
-5. **APPEND** decision summary to `.github/plans/memory.md` (never delete existing content)
+5. **UPDATE memory.md**:
+   - In `## Active Requirements` table: set Status to `draft` (create the row if absent, with complexity and today's date)
+   - Append decision summary to `## Decisions Log` (never delete existing content)
 6. **CONFIRM** creation: "✅ Created `.github/plans/{req_name}/{req_name}.architecture.md`"
-7. **SUGGEST** next step (@al-conductor or @workspace use al-spec.create)
+7. **SUGGEST** next step: run `@workspace use al-spec.create` → status stays `draft` until implementation starts
 
 **If user hasn't approved yet**: present design, ask "Does this architecture meet your requirements?", wait for confirmation, THEN execute above.
 

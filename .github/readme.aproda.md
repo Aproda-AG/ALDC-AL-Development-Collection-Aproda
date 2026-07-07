@@ -15,7 +15,7 @@ What the Aproda layer adds on top of upstream ALDC:
 
 | Feature | Description |
 |---------|-------------|
-| **ADO work item integration** | `skill-ado` — maps ADO work items (Bug/Task/US/Feature) to `req_name`, plans folder, and document headers; URL-based linking, no API fetch |
+| **ADO work item integration** | `skill-aproda-ado` — maps ADO work items (Bug/Task/US/Feature) to `req_name`, plans folder, and document headers; URL-based linking, no API fetch |
 | **Deploy-Run-Verify Cycle** | `skill-aproda-deploy-run-verify` — publish → sync → deploy → run → review cycle for on-premises BC instances (VALIDATED, 27/27 green) |
 | **HITL Validation instruction** | Auto-applied guardrail that wires the Deploy-Run-Verify Cycle into the HITL Validation phase |
 | **Layer meta-skill** | `skill-aproda-aldc` — explains and extends the Aproda customization layer itself; entry to `site-profile.aproda.md` |
@@ -91,7 +91,7 @@ The selection dialog is skipped entirely.
 
 ### ADO work item integration (in work ⚠️)
 
-Requirements, bugs, and tasks are tracked in Azure DevOps and flow directly into the ALDC planning structure via `skill-ado`:
+Requirements, bugs, and tasks are tracked in Azure DevOps and flow directly into the ALDC planning structure via `skill-aproda-ado`:
 
 - **Type-ID pattern** — the `req_name` (plans folder name) is derived as `{type}-{id}` (e.g. `bug-36370`, `us-99001`, `task-12345`). No descriptive slug — the title lives in ADO.
 - **ADO header** — every plan document gets an `**ADO**: [Bug 36370](…)` link at the top so context is never lost.
@@ -113,7 +113,7 @@ Requirements, bugs, and tasks are tracked in Azure DevOps and flow directly into
    Hand it to the appropriate agent (`@al-architect` for MEDIUM/HIGH complexity, or start with `/al-spec.create` for LOW). The agent confirms the derived `req_name` before creating any files.
 
 
-See `skill-ado` for the full naming and URL construction rules (`org = alphasol`, project from `aldc.yaml → ado.project`).
+See `skill-aproda-ado` for the full naming and URL construction rules (`org = alphasol`, project from `aldc.yaml → ado.project`).
 
 ---
 

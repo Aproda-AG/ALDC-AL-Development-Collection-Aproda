@@ -15,9 +15,11 @@
 
 ## Active Requirements
 
+> Status lifecycle: `draft` → `in progress` → `review` → *(pr-prepare → Completed)*
+
 | req_name | Complexity | Status | Last Updated |
 |----------|-----------|--------|--------------|
-| {req_name} | LOW/MEDIUM/HIGH | draft/in-progress/review/done | {date} |
+| {req_name} | LOW/MEDIUM/HIGH | draft | {date} |
 
 ## Completed Requirements
 

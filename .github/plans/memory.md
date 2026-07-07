@@ -17,6 +17,8 @@
 
 ## Completed Requirements
 
+> Status lifecycle: `draft` → `in progress` → `review` → *(pr-prepare → Completed)*
+
 | req_name | Completed | Archived |
 |----------|-----------|----------|
 

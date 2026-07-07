@@ -123,7 +123,7 @@ Progress is by **phase** (N/Total), a real value — never invent per-task perce
 
 6. **🚨 HARD GATE — PLAN APPROVAL**: STOP and WAIT for explicit user approval. DO NOT start implementation until user confirms. If `test-plan.md` doesn't exist for this requirement, CREATE IT from template during planning. Verify requirement set: `.spec.md` + `.architecture.md` + `.test-plan.md`.
 
-7. **Write Plan File**: Once approved, write `.github/plans/<task-name>/<task-name>-plan.md`. If the requirement originates from an ADO work item, load **`skill-ado`** to derive `<task-name>` and embed the ADO header.
+7. **Write Plan File**: Once approved, write `.github/plans/<task-name>/<task-name>-plan.md`. If the requirement originates from an ADO work item, load **`skill-aproda-ado`** to derive `<task-name>` and embed the ADO header.
 
 8. **Create Phase 1 Completion File** (MANDATORY): Write `.github/plans/<task-name>/<task-name>-phase-1-complete.md` with:
    - Planning findings summary (from al-planning-subagent)
@@ -268,8 +268,9 @@ After the review verdict allows proceeding (APPROVED / APPROVED_WITH_RECOMMENDAT
    - Final verification (all tests pass)
 
 2. **🚨 MANDATORY memory.md update at completion**:
-   Append to `.github/plans/memory.md`:
-   - Requirement status: in-progress → done
+   Update `.github/plans/memory.md`:
+   - **Active Requirements table**: change Status from `in progress` → `review` (delivery hands off to the human for testing; `al-pr-prepare` moves to Completed after acceptance)
+   - Append Inter-Session Context entry: date, who, what was done, what's next
    - Decisions taken during implementation
    - Deviations from spec/architecture (if any)
    - Test summary (total tests, pass rate)
@@ -622,7 +623,7 @@ Cross-check implement-subagent's "### Skills Loaded" against review-subagent's "
 - [ ] All phases complete
 - [ ] Full test suite passes
 - [ ] Summary presented to user
-- [ ] memory.md updated (in-progress → done)
+- [ ] memory.md updated (in progress → review)
 - [ ] Next steps recommended
 
 **If validation fails**: stop, report issue, wait for user guidance.

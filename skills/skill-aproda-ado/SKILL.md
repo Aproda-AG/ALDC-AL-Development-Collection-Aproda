@@ -1,5 +1,5 @@
 ---
-name: skill-ado
+name: skill-aproda-ado
 description: "Azure DevOps work item conventions for ALDC plans. Use when a requirement, bug, or task originates from an ADO work item — governs req_name derivation, folder naming, URL construction, and diagnosis/plan file headers."
 ---
 
@@ -26,6 +26,7 @@ Lowercase type + numeric ID. No descriptive slug — the title lives in ADO.
 
 Folder + files: `.github/plans/bug-36370/bug-36370-diagnosis.md` (Triage), `…-plan.md` / `….spec.md` / `….architecture.md` (Conductor/Architect).
 
+**Before creating any files:** read `memory.md` → `## Active Requirements`. If any row has Status `in progress` or `review`, mention it briefly (e.g. "ℹ️ `{req}` is currently `{status}`") and continue — no hard stop.
 State the derived `{req_name}` and let the user correct it before creating files. If only an ID is given, ask once for the type.
 
 ## Pattern 2 — ADO header (below the title, before other metadata)
