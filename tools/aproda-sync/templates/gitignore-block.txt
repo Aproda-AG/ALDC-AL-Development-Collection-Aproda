@@ -24,6 +24,7 @@ Base/tools/bcquality-aproda/
 .github/skills/skill-agent-toolkit/
 .github/skills/skill-api/
 .github/skills/skill-aproda-aldc/
+.github/skills/skill-aproda-ado/
 .github/skills/skill-aproda-deploy-run-verify/
 .github/skills/skill-contribution-assistant/
 .github/skills/skill-copilot/
