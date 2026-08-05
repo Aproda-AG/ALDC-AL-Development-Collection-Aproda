@@ -1,14 +1,14 @@
 ---
 agent: agent
-model: Claude Sonnet 4.5
+model: Claude Sonnet 4.6
 description: 'Prepare a clean, documented pull request draft for AL features or fixes with summary, testing notes, and checklist.'
-tools: [vscode/getProjectSetupInfo, vscode/installExtension, vscode/newWorkspace, vscode/runCommand, vscode/vscodeAPI, vscode/extensions, execute/runNotebookCell, execute/getTerminalOutput, execute/createAndRunTask, execute/runInTerminal, execute/runTests, read/getNotebookSummary, read/problems, read/readFile, read/readNotebookCellOutput, read/terminalSelection, read/terminalLastCommand, agent, edit, search, web, 'github/*', 'github/*', 'github/*', 'microsoft-docs/*', 'al-symbols-mcp/*', ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, sshadowsdk.al-lsp-for-agents/bclsp_incomingCalls, sshadowsdk.al-lsp-for-agents/bclsp_outgoingCalls, sshadowsdk.al-lsp-for-agents/bclsp_codeLens, sshadowsdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols, sshadowsdk.al-lsp-for-agents/bclsp_renameSymbol, todo]
+tools: [vscode/getProjectSetupInfo, vscode/installExtension, vscode/newWorkspace, vscode/runCommand, vscode/vscodeAPI, vscode/extensions, execute/runNotebookCell, execute/getTerminalOutput, execute/createAndRunTask, execute/runInTerminal, execute/runTests, read/getNotebookSummary, read/problems, read/readFile, read/readNotebookCellOutput, read/terminalSelection, read/terminalLastCommand, agent, edit, search, web, 'github/*', 'github/*', 'github/*', 'microsoft-learn/microsoft_docs_fetch', microsoft-learn/microsoft_docs_search, 'al-symbols-mcp/*', ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, SShadowSdk.al-lsp-for-agents/bclsp_goToDefinition, SShadowSdk.al-lsp-for-agents/bclsp_hover, SShadowSdk.al-lsp-for-agents/bclsp_findReferences, SShadowSdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, SShadowSdk.al-lsp-for-agents/bclsp_incomingCalls, SShadowSdk.al-lsp-for-agents/bclsp_outgoingCalls, SShadowSdk.al-lsp-for-agents/bclsp_codeLens, SShadowSdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, SShadowSdk.al-lsp-for-agents/bclsp_documentSymbols, SShadowSdk.al-lsp-for-agents/bclsp_renameSymbol, todo]
 
 ---
 
 # AL Pull Request Preparation
 
-Your goal is to prepare a **pull request draft** for the branch `${input:Branch}` summarizing all modifications, test evidence, and validation steps.
+Your goal is to prepare a **pull request draft** for the branch `${input:Branch}` summarizing all modifications, test evidence, and validation steps — and to execute all finalization steps at the end of this file (memory.md update, documentation update).
 
 ## 🔒 Human Gate: Pre-PR Review
 
@@ -55,276 +55,62 @@ Categorize into:
 ### 2. Extract Metadata
 
 **Find References:**
-Scan commit messages for:
-- Issue references (#123)
-- Work item IDs
-- Requirement numbers
+Scan commit messages and PR description for:
+- ADO work item references (`#123`) — used when repo is hosted directly in Azure DevOps
+- Azure Boards GitHub App references (`AB#123`) — used when repo is on GitHub linked to Azure Boards
+- Requirement names (matching `.github/plans/` subdirectories)
 
 **Pattern matching:**
-- Fixes #123
-- Closes #456
-- Related to WORK-789
+- #123 (ADO)
+- AB#123 (GitHub + Azure Boards)
+- req_name
+
+**Auto-detect repo type:** If the remote origin URL contains `dev.azure.com` or `visualstudio.com`, use `#123`. If it contains `github.com`, use `AB#123`.
 
 **Identify Reviewers:**
 If `${input:Reviewer}` is specified, include in the draft.
 
 ### 3. Generate PR Draft
 
-Create `/reports/pr-draft.md` with this structure:
+Create `/reports/pr-draft.md` with this compact structure:
 
 ```markdown
-# Pull Request: [Feature/Fix Title]
+## What
+[1-2 sentences: what was implemented/fixed and why]
 
-**Branch:** `${input:Branch}`
-**Target:** `main`
-**Author:** [Author Name]
-**Date:** [Current Date]
+## References
+- Req: `{req_name}` · Spec: `.github/plans/{req_name}/{req_name}.spec.md`
+- #[work-item] *(ADO) or* AB#[work-item] *(GitHub + Azure Boards)*
 
-## Overview
+## DB Changes
+> none
+<!-- or: TableExt 50xxx — field "XYZ" added (no upgrade codeunit required) -->
 
-[2-3 sentence description of changes]
+## Test Result
+- Deploy-Run-Verify: ✅ / ❌
+- Open HITL issues: none / [link to {req_name}-hitl-validation-issues.md]
 
-**Type of Change:**
-- [ ] New Feature
-- [ ] Bug Fix
-- [ ] Refactoring
-- [ ] Performance Improvement
-- [ ] Documentation
-- [ ] Configuration Change
-
-## Related Issues
-
-- Closes #[issue-number]
-- Relates to #[issue-number]
-
-## Changes Summary
-
-### File Changes
-
-| Category | Files | +Lines | -Lines |
-|----------|-------|--------|--------|
-| New Features | [#] | [#] | [#] |
-| Bug Fixes | [#] | [#] | [#] |
-| Tests | [#] | [#] | [#] |
-| Docs | [#] | [#] | [#] |
-| **Total** | **[#]** | **[#]** | **[#]** |
-
-### AL Objects Modified
-
-#### New Objects
-
-| Type | ID | Name | Purpose |
-|------|----|----- |---------|
-| Table | [ID] | [Name] | [Purpose] |
-| Page | [ID] | [Name] | [Purpose] |
-| Codeunit | [ID] | [Name] | [Purpose] |
-
-#### Modified Objects
-
-| Type | ID | Name | Changes |
-|------|----|----- |---------|
-| TableExt | [ID] | [Name] | [Description] |
-| PageExt | [ID] | [Name] | [Description] |
-
-#### Deleted Objects
-
-| Type | ID | Name | Reason |
-|------|----|----- |-------|
-| [Type] | [ID] | [Name] | [Reason] |
-
-## Technical Details
-
-### Architecture Changes
-[Describe design pattern or architecture changes]
-
-### Dependencies
-**New:** [List new dependencies]
-**Modified:** [old version → new version]
-**Removed:** [List removed dependencies]
-
-### Database Changes
-- [ ] New tables
-- [ ] New fields
-- [ ] Modified fields
-- [ ] New keys
-
-**Migration Notes:** [Any data migration needed]
-
-### API Changes
-**New Endpoints:**
-- `GET /api/[endpoint]` - [Description]
-
-**Modified Endpoints:**
-- `[Method] /api/[endpoint]` - [Changes]
-
-**Breaking Changes:** [List breaking changes]
-
-### Events
-**Published:** [New events and purpose]
-**Subscribed:** [New subscribers and purpose]
-
-## Testing
-
-### Test Scenarios
-
-1. **Scenario:** [Description]
-   - **Steps:** [How to test]
-   - **Expected:** [Expected result]
-   - **Result:** ✅ Pass / ❌ Fail
-
-### Automated Tests
-
-- ✅ Unit Tests: [X/Y passed]
-- ✅ Integration Tests: [X/Y passed]
-- ✅ Code Coverage: [X]%
-
-### Performance Impact
-
-- [ ] No impact
-- [ ] Improvement: [Details]
-- [ ] Potential impact: [Mitigation]
-
-## Review Checklist
-
-### Code Quality
-- [ ] Follows AL naming conventions
-- [ ] Follows AL style guidelines
-- [ ] No compiler warnings
-- [ ] Error handling implemented
-- [ ] Logging adequate
-
-### Security
-- [ ] No hardcoded secrets
-- [ ] Permissions reviewed
-- [ ] Input validation
-- [ ] No SQL injection risks
-
-### Testing
-- [ ] All tests pass
-- [ ] New code has tests
-- [ ] Edge cases tested
-- [ ] Manual testing done
-
-### Documentation
-- [ ] Code comments added
-- [ ] API docs updated
-- [ ] README updated
-- [ ] Help text added
-
-### BC Specific
-- [ ] Object IDs in range
-- [ ] Event patterns correct
-- [ ] Page layouts user-friendly
-- [ ] Translations handled
-
-### Deployment
-- [ ] Build succeeds
-- [ ] Package creates
-- [ ] Deployment steps documented
-- [ ] Rollback plan ready
-
-## Deployment Notes
-
-### Steps
-1. [Deployment instructions]
-2. [Configuration changes]
-3. [Verification steps]
-
-### Prerequisites
-[Requirements for deployment]
-
-### Rollback Plan
-[How to rollback if needed]
-
-## Screenshots
-
-### Before
-[Previous state]
-
-### After
-[New state]
-
-## Additional Notes
-
-### Known Issues
-[Limitations or known issues]
-
-### Future Enhancements
-[Potential improvements]
-
-### Breaking Changes
-[Breaking changes affecting existing functionality]
-
-## Reviewer Notes
-
-**Suggested Reviewers:**
-- ${input:Reviewer} - [Reason]
-
-**Focus Areas:**
-1. [Area to review carefully]
-2. [Another focus area]
-
-**Questions:**
-[Specific questions or concerns]
-
----
-
-**Generated by:** AL PR Preparation Workflow
-**Generated on:** [Timestamp]
+## Deployment
+> no special steps
+<!-- or: list steps beyond standard AL-Go release here -->
 ```
 
-## Output
+**Rules:**
+- Omit empty sections — only include sections with real content.
+- DB Changes: only fill in if new tables, new fields, or changed keys are present.
+- Deployment: only fill in if steps beyond the standard AL-Go release are required.
+- Do NOT list AL objects — changed files in GH/ADO already show this.
 
 **Primary:** `/reports/pr-draft.md`
-**Format:** Complete markdown document ready for PR creation
+**Format:** Compact markdown — only sections with real content
 
 ## Success Criteria
 
 - ✅ PR draft file created under `/reports/pr-draft.md`
-- ✅ Changes summarized by category
-- ✅ All modified AL objects documented
-- ✅ Related issues referenced
-- ✅ Review checklist complete
-- ✅ Deployment notes clear
-
-## Common PR Patterns
-
-### Feature Addition
-- Emphasize new capabilities
-- User benefit focus
-- Comprehensive testing
-- Document APIs/events
-
-### Bug Fix
-- Reference original issue
-- Explain root cause
-- Show before/after
-- Include regression tests
-
-### Refactoring
-- Explain motivation
-- Show no functional changes
-- Highlight improvements
-- Demonstrate coverage
-
-### Performance Optimization
-- Include benchmarks
-- Show improvements
-- Document approach
-- Note trade-offs
-
-## Tips
-
-- Be concise but thorough
-- Use tables for structure
-- Include file names and line numbers
-- Link to related documentation
-- Provide context for changes
-- Make reviewer's job easy
-- Include visual evidence
-- Anticipate questions
-- Document decisions
-- Keep security visible
+- ✅ "What" filled in with 1-2 sentences
+- ✅ Work item reference present (`#123` for ADO, `AB#123` for GitHub + Azure Boards)
+- ✅ DB Changes explicitly stated (or explicitly "none")
+- ✅ Deploy-Run-Verify result documented
 
 ## Aproda: memory.md Completion Update
 
