@@ -14,9 +14,10 @@
 
 [CmdletBinding()]
 param(
-    [string] $SearchRoot = '',  # Folder to scan. Default: parent folder of fork.
-    [switch] $IncludeNonAproda,       # Also report repos without Aproda-ALDC layer.
-    [switch] $FullDiff                # SHA-256 layer content compare (slower; default: version only).
+    [string]   $SearchRoot = '',        # Folder to scan. Default: parent folder of fork.
+    [string[]] $SkipRepos = @('BCQuality*', 'bcquality*'),  # Name patterns to silently ignore.
+    [switch]   $IncludeNonAproda,          # Also report repos without Aproda-ALDC layer.
+    [switch]   $FullDiff                   # SHA-256 layer content compare (slower; default: version only).
 )
 
 $ErrorActionPreference = 'Stop'
@@ -47,21 +48,18 @@ if ([string]::IsNullOrWhiteSpace($forkPath) -or -not (Test-Path $forkPath)) {
 $aprSyncDir = Join-Path $forkPath 'tools\aproda-sync'
 
 # ── Version helper ────────────────────────────────────────────────────────────
-function Get-LayerVersion([string] $repoRoot, [string] $layout) {
-    $yaml = if ($layout -eq 'fork') {
-        Join-Path $repoRoot 'aldc.yaml'
-    }
-    else {
-        Join-Path $repoRoot '.github\aldc.yaml'
-    }
+# aldc.yaml always sits at the REPO ROOT on both fork and project side
+# (dual-variant, D-18 — only toolkitRoot differs, the file path does not).
+function Get-LayerVersion([string] $repoRoot) {
+    $yaml = Join-Path $repoRoot 'aldc.yaml'
     if (-not (Test-Path -LiteralPath $yaml)) { return $null }
     foreach ($line in (Get-Content -LiteralPath $yaml -ErrorAction SilentlyContinue)) {
         if ($line -match '^\s+layerVersion:\s*"([^"]+)"') { return $Matches[1] }
     }
-    return $null  # aldc.yaml exists but no layerVersion (ALDC core, not Aproda fork)
+    return $null  # aldc.yaml exists but no layerVersion (upstream ALDC core, not Aproda fork)
 }
 
-$forkVersion = Get-LayerVersion $forkPath 'fork'
+$forkVersion = Get-LayerVersion $forkPath
 if (-not $forkVersion) {
     Write-Error "Could not read aproda.layerVersion from fork: $forkPath\aldc.yaml"
     return
@@ -76,11 +74,28 @@ Write-Host "Scanning     : $SearchRoot" -ForegroundColor Cyan
 if ($FullDiff) { Write-Host '             : Full diff enabled (SHA-256)' -ForegroundColor DarkCyan }
 Write-Host ''
 
+# Scan direct children + one level deeper inside container folders (no .git at top)
+function Test-SkipRepo([string] $name, [string[]] $patterns) {
+    foreach ($p in $patterns) { if ($name -like $p) { return $true } }; return $false
+}
+$allTopDirs = @(Get-ChildItem -Path $SearchRoot -Directory -ErrorAction SilentlyContinue)
+$rawRepos = [System.Collections.Generic.List[string]]::new()
+foreach ($d in $allTopDirs) {
+    if (Test-Path (Join-Path $d.FullName '.git')) {
+        $rawRepos.Add($d.FullName) | Out-Null
+    }
+    else {
+        # Container folder (no .git itself, e.g. _GitHub) — scan one level deeper
+        Get-ChildItem -Path $d.FullName -Directory -ErrorAction SilentlyContinue |
+        Where-Object { Test-Path (Join-Path $_.FullName '.git') } |
+        ForEach-Object { $rawRepos.Add($_.FullName) | Out-Null }
+    }
+}
 $repos = @(
-    Get-ChildItem -Path $SearchRoot -Directory -ErrorAction SilentlyContinue |
-    Where-Object { Test-Path (Join-Path $_.FullName '.git') } |
-    Where-Object { $_.FullName -ne $forkPath } |
-    Select-Object -ExpandProperty FullName | Sort-Object
+    $rawRepos |
+    Where-Object { $_ -ne $forkPath } |
+    Where-Object { -not (Test-SkipRepo (Split-Path -Leaf $_) $SkipRepos) } |
+    Sort-Object
 )
 if ($repos.Count -eq 0) { Write-Host 'No git repos found in scan root.' -ForegroundColor Yellow; return }
 
@@ -147,7 +162,7 @@ $results = [System.Collections.Generic.List[pscustomobject]]::new()
 
 foreach ($repo in $repos) {
     $repoName = Split-Path -Leaf $repo
-    $version = Get-LayerVersion $repo 'project'
+    $version = Get-LayerVersion $repo
 
     # No Aproda-ALDC detected
     if ($null -eq $version) {

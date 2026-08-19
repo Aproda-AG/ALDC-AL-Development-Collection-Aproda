@@ -9,10 +9,11 @@
 #           repos without Aproda-ALDC (no .github/aldc.yaml with layerVersion)
 # BEST PRACTICE: run Get-AprodaFleetStatus first to preview which repos need update.
 
-[CmdletBinding(SupportsShouldProcess)]
+[CmdletBinding()]
 param(
-    [string] $SearchRoot = '',  # Folder to scan. Default: parent folder of fork.
-    [switch] $WhatIf            # Dry-run: show what would be done, copy nothing.
+    [string]   $SearchRoot = '',  # Folder to scan. Default: parent folder of fork.
+    [string[]] $SkipRepos  = @('BCQuality*', 'bcquality*'),
+    [switch]   $WhatIf            # Dry-run: show what would be done, copy nothing.
 )
 
 $ErrorActionPreference = 'Stop'
@@ -38,12 +39,9 @@ if ([string]::IsNullOrWhiteSpace($forkPath) -or -not (Test-Path $forkPath)) {
 $aprSyncDir = Join-Path $forkPath 'tools\aproda-sync'
 
 # ── Version helper ────────────────────────────────────────────────────────────
-function Get-LayerVersion([string] $repoRoot, [string] $layout) {
-    $yaml = if ($layout -eq 'fork') {
-        Join-Path $repoRoot 'aldc.yaml'
-    } else {
-        Join-Path $repoRoot '.github\aldc.yaml'
-    }
+# aldc.yaml always sits at the REPO ROOT on both fork and project side (dual-variant, D-18).
+function Get-LayerVersion([string] $repoRoot) {
+    $yaml = Join-Path $repoRoot 'aldc.yaml'
     if (-not (Test-Path -LiteralPath $yaml)) { return $null }
     foreach ($line in (Get-Content -LiteralPath $yaml -ErrorAction SilentlyContinue)) {
         if ($line -match '^\s+layerVersion:\s*"([^"]+)"') { return $Matches[1] }
@@ -51,7 +49,7 @@ function Get-LayerVersion([string] $repoRoot, [string] $layout) {
     return $null
 }
 
-$forkVersion = Get-LayerVersion $forkPath 'fork'
+$forkVersion = Get-LayerVersion $forkPath
 if (-not $forkVersion) {
     Write-Error "Could not read aproda.layerVersion from fork: $forkPath\aldc.yaml"
     return
@@ -67,10 +65,22 @@ if ($WhatIf) { Write-Host '             : WhatIf — no files will be changed' -
 Write-Host ''
 
 $repos = @(
-    Get-ChildItem -Path $SearchRoot -Directory -ErrorAction SilentlyContinue |
-    Where-Object { Test-Path (Join-Path $_.FullName '.git') } |
-    Where-Object { $_.FullName -ne $forkPath } |
-    Select-Object -ExpandProperty FullName | Sort-Object
+    (& {
+        $allTop = @(Get-ChildItem -Path $SearchRoot -Directory -ErrorAction SilentlyContinue)
+        $found  = [System.Collections.Generic.List[string]]::new()
+        foreach ($d in $allTop) {
+            if (Test-Path (Join-Path $d.FullName '.git')) { $found.Add($d.FullName) | Out-Null }
+            else {
+                Get-ChildItem -Path $d.FullName -Directory -ErrorAction SilentlyContinue |
+                    Where-Object { Test-Path (Join-Path $_.FullName '.git') } |
+                    ForEach-Object { $found.Add($_.FullName) | Out-Null }
+            }
+        }
+        $found
+    }) |
+    Where-Object { $_ -ne $forkPath } |
+    Where-Object { $n = Split-Path -Leaf $_; -not ($SkipRepos | Where-Object { $n -like $_ }) } |
+    Sort-Object
 )
 if ($repos.Count -eq 0) { Write-Host 'No git repos found in scan root.' -ForegroundColor Yellow; return }
 
@@ -80,7 +90,7 @@ $current  = [System.Collections.Generic.List[string]]::new()
 $skipped  = [System.Collections.Generic.List[string]]::new()
 
 foreach ($repo in $repos) {
-    $version = Get-LayerVersion $repo 'project'
+    $version = Get-LayerVersion $repo
     if ($null -eq $version) { $skipped.Add($repo) | Out-Null; continue }
     if ($version -eq $forkVersion) { $current.Add($repo) | Out-Null; continue }
     $toUpdate.Add($repo) | Out-Null

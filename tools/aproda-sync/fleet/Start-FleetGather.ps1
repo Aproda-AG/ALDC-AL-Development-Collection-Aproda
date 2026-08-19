@@ -18,10 +18,11 @@
 # BEST PRACTICE: run Get-AprodaFleetStatus -FullDiff first to identify which
 #   repos have diverged (DRIFT status) before gathering.
 
-[CmdletBinding(SupportsShouldProcess)]
+[CmdletBinding()]
 param(
-    [string] $SearchRoot = '',  # Folder to scan. Default: parent folder of fork.
-    [switch] $WhatIf            # Dry-run: show what would be copied, change nothing.
+    [string]   $SearchRoot = '',  # Folder to scan. Default: parent folder of fork.
+    [string[]] $SkipRepos  = @('BCQuality*', 'bcquality*'),
+    [switch]   $WhatIf            # Dry-run: show what would be copied, change nothing.
 )
 
 $ErrorActionPreference = 'Stop'
@@ -69,8 +70,9 @@ if (-not $WhatIf) {
 }
 
 # ── Version helper ────────────────────────────────────────────────────────────
+# aldc.yaml always sits at the REPO ROOT on both fork and project side (dual-variant, D-18).
 function Get-LayerVersion([string] $repoRoot) {
-    $yaml = Join-Path $repoRoot '.github\aldc.yaml'
+    $yaml = Join-Path $repoRoot 'aldc.yaml'
     if (-not (Test-Path -LiteralPath $yaml)) { return $null }
     foreach ($line in (Get-Content -LiteralPath $yaml -ErrorAction SilentlyContinue)) {
         if ($line -match '^\s+layerVersion:\s*"([^"]+)"') { return $Matches[1] }
@@ -87,10 +89,22 @@ if ($WhatIf) { Write-Host '         : WhatIf — no files will be changed' -Fore
 Write-Host ''
 
 $allRepos = @(
-    Get-ChildItem -Path $SearchRoot -Directory -ErrorAction SilentlyContinue |
-    Where-Object { Test-Path (Join-Path $_.FullName '.git') } |
-    Where-Object { $_.FullName -ne $forkPath } |
-    Select-Object -ExpandProperty FullName | Sort-Object
+    (& {
+        $allTop = @(Get-ChildItem -Path $SearchRoot -Directory -ErrorAction SilentlyContinue)
+        $found  = [System.Collections.Generic.List[string]]::new()
+        foreach ($d in $allTop) {
+            if (Test-Path (Join-Path $d.FullName '.git')) { $found.Add($d.FullName) | Out-Null }
+            else {
+                Get-ChildItem -Path $d.FullName -Directory -ErrorAction SilentlyContinue |
+                    Where-Object { Test-Path (Join-Path $_.FullName '.git') } |
+                    ForEach-Object { $found.Add($_.FullName) | Out-Null }
+            }
+        }
+        $found
+    }) |
+    Where-Object { $_ -ne $forkPath } |
+    Where-Object { $n = Split-Path -Leaf $_; -not ($SkipRepos | Where-Object { $n -like $_ }) } |
+    Sort-Object
 )
 
 $candidates = @($allRepos | Where-Object {
