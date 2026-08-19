@@ -12,7 +12,7 @@
 [CmdletBinding()]
 param(
     [string]   $SearchRoot = '',  # Folder to scan. Default: parent folder of fork.
-    [string[]] $SkipRepos  = @('BCQuality*', 'bcquality*'),
+    [string[]] $SkipRepos = @('BCQuality*', 'bcquality*'),
     [switch]   $WhatIf            # Dry-run: show what would be done, copy nothing.
 )
 
@@ -30,7 +30,8 @@ elseif ($psEditor) {
     try {
         $d = Split-Path -Parent $psEditor.GetEditorContext().CurrentFile.Path
         $forkPath = Split-Path (Split-Path (Split-Path $d))
-    } catch {}
+    }
+    catch {}
 }
 if ([string]::IsNullOrWhiteSpace($forkPath) -or -not (Test-Path $forkPath)) {
     Write-Error 'Cannot self-locate fork. Set $env:APRODA_SYNC_SCRIPTDIR = "<fork>/tools/aproda-sync".'
@@ -67,13 +68,13 @@ Write-Host ''
 $repos = @(
     (& {
         $allTop = @(Get-ChildItem -Path $SearchRoot -Directory -ErrorAction SilentlyContinue)
-        $found  = [System.Collections.Generic.List[string]]::new()
+        $found = [System.Collections.Generic.List[string]]::new()
         foreach ($d in $allTop) {
             if (Test-Path (Join-Path $d.FullName '.git')) { $found.Add($d.FullName) | Out-Null }
             else {
                 Get-ChildItem -Path $d.FullName -Directory -ErrorAction SilentlyContinue |
-                    Where-Object { Test-Path (Join-Path $_.FullName '.git') } |
-                    ForEach-Object { $found.Add($_.FullName) | Out-Null }
+                Where-Object { Test-Path (Join-Path $_.FullName '.git') } |
+                ForEach-Object { $found.Add($_.FullName) | Out-Null }
             }
         }
         $found
@@ -86,8 +87,8 @@ if ($repos.Count -eq 0) { Write-Host 'No git repos found in scan root.' -Foregro
 
 # ── Classify repos ────────────────────────────────────────────────────────────
 $toUpdate = [System.Collections.Generic.List[string]]::new()
-$current  = [System.Collections.Generic.List[string]]::new()
-$skipped  = [System.Collections.Generic.List[string]]::new()
+$current = [System.Collections.Generic.List[string]]::new()
+$skipped = [System.Collections.Generic.List[string]]::new()
 
 foreach ($repo in $repos) {
     $version = Get-LayerVersion $repo
@@ -126,7 +127,8 @@ foreach ($repo in $toUpdate) {
         if ($WhatIf) {
             & ([ScriptBlock]::Create($engineSrc)) `
                 -Direction pull -ForkPath $forkPath -ProjectRoot $repo -WhatIf
-        } else {
+        }
+        else {
             & ([ScriptBlock]::Create($engineSrc)) `
                 -Direction pull -ForkPath $forkPath -ProjectRoot $repo
         }
@@ -144,7 +146,8 @@ foreach ($repo in $toUpdate) {
 Write-Host '════════════════════════════════════════' -ForegroundColor Cyan
 if ($WhatIf) {
     Write-Host "WhatIf: $($toUpdate.Count) repo(s) would be updated." -ForegroundColor DarkYellow
-} else {
+}
+else {
     $col = if ($failed -eq 0) { 'Green' } else { 'Yellow' }
     Write-Host ("Updated: $updated  Failed: $failed  Skipped: $($skipped.Count)") -ForegroundColor $col
 }
