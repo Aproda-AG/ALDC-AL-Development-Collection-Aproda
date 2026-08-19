@@ -92,6 +92,8 @@
         "agents/al-developer.agent.md",
         "agents/al-implement-subagent.agent.md",
         "agents/al-triage.agent.md",
+        "agents/al-agent-builder.agent.md",
+        "agents/al-presales.agent.md",
         "instructions/al-testing.instructions.md",
         "prompts/al-pr-prepare.prompt.md",
         "skills/skill-testing/SKILL.md",

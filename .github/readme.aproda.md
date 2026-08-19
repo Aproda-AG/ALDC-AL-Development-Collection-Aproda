@@ -1,6 +1,6 @@
 ﻿# Aproda ALDC Layer — README
 
-> **Version:** `1.2.0_aproda.7` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17).
+> **Version:** `1.2.0_aproda.8` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) &nbsp;·&nbsp; **Released:** 2026-08-19 — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17).
 > Aproda's customization layer on top of **ALDC** (AL Development Collection).
 > Fork: <https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda>
 > Upstream: ALDC Core (tracked via `upstream` remote).
@@ -202,6 +202,7 @@ This table **is** the Aproda index (D-17) — the one place to answer "what has 
 | HITL Validation instruction | `.github/instructions/hitl-validation.aproda.instructions.md` | D-11 | live |
 | Doc-update workflow | `.github/prompts/al-doc-update.aproda.prompt.md` | D-14 | live |
 | Layer sync (allowlist manifest + overlay script) | `.github/tools/aproda-sync/` | D-18 | live |
+| Fleet management tools (fork-only: status / update / gather) | `tools/aproda-sync/fleet/` | D-21 | live |
 
 ### In-place Upstream edits (deliberate merge-points)
 
@@ -210,8 +211,12 @@ Exact diffs in the [Upstream edits register](decisions.aproda.md).
 | File | Why | Decision |
 |------|-----|----------|
 | `copilot-instructions.md` | Skills-table rows for the 2 Aproda skills + v1.1→v1.2 drift-fix | D-7 / D-16 / D-17 |
-| `agents/al-developer.agent.md` | Deploy-Run-Verify Cycle + `al-doc-update` wiring (LOW trigger) | D-9 / D-14 |
+| `agents/al-architect.agent.md` | CANNOT block corrected (read-only terminal/subagent allowed for context-gathering); duplicate tool removed | D-2 |
+| `agents/al-developer.agent.md` | Deploy-Run-Verify Cycle + `al-doc-update` wiring; SShadowSdk casing + context7 MCP name fix | D-9 / D-14 / D-2 |
 | `agents/al-conductor.agent.md` | Deploy-Run-Verify Cycle gate + `al-doc-update` row (MEDIUM/HIGH) | D-9 / D-14 |
+| `agents/al-implement-subagent.agent.md` | SShadowSdk publisher casing fix | D-2 |
+| `agents/al-agent-builder.agent.md` | SShadowSdk casing + context7 MCP name fix | D-2 |
+| `agents/al-presales.agent.md` | context7 MCP name fix | D-2 |
 | `tools/aldc-validate/index.js` | v1.1→v1.2 banner drift-fix | D-17 |
 
 ### Personal fallback (not synced)
