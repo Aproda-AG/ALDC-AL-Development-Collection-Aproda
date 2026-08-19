@@ -2,7 +2,7 @@
 
 > **Aproda ALDC** ist Aprodas angepasste Version des quelloffenen [ALDC (AL Development Collection)](https://github.com/javiarmesto/AL-Development-Collection-for-GitHub-Copilot) Frameworks — ein strukturiertes, spec-getriebenes KI-Entwicklungsframework für Microsoft Dynamics 365 Business Central.
 >
-> Weiterlesen: [Aproda-README](readme.aproda.md) · [ALDC Quickstart](../docs/quick-start-en.md)
+> Weiterlesen: [Aproda-README](readme.aproda.md) · [Aproda Quickstart](readme.aproda.md#quickstart--initialize-aproda-aldc-to-a-existing-or-new-project-repo)
 
 ---
 
