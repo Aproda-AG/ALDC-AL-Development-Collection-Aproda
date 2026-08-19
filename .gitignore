@@ -20,6 +20,9 @@ aldc_audit*
 test-results/
 coverage/
 push.*
+# Aproda fleet / compare output (generated JSON reports)
+tools/aproda-sync/_compare-output/*.json
+tools/aproda-sync/fleet/_status-output/*.json
 # Temporary files
 *.tmp
 *.bak

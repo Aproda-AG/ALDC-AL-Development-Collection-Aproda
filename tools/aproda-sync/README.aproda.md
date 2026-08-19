@@ -73,6 +73,9 @@ self-locates. (See *Two ways `Start-Pull.ps1` comes to exist* below.)
 | `Start-Push.ps1.template` | Recurring **push** launcher (same self-location; one path to fill). Copy → `Start-Push.ps1` (git-ignored). |
 | `Start-InitNewProject.ps1` | **Fork-only**, committed (not a template, not synced). Pick a target folder → bootstrap it. Self-locates the fork from its own path. Triggered via the VS Code task (see below) or via `Start-InitNewProject-SRP-Safe.ps1`. |
 | `Start-InitNewProject-SRP-Safe.ps1` | **Fork-only** manual launcher for `Start-InitNewProject.ps1`. Open → `Ctrl+A` → **Run Selection**. Machine-agnostic (self-locating). Use when the VS Code task is unavailable. |
+| `fleet/Get-AprodaFleetStatus.ps1` | **Fork-only fleet tool.** Scans sibling project repos; reports layer version and status (`OK` / `UPDATE` / `DRIFT` / `NONE`). With `-FullDiff` runs a full SHA-256 layer compare. Writes a JSON report to `fleet/_status-output/`. |
+| `fleet/Start-FleetUpdate.ps1` | **Fork-only fleet tool.** Updates all project repos whose layer version is older than the fork by running a pull via the engine. Supports `-WhatIf`. |
+| `fleet/Start-FleetGather.ps1` | **Fork-only fleet tool.** Brings in-place edits from selected project repos back into the fork (push direction). Conflict guard: aborts if the fork has uncommitted tracked changes. Interactive repo selection (Out-GridView / console fallback). Supports `-WhatIf`. |
 
 ## How to run it (SRP-safe)
 
@@ -91,6 +94,9 @@ In practice you don't write that — you use a launcher:
 | Pull the layer into this project | open `Start-Pull.ps1` → **Run Selection** | — (self-locating, already SRP-safe) |
 | Push local layer edits to the fork | open `Start-Push.ps1` → **Run Selection** | — |
 | Onboard a brand-new repo (from fork) | `Ctrl+Shift+P` → **Tasks: Run Task** → **`Aproda: Init New Project`** | open `Start-InitNewProject-SRP-Safe.ps1` → `Ctrl+A` → **Run Selection** |
+| *(Fork admin)* Check status of all local project repos | open `fleet/Get-AprodaFleetStatus.ps1` → **Run Selection** | add `-FullDiff` for content compare |
+| *(Fork admin)* Update outdated project repos to current layer | open `fleet/Start-FleetUpdate.ps1` → **Run Selection** | add `-WhatIf` to preview first |
+| *(Fork admin)* Gather in-place edits from project repos into fork | open `fleet/Start-FleetGather.ps1` → **Run Selection** | add `-WhatIf` to preview first |
 
 > **Always dry-run first** when unsure: the engine supports `-WhatIf` (shows the
 > resolved file set and writes nothing).
