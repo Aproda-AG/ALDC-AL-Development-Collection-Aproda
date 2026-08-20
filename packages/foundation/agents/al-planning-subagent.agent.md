@@ -5,7 +5,7 @@ user-invocable: false
 disable-model-invocation: true
 argument-hint: 'Research goal or problem statement for AL development'
 tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, search, web/githubTextSearch, 'al-symbols-mcp/*', 'microsoft-learn/*', todo]
-model: Claude Sonnet 4.6 (copilot)
+model: GPT-5.6 Terra (copilot)
 handoffs:
   - label: Return to Conductor
     agent: AL Development Conductor

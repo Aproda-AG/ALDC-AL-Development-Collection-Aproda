@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Agent ID** | `dredd` |
-| **Model** | Claude Sonnet 4.6 |
+| **Model** | GPT-5.6 Terra |
 | **Type** | User-facing · Independent audit |
 | **Invocation** | `@Dredd` |
 | **User-invocable** | Yes |

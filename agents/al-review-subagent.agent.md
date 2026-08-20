@@ -5,7 +5,7 @@ user-invocable: false
 disable-model-invocation: true
 argument-hint: 'Phase implementation to review with acceptance criteria and AL validation requirements'
 tools: [read/problems, read/readFile, search, 'al-symbols-mcp/*', ms-dynamics-smb.al/al_debug, ms-dynamics-smb.al/al_setbreakpoint, ms-dynamics-smb.al/al_snapshotdebugging, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolrelations]
-model: Claude Sonnet 4.6 (copilot)
+model: GPT-5.6 Terra (copilot)
 handoffs:
   - label: Return to Conductor
     agent: AL Development Conductor

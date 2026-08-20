@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Agent ID** | `al-implement-subagent` |
-| **Model** | Claude Sonnet 4.6 |
+| **Model** | GPT-5.6 Terra |
 | **Type** | Internal · TDD executor |
 | **Invoked by** | AL Development Conductor |
 | **User-invocable** | No |

@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Agent ID** | `al-architect` |
-| **Model** | Claude Sonnet 4.6 |
+| **Model** | Claude Sonnet 5 |
 | **Type** | User-facing · Strategic |
 | **Invocation** | `@AL Architecture & Design Specialist` |
 

@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Agent ID** | `al-conductor` |
-| **Model** | Claude Sonnet 4.6 |
+| **Model** | GPT-5.6 Terra |
 | **Type** | User-facing · Orchestrator |
 | **Invocation** | `@AL Development Conductor` |
 
@@ -38,9 +38,9 @@ graph LR
 
 | Subagent | Role | Model |
 |---|---|---|
-| **AL Planning Subagent** | Research codebase, gather context, identify objects | Claude Sonnet 4.6 |
-| **AL Implementation Subagent** | RED → GREEN → REFACTOR TDD cycle | Claude Sonnet 4.6 |
-| **AL Code Review Subagent** | Quality assurance, pattern validation, verdict | Claude Sonnet 4.6 |
+| **AL Planning Subagent** | Research codebase, gather context, identify objects | GPT-5.6 Terra |
+| **AL Implementation Subagent** | RED → GREEN → REFACTOR TDD cycle | GPT-5.6 Terra |
+| **AL Code Review Subagent** | Quality assurance, pattern validation, verdict | GPT-5.6 Terra |
 
 ## Input options
 

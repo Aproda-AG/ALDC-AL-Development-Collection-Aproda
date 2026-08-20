@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Agent ID** | `al-developer` |
-| **Model** | Claude Sonnet 4.6 |
+| **Model** | GPT-5.6 Terra |
 | **Type** | User-facing · Tactical |
 | **Invocation** | `@AL Implementation Specialist` |
 

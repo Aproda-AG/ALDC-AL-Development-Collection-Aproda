@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Agent ID** | `al-triage` |
-| **Model** | Claude Sonnet 4.6 |
+| **Model** | GPT-5.6 Terra |
 | **Type** | User-facing · Reactive diagnosis |
 | **Invocation** | `@AL Triage` |
 | **User-invocable** | Yes |

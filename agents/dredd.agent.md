@@ -4,7 +4,7 @@ description: 'Independent, on-demand AL codebase auditor for Business Central. J
 user-invocable: true
 argument-hint: 'Optional: a module/folder to focus on, or "todo" for a full-codebase audit (default = changes vs main)'
 tools: [changes, read/readFile, read/problems, search, edit, 'al-symbols-mcp/*', ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations]
-model: Claude Sonnet 4.6 (copilot)
+model: GPT-5.6 Terra (copilot)
 handoffs:
   - label: Hand findings to implementer
     agent: AL Implementation Specialist

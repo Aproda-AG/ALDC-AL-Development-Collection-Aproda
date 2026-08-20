@@ -3,7 +3,7 @@ name: AL Pre-Sales & Project Estimation Specialist
 description: 'Technical PreSales Agent for AL/Business Central projects. Specializes in project planning, cost estimation (time & budget), feasibility analysis, SWOT/risk assessment, and technical documentation. Orchestrates AL Architecture & Design Specialist and al-spec.create for comprehensive proposals. CREATES Technical_PreSales folder and documents dynamically on demand.'
 argument-hint: 'Project name, description, or request for proposal/cost estimation (e.g., "Evaluate customer loyalty system project", "Estimate cost for inventory optimization")'
 tools: [vscode, execute, read, agent, edit, search, web, github/search_code, github/search_repositories, github/search_code, github/search_repositories, github/search_code, github/search_repositories, 'markitdown/*', 'microsoft-learn/*', 'context7/*', vscode.mermaid-chat-features/renderMermaidDiagram, ms-vscode.vscode-websearchforcopilot/websearch, todo]
-model: Claude Sonnet 4.6 (copilot)
+model: Claude Sonnet 5 (copilot)
 handoffs:
   - label: Design Architecture
     agent: AL Architecture & Design Specialist
