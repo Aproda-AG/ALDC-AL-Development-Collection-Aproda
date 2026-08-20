@@ -99,6 +99,10 @@
         "agents/dredd.agent.md",
         "instructions/al-testing.instructions.md",
         "prompts/al-pr-prepare.prompt.md",
+        "prompts/al-build.prompt.md",
+        "prompts/al-context.create.prompt.md",
+        "prompts/al-initialize.prompt.md",
+        "prompts/al-memory.create.prompt.md",
         "skills/skill-testing/SKILL.md",
         "tools/aldc-validate/index.js"
     ],

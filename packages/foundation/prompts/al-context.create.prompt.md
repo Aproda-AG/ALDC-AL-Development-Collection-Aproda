@@ -1,6 +1,6 @@
 ---
 agent: agent
-model: Claude Sonnet 4.5
+model: GPT-5.6 Terra (copilot)
 description: "Generate or update context.md file documenting project structure, architecture, and key patterns for AI assistants and developers"
 tools: [vscode/memory, read/readFile, edit, search, 'microsoft-docs/*', 'al-symbols-mcp/*', todo]
 ---

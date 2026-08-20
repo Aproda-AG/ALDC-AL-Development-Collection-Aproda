@@ -1,6 +1,6 @@
 ---
 agent: agent
-model: Claude Sonnet 4.5
+model: GPT-5.6 Terra (copilot)
 description: "Generate or update memory.md file tracking decisions, changes, and learnings throughout project development for continuity across sessions"
 tools: [read/problems, edit, search/changes, 'markitdown/*', 'upstash/context7/*', todo]
 ---

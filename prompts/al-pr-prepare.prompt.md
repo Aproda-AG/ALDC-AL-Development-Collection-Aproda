@@ -1,6 +1,6 @@
 ---
 agent: agent
-model: Claude Sonnet 4.6
+model: GPT-5.6 Terra (copilot)
 description: 'Prepare a clean, documented pull request draft for AL features or fixes with summary, testing notes, and checklist.'
 tools: [vscode/getProjectSetupInfo, vscode/installExtension, vscode/newWorkspace, vscode/runCommand, vscode/vscodeAPI, vscode/extensions, execute/runNotebookCell, execute/getTerminalOutput, execute/createAndRunTask, execute/runInTerminal, execute/runTests, read/getNotebookSummary, read/problems, read/readFile, read/readNotebookCellOutput, read/terminalSelection, read/terminalLastCommand, agent, edit, search, web, 'github/*', 'github/*', 'github/*', 'microsoft-learn/microsoft_docs_fetch', microsoft-learn/microsoft_docs_search, 'al-symbols-mcp/*', ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, SShadowSdk.al-lsp-for-agents/bclsp_goToDefinition, SShadowSdk.al-lsp-for-agents/bclsp_hover, SShadowSdk.al-lsp-for-agents/bclsp_findReferences, SShadowSdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, SShadowSdk.al-lsp-for-agents/bclsp_incomingCalls, SShadowSdk.al-lsp-for-agents/bclsp_outgoingCalls, SShadowSdk.al-lsp-for-agents/bclsp_codeLens, SShadowSdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, SShadowSdk.al-lsp-for-agents/bclsp_documentSymbols, SShadowSdk.al-lsp-for-agents/bclsp_renameSymbol, todo]
 

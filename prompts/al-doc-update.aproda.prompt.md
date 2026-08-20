@@ -1,6 +1,6 @@
 ---
 agent: agent
-model: Claude Sonnet 4.5
+model: Claude Sonnet 5 (copilot)
 description: "Aproda: refresh the durable per-module documentation (technical reference EN + user handbook de-CH) under .github/documentation/<Module>/ from the current code + spec. Run at the delivery boundary."
 tools: [vscode/memory, read/readFile, edit, search, 'al-symbols-mcp/*', todo]
 ---
