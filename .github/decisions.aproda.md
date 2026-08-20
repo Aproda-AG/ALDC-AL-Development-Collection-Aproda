@@ -210,6 +210,49 @@ The fork needed a way to manage the *fleet* of project repos that carry the Apro
 
 **All three are fork-only** — they are deliberately absent from `aproda-sync.json` (not in `includeFiles`, not matching any sync glob) so they are invisible to the allowlist syncer in both directions. Rationale: they operate on the fork **as a whole** (comparing/updating/gathering across multiple project repos), require access to the sync engine and a local fork clone, and are never useful inside a project repo. Keeping them fork-side avoids confusing consumers with fork-admin tools they cannot run. Self-location follows the same 3-tier pattern used throughout the toolkit (`$PSScriptRoot` → `$env:APRODA_SYNC_SCRIPTDIR` → `$psEditor` current-file path). The `fleet/_status-output/` output directory is git-ignored.
 
+### D-22 — Per-agent model pinning: cost-tiered defaults + a HITL model-escalation gate
+All 10 agents were pinned to `Claude Sonnet 4.6 (copilot)`, which **retires 2026-09-01**. Migration was therefore forced, not optional — the only decision left was *which* model per agent.
+
+**Selection metric: cost per completed task, not price per token.** Price per token is misleading because verbosity differs by a factor of ~3 between models at the same price tier. Measured against the Artificial Analysis Intelligence Index v4.1.1 (2026-08):
+
+| Model | AA Index | Price in/out | Cost per AA task | Output tokens (full Index) | Speed |
+|-------|---------:|--------------|-----------------:|---------------------------:|------:|
+| Claude Opus 5 | 63 | $5 / $25 | $2.34 | 100M | 59 t/s |
+| GPT-5.6 Terra | 57 | $2 / $12 | **$0.51** | 96M | 116 t/s |
+| Claude Sonnet 5 | 55 | $2 / $10 | $1.72 | 300M | 81 t/s |
+| GPT-5.6 Luna | 52 | $0.20 / $1.20 | $0.05 | 130M | 154 t/s |
+
+Three findings drove the allocation: (a) **Terra dominates Sonnet 5** on both axes — higher index *and* 3.4× lower cost per task, because Sonnet 5's cheaper output price is over-compensated by its token volume; (b) **Opus 5 dominates GPT-5.6 Sol** (63 vs 61 index at a lower output price), so Sol is never the right pick; (c) **Claude Fable 5 is excluded on compliance** — Anthropic retains prompts/outputs for safety classifiers, outside GitHub's standard data-retention agreement, which is disqualifying for customer code.
+
+**Allocation rule: is the prose the product?** Where the deliverable is human-read documents, verbose reasoning is *wertschöpfend* and Sonnet 5's lower output price applies — Anthropic also leads the agentic knowledge-work benchmark (AA-Briefcase). Where the deliverable is code, tool loops, or structured JSON, verbosity is pure waste and Terra wins on index, cost and speed.
+
+| Agent | Model | Why |
+|-------|-------|-----|
+| `al-architect` | Claude Sonnet 5 | Deliverable is `architecture.md` + diagrams; low frequency; prose quality is the product |
+| `al-presales` | Claude Sonnet 5 | Estimation/SWOT/proposal documents, multilingual, no code risk |
+| `al-agent-builder` | Claude Sonnet 5 | Natural-language agent instructions are half the deliverable |
+| `al-conductor` | GPT-5.6 Terra | Orchestration = many turns, large input context, mechanical output |
+| `al-developer` | GPT-5.6 Terra | Daily edit→diagnostics→fix loop; speed and cost per task dominate |
+| `al-implement-subagent` | GPT-5.6 Terra | Highest token volume in the framework |
+| `al-planning-subagent` | GPT-5.6 Terra | Read-only research; needs search discipline + long context, not max reasoning |
+| `al-review-subagent` | GPT-5.6 Terra | Output is a strict JSON verdict; runs **every phase** → the cost driver among the gates |
+| `dredd` | GPT-5.6 Terra | Same findings/JSON profile as the review subagent; consistency between in-loop and independent auditor is deliberate |
+| `al-triage` | GPT-5.6 Terra | Core work is reproduce → debug → trace, i.e. a tool loop |
+
+**Opus 5 is deliberately NOT a pinned default anywhere.** At $2.34/task (~4.6× Terra) it is not defensible for daily work. Instead it is reachable through a **HITL model-escalation gate** in the two agents where invocation is rare *and* the decision is hard to reverse:
+
+- **`al-architect`** — raised only at **HIGH** complexity, evaluated *before* any design work. Placing it at the existing "architecture complete → approve" gate would be useless: by then the reasoning has already happened and an upgrade would only polish wording. The gate rides on the complexity assessment that ALDC performs anyway, so it adds **no new interruption**.
+- **`al-triage`** — raised only for **high-stakes incidents** (production outage, data-integrity risk, customer-facing regression, posting/financial impact). Rationale: a wrong root cause here is caught by **no downstream reviewer**; the fix ships against it.
+
+**Two hard constraints on the gate's wording**, both encoded as explicit prompt rules:
+
+1. **The agent must never name the model it is running on.** There is no API for a model to read its own identity or the picker; the name is injected by the platform. A prompt that says "you are running X" invites a **fabricated model name that the user then acts on** as a cost decision. The gate therefore states only the *recommendation*.
+2. **The skip condition fails safe.** Skip only on *positive* confirmation of Opus 5; when unsure, raise the gate. Asking unnecessarily costs one reply; skipping wrongly costs quality silently. A closing "never raise for LOW/MEDIUM (resp. routine bugs)" rule prevents the gate from degenerating into noise that gets reflexively dismissed.
+
+**Rejected alternatives:** (a) *Opus 5 as pinned default for the reviewer/auditor/triage trio* — rejected on cost, since `al-review-subagent` runs per phase and is therefore effectively daily; (b) *self-switching the model from the prompt* — not possible, `model:` is a default applied at agent selection and only the user's picker overrides it; (c) *raising the reasoning level instead of the model class* — kept as the cheaper everyday lever, but 55→57 is not equivalent to 55→63, so it does not replace the gate at HIGH; (d) *GPT-5.6 Luna as any agent's default* — reserved as an explicit cost mode for bounded, mechanical work (workflow prompts, LOW-complexity research), not a pinned agent model.
+
+**Mirror tree caveat.** Every agent exists twice — `agents/<name>.agent.md` (the discovered, authoritative copy) and `packages/foundation/agents/<name>.agent.md` (a distribution mirror, **not** covered by `aproda-sync.json`). Both were updated. Any future model or gate change must touch both or the mirror silently drifts.
+
 ---
 
 ## Stacking vs. changing — practical guide
@@ -253,6 +296,11 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `agents/al-triage.agent.md` | Added ADO work item routing via `skill-aproda-ado`; subfolder path fix for diagnosis.md (`plans/<id>/<id>-diagnosis.md`) | D-2 | 2026-07-07 |
 | `instructions/al-testing.instructions.md` | Test/TestCases + TestLibrary folder rule; MS library-first mandate; mandatory `skill-testing` load token | D-2 | 2026-06-29 |
 | `skills/skill-testing/SKILL.md` | Added standard MS test library reference table (MSLibraries section) and symbol-discovery recipe | D-2 | 2026-06-29 |
+| `agents/*.agent.md` (all 10) | `model:` re-pinned off the retiring `Claude Sonnet 4.6`: `Claude Sonnet 5` for al-architect / al-presales / al-agent-builder, `GPT-5.6 Terra` for the other seven | D-2 / D-22 | 2026-08-20 |
+| `packages/foundation/agents/*.agent.md` (all 10) | Same model pins + both gates — **fork-only distribution mirror**, deliberately absent from `aproda-sync.json` and `aldc.yaml`. Must be changed in lockstep with `agents/` or it drifts silently | D-2 / D-22 | 2026-08-20 |
+| `agents/al-architect.agent.md` | Added «Model Escalation Gate (HIGH complexity only)» section before Core Principles: HITL stop recommending Claude Opus 5, fires only at HIGH and only when Opus is not already confirmed | D-2 / D-22 | 2026-08-20 |
+| `agents/al-triage.agent.md` | Added «Model Escalation Gate (high-stakes incidents only)» section before the reactive loop: same pattern, trigger = production/data-integrity/customer-facing severity | D-2 / D-22 | 2026-08-20 |
+| `docs/agents/*.agent.md` + `docs/agents/index.md` | Doc-drift fix: `**Model**` rows and agent overview tables re-synced to the D-22 pins. **Fork-only** (mkdocs site pages; not in `aldc.yaml`, therefore deliberately *not* added to `inPlaceEdits` — projects do not consume them) | D-2 / D-22 | 2026-08-20 |
 
 ---
 
@@ -269,3 +317,5 @@ The few places where we touched Upstream files in-place. This is the list the up
 | 2026-07-07 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.6` | Sync layer audit: `aproda-sync.json` `inPlaceEdits` completed (added `README.md`, `al-architect`, `al-implement-subagent`, `al-triage`, `al-testing.instructions.md`, `prompts/al-pr-prepare.prompt.md`, `skills/skill-testing/SKILL.md`); stale-cleanup tombstone added for `skills/skill-ado` (renamed to `skill-aproda-ado`); D-7 register brought in sync. |
 | 2026-07-07 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.6` | Sync layer audit: `aproda-sync.json` `inPlaceEdits` completed (added `README.md`, `al-architect`, `al-implement-subagent`, `al-triage`, `al-testing.instructions.md`, `prompts/al-pr-prepare.prompt.md`, `skills/skill-testing/SKILL.md`); stale-cleanup tombstone added for `skills/skill-ado` (renamed to `skill-aproda-ado`); D-7 register brought in sync. |
 | 2026-08-05 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.7` | `skill-aproda-ado/SKILL.md`: `req_name` pattern extended to `{type}-{id}-{short-name}` — short name derived from work item title (kebab-case, max 4–5 meaningful words, noise words stripped); table examples updated. `prompts/al-pr-prepare.prompt.md`: updated (model + tools). |
+| 2026-08-19 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.8` | *(logged retroactively)* Tool-fit fixes across agents: `sshadowsdk` → `SShadowSdk` (publisher casing), `upstash/context7` → `context7` (MCP server key); `al-architect` CANNOT-block rewritten (read-only terminal + `runSubagent` allowed, builds/deploys still forbidden). |
+| 2026-08-20 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.9` | Model re-pinning (D-22): all 10 agents off the retiring `Claude Sonnet 4.6` → 3× `Claude Sonnet 5` (doc-producing roles), 7× `GPT-5.6 Terra` (code/tool-loop/JSON roles); both `agents/` and the `packages/foundation/agents/` mirror. Model Escalation Gate added to `al-architect` (HIGH complexity) and `al-triage` (high-stakes incident) — HITL stop recommending Claude Opus 5, never naming the running model. `aproda-sync.json` `inPlaceEdits` extended with `al-planning-subagent`, `al-review-subagent`, `dredd`. |

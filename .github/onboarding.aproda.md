@@ -149,7 +149,7 @@ Erzeugt Modul-Doku (`al-doc-update`) und PR-Beschreibung. Erst nach grünem Depl
 | Frage | Dokument |
 |-------|----------|
 | Layer-Struktur und Upgrade-Zyklus | [readme.aproda.md](readme.aproda.md) |
-| Warum ist es so strukturiert? | [decisions.aproda.md](decisions.aproda.md) (D-1…D-18) |
+| Warum ist es so strukturiert? | [decisions.aproda.md](decisions.aproda.md) (D-1…D-22) |
 | Infra-Details (K:, NST, SRP, Remote-PS) | [site-profile.aproda.md](site-profile.aproda.md) |
 | ALDC-Framework-Spec | [docs/framework/ALDC-Core-Spec-v1.2.md](../docs/framework/ALDC-Core-Spec-v1.2.md) |
 | Deploy-Run-Verify Cycle – Technisches | [skills/skill-aproda-deploy-run-verify/SKILL.md](../skills/skill-aproda-deploy-run-verify/SKILL.md) |

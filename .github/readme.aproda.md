@@ -1,6 +1,6 @@
 ﻿# Aproda ALDC Layer — README
 
-> **Version:** `1.2.0_aproda.8` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) &nbsp;·&nbsp; **Released:** 2026-08-19 — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17).
+> **Version:** `1.2.0_aproda.9` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) &nbsp;·&nbsp; **Released:** 2026-08-20 — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17).
 > Aproda's customization layer on top of **ALDC** (AL Development Collection).
 > Fork: <https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda>
 > Upstream: ALDC Core (tracked via `upstream` remote).
@@ -194,7 +194,7 @@ This table **is** the Aproda index (D-17) — the one place to answer "what has 
 | Item | Path | Decision | Status |
 |------|------|----------|--------|
 | This README (= the inventory/index) | `.github/readme.aproda.md` | D-1 | live |
-| Design decisions | `.github/decisions.aproda.md` | D-1 | live (D-1…D-18) |
+| Design decisions | `.github/decisions.aproda.md` | D-1 | live (D-1…D-22) |
 | Site profile (infra facts) | `.github/site-profile.aproda.md` | D-16 | live |
 | Deploy-Run-Verify Cycle skill | `.github/skills/skill-aproda-deploy-run-verify/` | D-8, D-15 | **VALIDATED** (27/27 green) |
 | Meta-skill (explain + extend the layer) | `.github/skills/skill-aproda-aldc/` | D-16 | live |
@@ -257,8 +257,8 @@ The ALDC base is **pinned** in `aldc.yaml → aproda.basePin` (analogous to the 
 
 On every version bump (Upstream upgrade **or** Aproda-layer change), create a Git tag on the fork:
 ```
-git tag v1.2.0_aproda.7
-git push origin v1.2.0_aproda.7
+git tag v1.2.0_aproda.9
+git push origin v1.2.0_aproda.9
 ```
 The tag name matches the composite version string exactly. This makes the exact fork state reproducible and lets projects record which layer version they pulled.
 
@@ -292,7 +292,7 @@ We touch Upstream files in-place only where additive discovery requires it — c
 
 ## See also
 
-- [`decisions.aproda.md`](decisions.aproda.md) — the **why** behind this structure (full decision record D-1…D-18).
+- [`decisions.aproda.md`](decisions.aproda.md) — the **why** behind this structure (full decision record D-1…D-22).
 - [`site-profile.aproda.md`](site-profile.aproda.md) — concrete infrastructure facts (K:, NST servers, SRP, remote-PS).
 - [`skills/skill-aproda-aldc/SKILL.md`](skills/skill-aproda-aldc/SKILL.md) — meta-skill: explain & extend this layer.
 - [`skills/skill-aproda-deploy-run-verify/SKILL.md`](skills/skill-aproda-deploy-run-verify/SKILL.md) — Deploy-Run-Verify Cycle (VALIDATED, 27/27).

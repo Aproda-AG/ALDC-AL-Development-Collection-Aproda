@@ -64,9 +64,9 @@ I need to build a sales forecasting system...
 
 | Mode | Role | Model | Purpose |
 |------|------|-------|---------|
-| **AL Planning Subagent** | AL-aware Research Specialist | Sonnet 4.6 | Analyzes codebase, gathers context for planning |
-| **AL Implementation Subagent** | TDD Implementation Executor | Sonnet 4.6 | Executes RED→GREEN→REFACTOR cycle |
-| **AL Code Review Subagent** | Quality Assurance Validator | Sonnet 4.6 | Reviews code against AL best practices |
+| **AL Planning Subagent** | AL-aware Research Specialist | GPT-5.6 Terra | Analyzes codebase, gathers context for planning |
+| **AL Implementation Subagent** | TDD Implementation Executor | GPT-5.6 Terra | Executes RED→GREEN→REFACTOR cycle |
+| **AL Code Review Subagent** | Quality Assurance Validator | GPT-5.6 Terra | Reviews code against AL best practices |
 
 > 💡 **Note**: Subagents are automatically invoked by `al-conductor` via `runSubagent` tool. You don't invoke them directly.
 
@@ -76,8 +76,8 @@ Invoked directly when you start from a **symptom** or want an **independent audi
 
 | Mode | Role | Model | Best For |
 |------|------|-------|----------|
-| **AL Triage** | Reactive Diagnosis Specialist | Claude Sonnet 4.6 | Reproduce → localize → root-cause an existing bug/regression/incident; recommends the minimal fix (read-only on code) |
-| **Dredd** | Independent AL Auditor | Claude Sonnet 4.6 | On-demand static audit against BCQuality + native checks; advisory verdict written to `.github/audits/` (read-only on code) |
+| **AL Triage** | Reactive Diagnosis Specialist | GPT-5.6 Terra | Reproduce → localize → root-cause an existing bug/regression/incident; recommends the minimal fix (read-only on code) |
+| **Dredd** | Independent AL Auditor | GPT-5.6 Terra | On-demand static audit against BCQuality + native checks; advisory verdict written to `.github/audits/` (read-only on code) |
 
 > 💡 Both are read-only on AL code and hand fixes to `@AL Developer`. Triage is the *dynamic* counterpart (reproduce & trace); Dredd is the *static* one (judge the artifact).
 

@@ -5,7 +5,7 @@ description: "Explain, extend, change, or maintain the Aproda ALDC layer (the .a
 
 # Skill: Aproda ALDC — Explain & Extend the Customization Layer
 
-> **Aproda custom skill** — the meta-skill for the Aproda ALDC layer itself. See [`../../readme.aproda.md`](../../readme.aproda.md) (how the layer works) and [`../../decisions.aproda.md`](../../decisions.aproda.md) (why — decisions D-1..D-15).
+> **Aproda custom skill** — the meta-skill for the Aproda ALDC layer itself. See [`../../readme.aproda.md`](../../readme.aproda.md) (how the layer works) and [`../../decisions.aproda.md`](../../decisions.aproda.md) (why — decisions D-1..D-22).
 > **Two audiences:** the **many** who just ask what the layer is / why a rule exists (Explain mode), and the **few** who change it (Extend mode). Extend mode is **guarded** — see [`../../instructions/aproda-aldc-steward.aproda.instructions.md`](../../instructions/aproda-aldc-steward.aproda.instructions.md).
 
 ## When to Load
@@ -23,9 +23,10 @@ Load this skill when the task is **about the Aproda layer**, not about the BC ex
 | Question | Source of truth |
 |----------|-----------------|
 | *How* does the layer extend ALDC? (conventions, naming, no override folder) | [`readme.aproda.md`](../../readme.aproda.md) |
-| *Why* is it built this way? (every design decision, D-1..D-15) | [`decisions.aproda.md`](../../decisions.aproda.md) |
+| *Why* is it built this way? (every design decision, D-1..D-22) | [`decisions.aproda.md`](../../decisions.aproda.md) |
 | What infra do we run on? (K:, NST servers, SRP, remote-PS) | [`site-profile.aproda.md`](../../site-profile.aproda.md) |
 | How is the runtime Deploy-Run-Verify Cycle standardized? | [`skill-aproda-deploy-run-verify`](../skill-aproda-deploy-run-verify/SKILL.md) |
+| Which model does each agent run on, and when do we escalate to Opus? | `decisions.aproda.md` → **D-22** (pins + Model Escalation Gate) |
 | Which Upstream files did we touch in place? | `decisions.aproda.md` → *Upstream edits register* |
 
 This skill **orchestrates and links** those; it never copies their content.
