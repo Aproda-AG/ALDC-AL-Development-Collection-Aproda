@@ -47,8 +47,6 @@ flowchart LR
    ```
    git clone https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda
    ```
-2. **Use an existing target Git repository** or run `git init` in the folder of a new target project.
-
 ### 2) Initialize or update a repository
 
 1. **Open the fork in VS Code** (`File → Open Folder`).

@@ -85,12 +85,10 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 
 1. Aproda-ALDC-Fork lokal klonen:
    `git clone https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda`
-2. Zielprojekt als bestehendes Git-Repository verwenden oder für ein neues Projekt im Zielordner ausführen:
-  `git init`
 
 ### 2 — Repo initialisieren und aktualisieren
 
-Initialisierung und Sync erfolgen aus dem lokalen Aproda-ALDC-Fork.
+Initialisierung und Sync zu/von den Projekt-Repos erfolgen aus dem lokalen Aproda-ALDC-Fork.
 
 ```
 1. Aproda-ALDC in VS Code öffnen: File → Open Folder
