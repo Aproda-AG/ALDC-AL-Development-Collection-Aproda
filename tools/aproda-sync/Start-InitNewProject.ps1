@@ -44,12 +44,29 @@ $targetRepo = ''
 
 # ── Resolve the target interactively when not provided ───────────────────────
 if ([string]::IsNullOrWhiteSpace($targetRepo)) {
-    # Scan sibling folders of the fork for git repos (likely candidates).
+    # Scan the fork's parent recursively, while avoiding generated dependency folders.
     $searchRoot = Split-Path -Parent $forkPath
-    $candidates = @(Get-ChildItem -Path $searchRoot -Directory -ErrorAction SilentlyContinue |
-        Where-Object { Test-Path (Join-Path $_.FullName '.git') } |
-        Select-Object -ExpandProperty FullName |
-        Sort-Object)
+    $excludedDirectoryNames = @('.git', '.alpackages', '.venv', 'bin', 'node_modules', 'obj')
+    $pendingDirectories = [System.Collections.Generic.Queue[string]]::new()
+    $pendingDirectories.Enqueue($searchRoot)
+    $candidates = @()
+
+    while ($pendingDirectories.Count -gt 0) {
+        $currentDirectory = $pendingDirectories.Dequeue()
+        $childDirectories = @(Get-ChildItem -Path $currentDirectory -Directory -ErrorAction SilentlyContinue)
+        foreach ($childDirectory in $childDirectories) {
+            if ($childDirectory.Name -in $excludedDirectoryNames) {
+                continue
+            }
+
+            if (Test-Path (Join-Path $childDirectory.FullName '.git')) {
+                $candidates += $childDirectory.FullName
+            }
+
+            $pendingDirectories.Enqueue($childDirectory.FullName)
+        }
+    }
+    $candidates = @($candidates | Sort-Object -Unique)
 
     # TIER 1: Out-GridView (GUI, works in VS Code integrated terminal + standard PS)
     if ($candidates.Count -gt 0 -and (Get-Command Out-GridView -ErrorAction SilentlyContinue)) {
