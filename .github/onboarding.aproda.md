@@ -85,7 +85,7 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 
 1. Aproda-ALDC-Fork lokal klonen:
 ```
-   git clone https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda
+git clone https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda
 ```
 2. BCQuality einmalig pro Workstation klonen (neben das Projekt-Repo, nicht hinein):
 [readme.aproda.md — BCQuality](readme.aproda.md#2-BCQuality-knowledge-base-one-time-per-workstation)
