@@ -56,16 +56,16 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 | `@AL Pre-Sales & Project Estimation Specialist` | Aufwandschätzung | PERT, SWOT, Kostenaufstellung |
 | `@Dredd` | Unabhängiges Audit | BCQuality-zitierter statischer Review |
 
-### Aproda-Erweiterungen (🟦)
+### Aproda-Erweiterungen
 
 | Feature | Beschreibung |
 |---------|--------------|
 | **Deploy-Run-Verify Cycle** | `skill-aproda-deploy-run-verify` — publish → sync → run-tests → review gegen ASINST-Umgebung (später Container); loop bis grün |
-| **ADO-Integration** | `skill-aproda-ado` — `req_name = {type}-{id}` (z.B. `bug-36370`), ADO-URL in jedem Plan-Dokument |
+| **ADO-Integration** | `skill-aproda-ado` — `req_name = {type}-{id}-{short-name}` (z.B. `bug-36370-posting-error`), ADO-URL in jedem Plan-Dokument |
 | **HITL Validation** | Strukturiertes Issue-Tracking in `{req}-hitl-validation-issues.md` über mehrere Pre-PR Feedback-Runden ([Bitte Lesen](readme.aproda.md#hitl-validation)) |
 | **Modul-Doku** | `al-doc-update`-Workflow — `<Modul>.reference.md` (EN) + `<Modul>.Handbuch.de-CH.md` |
 
-### Workflows (`@workspace use <name>`)
+### Workflows / Prompts
 
 | Workflow | Wann aufrufen | Was es tut |
 |----------|---------------|------------|
@@ -75,19 +75,26 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 | `al-memory.create` | Nach langer Session | Aktualisiert `memory.md` für Session-Kontinuität |
 | `al-context.create` | Projektstart / neuer Kollege | Generiert `context.md` als KI-Kontext-Einführung |
 | `al-initialize` | Einmaliges Setup | Vollständiges Workspace- und Umgebungs-Setup |
-| `al-doc-update` 🟦 | Vor PR (Aproda) | Erstellt/aktualisiert `reference.md` + `Handbuch.de-CH.md` |
+| `al-doc-update` | Vor PR (Aproda) | Erstellt/aktualisiert `reference.md` + `Handbuch.de-CH.md` |
 
 ---
 
 ## Wie verwenden?
 
-### 1 — Repo initialisieren (einmalig pro Projekt)
+### 1 — Einmalige Vorbereitung
 
-**Voraussetzung:** Fork lokal geklont, Ziel-Projekt-Repo existiert (`git init` reicht).
+1. Aproda-ALDC-Fork lokal klonen:
+   `git clone https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda`
+2. Zielprojekt als bestehendes Git-Repository verwenden oder für ein neues Projekt im Zielordner ausführen:
+  `git init`
+
+### 2 — Repo initialisieren und aktualisieren
+
+Initialisierung und Sync erfolgen aus dem lokalen Aproda-ALDC-Fork.
 
 ```
-1. Fork in VS Code öffnen: File → Open Folder
-2. tools/aproda-sync/Start-InitNewProject-SRP-Safe.ps1 öffnen
+1. Aproda-ALDC in VS Code öffnen: File → Open Folder
+2. `tools/aproda-sync/Start-InitNewProject-SRP-Safe.ps1` öffnen
 3. Alles markieren (Ctrl+A) → Strg+P-Command: `PowerShell: Run Selection` oder F8 (PowerShell Extension Terminal)
 4. Ziel-Repo im Auswahlfenster wählen (oder Pfad eintippen)
 → Layer wird nach .github/ des Zielprojekts geschrieben
@@ -95,6 +102,18 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 
 > - Genauere Anleitung im [readme.aproda.md - Quickstart](readme.aproda.md#Quickstart-—-initialize-Aproda-Aldc-to-a-existing-or-new-project-repo)
 > - Repo nicht im Auswahlfenster? → [readme.aproda.md — Fallback](readme.aproda.md#3-fallback--target-repo-not-in-the-selection-list)
+
+Der Init darf später erneut ausgeführt werden: Er aktualisiert den Layer über einen allowlist-basierten Overlay-Pull. Alternativ führt man im Ziel-Repo das beim ersten Init automatisch erstellte `.github/tools/aproda-sync/Start-Pull.ps1` aus. Beide Wege aktualisieren nur die Aproda- und ALDC-Toolkit-Dateien und löschen keine Projektdateien - der Sync arbeitet als Overlay: Er kopiert nur die erlaubten Layer-Dateien. Unberührt vom Sync bleiben Fachcode, AL-Go-Konfiguration, `plans/` und `documentation/`.
+
+#### Init-Ergebnis und Versionierung
+
+Die Root-`.gitignore` enthält dafür den verwalteten Block `# Aproda ALDC Tool - BEGIN/END`; nur dieser Block wird bei Init/Pull aktualisiert. Projektbezogene Skills können neben den ignorierten Framework-Ordnern ergänzt werden.
+
+| Kategorie | Artefakte | Behandlung |
+|---|---|---|
+| **Init/Update** | `.github/`-Toolkit, `Start-Pull.ps1` | Init schreibt den Layer; Update per erneutem Init oder lokalem `Start-Pull.ps1`. |
+| **Committen** / Kommt ins Projektrepo | `*.code-workspace`, `.github/plans/memory.md`, `.github/plans/{req}/`, Projektdokumentation, Root-`.gitignore` | Workspace enthält `.github`, Base-/Test-Ordner, `../bcquality-aproda` und `chat.useCustomizationsInParentRepositories`. |
+| **Ignorieren** | `Start-Pull.ps1`, `Start-Push.ps1`, `**/PowerShell/_temp/`, `**/PowerShell/_runner/`, synchronisierte Toolkit-Dateien | Lokale Fork-Pfade, temporäre Runner und die vom Fork gelieferte Verteilkopie. |
 
 **BCQuality einmalig pro Workstation klonen** (neben das Projekt-Repo, nicht hinein):
 
@@ -104,7 +123,7 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 git clone https://github.com/Aproda-AG/BCQuality-Aproda bcquality-aproda
 ```
 
-### 2 — Routing: Komplexität bestimmt den Einstieg
+### 3 — Routing: Komplexität bestimmt den Einstieg
 
 ```
 LOW   (ein Objekt, keine Integration):
@@ -118,16 +137,16 @@ MEDIUM/HIGH (Logik, Events, externe Systeme):
 
 Im Zweifel: `@AL Architecture & Design Specialist` fragen — er bewertet die Komplexität und empfiehlt den Weg.
 
-### 3 — ADO-Anforderung starten
+### 4 — ADO-Anforderung starten
 
 ```
 1. Work Item in ADO prüfen/ergänzen (Beschreibung, Akzeptanzkriterien)
 2. URL + Inhalt ins Chat-Prompt kopieren:
    https://dev.azure.com/alphasol/<projekt>/_workitems/edit/<id>
-3. Agent bestimmt req_name = {type}-{id}, legt .github/plans/{type}-{id}/ an
+3. Agent bestimmt `req_name = {type}-{id}-{short-name}` und legt `.github/plans/{type}-{id}-{short-name}/` an
 ```
 
-### 4 — Deploy-Run-Verify Cycle (OnPrem Gate)
+### 5 — Deploy-Run-Verify Cycle (OnPrem Gate)
 
 Nach jeder Implementierungsphase läuft der Deploy-Run-Verify Cycle automatisch:
 - `al-developer` → einmal vor PR (LOW)
@@ -135,7 +154,7 @@ Nach jeder Implementierungsphase läuft der Deploy-Run-Verify Cycle automatisch:
 
 Konfiguration: `Test/deploy-run-verify.config.jsonc` + `launch.json` im Projekt.
 
-### 5 — PR vorbereiten
+### 6 — PR vorbereiten
 
 ```
 @workspace use al-pr-prepare

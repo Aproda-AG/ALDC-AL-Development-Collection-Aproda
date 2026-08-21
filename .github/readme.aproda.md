@@ -31,32 +31,54 @@ What the Aproda layer adds on top of upstream ALDC:
 > [!IMPORTANT]
 > - ⚠️ (Noch) nicht kompatibel mit ACT (Aproda Copilot Template) von Antionio. **Nicht getestet und nicht empfohlen, beides gleichzeitig in einem Repo zu verwenden**
 
-**Prerequisites:** a local clone of the fork + a target project repo already initialized with `git init`.
-
 ```mermaid
 flowchart LR
-    A["Clone fork\ngit clone …Aproda-AG/…"] --> B["Open fork in VS Code\nFile → Open Folder"]
-    B --> C["Open\ntools/aproda-sync/\nStart-InitNewProject-SRP-Safe.ps1"]
-    C --> D["Select All (Ctrl+A)\n→ Run Selection\n(PS Extension terminal)"]
-    D --> E["Repo-selection window\npicks target project"]
-    E --> F["Layer written to\n.github/ of target\nStart-Pull.ps1 materialized"]
+   A["Clone fork\ngit clone …Aproda-AG/…"] --> B["Create or select\ntarget Git repository"]
+   B --> C["Open fork in VS Code\nFile → Open Folder"]
+   C --> D["Open\ntools/aproda-sync/\nStart-InitNewProject-SRP-Safe.ps1"]
+   D --> E["Select All (Ctrl+A)\n→ Run Selection\n(PS Extension terminal)"]
+   E --> F["Repo-selection window\npicks target project"]
+   F --> G["Layer written to\n.github/ of target\nStart-Pull.ps1 materialized"]
 ```
 
-### 1) Steps
+### 1) One-time preparation
 
 1. **Clone the fork** (one-time, keep it on your workstation):
    ```
    git clone https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda
    ```
-2. **Open the fork in VS Code** (`File → Open Folder`).
-3. **Open** `tools/aproda-sync/Start-InitNewProject-SRP-Safe.ps1` in the editor.
-4. **Run it SRP-safe:** Select All (`Ctrl+A`) → right-click → *Run Selection* in the PowerShell Extension terminal (or `Shift+F8` / *PowerShell: Run Selection*).
-5. **Select the target repo** from the pop-up grid view (or type the path at the console prompt if the GUI is unavailable).
+2. **Use an existing target Git repository** or run `git init` in the folder of a new target project.
+
+### 2) Initialize or update a repository
+
+1. **Open the fork in VS Code** (`File → Open Folder`).
+2. **Open** `tools/aproda-sync/Start-InitNewProject-SRP-Safe.ps1` in the editor.
+3. **Run it SRP-safe:** Select All (`Ctrl+A`) → right-click → *Run Selection* in the PowerShell Extension terminal (or `Shift+F8` / *PowerShell: Run Selection*).
+4. **Select the target repo** from the pop-up grid view (or type the path at the console prompt if the GUI is unavailable).
    > **Skip the dialog:** set `$targetRepo` at the top of the launcher (line 9) to a fixed path and the selection step is bypassed entirely.
-6. The entire layer is written into `.github/` of the target. A `Start-Pull.ps1` is materialized there for future updates.
+5. The entire layer is written into `.github/` of the target. A `Start-Pull.ps1` is materialized there for future updates.
 
 > **After init:** open the target project folder in VS Code and work normally with Copilot.
-> For future layer updates, run `Start-Pull.ps1` inside the target project.
+> For future layer updates, either run the initializer again from the fork or run `Start-Pull.ps1` inside the target project. Both paths perform the same allowlist-based overlay update and do not delete project files.
+
+### What initialization changes and what to commit
+
+The bootstrap performs an initial layer pull, a second framework settle-pull, and the project-local initialization. The initialization is idempotent, so it also runs safely after every later pull.
+
+Commit the project configuration and persistent working documents created or maintained by the initialization:
+
+- `aldc.code-workspace`, created when absent, with `.github`, `App`, `Test`, and `../bcquality-aproda` roots. Rename or remove the `App` and `Test` placeholders to match the repository layout before committing.
+- The workspace setting `chat.useCustomizationsInParentRepositories: true`; existing parseable workspace files are supplemented with the `.github` and BCQuality roots and this setting.
+- `.github/plans/memory.md`, seeded once, and the requirement-specific planning documents beneath `.github/plans/`.
+- Project-specific documentation and the root `.gitignore` update.
+
+The root `.gitignore` gets one managed, clearly visible block: `# Aproda ALDC Tool - BEGIN/END`. Future init or pull runs update only this block. It ignores machine- or runtime-local material, notably:
+
+- `.github/tools/aproda-sync/Start-Pull.ps1` and `Start-Push.ps1`, because they contain a workstation-specific absolute path to the fork.
+- Temporary PowerShell execution folders: `**/PowerShell/_temp/` and `**/PowerShell/_runner/`.
+- The synchronized Aproda/ALDC toolkit folders, preventing their distribution copy from being versioned independently in every consuming project. Project-specific skills can still be added alongside the ignored framework folders.
+
+The syncer is an allowlist-only overlay: it copies the toolkit layer but never deletes files. Application code, AL-Go files, plans, and documentation are excluded from the sync and cannot be pushed from a project back to the fork.
 
 ### 2) BCQuality knowledge base (one-time, per workstation)
 
@@ -93,9 +115,9 @@ The selection dialog is skipped entirely.
 
 Requirements, bugs, and tasks are tracked in Azure DevOps and flow directly into the ALDC planning structure via `skill-aproda-ado`:
 
-- **Type-ID pattern** — the `req_name` (plans folder name) is derived as `{type}-{id}` (e.g. `bug-36370`, `us-99001`, `task-12345`). No descriptive slug — the title lives in ADO.
+- **Type-ID-short-name pattern** — the `req_name` (plans folder name) is derived as `{type}-{id}-{short-name}` (e.g. `bug-36370-posting-error`). The short name is derived from the work item title in kebab-case, with up to four or five meaningful words.
 - **ADO header** — every plan document gets an `**ADO**: [Bug 36370](…)` link at the top so context is never lost.
-- **Process** — the agent reads the work item description/acceptance criteria from the chat prompt (no API fetch). The planner creates `.github/plans/{type}-{id}/` with spec, architecture, and test-plan files using the ADO ID as the anchor throughout.
+- **Process** — the agent reads the work item description/acceptance criteria from the chat prompt (no API fetch). The planner creates `.github/plans/{type}-{id}-{short-name}/` with spec, architecture, and test-plan files using the ADO ID as the anchor throughout.
 
 **How to start:**
 
