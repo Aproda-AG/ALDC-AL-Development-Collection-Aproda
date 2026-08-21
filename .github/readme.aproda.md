@@ -78,7 +78,7 @@ The root `.gitignore` gets one managed, clearly visible block: `# Aproda ALDC To
 
 The syncer is an allowlist-only overlay: it copies the toolkit layer but never deletes files. Application code, AL-Go files, plans, and documentation are excluded from the sync and cannot be pushed from a project back to the fork.
 
-### 2) BCQuality knowledge base (one-time, per workstation)
+### 3) BCQuality knowledge base (one-time, per workstation)
 
 **[BCQuality](https://github.com/microsoft/BCQuality)** is the official, agent-readable MS BC knowledge base for BC Development. `@Dredd` and the Review Subagent can use it during code review. It is mounted as a second workspace root (read-only) and never compiled into the AL extension.
 
@@ -92,7 +92,7 @@ git clone https://github.com/Aproda-AG/BCQuality-Aproda bcquality-aproda
 
 The folder must sit **next to** (not inside) the project repo so its `.al` files never enter the AL compiler's scope. Once cloned, it is available to all projects on the same workstation — no per-project setup needed. 
 
-### 3) Fallback — target repo not in the selection list
+### 4) Fallback — target repo not in the selection list
 
 The script scans sibling folders of the fork for git repos. If the target project isn't found there (different drive, nested path, etc.):
 

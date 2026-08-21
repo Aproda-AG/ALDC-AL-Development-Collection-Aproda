@@ -84,7 +84,13 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 ### 1 — Einmalige Vorbereitung
 
 1. Aproda-ALDC-Fork lokal klonen:
-   `git clone https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda`
+```
+   git clone https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda
+```
+2. BCQuality einmalig pro Workstation klonen (neben das Projekt-Repo, nicht hinein):
+[readme.aproda.md — BCQuality](readme.aproda.md#2-BCQuality-knowledge-base-one-time-per-workstation)```
+git clone https://github.com/Aproda-AG/BCQuality-Aproda bcquality-aproda
+```
 
 ### 2 — Repo initialisieren und aktualisieren
 
@@ -113,13 +119,6 @@ Die Root-`.gitignore` enthält dafür den verwalteten Block `# Aproda ALDC Tool 
 | **Committen** / Kommt ins Projektrepo | `*.code-workspace`, `.github/plans/memory.md`, `.github/plans/{req}/`, Projektdokumentation, Root-`.gitignore` | Workspace enthält `.github`, Base-/Test-Ordner, `../bcquality-aproda` und `chat.useCustomizationsInParentRepositories`. |
 | **Ignorieren** | `Start-Pull.ps1`, `Start-Push.ps1`, `**/PowerShell/_temp/`, `**/PowerShell/_runner/`, synchronisierte Toolkit-Dateien | Lokale Fork-Pfade, temporäre Runner und die vom Fork gelieferte Verteilkopie. |
 
-**BCQuality einmalig pro Workstation klonen** (neben das Projekt-Repo, nicht hinein):
-
-[readme.aproda.md — BCQuality](readme.aproda.md#2-BCQuality-knowledge-base-one-time-per-workstation)
-
-```
-git clone https://github.com/Aproda-AG/BCQuality-Aproda bcquality-aproda
-```
 
 ### 3 — Routing: Komplexität bestimmt den Einstieg
 
