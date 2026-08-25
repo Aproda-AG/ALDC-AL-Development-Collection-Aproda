@@ -249,6 +249,15 @@ Exact diffs in the [Upstream edits register](decisions.aproda.md).
 
 ---
 
+## Extension Ideas
+
+Open, fork-internal enhancement proposals are tracked in
+[`extension-ideas.md`](extension-ideas.md). An approved item moves to a dedicated
+plan folder; adopted architectural decisions are recorded in
+[`decisions.aproda.md`](decisions.aproda.md).
+
+---
+
 ## Upgrade cycle (ALDC → Aproda fork)
 
 Goal: pull Upstream improvements with **as much automation as possible**, human only on real conflicts.

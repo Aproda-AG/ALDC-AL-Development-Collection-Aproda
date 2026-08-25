@@ -51,6 +51,11 @@ Editing any Aproda-layer file triggers [`aproda-aldc-steward.aproda.instructions
 3. **Stop and get explicit confirmation** before editing.
 
 ### Step 1 — Choose the mechanism (the core decision)
+When working in the Aproda-ALDC fork (only there), check the fork-local
+`.github/extension-ideas.md` before proposing a new extension. It records
+curated candidates and avoids duplicate proposals; it is intentionally not
+distributed to project copies.
+
 Use the `readme.aproda.md` "Stacking vs. changing" table:
 
 | Intent | Mechanism | Touches Upstream? |

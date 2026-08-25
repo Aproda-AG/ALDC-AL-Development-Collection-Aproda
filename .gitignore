@@ -88,3 +88,6 @@ aldc_audit*.md
 aldc_audit*.json
 PUSH.md
 PUSH.ps1
+
+# Fork comparison clones (local only; manifests and analysis reports are tracked)
+_ALDC-Fork-Vergleich/*
