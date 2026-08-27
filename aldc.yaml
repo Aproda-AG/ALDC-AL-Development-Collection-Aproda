@@ -19,7 +19,7 @@ toolkitRoot: "."
 # ".". That one diverging line is why aldc.yaml is NOT auto-synced (D-18 follow-up).
 # ─────────────────────────────────────────────────────────────────────────────
 aproda:
-  layerVersion: "1.2.0_aproda.9"        # <ALDC core.version>_aproda.<revision>
+  layerVersion: "1.2.0_aproda.10"       # <ALDC core.version>_aproda.<revision>
   fork: "https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda"
   basePin: "a900263f51e416762cc7f85575deb9b30cd5b1e3"   # ALDC commit the fork sits on (upstream == fork, in sync 2026-06-25)
   inventory: ".github/readme.aproda.md"

@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: aproda-layer-release
@@ -69,6 +69,8 @@ jobs:
     if: needs.validate.outputs.release_required == 'true'
     runs-on: ubuntu-latest
     environment: aproda-layer-release
+    permissions:
+      contents: write
     steps:
       - name: Checkout approved candidate
         uses: actions/checkout@v4

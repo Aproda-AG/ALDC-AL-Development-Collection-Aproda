@@ -1,12 +1,12 @@
 import * as fs from "fs/promises";
 import * as https from "https";
 import * as vscode from "vscode";
-import { repositoryUrl } from "../config";
 import { Logger } from "../log";
 import { run } from "../process";
 import { compareExtensionVersions } from "./version";
 
 const tagPrefix = "vscode-ext/v";
+const extensionRepositoryUrl = "https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda.git";
 const versionPattern = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
 export interface ExtensionUpdate {
@@ -21,8 +21,7 @@ interface GitHubRelease {
 
 export async function findExtensionUpdate(logger: Logger): Promise<ExtensionUpdate | undefined> {
     const current = currentExtensionVersion();
-    const repository = repositoryUrl();
-    const result = await run("git", ["ls-remote", "--tags", repository, "refs/tags/vscode-ext/v*"], {
+    const result = await run("git", ["ls-remote", "--tags", extensionRepositoryUrl, "refs/tags/vscode-ext/v*"], {
         env: { GIT_TERMINAL_PROMPT: "0" }
     });
     if (result.code !== 0) {
@@ -45,7 +44,7 @@ export async function findExtensionUpdate(logger: Logger): Promise<ExtensionUpda
 }
 
 export async function installExtensionUpdate(context: vscode.ExtensionContext, update: ExtensionUpdate, logger: Logger): Promise<void> {
-    const repository = githubRepository(repositoryUrl());
+    const repository = githubRepository(extensionRepositoryUrl);
     if (!repository) {
         throw new Error("Extension self-update requires a GitHub repository URL.");
     }

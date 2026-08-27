@@ -54,7 +54,7 @@ The layer update mechanism consumes the Git tag. The GitHub Release has no requi
 - `package.json` has a valid SemVer version.
 - It is greater than the highest existing `vscode-ext/v*` tag.
 - `npm ci`, `npm test`, and `npm run package` succeed in `tools/aproda-vscode-extension`.
-- The release attaches `aproda-aldc.vsix`.
+- The release attaches `aproda-aldc-<semver>.vsix`.
 
 The extension's self-update check resolves the tag, then downloads that VSIX asset from the matching GitHub Release. Do not approve the release if the asset upload is absent or failed.
 

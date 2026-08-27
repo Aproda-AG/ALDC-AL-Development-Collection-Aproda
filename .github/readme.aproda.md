@@ -1,6 +1,6 @@
 ﻿# Aproda ALDC Layer — README
 
-> **Version:** `1.2.0_aproda.9` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) &nbsp;·&nbsp; **Released:** 2026-08-20 — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17).
+> **Version:** `1.2.0_aproda.10` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) &nbsp;·&nbsp; **Release:** CI-gated — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17, D-25).
 > Aproda's customization layer on top of **ALDC** (AL Development Collection).
 > Fork: <https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda>
 > Upstream: ALDC Core (tracked via `upstream` remote).
@@ -289,12 +289,7 @@ flowchart TD
 
 The ALDC base is **pinned** in `aldc.yaml → aproda.basePin` (analogous to the BCQuality SHA pin in `aldc.yaml → external.bcquality`) so upgrades are intentional and reproducible. Current pin: `a900263f51e416762cc7f85575deb9b30cd5b1e3` (upstream == fork, in sync 2026-06-25). On each adopted upgrade, bump `aproda.layerVersion` and add a row to the [Version / pin changelog](decisions.aproda.md). Scheme: `<ALDC core.version>_aproda.<n>` (D-17).
 
-On every version bump (Upstream upgrade **or** Aproda-layer change), create a Git tag on the fork:
-```
-git tag v1.2.0_aproda.9
-git push origin v1.2.0_aproda.9
-```
-The tag name matches the composite version string exactly. This makes the exact fork state reproducible and lets projects record which layer version they pulled.
+On every version bump (Upstream upgrade **or** Aproda-layer change), merge the validated candidate to `aproda`. The layer release workflow validates it, waits for the `aproda-layer-release` Environment approval, then creates the matching Git tag and GitHub Release. Do not create or push the tag manually. The tag name matches the composite version string exactly; this makes the exact fork state reproducible and lets projects record which layer version they pulled.
 
 ---
 

@@ -20,14 +20,14 @@ Run `npm test` to compile and run focused tests. Run `npm run package` to produc
 
 ## Internal Installation
 
-Download `aproda-aldc.vsix` from the internal GitHub release and install it with VS Code's **Extensions: Install from VSIX...** command, or run:
+Download the versioned release asset, for example `aproda-aldc-0.1.0.vsix`, from the internal GitHub release and install it with VS Code's **Extensions: Install from VSIX...** command, or run:
 
 ```powershell
-code --install-extension .\aproda-aldc.vsix
+code --install-extension .\aproda-aldc-0.1.0.vsix
 ```
 
 The extension checks for a newer internal release at startup and through **Check for Extension Updates**. Selecting **Update Extension** signs in to GitHub when needed, downloads the release VSIX, installs it, and offers to reload VS Code.
 
 ## Release
 
-Update `package.json` and `CHANGELOG.md`, then create and push a matching tag such as `vscode-ext/v0.1.0`. The release workflow verifies the tag, runs tests, packages the VSIX, and attaches it to the GitHub release.
+Update `package.json` and `CHANGELOG.md`, validate the candidate, then merge it to `aproda`. The release workflow validates the version, runs tests, packages `aproda-aldc-<semver>.vsix`, and waits for approval in the `aproda-vscode-extension-release` Environment. After approval, CI creates the matching `vscode-ext/v<semver>` tag and GitHub Release. Do not create or push VSIX release tags manually.
