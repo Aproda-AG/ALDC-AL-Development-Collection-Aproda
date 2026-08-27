@@ -2,6 +2,11 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import * as vscode from "vscode";
 
+export type AldcRepositoryResolution =
+    | { state: "configured"; repositoryRoot: string; configurationPath: string }
+    | { state: "notInstalled"; repositoryRoots: string[] }
+    | { state: "ambiguousRepository"; repositoryRoots: string[] };
+
 export async function findGitRoot(start: string): Promise<string | undefined> {
     let current = path.resolve(start);
     while (true) {
@@ -50,6 +55,37 @@ export async function resolveTargetRepo(): Promise<string | undefined> {
         placeHolder: "Choose the repository to initialize"
     });
     return selected?.value;
+}
+
+export async function resolveAldcRepository(): Promise<AldcRepositoryResolution> {
+    const roots = new Map<string, string>();
+    for (const folder of vscode.workspace.workspaceFolders ?? []) {
+        const root = await findGitRoot(folder.uri.fsPath);
+        if (root) {
+            roots.set(root.toLocaleLowerCase(), root);
+        }
+    }
+
+    const repositoryRoots = [...roots.values()];
+    const configuredRepositories: string[] = [];
+    for (const repositoryRoot of repositoryRoots) {
+        if (await pathExists(path.join(repositoryRoot, "aldc.yaml"))) {
+            configuredRepositories.push(repositoryRoot);
+        }
+    }
+
+    if (configuredRepositories.length === 1) {
+        const repositoryRoot = configuredRepositories[0];
+        return {
+            state: "configured",
+            repositoryRoot,
+            configurationPath: path.join(repositoryRoot, "aldc.yaml")
+        };
+    }
+    if (configuredRepositories.length > 1) {
+        return { state: "ambiguousRepository", repositoryRoots: configuredRepositories };
+    }
+    return { state: "notInstalled", repositoryRoots };
 }
 
 async function pathExists(candidate: string): Promise<boolean> {

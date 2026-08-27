@@ -264,6 +264,11 @@ The VS Code extension needs a remote, machine-readable release source for its st
 
 A GitHub Actions workflow validates every matching tag against the checked-out `aldc.yaml`, so `v1.2.0_aproda.10` must contain exactly `layerVersion: "1.2.0_aproda.10"`. The extension treats an installed version newer than the latest tag as `ahead`, not current, preventing a false update result while a release tag is missing. The current `aproda` head must receive `v1.2.0_aproda.9` before release-channel checks are rolled out.
 
+### D-24 — Agent configuration access uses an extension-owned read-only tool
+Consumer workspaces deliberately expose curated subfolders such as `.github`, `Base`, and `Test`, not the repository root. Parent customization discovery makes ALDC instructions visible, but does not make root-level `aldc.yaml` readable to agents. Moving the file into `.github` would break the root-anchored sync, bootstrap, and fleet contract.
+
+The Aproda VS Code extension therefore contributes `aprodaAldc_readConfiguration` (`#aldcConfiguration`). It resolves Git roots from existing workspace folders, accepts exactly one root containing `aldc.yaml`, and returns a structured subset of the authoritative configuration. It is read-only, never prompts agents to select a repository, and reports missing, ambiguous, or invalid configuration explicitly. ALDC personas use the tool before configuration-dependent decisions and use direct root-level access only when the extension tool is unavailable.
+
 ---
 
 ## Stacking vs. changing — practical guide
@@ -313,6 +318,7 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `agents/al-triage.agent.md` | Added «Model Escalation Gate (high-stakes incidents only)» section before the reactive loop: same pattern, trigger = production/data-integrity/customer-facing severity | D-2 / D-22 | 2026-08-20 |
 | `docs/agents/*.agent.md` + `docs/agents/index.md` | Doc-drift fix: `**Model**` rows and agent overview tables re-synced to the D-22 pins. **Fork-only** (mkdocs site pages; not in `aldc.yaml`, therefore deliberately *not* added to `inPlaceEdits` — projects do not consume them) | D-2 / D-22 | 2026-08-20 |
 | `prompts/al-build`, `al-context.create`, `al-initialize`, `al-memory.create`, `al-pr-prepare` (both trees) | `model:` re-pinned off the retiring `Claude Sonnet 4.5` → `GPT-5.6 Terra` (deterministic procedures, tool loops, structured output) | D-2 / D-22 | 2026-08-20 |
+| `copilot-instructions.md`, `agents/al-conductor.agent.md`, `agents/al-triage.agent.md`, `agents/al-review-subagent.agent.md`, `agents/dredd.agent.md` | Added `#aldcConfiguration` usage rule and extension tool allowlist for authoritative root-level configuration in curated consumer workspaces | D-2 / D-24 | 2026-08-27 |
 
 ---
 

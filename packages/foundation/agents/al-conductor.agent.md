@@ -1,7 +1,7 @@
 ---
 name: AL Development Conductor
 description: 'AL Conductor Agent - Orchestrates Planning → Implementation → Review → Commit cycle for AL Development. Enforces TDD and quality gates for Business Central extensions.'
-tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, agent, edit, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, todo]
+tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, agent, edit, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, todo, aproda.aproda-aldc/aprodaAldc_readConfiguration]
 agents: ['AL Planning Subagent', 'AL Code Review Subagent', 'AL Implementation Subagent']
 model: GPT-5.6 Terra (copilot)
 argument-hint: 'Feature description or requirements for TDD orchestration (e.g., "Add customer loyalty points system")'
@@ -94,7 +94,7 @@ Progress is by **phase** (N/Total), a real value — never invent per-task perce
 
 2. **Check for Input Documents**: architecture.md, spec.md, requirements doc — use whatever's available to guide planning.
 
-   > **Resolve the BCQuality decision ONCE (here — not in each subagent).** Read `aldc.yaml → external.bcquality.enabled` (**absent field ⇒ `auto`**):
+  > **Resolve the BCQuality decision ONCE (here — not in each subagent).** Invoke `#aldcConfiguration` to read `aldc.yaml → external.bcquality.enabled` (**absent field ⇒ `auto`**). Fall back to direct root-level access only when the tool is unavailable:
    > - `false` → **off**: `bcquality = { decision: "disabled", mounted: false }`. **Do not probe.**
    > - `auto` / `true` → probe `<home>/<entryPoint>` **once** (e.g. `read_file ../bcquality/skills/entry.md`): a successful read → `{ decision: "active", mounted: true, sha: <pinnedCommit or resolved> }`; absent — **a probe that errors or returns empty counts as absent** → `{ decision: "not-applicable", mounted: false }`; do **not** retry the read (for `true`, note the expected-but-absent in the plan — never block).
    >

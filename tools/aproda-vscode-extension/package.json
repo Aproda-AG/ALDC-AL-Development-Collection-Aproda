@@ -10,7 +10,7 @@
         "url": "https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda.git"
     },
     "engines": {
-        "vscode": "^1.85.0"
+        "vscode": "^1.109.0"
     },
     "categories": [
         "Other"
@@ -21,6 +21,17 @@
         "workspaceContains:**/aldc.yaml"
     ],
     "contributes": {
+        "languageModelTools": [
+            {
+                "name": "aprodaAldc_readConfiguration",
+                "displayName": "Read ALDC Configuration",
+                "modelDescription": "Read the authoritative aldc.yaml configuration for the current ALDC project. Use this before making a decision that depends on ALDC configuration, including the toolkit root, plans root, Aproda layer version, or BCQuality settings. It resolves the repository root from workspace folders, so it works when the repository root is not itself a workspace folder. It is read-only and returns a structured result. Do not use it for general source-code questions.",
+                "canBeReferencedInPrompt": true,
+                "toolReferenceName": "aldcConfiguration",
+                "userDescription": "Read authoritative ALDC project configuration",
+                "when": "aprodaAldc.isAlProject"
+            }
+        ],
         "commands": [
             {
                 "command": "aprodaAldc.setup",
@@ -123,7 +134,7 @@
     },
     "devDependencies": {
         "@types/node": "^22.15.3",
-        "@types/vscode": "^1.85.0",
+        "@types/vscode": "^1.109.0",
         "@vscode/vsce": "^3.6.0",
         "typescript": "^5.8.3"
     }

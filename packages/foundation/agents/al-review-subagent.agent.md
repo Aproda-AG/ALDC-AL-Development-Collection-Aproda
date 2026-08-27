@@ -4,7 +4,7 @@ description: 'AL Code Review Subagent - Quality assurance for Business Central A
 user-invocable: false
 disable-model-invocation: true
 argument-hint: 'Phase implementation to review with acceptance criteria and AL validation requirements'
-tools: [read/problems, read/readFile, search, 'al-symbols-mcp/*', ms-dynamics-smb.al/al_debug, ms-dynamics-smb.al/al_setbreakpoint, ms-dynamics-smb.al/al_snapshotdebugging, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolrelations]
+tools: [read/problems, read/readFile, search, 'al-symbols-mcp/*', ms-dynamics-smb.al/al_debug, ms-dynamics-smb.al/al_setbreakpoint, ms-dynamics-smb.al/al_snapshotdebugging, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolrelations, aproda.aproda-aldc/aprodaAldc_readConfiguration]
 model: GPT-5.6 Terra (copilot)
 handoffs:
   - label: Return to Conductor
@@ -33,7 +33,7 @@ BCQuality is a curated, citable BC knowledge base consumed from the external BCQ
 > - `disabled` / `not-applicable` (or `mounted: false`) → **skip Step 0 entirely**: set `review.bcquality = { outcome: "not-applicable", skills-run: [], submodule-sha: null }`, leave `sub-results: []`, record the reason in `review.notes`, and **read NOTHING from the BCQuality clone** (no `entry.md`, no `skills/read.md`, no `do.md`). The Step 2 native residual then **expands from A/C/F/G to the full A–G checklist**, each domain verified against its `.github/instructions/*` + `.github/skills/*`.
 > - `active` → proceed to Step 0 proper (1–5), using the passed `sha`.
 >
-> **Standalone fallback only** (no decision passed — you were invoked outside the Conductor): resolve it yourself — read `aldc.yaml → external.bcquality.enabled` (**absent field ⇒ `auto`**); `false` → skip as above; `auto`/`true` → **probe once** (`read_file <home>/<entryPoint>`, e.g. `../bcquality/skills/entry.md`): a successful read is the mounted signal (proceed); a read that **errors or returns empty = absent** → skip as above — **never retry the read or proceed to Route/Execute**. A missing knowledge layer **never** fails or blocks the review.
+> **Standalone fallback only** (no decision passed — you were invoked outside the Conductor): invoke `#aldcConfiguration` to resolve `aldc.yaml → external.bcquality.enabled` (**absent field ⇒ `auto`**), falling back to direct root-level access only when the tool is unavailable; `false` → skip as above; `auto`/`true` → **probe once** (`read_file <home>/<entryPoint>`, e.g. `../bcquality/skills/entry.md`): a successful read is the mounted signal (proceed); a read that **errors or returns empty = absent** → skip as above — **never retry the read or proceed to Route/Execute**. A missing knowledge layer **never** fails or blocks the review.
 
 > **BCQuality status — surface one line** (product signal): probe OK → `🟢 BCQuality · active — {ref, or 📌 <sha> if pinned}`; probe fails/disabled → `⚪ BCQuality · not mounted — native A–G fallback`. When you emit the review, append `📎 BCQuality · {n} cited findings` (n = findings with non-empty `references[]`; omit when not-applicable).
 

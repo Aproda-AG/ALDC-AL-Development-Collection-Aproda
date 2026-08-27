@@ -7,12 +7,14 @@ import { Logger } from "./log";
 import { initializeProject } from "./commands/initProject";
 import { LayerSource } from "./source/layerSource";
 import { asMessage, runDoctor } from "./setup/doctor";
+import { registerReadAldcConfigurationTool } from "./agent/readAldcConfigurationTool";
 
 export function activate(context: vscode.ExtensionContext): void {
   const logger = new Logger();
   const layerSource = new LayerSource(context, logger);
   let startupCheck: Promise<void> | undefined;
   context.subscriptions.push(logger);
+  registerReadAldcConfigurationTool(context);
 
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.showLog", () => logger.show()));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.doctor", () => runDoctor(context, logger, layerSource)));
