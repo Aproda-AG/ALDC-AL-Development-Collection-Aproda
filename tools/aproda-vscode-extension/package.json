@@ -1,0 +1,126 @@
+{
+    "name": "aproda-aldc",
+    "displayName": "Aproda ALDC",
+    "description": "Aproda ALDC project tooling for Visual Studio Code.",
+    "version": "0.1.0",
+    "publisher": "aproda",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda.git"
+    },
+    "engines": {
+        "vscode": "^1.85.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "main": "./dist/extension.js",
+    "activationEvents": [
+        "workspaceContains:**/app.json",
+        "workspaceContains:**/aldc.yaml"
+    ],
+    "contributes": {
+        "commands": [
+            {
+                "command": "aprodaAldc.setup",
+                "title": "Aproda ALDC: Run Setup"
+            },
+            {
+                "command": "aprodaAldc.doctor",
+                "title": "Aproda ALDC: Doctor (Environment Diagnostics)"
+            },
+            {
+                "command": "aprodaAldc.repairCache",
+                "title": "Aproda ALDC: Repair Layer Cache"
+            },
+            {
+                "command": "aprodaAldc.showLog",
+                "title": "Aproda ALDC: Show Log"
+            },
+            {
+                "command": "aprodaAldc.initProject",
+                "title": "Aproda ALDC: Initialize / Update This Project"
+            },
+            {
+                "command": "aprodaAldc.previewChanges",
+                "title": "Aproda ALDC: Preview Changes (Dry Run)"
+            },
+            {
+                "command": "aprodaAldc.checkForUpdates",
+                "title": "Aproda ALDC: Check for Layer Updates"
+            }
+        ],
+        "configuration": {
+            "title": "Aproda ALDC",
+            "properties": {
+                "aprodaAldc.source.mode": {
+                    "type": "string",
+                    "default": "managed",
+                    "enum": [
+                        "managed",
+                        "localFork"
+                    ],
+                    "markdownDescription": "Layer source mode. Use `managed` unless you maintain the Aproda layer."
+                },
+                "aprodaAldc.source.forkPath": {
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "Path to a local Aproda ALDC fork. Used only in `localFork` mode."
+                },
+                "aprodaAldc.source.repositoryUrl": {
+                    "type": "string",
+                    "default": "https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda.git",
+                    "markdownDescription": "Repository used by the managed layer cache."
+                },
+                "aprodaAldc.channel": {
+                    "type": "string",
+                    "default": "release",
+                    "enum": [
+                        "release",
+                        "edge",
+                        "pinned"
+                    ],
+                    "markdownDescription": "Layer release channel."
+                },
+                "aprodaAldc.pinnedVersion": {
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "Layer version to use when the channel is `pinned`, for example `1.2.0_aproda.9`."
+                },
+                "aprodaAldc.pwshPath": {
+                    "type": "string",
+                    "default": "pwsh",
+                    "markdownDescription": "PowerShell executable used by later project commands."
+                },
+                "aprodaAldc.startupCheck.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Check for a newer Aproda ALDC layer when an AL project opens."
+                },
+                "aprodaAldc.startupCheck.intervalHours": {
+                    "type": "number",
+                    "default": 24,
+                    "minimum": 1,
+                    "markdownDescription": "Minimum time between automatic layer update checks."
+                }
+            }
+        }
+    },
+    "scripts": {
+        "compile": "node ./node_modules/typescript/lib/tsc.js -p .",
+        "watch": "node ./node_modules/typescript/lib/tsc.js -p . --watch",
+        "package": "npm run compile && node ./node_modules/@vscode/vsce/vsce package --out dist/aproda-aldc.vsix",
+        "lint": "node ./node_modules/typescript/lib/tsc.js --noEmit",
+        "test": "npm run compile && node ./test/version-compare.test.js"
+    },
+    "dependencies": {
+        "yaml": "^2.8.1"
+    },
+    "devDependencies": {
+        "@types/node": "^22.15.3",
+        "@types/vscode": "^1.85.0",
+        "@vscode/vsce": "^3.6.0",
+        "typescript": "^5.8.3"
+    }
+}
