@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
-import { Channel, devRoot, forkPath, pinnedVersion, startupCheckIntervalHours, updateGlobal } from "../config";
+import * as path from "path";
+import { bcqualityPath, Channel, channel, devRoot, forkPath, pinnedVersion, sourceMode, startupCheckIntervalHours, startupChecksEnabled, updateGlobal } from "../config";
 import { directoryExists, proposeDevRoot } from "../env/devRoot";
 import { resolveTargetRepo } from "../env/gitRoot";
 import { Logger } from "../log";
@@ -16,10 +17,14 @@ export async function offerInitialSetup(context: vscode.ExtensionContext, logger
     if (context.globalState.get<boolean>(setupCompletedKey)) {
         return;
     }
-    const choice = await vscode.window.showInformationMessage("Configure Aproda ALDC settings for this VS Code installation?", "Configure Settings", "Later");
+    const choice = await vscode.window.showInformationMessage(
+        "Welcome to Aproda ALDC. Open the guided setup to configure your environment and initialize a project.",
+        "Getting Started",
+        "Later"
+    );
     await context.globalState.update(setupCompletedKey, true);
-    if (choice === "Configure Settings") {
-        await runSetupWizard(context, logger, layerSource);
+    if (choice === "Getting Started") {
+        await vscode.commands.executeCommand("aprodaAldc.openWalkthrough");
     }
 }
 
@@ -29,7 +34,7 @@ export async function runSetupWizard(context: vscode.ExtensionContext, logger: L
     const proposedRoot = devRoot() || await proposeDevRoot(repositoryRoot) || "";
     const selectedRoot = await vscode.window.showInputBox({
         title: "Aproda ALDC: Developer Root",
-        prompt: "Used by future Aproda ALDC tooling. Leave blank to configure it later.",
+        prompt: "Base folder for shared Aproda tooling, including the default BCQuality-Aproda location. Leave blank to configure it later.",
         value: proposedRoot,
         ignoreFocusOut: true
     });
@@ -46,8 +51,8 @@ export async function runSetupWizard(context: vscode.ExtensionContext, logger: L
     await updateGlobal("devRoot", normalizedRoot);
 
     const selectedMode = await vscode.window.showQuickPick([
-        { label: "Managed cache", value: "managed" as const, description: "Recommended. The extension maintains a clean local clone." },
-        { label: "Local fork", value: "localFork" as const, description: "For Aproda layer maintainers." }
+        quickPickItem("Managed cache", "managed", sourceMode(), "managed", "Keeps an extension-managed local copy of the approved layer release."),
+        quickPickItem("Local fork", "localFork", sourceMode(), "managed", "For layer maintainers. Uses your local fork and warns about drift.")
     ], { title: "Aproda ALDC: Layer Source", ignoreFocusOut: true });
     if (!selectedMode) {
         return;
@@ -62,9 +67,9 @@ export async function runSetupWizard(context: vscode.ExtensionContext, logger: L
     }
 
     const selectedChannel = await vscode.window.showQuickPick([
-        { label: "Release", value: "release" as const },
-        { label: "Edge", value: "edge" as const },
-        { label: "Pinned", value: "pinned" as const }
+        quickPickItem("Release", "release", channel(), "release", "Latest tagged, approved layer release."),
+        quickPickItem("Edge", "edge", channel(), "release", "Current aproda branch. May contain unreleased changes."),
+        quickPickItem("Pinned", "pinned", channel(), "release", "A specific tagged layer version.")
     ], { title: "Aproda ALDC: Layer Channel", ignoreFocusOut: true });
     if (!selectedChannel) {
         return;
@@ -84,10 +89,22 @@ export async function runSetupWizard(context: vscode.ExtensionContext, logger: L
         await updateGlobal("pinnedVersion", version.trim());
     }
 
+    const defaultBcqualityPath = normalizedRoot ? path.join(normalizedRoot, "BCQuality-Aproda") : "";
+    const selectedBcqualityPath = await vscode.window.showInputBox({
+        title: "Aproda ALDC: BCQuality Location",
+        prompt: "Shared standalone BCQuality-Aproda repository. It must be outside project repositories.",
+        value: bcqualityPath() || defaultBcqualityPath,
+        ignoreFocusOut: true
+    });
+    if (selectedBcqualityPath === undefined) {
+        return;
+    }
+    await updateGlobal("bcquality.path", selectedBcqualityPath.trim());
+
     const selectedStartupCheck = await vscode.window.showQuickPick([
-        { label: "Enable startup update checks", value: true },
-        { label: "Disable startup update checks", value: false }
-    ], { title: "Aproda ALDC: Startup Update Check", ignoreFocusOut: true });
+        quickPickItem("Enable layer update checks", true, startupChecksEnabled(), true, "Checks for newer layers when an AL project opens."),
+        quickPickItem("Disable layer update checks", false, startupChecksEnabled(), true, "Layer updates remain available from the Command Palette.")
+    ], { title: "Aproda ALDC: Layer Update Checks", ignoreFocusOut: true });
     if (!selectedStartupCheck) {
         return;
     }
@@ -95,7 +112,7 @@ export async function runSetupWizard(context: vscode.ExtensionContext, logger: L
     if (selectedStartupCheck.value) {
         const interval = await vscode.window.showInputBox({
             title: "Aproda ALDC: Update Check Interval",
-            prompt: "Minimum hours between automatic checks.",
+            prompt: "Minimum number of hours between automatic layer update checks.",
             value: String(startupCheckIntervalHours()),
             validateInput: (value) => /^\d+$/.test(value) && Number(value) >= 1 ? undefined : "Enter a whole number of at least 1.",
             ignoreFocusOut: true
@@ -108,4 +125,9 @@ export async function runSetupWizard(context: vscode.ExtensionContext, logger: L
     await context.globalState.update(setupCompletedKey, true);
     logger.info("Aproda ALDC settings wizard completed.");
     void vscode.window.showInformationMessage("Aproda ALDC settings were saved.");
+}
+
+function quickPickItem<T>(label: string, value: T, current: T, defaultValue: T, description: string): vscode.QuickPickItem & { value: T } {
+    const state = current === defaultValue ? "Default, Current" : current === value ? "Current" : value === defaultValue ? "Default" : "";
+    return { label: state ? `${label} (${state})` : label, value, description, picked: current === value };
 }

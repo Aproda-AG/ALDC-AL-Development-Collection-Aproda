@@ -12,7 +12,7 @@ import { registerReadAldcConfigurationTool } from "./agent/readAldcConfiguration
 import { installOrUpdateBcquality } from "./bcquality/install";
 import { resolveTargetRepo } from "./env/gitRoot";
 import { reconcileBcqualityWorkspace } from "./workspace/bcqualityRoot";
-import { openGettingStarted } from "./commands/gettingStarted";
+import { openGettingStarted, openWalkthrough } from "./commands/gettingStarted";
 import { validateInstallation } from "./commands/validate";
 import { checkForExtensionUpdates, shouldRunExtensionUpdateCheck } from "./commands/extensionUpdate";
 
@@ -37,6 +37,7 @@ export function activate(context: vscode.ExtensionContext): void {
       await reconcileBcqualityWorkspace(repositoryRoot, bcqualityRoot, logger);
     }
   }));
+  context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.openWalkthrough", () => openWalkthrough()));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.gettingStarted", () => openGettingStarted()));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.validate", () => validateInstallation(logger)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.resetData", () => resetLocalData(context, layerSource, logger, () => startupCheck)));

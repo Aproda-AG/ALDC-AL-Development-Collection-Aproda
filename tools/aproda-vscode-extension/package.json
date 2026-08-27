@@ -72,7 +72,11 @@
             },
             {
                 "command": "aprodaAldc.gettingStarted",
-                "title": "Aproda ALDC: Open Getting Started"
+                "title": "Aproda ALDC: Open Onboarding Guide"
+            },
+            {
+                "command": "aprodaAldc.openWalkthrough",
+                "title": "Aproda ALDC: Open Get Started"
             },
             {
                 "command": "aprodaAldc.validate",
@@ -109,7 +113,7 @@
                 "aprodaAldc.gettingStartedUrl": {
                     "type": "string",
                     "default": "https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda/blob/aproda/.github/onboarding.aproda.md",
-                    "markdownDescription": "Aproda ALDC onboarding documentation opened by the Getting Started command."
+                    "markdownDescription": "Aproda ALDC onboarding documentation opened by the Onboarding Guide command."
                 },
                 "aprodaAldc.source.mode": {
                     "type": "string",
@@ -172,7 +176,7 @@
             {
                 "id": "aprodaAldc.gettingStarted",
                 "title": "Get Started with Aproda ALDC",
-                "description": "Configure the extension, apply the layer, and prepare the BCQuality knowledge base.",
+                "description": "Configure the extension, preview or apply layer changes, and prepare the BCQuality knowledge base.",
                 "steps": [
                     {
                         "id": "configure",
@@ -185,7 +189,7 @@
                     },
                     {
                         "id": "applyLayer",
-                        "title": "Apply the layer",
+                        "title": "Preview or apply layer changes",
                         "description": "[Preview changes](command:aprodaAldc.previewChanges) or [apply the layer](command:aprodaAldc.initProject) to the current project.",
                         "media": {
                             "image": "media/A-ALDC Logo.png",
