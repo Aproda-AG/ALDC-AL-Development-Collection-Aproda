@@ -81,6 +81,9 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 
 ## Wie verwenden?
 
+> [!TIP]
+> Die interne VS Code Extension **Aproda ALDC** ist der empfohlene Einstieg: Starte **Aproda ALDC: Configure Settings**, danach **Preview Update Changes** oder **Apply Layer to Project**. Der nachfolgende PowerShell-Weg bleibt für die Initialisierung ausserhalb eines geöffneten Workspace verfügbar.
+
 ### 1 — Einmalige Vorbereitung
 
 1. Aproda-ALDC-Fork lokal klonen:

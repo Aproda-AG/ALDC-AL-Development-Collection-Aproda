@@ -10,6 +10,7 @@ export const globalSettingKeys = [
     "bcquality.path",
     "bcquality.setEnvInWorkspace",
     "bcquality.autoFixWorkspacePath",
+    "gettingStartedUrl",
     "source.mode",
     "source.forkPath",
     "source.repositoryUrl",
@@ -34,6 +35,10 @@ export function setBcqualityEnvInWorkspace(): boolean {
 
 export function autoFixBcqualityWorkspacePath(): boolean {
     return vscode.workspace.getConfiguration(section).get<boolean>("bcquality.autoFixWorkspacePath", true);
+}
+
+export function gettingStartedUrl(): string {
+    return vscode.workspace.getConfiguration(section).get<string>("gettingStartedUrl", "").trim();
 }
 
 export function sourceMode(): SourceMode {

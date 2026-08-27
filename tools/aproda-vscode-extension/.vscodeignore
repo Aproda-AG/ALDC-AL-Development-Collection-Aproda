@@ -6,4 +6,6 @@ tsconfig.json
 node_modules/**
 !node_modules/yaml/**
 !node_modules/jsonc-parser/**
+media/logo-transparent.png
+media/walkthrough.svg
 *.vsix

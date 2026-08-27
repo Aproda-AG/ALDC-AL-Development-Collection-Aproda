@@ -3,7 +3,7 @@
     "displayName": "Aproda ALDC",
     "description": "Aproda ALDC project tooling for Visual Studio Code.",
     "version": "0.1.0",
-    "publisher": "aproda",
+    "publisher": "aprodaag",
     "license": "MIT",
     "repository": {
         "type": "git",
@@ -15,6 +15,7 @@
     "categories": [
         "Other"
     ],
+    "icon": "media/A-ALDC Logo.png",
     "main": "./dist/extension.js",
     "activationEvents": [
         "workspaceContains:**/app.json",
@@ -66,6 +67,10 @@
                 "title": "Aproda ALDC: Install / Update BCQuality"
             },
             {
+                "command": "aprodaAldc.gettingStarted",
+                "title": "Aproda ALDC: Open Getting Started"
+            },
+            {
                 "command": "aprodaAldc.resetData",
                 "title": "Aproda ALDC: Reset Layer Cache and Settings"
             }
@@ -92,6 +97,11 @@
                     "type": "boolean",
                     "default": true,
                     "markdownDescription": "Keep BCQuality roots and settings aligned in project workspace files."
+                },
+                "aprodaAldc.gettingStartedUrl": {
+                    "type": "string",
+                    "default": "https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda/blob/aproda/.github/onboarding.aproda.md",
+                    "markdownDescription": "Aproda ALDC onboarding documentation opened by the Getting Started command."
                 },
                 "aprodaAldc.source.mode": {
                     "type": "string",
@@ -144,7 +154,52 @@
                     "markdownDescription": "Minimum time between automatic layer update checks."
                 }
             }
-        }
+        },
+        "walkthroughs": [
+            {
+                "id": "aprodaAldc.gettingStarted",
+                "title": "Get Started with Aproda ALDC",
+                "description": "Configure the extension, apply the layer, and prepare the BCQuality knowledge base.",
+                "steps": [
+                    {
+                        "id": "configure",
+                        "title": "Configure settings",
+                        "description": "[Configure Aproda ALDC settings](command:aprodaAldc.setup).",
+                        "media": {
+                            "image": "media/A-ALDC Logo.png",
+                            "altText": "Aproda ALDC configuration"
+                        }
+                    },
+                    {
+                        "id": "applyLayer",
+                        "title": "Apply the layer",
+                        "description": "[Preview changes](command:aprodaAldc.previewChanges) or [apply the layer](command:aprodaAldc.initProject) to the current project.",
+                        "media": {
+                            "image": "media/A-ALDC Logo.png",
+                            "altText": "Aproda ALDC layer workflow"
+                        }
+                    },
+                    {
+                        "id": "installBcquality",
+                        "title": "Install BCQuality",
+                        "description": "[Install or update BCQuality](command:aprodaAldc.installBcQuality).",
+                        "media": {
+                            "image": "media/A-ALDC Logo.png",
+                            "altText": "BCQuality knowledge base"
+                        }
+                    },
+                    {
+                        "id": "readOnboarding",
+                        "title": "Read the onboarding guide",
+                        "description": "[Open the Aproda ALDC onboarding guide](command:aprodaAldc.gettingStarted).",
+                        "media": {
+                            "image": "media/A-ALDC Logo.png",
+                            "altText": "Aproda ALDC onboarding guide"
+                        }
+                    }
+                ]
+            }
+        ]
     },
     "scripts": {
         "compile": "node ./node_modules/typescript/lib/tsc.js -p .",
