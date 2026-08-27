@@ -275,6 +275,7 @@ Write-Host ""
 
 # ── Apply (OVERLAY: copy only; never delete anything at the destination) ─────
 $copied = 0
+$dryRunChanges = 0
 foreach ($logical in $selected) {
     $srcRel = Get-PhysicalPath $logical $srcSide
     $dstRel = Get-PhysicalPath $logical $dstSide
@@ -283,12 +284,17 @@ foreach ($logical in $selected) {
 
     if (-not (Test-Path $srcFile)) { continue }
 
+    if ($WhatIfPreference -and (Test-Path $dstFile) -and ((Get-FileHash -LiteralPath $srcFile -Algorithm SHA256).Hash -eq (Get-FileHash -LiteralPath $dstFile -Algorithm SHA256).Hash)) {
+        continue
+    }
+
     $dstDir = Split-Path $dstFile -Parent
     if ($PSCmdlet.ShouldProcess($dstFile, "Copy from $srcFile")) {
         if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
         Copy-Item -LiteralPath $srcFile -Destination $dstFile -Force
         $copied++
     }
+    if ($WhatIfPreference) { $dryRunChanges++ }
 }
 
 # ── Dual-variant files (D-18 follow-up) ──────────────────────────────────────
@@ -337,19 +343,25 @@ foreach ($dv in @($manifest.dualVariant)) {
         }
     }
 
+    $expected = ($lines -join $nl)
+    if ($WhatIfPreference -and (Test-Path $dvDst) -and ([System.IO.File]::ReadAllText($dvDst) -eq $expected)) {
+        continue
+    }
+
     Write-Host "Dual-variant: $($dv.path)  (toolkitRoot -> $dstSide value)" -ForegroundColor Green
     if ($PSCmdlet.ShouldProcess($dvDst, "Write dual-variant from $dvSrc")) {
         $dstDir = Split-Path $dvDst -Parent
         if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
         $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-        [System.IO.File]::WriteAllText($dvDst, ($lines -join $nl), $utf8NoBom)
+        [System.IO.File]::WriteAllText($dvDst, $expected, $utf8NoBom)
         $dualCount++
     }
+    if ($WhatIfPreference) { $dryRunChanges++ }
 }
 
 Write-Host ""
 if ($WhatIfPreference) {
-    Write-Host "DRY-RUN complete — $($selected.Count) file(s) + $(@($manifest.dualVariant).Count) dual-variant would sync. No changes made." -ForegroundColor Yellow
+    Write-Host "DRY-RUN complete — $dryRunChanges change(s) would be applied. No changes made." -ForegroundColor Yellow
 }
 else {
     Write-Host "Done — $copied file(s) copied + $dualCount dual-variant ($Direction)." -ForegroundColor Green

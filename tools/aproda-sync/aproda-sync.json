@@ -121,7 +121,8 @@
         "workflows/**", // AL-Go owns workflows; Aproda's own CI is named below as an exception
         "AL-Go-Settings.json",
         ".AL-Go/**",
-        "*.code-workspace"
+        "*.code-workspace",
+        "tools/aproda-vscode-extension/**"
     ],
     // Exceptions to neverTouch: Aproda-owned files that happen to live under a
     // denied folder (e.g. our BCQuality evidence workflow under workflows/).
