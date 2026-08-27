@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import { Logger } from "../log";
 import { findExtensionUpdate, installExtensionUpdate } from "../extensionUpdate/service";
+import { repositoryUrl } from "../config";
+import { openGitAuthenticationTerminal } from "../source/authenticate";
 
 const lastCheckKey = "lastExtensionUpdateCheck";
 const skipKey = "skippedExtensionVersion";
@@ -40,7 +42,10 @@ export async function checkForExtensionUpdates(context: vscode.ExtensionContext,
     } catch (error) {
         logger.error(error instanceof Error ? error.message : String(error));
         if (manual) {
-            const selection = await vscode.window.showErrorMessage("Aproda ALDC extension update check failed.", "Show Log");
+            const selection = await vscode.window.showErrorMessage("Aproda ALDC extension update check failed. Sign in to GitHub, then retry the check.", "Sign In / Retry", "Show Log");
+            if (selection === "Sign In / Retry") {
+                openGitAuthenticationTerminal(repositoryUrl(), logger);
+            }
             if (selection === "Show Log") {
                 logger.show();
             }

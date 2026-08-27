@@ -269,6 +269,13 @@ Consumer workspaces deliberately expose curated subfolders such as `.github`, `B
 
 The Aproda VS Code extension therefore contributes `aprodaAldc_readConfiguration` (`#aldcConfiguration`). It resolves Git roots from existing workspace folders, accepts exactly one root containing `aldc.yaml`, and returns a structured subset of the authoritative configuration. It is read-only, never prompts agents to select a repository, and reports missing, ambiguous, or invalid configuration explicitly. ALDC personas use the tool before configuration-dependent decisions and use direct root-level access only when the extension tool is unavailable.
 
+### D-25 — CI creates release tags after validation and approval
+Layer and VS Code extension releases are separate version streams. A version bump merged to `aproda` starts the matching CI validation automatically; it does not itself create a release. The final CI job waits for approval in a dedicated GitHub Environment, then creates the immutable tag and GitHub Release. This preserves a single human release authorization without requiring a second manually started workflow.
+
+Layer tags remain `v<core>_aproda.<revision>` and are the technical source for layer update checks. Extension tags remain `vscode-ext/v<semver>`; their matching GitHub Release contains `aproda-aldc.vsix`, which is the self-update download source. A release tag therefore always denotes a validated, approved publication. Manual creation of either tag is prohibited.
+
+`skill-aproda-aldc-release` documents this process for fork maintainers. It is deliberately excluded from the overlay sync manifest: consumer projects update from releases but must never be instructed to create them.
+
 ---
 
 ## Stacking vs. changing — practical guide

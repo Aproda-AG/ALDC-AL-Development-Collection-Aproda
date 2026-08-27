@@ -1,34 +1,96 @@
-name: Aproda Layer Version
+name: Release Aproda Layer
 
 on:
   push:
-    tags:
-      - 'v*_aproda.*'
+    branches:
+      - aproda
+    paths:
+      - aldc.yaml
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: aproda-layer-release
+  cancel-in-progress: false
 
 jobs:
-  validate-layer-version:
+  validate:
+    if: github.ref_name == 'aproda'
     runs-on: ubuntu-latest
+    outputs:
+      release_required: ${{ steps.candidate.outputs.release_required }}
+      tag: ${{ steps.candidate.outputs.tag }}
     steps:
-      - name: Checkout tagged revision
+      - name: Checkout release candidate
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Validate tag and layer version
+      - name: Verify release candidate
+        id: candidate
         shell: bash
         run: |
           set -euo pipefail
-          TAG="${GITHUB_REF_NAME}"
-          VERSION="${TAG#v}"
-          if [[ "$TAG" == "$VERSION" ]] || ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+_aproda\.[0-9]+$ ]]; then
-            echo "Expected tag format v<core>_aproda.<revision>; got $TAG" >&2
+          VERSION=$(sed -nE 's/^[[:space:]]*layerVersion:[[:space:]]*"?([^"#[:space:]]+).*/\1/p' aldc.yaml | head -n1)
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+_aproda\.[0-9]+$ ]]; then
+            echo "Expected aldc.yaml aproda.layerVersion in <core>_aproda.<revision> format; got ${VERSION:-<missing>}." >&2
             exit 1
           fi
-          ACTUAL=$(sed -nE 's/^[[:space:]]*layerVersion:[[:space:]]*"?([^"#[:space:]]+).*/\1/p' aldc.yaml | head -n1)
-          if [[ "$ACTUAL" != "$VERSION" ]]; then
-            echo "Tag $TAG requires aldc.yaml aproda.layerVersion $VERSION; found ${ACTUAL:-<missing>}." >&2
+          TAG="v$VERSION"
+          git fetch --tags origin
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "release_required=false" >> "$GITHUB_OUTPUT"
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            echo "Layer release $TAG already exists; no release is required."
+            exit 0
+          fi
+          LATEST=$(git tag --list 'v*_aproda.*' | sort -V | tail -n1)
+          if [[ -n "$LATEST" ]] && [[ "$(printf '%s\n%s\n' "$LATEST" "$TAG" | sort -V | tail -n1)" != "$TAG" ]]; then
+            echo "Candidate $TAG must be newer than the latest layer release $LATEST." >&2
             exit 1
           fi
-          echo "Validated Aproda layer version $VERSION."
+          echo "release_required=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Validated new Aproda layer release candidate $TAG."
+
+      - name: Install validator dependencies
+        if: steps.candidate.outputs.release_required == 'true'
+        run: npm install --omit=dev --no-package-lock
+        working-directory: tools/aldc-validate
+
+      - name: Validate layer
+        if: steps.candidate.outputs.release_required == 'true'
+        run: node tools/aldc-validate/index.js --config aldc.yaml
+
+  release:
+    needs: validate
+    if: needs.validate.outputs.release_required == 'true'
+    runs-on: ubuntu-latest
+    environment: aproda-layer-release
+    steps:
+      - name: Checkout approved candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/${{ needs.validate.outputs.tag }}" >/dev/null; then
+            echo "Tag ${{ needs.validate.outputs.tag }} was created while approval was pending." >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ needs.validate.outputs.tag }}" "$GITHUB_SHA" -m "Release ${{ needs.validate.outputs.tag }}"
+          git push origin "${{ needs.validate.outputs.tag }}"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.validate.outputs.tag }}
+          name: Aproda Layer ${{ needs.validate.outputs.tag }}
+          generate_release_notes: true

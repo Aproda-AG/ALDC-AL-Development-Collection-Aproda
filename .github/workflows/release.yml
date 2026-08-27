@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   release:
+    if: ${{ !contains(github.ref_name, '_aproda.') }}
     name: Create Release
     runs-on: ubuntu-latest
     

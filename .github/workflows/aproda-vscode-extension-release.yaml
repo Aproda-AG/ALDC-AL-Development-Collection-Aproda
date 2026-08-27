@@ -2,21 +2,34 @@ name: Release Aproda ALDC VSIX
 
 on:
   push:
-    tags:
-      - 'vscode-ext/v*'
+    branches:
+      - aproda
+    paths:
+      - tools/aproda-vscode-extension/package.json
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: aproda-vscode-extension-release
+  cancel-in-progress: false
+
 jobs:
-  release:
+  validate:
+    if: github.ref_name == 'aproda'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: tools/aproda-vscode-extension
+    outputs:
+      release_required: ${{ steps.candidate.outputs.release_required }}
+      tag: ${{ steps.candidate.outputs.tag }}
     steps:
-      - name: Checkout tagged revision
+      - name: Checkout release candidate
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -25,26 +38,83 @@ jobs:
           cache: npm
           cache-dependency-path: tools/aproda-vscode-extension/package-lock.json
 
-      - name: Verify tag matches extension version
+      - name: Verify release candidate
+        id: candidate
         shell: bash
         run: |
           set -euo pipefail
-          expected="vscode-ext/v$(node -p "require('./package.json').version")"
-          if [[ "${GITHUB_REF_NAME}" != "$expected" ]]; then
-            echo "Tag ${GITHUB_REF_NAME} must match package.json version: $expected" >&2
+          VERSION=$(node -p "require('./package.json').version")
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "package.json version must be valid SemVer; got $VERSION." >&2
             exit 1
           fi
+          TAG="vscode-ext/v$VERSION"
+          git fetch --tags origin
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "release_required=false" >> "$GITHUB_OUTPUT"
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            echo "VSIX release $TAG already exists; no release is required."
+            exit 0
+          fi
+          LATEST=$(git tag --list 'vscode-ext/v*' | sed 's|vscode-ext/v||' | sort -V | tail -n1)
+          if [[ -n "$LATEST" ]] && [[ "$(printf '%s\n%s\n' "$LATEST" "$VERSION" | sort -V | tail -n1)" != "$VERSION" ]]; then
+            echo "Candidate $VERSION must be newer than the latest VSIX release $LATEST." >&2
+            exit 1
+          fi
+          echo "release_required=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Validated new VSIX release candidate $TAG."
 
       - name: Install dependencies
+        if: steps.candidate.outputs.release_required == 'true'
         run: npm ci
 
       - name: Test and package
+        if: steps.candidate.outputs.release_required == 'true'
         run: |
           npm test
           npm run package
 
+      - name: Upload VSIX
+        if: steps.candidate.outputs.release_required == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aproda-aldc-vsix
+          path: tools/aproda-vscode-extension/dist/aproda-aldc.vsix
+          if-no-files-found: error
+
+  release:
+    needs: validate
+    if: needs.validate.outputs.release_required == 'true'
+    runs-on: ubuntu-latest
+    environment: aproda-vscode-extension-release
+    steps:
+      - name: Checkout approved candidate
+        uses: actions/checkout@v4
+
+      - name: Download VSIX
+        uses: actions/download-artifact@v4
+        with:
+          name: aproda-aldc-vsix
+          path: release
+
+      - name: Create release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/${{ needs.validate.outputs.tag }}" >/dev/null; then
+            echo "Tag ${{ needs.validate.outputs.tag }} was created while approval was pending." >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ needs.validate.outputs.tag }}" "$GITHUB_SHA" -m "Release ${{ needs.validate.outputs.tag }}"
+          git push origin "${{ needs.validate.outputs.tag }}"
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.validate.outputs.tag }}
+          name: Aproda ALDC VSIX ${{ needs.validate.outputs.tag }}
           generate_release_notes: true
-          files: tools/aproda-vscode-extension/dist/aproda-aldc.vsix
+          files: release/aproda-aldc.vsix

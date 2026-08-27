@@ -30,6 +30,6 @@ You are editing a file that belongs to the **Aproda ALDC customization layer** â
 
 - **Record it**: add/extend a D-entry in `decisions.aproda.md`; if you touched an Upstream file in place, add a row to the **Upstream-edits register**.
 - **English** for all persisted `.github/**` artifacts.
-- **Flow back to the fork**: you are editing a **working copy** inside a project. Validate here, but remind the user the change is only adopted once it is pushed back to the **aproda-aldc fork** (`subtree push` / PR) â€” otherwise the next `subtree pull` overwrites it and project copies drift.
+- **Flow back to the fork**: you are editing a **working copy** inside a project. Validate here, but remind the user the change is adopted only after it reaches the **aproda-aldc fork** through the allowed overlay-sync path or a fork PR; otherwise a later layer apply overwrites it and project copies drift.
 
 This guardrail applies **only** to Aproda-layer files (this instruction's `applyTo`). It does not affect normal AL/product development.

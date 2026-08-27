@@ -22,6 +22,7 @@ What the Aproda layer adds on top of upstream ALDC:
 | **Steward guardrail** | HITL instruction that triggers on any proposed layer edit — all changes require explicit confirmation |
 | **Doc-update workflow** | `/al-doc-update` — updates living documentation after implementation; integrated into `al-developer` and `al-conductor` |
 | **VS Code extension** | `tools/aproda-vscode-extension/` — guided in-workspace initialization, managed layer cache, BCQuality setup, validation, and internal VSIX updates |
+| **Release skill** | `skills/skill-aproda-aldc-release/` — fork-maintainer-only release governance for the layer and internal VSIX |
 | **Overlay sync tool** | `tools/aproda-sync/` — allowlist-driven syncer to push/pull the layer between fork and projects (`Start-InitNewProject`, `Start-Pull`, `Start-Push`) |
 | **Site profile** | `.github/site-profile.aproda.md` — concrete infrastructure facts (K: drive, NST servers, SRP, remote-PS) |
 
@@ -216,7 +217,7 @@ This table **is** the Aproda index (D-17) — the one place to answer "what has 
 | Item | Path | Decision | Status |
 |------|------|----------|--------|
 | This README (= the inventory/index) | `.github/readme.aproda.md` | D-1 | live |
-| Design decisions | `.github/decisions.aproda.md` | D-1 | live (D-1…D-22) |
+| Design decisions | `.github/decisions.aproda.md` | D-1 | live (D-1…D-25) |
 | Site profile (infra facts) | `.github/site-profile.aproda.md` | D-16 | live |
 | Deploy-Run-Verify Cycle skill | `.github/skills/skill-aproda-deploy-run-verify/` | D-8, D-15 | **VALIDATED** (27/27 green) |
 | Meta-skill (explain + extend the layer) | `.github/skills/skill-aproda-aldc/` | D-16 | live |
@@ -226,6 +227,7 @@ This table **is** the Aproda index (D-17) — the one place to answer "what has 
 | Layer sync (allowlist manifest + overlay script) | `.github/tools/aproda-sync/` | D-18 | live |
 | Fleet management tools (fork-only: status / update / gather) | `tools/aproda-sync/fleet/` | D-21 | live |
 | VS Code extension (fork-only: guided project setup and updates) | `tools/aproda-vscode-extension/` | D-21 | live |
+| Release skill (fork-only: tag and GitHub Release governance) | `skills/skill-aproda-aldc-release/` | D-25 | live |
 
 ### In-place Upstream edits (deliberate merge-points)
 

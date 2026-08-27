@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import { resolveTargetRepo } from "../env/gitRoot";
 import { Logger } from "../log";
+import { repositoryUrl } from "../config";
+import { openGitAuthenticationTerminal } from "../source/authenticate";
 import { VersionService } from "../version/service";
 
 const lastCheckKey = "lastLayerUpdateCheck";
@@ -26,7 +28,10 @@ export async function checkForLayerUpdates(context: vscode.ExtensionContext, log
     } catch (error) {
         logger.error(error instanceof Error ? error.message : String(error));
         if (manual) {
-            void vscode.window.showErrorMessage("Aproda ALDC update check failed.", "Show Log").then((selection) => {
+            void vscode.window.showErrorMessage("Aproda ALDC update check failed. Sign in to GitHub, then retry the check.", "Sign In / Retry", "Show Log").then((selection) => {
+                if (selection === "Sign In / Retry") {
+                    openGitAuthenticationTerminal(repositoryUrl(), logger);
+                }
                 if (selection === "Show Log") {
                     logger.show();
                 }

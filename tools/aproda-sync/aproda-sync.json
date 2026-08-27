@@ -122,7 +122,8 @@
         "AL-Go-Settings.json",
         ".AL-Go/**",
         "*.code-workspace",
-        "tools/aproda-vscode-extension/**"
+        "tools/aproda-vscode-extension/**",
+        "skills/skill-aproda-aldc-release/**"
     ],
     // Exceptions to neverTouch: Aproda-owned files that happen to live under a
     // denied folder (e.g. our BCQuality evidence workflow under workflows/).

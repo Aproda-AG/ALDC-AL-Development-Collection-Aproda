@@ -1,11 +1,11 @@
 ---
 name: skill-aproda-aldc
-description: "Explain, extend, change, or maintain the Aproda ALDC layer (the .aproda. fork customization on top of ALDC Core). Triggers on: extend/modify/add Aproda skill/agent/instruction/workflow, .aproda. convention, decisions.aproda.md, readme.aproda.md, stacking vs in-place edit, skill-aproda-*, Upstream-touch register, subtree pull/push, 'what is the Aproda layer', onboarding questions about ALDC. Also the knowledge entry point for Aproda infrastructure (site-profile.aproda.md). Aproda custom skill."
+description: "Explain, extend, change, or maintain the Aproda ALDC layer (the .aproda. fork customization on top of ALDC Core). Triggers on: extend/modify/add Aproda skill/agent/instruction/workflow, .aproda. convention, decisions.aproda.md, readme.aproda.md, stacking vs in-place edit, skill-aproda-*, Upstream-touch register, overlay sync, 'what is the Aproda layer', onboarding questions about ALDC. Also the knowledge entry point for Aproda infrastructure (site-profile.aproda.md). Aproda custom skill."
 ---
 
 # Skill: Aproda ALDC — Explain & Extend the Customization Layer
 
-> **Aproda custom skill** — the meta-skill for the Aproda ALDC layer itself. See [`../../readme.aproda.md`](../../readme.aproda.md) (how the layer works) and [`../../decisions.aproda.md`](../../decisions.aproda.md) (why — decisions D-1..D-22).
+> **Aproda custom skill** — the meta-skill for the Aproda ALDC layer itself. See [`../../readme.aproda.md`](../../readme.aproda.md) (how the layer works) and [`../../decisions.aproda.md`](../../decisions.aproda.md) (why — decisions D-1..D-25).
 > **Two audiences:** the **many** who just ask what the layer is / why a rule exists (Explain mode), and the **few** who change it (Extend mode). Extend mode is **guarded** — see [`../../instructions/aproda-aldc-steward.aproda.instructions.md`](../../instructions/aproda-aldc-steward.aproda.instructions.md).
 
 ## When to Load
@@ -13,7 +13,7 @@ description: "Explain, extend, change, or maintain the Aproda ALDC layer (the .a
 Load this skill when the task is **about the Aproda layer**, not about the BC extension being built:
 
 - **Explain**: "what is the Aproda ALDC layer?", "why is X done this way?", "what does decision D-N mean?", onboarding questions about the framework, where a convention comes from.
-- **Extend / change**: add a new Aproda skill/agent/instruction/workflow; change an existing Upstream behaviour; reroute an agent; decide stacking vs in-place edit; record a decision; maintain the Upstream-touch register; plan a `subtree pull`/`push`.
+- **Extend / change**: add a new Aproda skill/agent/instruction/workflow; change an existing Upstream behaviour; reroute an agent; decide stacking vs in-place edit; record a decision; maintain the Upstream-touch register; plan an overlay sync.
 - **Infra lookup**: as the entry point to [`../../site-profile.aproda.md`](../../site-profile.aproda.md) (K: DVD, NST servers, SRP, remote-PS, paste mangling).
 
 > This skill is **not** loaded for normal AL development. Building the BC extension uses the domain skills (`skill-api`, `skill-events`, …) and `skill-aproda-deploy-run-verify`. This one is meta — it changes/explains the **framework**, not the product.
@@ -26,6 +26,7 @@ Load this skill when the task is **about the Aproda layer**, not about the BC ex
 | *Why* is it built this way? (every design decision, D-1..D-22) | [`decisions.aproda.md`](../../decisions.aproda.md) |
 | What infra do we run on? (K:, NST servers, SRP, remote-PS) | [`site-profile.aproda.md`](../../site-profile.aproda.md) |
 | How is the runtime Deploy-Run-Verify Cycle standardized? | [`skill-aproda-deploy-run-verify`](../skill-aproda-deploy-run-verify/SKILL.md) |
+| How are layer or VSIX releases prepared and approved? | [`skill-aproda-aldc-release`](../skill-aproda-aldc-release/SKILL.md) (fork-maintainer only) |
 | Which model does each agent run on, and when do we escalate to Opus? | `decisions.aproda.md` → **D-22** (pins + Model Escalation Gate) |
 | Which Upstream files did we touch in place? | `decisions.aproda.md` → *Upstream edits register* |
 
@@ -37,7 +38,7 @@ Answer from the knowledge map above. Core facts to convey when onboarding someon
 
 - The Aproda layer is a **fork customization on top of ALDC Core**, kept in the **same Upstream folders** — there is **no separate `aproda/` override folder, no agent clones, no `.vscode` discovery registration** (D-3/D-4/D-5).
 - **Two mechanisms only** (the TL;DR of `readme.aproda.md`):
-  1. **Net-new** things use the **`.aproda.` infix** (files) or **`skill-aproda-*`** prefix (folders) → they never collide → `subtree pull` merges them cleanly.
+  1. **Net-new** things use the **`.aproda.` infix** (files) or **`skill-aproda-*`** prefix (folders) → they never collide → the allowlist overlay sync selects them deliberately.
   2. **Changes to Upstream behaviour** are **in-place edits** of the original file → the next-pull **merge conflict is the deliberate change-log**.
 - The `.aproda.` infix keeps the **type suffix intact** (`.prompt.md`, `.instructions.md`, `.agent.md`) so default discovery + `applyTo` keep working with zero registration.
 - When the user is **about to change** something, always surface the relevant **decision (D-N)** so they don't unknowingly revert a deliberate choice (this is the steward guardrail's whole purpose).
@@ -78,19 +79,19 @@ Use the `readme.aproda.md` "Stacking vs. changing" table:
 
 ### Step 4 — Validate where you are, then flow back to the fork
 - You are almost always editing a **working copy** of the layer inside a concrete project (so you can validate live — e.g. run `skill-aproda-deploy-run-verify`). That is fine and encouraged.
-- **The change is only "real" once it flows back to the aproda-aldc fork** (`subtree push` / PR). Until then, the next `subtree pull` in any project will overwrite or conflict with the local-only edit, and project copies drift.
-- Direction: **fork = source of truth**; projects = working copies that read+apply and may edit+validate, then push the change upstream to the fork.
+- **The change is only "real" once it flows back to the aproda-aldc fork** through the allowed overlay-sync path or a fork PR. Until then, a later layer apply can overwrite the local-only edit and project copies drift.
+- Direction: **fork = source of truth**; projects = working copies that read+apply and may edit+validate, then contribute the change upstream through the approved sync or PR process.
 
 ## Distribution model
 
 ```
 aproda-aldc fork (source of truth)
-        │  subtree pull (D-6)         ▲  subtree push / PR
+  │  allowlist overlay apply     ▲  approved sync / PR
         ▼                             │  (layer changes flow back)
 project repo A / B / C  ── read + apply (many) ── edit + validate (few) ──┘
 ```
 
-- **Everything in this layer ships to every project** via the `.github/` subtree (skills, instructions, site-profile, this meta-skill).
+- **Only manifest-allowed layer artifacts ship to projects** via the overlay sync. Fork-only tooling and governance, including `skill-aproda-aldc-release`, remains in the fork.
 - **Reading/applying** happens in every project; **changing** happens where the need arises (with live validation), then **must** flow back to the fork.
 - A repo that does **not** carry the full subtree relies on the personal **user-memory** summary of the infra facts as a fallback (redundant by design, like the self-describing `hitl-validation-issues.md`, D-11).
 
