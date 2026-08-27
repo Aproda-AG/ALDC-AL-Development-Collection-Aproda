@@ -16,3 +16,17 @@ Use **Open Getting Started** or the **Get Started with Aproda ALDC** walkthrough
 ## Development
 
 Run `npm test` to compile and run focused tests. Run `npm run package` to produce `dist/aproda-aldc.vsix`.
+
+## Internal Installation
+
+Download `aproda-aldc.vsix` from the internal GitHub release and install it with VS Code's **Extensions: Install from VSIX...** command, or run:
+
+```powershell
+code --install-extension .\aproda-aldc.vsix
+```
+
+Reinstall a newer VSIX from the same command. The extension does not update itself.
+
+## Release
+
+Update `package.json` and `CHANGELOG.md`, then create and push a matching tag such as `vscode-ext/v0.1.0`. The release workflow verifies the tag, runs tests, packages the VSIX, and attaches it to the GitHub release.

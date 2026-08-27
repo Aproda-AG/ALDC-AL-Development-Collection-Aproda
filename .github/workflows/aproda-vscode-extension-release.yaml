@@ -1,0 +1,50 @@
+name: Release Aproda ALDC VSIX
+
+on:
+  push:
+    tags:
+      - 'vscode-ext/v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/aproda-vscode-extension
+    steps:
+      - name: Checkout tagged revision
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/aproda-vscode-extension/package-lock.json
+
+      - name: Verify tag matches extension version
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="vscode-ext/v$(node -p "require('./package.json').version")"
+          if [[ "${GITHUB_REF_NAME}" != "$expected" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} must match package.json version: $expected" >&2
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test and package
+        run: |
+          npm test
+          npm run package
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: tools/aproda-vscode-extension/dist/aproda-aldc.vsix
