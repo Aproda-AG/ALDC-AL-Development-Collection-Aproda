@@ -434,7 +434,7 @@ Runs once on first activation (`globalState` marker) and on demand. Multi-step Q
 
 `vscode.env.openExternal(config.gettingStartedUrl)`. Default URL points at the `aproda` branch of the fork, overridable by setting so a document move needs no release.
 
-Additionally a native walkthrough (`contributes.walkthroughs`) with four steps: Run Setup · Initialize this project · Install BCQuality · Read the onboarding guide.
+Additionally a native walkthrough (`contributes.walkthroughs`) with four steps: Configure Settings · Preview or apply layer changes · Install BCQuality · Read the onboarding guide. First activation offers this walkthrough without interrupting the current workflow.
 
 ---
 
@@ -445,9 +445,9 @@ Two independent streams — do not conflate them.
 | Stream | Marker | Consumer |
 |---|---|---|
 | Layer | `aldc.yaml` → `aproda.layerVersion`, tag `v<version>` | Startup check, init/update |
-| Extension | `package.json` → `version`, tag `vscode-ext/v<semver>` | Internal VSIX release |
+| Extension | `package.json` → `version`, tag `vscode-ext/v<semver>` | VSIX self-update |
 
-Extension self-update and extension-version checks are deferred. New versions are distributed as manually installed internal VSIX releases.
+The extension checks the newest `vscode-ext/v*` tag on the standard startup throttle. On explicit user selection it authenticates with GitHub, downloads the release VSIX asset, installs it through VS Code, and offers a window reload.
 
 ---
 
@@ -566,7 +566,7 @@ Extension self-update and extension-version checks are deferred. New versions ar
 
 **Done when:** two colleagues install the VSIX and complete an initialization without asking questions.
 
-**Implemented 2026-08-27:** the `Release Aproda ALDC VSIX` workflow runs on `vscode-ext/v*` tags, verifies the tag exactly matches `tools/aproda-vscode-extension/package.json`, runs `npm ci`, tests and packages the extension, then attaches `aproda-aldc.vsix` to a GitHub release. The extension README documents VS Code and CLI installation plus the tag-based internal release procedure. Extension self-update remains explicitly deferred; users install newer internal VSIX releases manually.
+**Implemented 2026-08-27:** the `Release Aproda ALDC VSIX` workflow runs on `vscode-ext/v*` tags, verifies the tag exactly matches `tools/aproda-vscode-extension/package.json`, runs `npm ci`, tests and packages the extension, then attaches `aproda-aldc.vsix` to a GitHub release. The extension checks tagged internal releases on the configured startup interval. After explicit user confirmation and GitHub authentication, it downloads the release asset, installs the VSIX through VS Code, and offers a window reload.
 
 ---
 

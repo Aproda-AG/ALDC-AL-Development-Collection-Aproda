@@ -21,43 +21,45 @@ What the Aproda layer adds on top of upstream ALDC:
 | **Layer meta-skill** | `skill-aproda-aldc` — explains and extends the Aproda customization layer itself; entry to `site-profile.aproda.md` |
 | **Steward guardrail** | HITL instruction that triggers on any proposed layer edit — all changes require explicit confirmation |
 | **Doc-update workflow** | `/al-doc-update` — updates living documentation after implementation; integrated into `al-developer` and `al-conductor` |
+| **VS Code extension** | `tools/aproda-vscode-extension/` — guided in-workspace initialization, managed layer cache, BCQuality setup, validation, and internal VSIX updates |
 | **Overlay sync tool** | `tools/aproda-sync/` — allowlist-driven syncer to push/pull the layer between fork and projects (`Start-InitNewProject`, `Start-Pull`, `Start-Push`) |
 | **Site profile** | `.github/site-profile.aproda.md` — concrete infrastructure facts (K: drive, NST servers, SRP, remote-PS) |
 
 ---
 
-## Quickstart — initialize Aproda Aldc to a existing or new project repo
+## Install via VS Code extension (Recommended)
 
 > [!IMPORTANT]
 > - ⚠️ (Noch) nicht kompatibel mit ACT (Aproda Copilot Template) von Antionio. **Nicht getestet und nicht empfohlen, beides gleichzeitig in einem Repo zu verwenden**
 
 ```mermaid
 flowchart LR
-   A["Clone fork\ngit clone …Aproda-AG/…"] --> B["Create or select\ntarget Git repository"]
-   B --> C["Open fork in VS Code\nFile → Open Folder"]
-   C --> D["Open\ntools/aproda-sync/\nStart-InitNewProject-SRP-Safe.ps1"]
-   D --> E["Select All (Ctrl+A)\n→ Run Selection\n(PS Extension terminal)"]
-   E --> F["Repo-selection window\npicks target project"]
-   F --> G["Layer written to\n.github/ of target\nStart-Pull.ps1 materialized"]
+   A["Install internal\nAproda ALDC VSIX"] --> B["Open target Git repository\nin VS Code"]
+   B --> C["Aproda ALDC:\nOpen Get Started"]
+   C --> D["Configure Settings\nmanaged cache + BCQuality"]
+   D --> E["Preview Update Changes"]
+   E --> F["Apply Layer to Project"]
 ```
 
-### 1) One-time preparation
+The internal **Aproda ALDC** extension is the standard path for initializing and updating an open project repository. It owns a managed local cache of this fork, so project developers do not clone the fork themselves.
 
-1. **Clone the fork** (one-time, keep it on your workstation):
-   ```
-   git clone https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda
-   ```
-### 2) Initialize or update a repository
+1. Install the internal VSIX as described in [the extension README](../tools/aproda-vscode-extension/README.md#internal-installation).
+2. Open the target Git repository in VS Code.
+3. On first activation, select **Getting Started** in the notification, then run **Configure Settings** in the native walkthrough.
+4. Run **Preview Update Changes** and review the result. Run **Apply Layer to Project** only after confirming the preview.
+5. Run **Install / Update BCQuality** when the walkthrough reaches that step. The wizard proposes a shared, standalone `BCQuality-Aproda` location outside project repositories.
+6. Use **Validate Installation** after applying the layer. For later changes, use **Check for Updates** and **Check for Extension Updates**.
 
-1. **Open the fork in VS Code** (`File → Open Folder`).
-2. **Open** `tools/aproda-sync/Start-InitNewProject-SRP-Safe.ps1` in the editor.
-3. **Run it SRP-safe:** Select All (`Ctrl+A`) → right-click → *Run Selection* in the PowerShell Extension terminal (or `Shift+F8` / *PowerShell: Run Selection*).
-4. **Select the target repo** from the pop-up grid view (or type the path at the console prompt if the GUI is unavailable).
-   > **Skip the dialog:** set `$targetRepo` at the top of the launcher (line 9) to a fixed path and the selection step is bypassed entirely.
-5. The entire layer is written into `.github/` of the target. A `Start-Pull.ps1` is materialized there for future updates.
+## Fallback: Install via PowerShell initialization outside an open workspace
 
-> **After init:** open the target project folder in VS Code and work normally with Copilot.
-> For future layer updates, either run the initializer again from the fork or run `Start-Pull.ps1` inside the target project. Both paths perform the same allowlist-based overlay update and do not delete project files.
+Use this path only when the target repository cannot be opened in VS Code, or when an administrator needs the external repository-picker workflow. It requires a local clone of this fork.
+
+1. Clone the fork once: `git clone https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda`.
+2. Open `tools/aproda-sync/Start-InitNewProject-SRP-Safe.ps1` from the fork.
+3. Select all content and run it with **PowerShell: Run Selection** in the PowerShell Extension terminal.
+4. Select or enter the target repository path. To bypass the selector, pre-fill `$targetRepo` in the launcher.
+
+The launcher writes the layer to `.github/` and materializes `Start-Pull.ps1` for later updates. Both the extension and PowerShell paths use the same allowlist-driven sync engine and never delete project files.
 
 ### What initialization changes and what to commit
 
@@ -78,13 +80,13 @@ The root `.gitignore` gets one managed, clearly visible block: `# Aproda ALDC To
 
 The syncer is an allowlist-only overlay: it copies the toolkit layer but never deletes files. Application code, AL-Go files, plans, and documentation are excluded from the sync and cannot be pushed from a project back to the fork.
 
-### 3) BCQuality knowledge base (one-time, per workstation)
+### BCQuality knowledge base (one-time, per workstation)
 
 **[BCQuality](https://github.com/microsoft/BCQuality)** is the official, agent-readable MS BC knowledge base for BC Development. `@Dredd` and the Review Subagent can use it during code review. It is mounted as a second workspace root (read-only) and never compiled into the AL extension.
 
 BCQuality defines three layers: **MS** (official Microsoft guidelines), **Community** (supplementary patterns), and **Custom** (company-specific rules). The Aproda fork [`Aproda-AG/BCQuality-Aproda`](https://github.com/Aproda-AG/BCQuality-Aproda) populates the Custom layer with initial Aproda-specific additions.
 
-The generated workspace file expects a BCQuality clone as a sibling of the project repo at `../bcquality-aproda`. Clone it once alongside your projects:
+The extension manages the recommended central clone at the configured developer root and reconciles project workspace files automatically. For the PowerShell fallback, clone it once alongside projects at `../bcquality-aproda`:
 
 ```
 git clone https://github.com/Aproda-AG/BCQuality-Aproda bcquality-aproda
@@ -92,7 +94,7 @@ git clone https://github.com/Aproda-AG/BCQuality-Aproda bcquality-aproda
 
 The folder must sit **next to** (not inside) the project repo so its `.al` files never enter the AL compiler's scope. Once cloned, it is available to all projects on the same workstation — no per-project setup needed. 
 
-### 4) Fallback — target repo not in the selection list
+### PowerShell fallback — target repo not in the selection list
 
 The script scans sibling folders of the fork for git repos. If the target project isn't found there (different drive, nested path, etc.):
 
@@ -223,6 +225,7 @@ This table **is** the Aproda index (D-17) — the one place to answer "what has 
 | Doc-update workflow | `.github/prompts/al-doc-update.aproda.prompt.md` | D-14 | live |
 | Layer sync (allowlist manifest + overlay script) | `.github/tools/aproda-sync/` | D-18 | live |
 | Fleet management tools (fork-only: status / update / gather) | `tools/aproda-sync/fleet/` | D-21 | live |
+| VS Code extension (fork-only: guided project setup and updates) | `tools/aproda-vscode-extension/` | D-21 | live |
 
 ### In-place Upstream edits (deliberate merge-points)
 

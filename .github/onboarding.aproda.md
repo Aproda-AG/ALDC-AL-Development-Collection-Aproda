@@ -2,7 +2,7 @@
 
 > **Aproda ALDC** ist Aprodas angepasste Version des quelloffenen [ALDC (AL Development Collection)](https://github.com/javiarmesto/AL-Development-Collection-for-GitHub-Copilot) Frameworks — ein strukturiertes, spec-getriebenes KI-Entwicklungsframework für Microsoft Dynamics 365 Business Central.
 >
-> Weiterlesen: [Aproda-README](readme.aproda.md) · [Aproda Quickstart](readme.aproda.md#quickstart--initialize-aproda-aldc-to-a-existing-or-new-project-repo)
+> Weiterlesen: [Aproda-README](readme.aproda.md) · [VS Code Einstieg](readme.aproda.md#recommended-vs-code-extension)
 
 ---
 
@@ -31,7 +31,7 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 > [!IMPORTANT]
 > - Wichtigster Grundsatz: **Qualitative Spezifikation → Qualitatives Ergebnis**
 > - Genauere Beschreibungen im [readme.aproda.md](readme.aproda.md) und [README.md](../README.md)
-> - ⚠️ (Noch) nicht kompatibel mit ACT (Aproda Copilot Template) von Antionio. **Nicht getestet und nicht empfohlen, beides gleichzeitig in einem Repo zu verwenden**
+> - ⚠️ Nicht kompatibel mit ACT (Aproda Copilot Template) von Antionio. **Nicht getestet und nicht empfohlen, beides gleichzeitig in einem Repo zu verwenden**
 
 | Ohne Aproda ALDC | Mit Aproda ALDC |
 |------------------|-----------------|
@@ -82,49 +82,21 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 ## Wie verwenden?
 
 > [!TIP]
-> Die interne VS Code Extension **Aproda ALDC** ist der empfohlene Einstieg: Starte **Aproda ALDC: Configure Settings**, danach **Preview Update Changes** oder **Apply Layer to Project**. Der nachfolgende PowerShell-Weg bleibt für die Initialisierung ausserhalb eines geöffneten Workspace verfügbar.
+> Die interne VS Code Extension **Aproda ALDC** ist der empfohlene Einstieg. Sie verwaltet den Layer-Cache und die BCQuality-Einrichtung; ein lokaler Fork ist nur für Layer-Maintainer oder den nachfolgenden PowerShell-Fallback nötig.
 
-### 1 — Einmalige Vorbereitung
+### 1 — Installation und Projekt einrichten
 
-1. Aproda-ALDC-Fork lokal klonen:
-```
-git clone https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda
-```
-2. BCQuality einmalig pro Workstation klonen (neben das Projekt-Repo, nicht hinein):
-[readme.aproda.md — BCQuality](readme.aproda.md#2-BCQuality-knowledge-base-one-time-per-workstation)
-```
-git clone https://github.com/Aproda-AG/BCQuality-Aproda bcquality-aproda
-```
+1. Die interne `aproda-aldc.vsix` aus dem GitHub Release installieren: VS Code Command Palette → **Extensions: Install from VSIX...**.
+2. VS Code bei Aufforderung neu laden und das Ziel-Git-Repository öffnen.
+3. Beim ersten Hinweis **Getting Started** wählen. Dadurch öffnet sich der native VS Code Walkthrough.
+4. Im Walkthrough **Configure Settings** ausführen. Der Wizard konfiguriert Developer Root, Layer-Quelle, Channel, BCQuality-Standort und Layer-Update-Checks.
+5. **Preview Update Changes** ausführen und das Ergebnis prüfen.
+6. **Apply Layer to Project** auswählen, wenn die Vorschau passt.
+7. **Install / Update BCQuality** ausführen und danach bei Bedarf **Validate Installation**.
 
-### 2 — Repo initialisieren und aktualisieren
+Für spätere Layer-Versionen stehen **Check for Updates** und **Preview Update Changes** bereit. Die Extension selbst prüft interne VSIX-Releases und bietet nach expliziter Bestätigung die Installation an.
 
-Initialisierung und Sync zu/von den Projekt-Repos erfolgen aus dem lokalen Aproda-ALDC-Fork.
-
-```
-1. Aproda-ALDC in VS Code öffnen: File → Open Folder
-2. `tools/aproda-sync/Start-InitNewProject-SRP-Safe.ps1` öffnen
-3. Alles markieren (Ctrl+A) → Strg+P-Command: `PowerShell: Run Selection` oder F8 (PowerShell Extension Terminal)
-4. Ziel-Repo im Auswahlfenster wählen (oder Pfad eintippen)
-→ Layer wird nach .github/ des Zielprojekts geschrieben
-```
-
-> - Genauere Anleitung im [readme.aproda.md - Quickstart](readme.aproda.md#Quickstart-—-initialize-Aproda-Aldc-to-a-existing-or-new-project-repo)
-> - Repo nicht im Auswahlfenster? → [readme.aproda.md — Fallback](readme.aproda.md#3-fallback--target-repo-not-in-the-selection-list)
-
-Der Init darf später erneut ausgeführt werden: Er aktualisiert den Layer über einen allowlist-basierten Overlay-Pull. Alternativ führt man im Ziel-Repo das beim ersten Init automatisch erstellte `.github/tools/aproda-sync/Start-Pull.ps1` aus. Beide Wege aktualisieren nur die Aproda- und ALDC-Toolkit-Dateien und löschen keine Projektdateien - der Sync arbeitet als Overlay: Er kopiert nur die erlaubten Layer-Dateien. Unberührt vom Sync bleiben Fachcode, AL-Go-Konfiguration, `plans/` und `documentation/`.
-
-#### Init-Ergebnis und Versionierung
-
-Die Root-`.gitignore` enthält dafür den verwalteten Block `# Aproda ALDC Tool - BEGIN/END`; nur dieser Block wird bei Init/Pull aktualisiert. Projektbezogene Skills können neben den ignorierten Framework-Ordnern ergänzt werden.
-
-| Kategorie | Artefakte | Behandlung |
-|---|---|---|
-| **Init/Update** | `.github/`-Toolkit, `Start-Pull.ps1` | Init schreibt den Layer; Update per erneutem Init oder lokalem `Start-Pull.ps1`. |
-| **Committen** / Kommt ins Projektrepo | `*.code-workspace`, `.github/plans/memory.md`, `.github/plans/{req}/`, Projektdokumentation, Root-`.gitignore` | Workspace enthält `.github`, Base-/Test-Ordner, `../bcquality-aproda` und `chat.useCustomizationsInParentRepositories`. |
-| **Ignorieren** | `Start-Pull.ps1`, `Start-Push.ps1`, `**/PowerShell/_temp/`, `**/PowerShell/_runner/`, synchronisierte Toolkit-Dateien | Lokale Fork-Pfade, temporäre Runner und die vom Fork gelieferte Verteilkopie. |
-
-
-### 3 — Routing: Komplexität bestimmt den Einstieg
+### 2 — Routing: Komplexität bestimmt den Einstieg
 
 ```
 LOW   (ein Objekt, keine Integration):
@@ -138,7 +110,7 @@ MEDIUM/HIGH (Logik, Events, externe Systeme):
 
 Im Zweifel: `@AL Architecture & Design Specialist` fragen — er bewertet die Komplexität und empfiehlt den Weg.
 
-### 4 — ADO-Anforderung starten
+### 3 — ADO-Anforderung starten
 
 ```
 1. Work Item in ADO prüfen/ergänzen (Beschreibung, Akzeptanzkriterien)
@@ -147,7 +119,7 @@ Im Zweifel: `@AL Architecture & Design Specialist` fragen — er bewertet die Ko
 3. Agent bestimmt `req_name = {type}-{id}-{short-name}` und legt `.github/plans/{type}-{id}-{short-name}/` an
 ```
 
-### 5 — Deploy-Run-Verify Cycle (OnPrem Gate)
+### 4 — Deploy-Run-Verify Cycle (OnPrem Gate)
 
 Nach jeder Implementierungsphase läuft der Deploy-Run-Verify Cycle automatisch:
 - `al-developer` → einmal vor PR (LOW)
@@ -155,7 +127,7 @@ Nach jeder Implementierungsphase läuft der Deploy-Run-Verify Cycle automatisch:
 
 Konfiguration: `Test/deploy-run-verify.config.jsonc` + `launch.json` im Projekt.
 
-### 6 — PR vorbereiten
+### 5 — PR vorbereiten
 
 ```
 @workspace use al-pr-prepare
