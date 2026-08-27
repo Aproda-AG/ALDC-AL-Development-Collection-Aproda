@@ -25,6 +25,7 @@ jobs:
     outputs:
       release_required: ${{ steps.candidate.outputs.release_required }}
       tag: ${{ steps.candidate.outputs.tag }}
+      version: ${{ steps.candidate.outputs.version }}
     steps:
       - name: Checkout release candidate
         uses: actions/checkout@v4
@@ -53,6 +54,7 @@ jobs:
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
             echo "release_required=false" >> "$GITHUB_OUTPUT"
             echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
             echo "VSIX release $TAG already exists; no release is required."
             exit 0
           fi
@@ -63,6 +65,7 @@ jobs:
           fi
           echo "release_required=true" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Validated new VSIX release candidate $TAG."
 
       - name: Install dependencies
@@ -74,13 +77,14 @@ jobs:
         run: |
           npm test
           npm run package
+          mv dist/aproda-aldc.vsix "dist/aproda-aldc-${{ steps.candidate.outputs.version }}.vsix"
 
       - name: Upload VSIX
         if: steps.candidate.outputs.release_required == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: aproda-aldc-vsix
-          path: tools/aproda-vscode-extension/dist/aproda-aldc.vsix
+          name: aproda-aldc-vsix-${{ steps.candidate.outputs.version }}
+          path: tools/aproda-vscode-extension/dist/aproda-aldc-${{ steps.candidate.outputs.version }}.vsix
           if-no-files-found: error
 
   release:
@@ -95,7 +99,7 @@ jobs:
       - name: Download VSIX
         uses: actions/download-artifact@v4
         with:
-          name: aproda-aldc-vsix
+          name: aproda-aldc-vsix-${{ needs.validate.outputs.version }}
           path: release
 
       - name: Create release tag
@@ -117,4 +121,4 @@ jobs:
           tag_name: ${{ needs.validate.outputs.tag }}
           name: Aproda ALDC VSIX ${{ needs.validate.outputs.tag }}
           generate_release_notes: true
-          files: release/aproda-aldc.vsix
+          files: release/aproda-aldc-${{ needs.validate.outputs.version }}.vsix

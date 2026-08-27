@@ -7,7 +7,6 @@ import { run } from "../process";
 import { compareExtensionVersions } from "./version";
 
 const tagPrefix = "vscode-ext/v";
-const vsixName = "aproda-aldc.vsix";
 const versionPattern = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
 export interface ExtensionUpdate {
@@ -54,6 +53,7 @@ export async function installExtensionUpdate(context: vscode.ExtensionContext, u
     const session = await vscode.authentication.getSession("github", ["repo"], { createIfNone: true });
     const releaseUrl = `https://api.github.com/repos/${repository.owner}/${repository.name}/releases/tags/${encodeURIComponent(update.tag)}`;
     const release = JSON.parse((await request(releaseUrl, session.accessToken)).toString("utf8")) as GitHubRelease;
+    const vsixName = `aproda-aldc-${update.available}.vsix`;
     const asset = release.assets.find((candidate) => candidate.name === vsixName);
     if (!asset) {
         throw new Error(`Release ${update.tag} does not contain ${vsixName}.`);
