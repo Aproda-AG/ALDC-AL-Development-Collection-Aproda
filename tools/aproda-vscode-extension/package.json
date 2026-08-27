@@ -69,6 +69,11 @@
         "configuration": {
             "title": "Aproda ALDC",
             "properties": {
+                "aprodaAldc.devRoot": {
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "Developer root used by future Aproda ALDC tooling, for example `I:/Florian Köll`."
+                },
                 "aprodaAldc.source.mode": {
                     "type": "string",
                     "default": "managed",
@@ -127,7 +132,7 @@
         "watch": "node ./node_modules/typescript/lib/tsc.js -p . --watch",
         "package": "npm run compile && node ./node_modules/@vscode/vsce/vsce package --out dist/aproda-aldc.vsix",
         "lint": "node ./node_modules/typescript/lib/tsc.js --noEmit",
-        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/reset-data.test.js"
+        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js"
     },
     "dependencies": {
         "yaml": "^2.8.1"

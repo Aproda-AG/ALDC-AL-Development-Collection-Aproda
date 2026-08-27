@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { resetGlobalSettings } from "../config";
 import { Logger } from "../log";
 import { LayerSource } from "../source/layerSource";
+import { resetSetupState } from "../setup/wizard";
 import { resetUpdateCheckState } from "../startup/check";
 
 export async function resetLocalData(
@@ -27,6 +28,7 @@ export async function resetLocalData(
                 await layerSource.clearCache();
                 await resetGlobalSettings();
                 await resetUpdateCheckState(context);
+                await resetSetupState(context);
             }
         );
         logger.info("Aproda ALDC local cache, global settings, and update-check state were reset.");

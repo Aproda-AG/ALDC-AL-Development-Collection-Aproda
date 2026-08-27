@@ -6,6 +6,7 @@ export type Channel = "release" | "edge" | "pinned";
 const section = "aprodaAldc";
 
 export const globalSettingKeys = [
+    "devRoot",
     "source.mode",
     "source.forkPath",
     "source.repositoryUrl",
@@ -15,6 +16,10 @@ export const globalSettingKeys = [
     "startupCheck.enabled",
     "startupCheck.intervalHours"
 ] as const;
+
+export function devRoot(): string {
+    return vscode.workspace.getConfiguration(section).get<string>("devRoot", "").trim();
+}
 
 export function sourceMode(): SourceMode {
     return vscode.workspace.getConfiguration(section).get<SourceMode>("source.mode", "managed");
