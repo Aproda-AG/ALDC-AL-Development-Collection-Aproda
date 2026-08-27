@@ -24,15 +24,15 @@
         "commands": [
             {
                 "command": "aprodaAldc.setup",
-                "title": "Aproda ALDC: Run Setup"
+                "title": "Aproda ALDC: Configure Settings"
             },
             {
                 "command": "aprodaAldc.doctor",
-                "title": "Aproda ALDC: Doctor (Environment Diagnostics)"
+                "title": "Aproda ALDC: Environment Diagnostics"
             },
             {
                 "command": "aprodaAldc.repairCache",
-                "title": "Aproda ALDC: Repair Layer Cache"
+                "title": "Aproda ALDC: (Re)build Layer Cache"
             },
             {
                 "command": "aprodaAldc.showLog",
@@ -40,15 +40,19 @@
             },
             {
                 "command": "aprodaAldc.initProject",
-                "title": "Aproda ALDC: Initialize / Update This Project"
+                "title": "Aproda ALDC: Apply Layer to Project"
             },
             {
                 "command": "aprodaAldc.previewChanges",
-                "title": "Aproda ALDC: Preview Changes (Dry Run)"
+                "title": "Aproda ALDC: Preview Update Changes"
             },
             {
                 "command": "aprodaAldc.checkForUpdates",
-                "title": "Aproda ALDC: Check for Layer Updates"
+                "title": "Aproda ALDC: Check for Updates"
+            },
+            {
+                "command": "aprodaAldc.resetData",
+                "title": "Aproda ALDC: Reset Layer Cache and Settings"
             }
         ],
         "configuration": {
@@ -112,7 +116,7 @@
         "watch": "node ./node_modules/typescript/lib/tsc.js -p . --watch",
         "package": "npm run compile && node ./node_modules/@vscode/vsce/vsce package --out dist/aproda-aldc.vsix",
         "lint": "node ./node_modules/typescript/lib/tsc.js --noEmit",
-        "test": "npm run compile && node ./test/version-compare.test.js"
+        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/reset-data.test.js"
     },
     "dependencies": {
         "yaml": "^2.8.1"

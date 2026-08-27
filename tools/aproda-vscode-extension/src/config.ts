@@ -5,6 +5,17 @@ export type Channel = "release" | "edge" | "pinned";
 
 const section = "aprodaAldc";
 
+export const globalSettingKeys = [
+    "source.mode",
+    "source.forkPath",
+    "source.repositoryUrl",
+    "channel",
+    "pinnedVersion",
+    "pwshPath",
+    "startupCheck.enabled",
+    "startupCheck.intervalHours"
+] as const;
+
 export function sourceMode(): SourceMode {
     return vscode.workspace.getConfiguration(section).get<SourceMode>("source.mode", "managed");
 }
@@ -39,4 +50,9 @@ export function startupCheckIntervalHours(): number {
 
 export function updateGlobal<T>(key: string, value: T): Thenable<void> {
     return vscode.workspace.getConfiguration(section).update(key, value, vscode.ConfigurationTarget.Global);
+}
+
+export async function resetGlobalSettings(): Promise<void> {
+    const configuration = vscode.workspace.getConfiguration(section);
+    await Promise.all(globalSettingKeys.map((key) => configuration.update(key, undefined, vscode.ConfigurationTarget.Global)));
 }

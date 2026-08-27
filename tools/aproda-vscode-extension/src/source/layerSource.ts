@@ -37,6 +37,11 @@ export class LayerSource {
         await this.ensureManagedCache();
     }
 
+    async clearCache(): Promise<void> {
+        this.logger.info(`Removing managed layer cache: ${this.cachePath}`);
+        await fs.rm(this.cachePath, { recursive: true, force: true });
+    }
+
     async describe(): Promise<SourceStatus> {
         if (sourceMode() === "localFork") {
             return this.ensureLocalFork(false);

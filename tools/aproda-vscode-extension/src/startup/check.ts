@@ -44,6 +44,14 @@ export async function markStartupCheckComplete(context: vscode.ExtensionContext)
     await context.globalState.update(lastCheckKey, Date.now());
 }
 
+export async function resetUpdateCheckState(context: vscode.ExtensionContext): Promise<void> {
+    await Promise.all([
+        context.globalState.update(lastCheckKey, undefined),
+        context.workspaceState.update(skipKey, undefined),
+        context.workspaceState.update(disabledKey, undefined)
+    ]);
+}
+
 async function showManualResult(result: Awaited<ReturnType<VersionService["check"]>>, logger: Logger): Promise<void> {
     if (result.status === "outdated") {
         await showUpdateActions(result.message, logger);
