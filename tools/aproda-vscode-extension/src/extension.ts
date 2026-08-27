@@ -13,6 +13,7 @@ import { installOrUpdateBcquality } from "./bcquality/install";
 import { resolveTargetRepo } from "./env/gitRoot";
 import { reconcileBcqualityWorkspace } from "./workspace/bcqualityRoot";
 import { openGettingStarted } from "./commands/gettingStarted";
+import { validateInstallation } from "./commands/validate";
 
 export function activate(context: vscode.ExtensionContext): void {
   const logger = new Logger();
@@ -35,6 +36,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   }));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.gettingStarted", () => openGettingStarted()));
+  context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.validate", () => validateInstallation(logger)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.resetData", () => resetLocalData(context, layerSource, logger, () => startupCheck)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.repairCache", async () => {
     try {

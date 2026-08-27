@@ -71,6 +71,10 @@
                 "title": "Aproda ALDC: Open Getting Started"
             },
             {
+                "command": "aprodaAldc.validate",
+                "title": "Aproda ALDC: Validate Installation"
+            },
+            {
                 "command": "aprodaAldc.resetData",
                 "title": "Aproda ALDC: Reset Layer Cache and Settings"
             }
