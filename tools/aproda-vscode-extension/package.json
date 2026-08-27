@@ -62,6 +62,10 @@
                 "title": "Aproda ALDC: Check for Updates"
             },
             {
+                "command": "aprodaAldc.installBcQuality",
+                "title": "Aproda ALDC: Install / Update BCQuality"
+            },
+            {
                 "command": "aprodaAldc.resetData",
                 "title": "Aproda ALDC: Reset Layer Cache and Settings"
             }
@@ -73,6 +77,21 @@
                     "type": "string",
                     "default": "",
                     "markdownDescription": "Developer root used by future Aproda ALDC tooling, for example `I:/Florian Köll`."
+                },
+                "aprodaAldc.bcquality.path": {
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "Central BCQuality-Aproda clone. Defaults to `<developer root>/BCQuality-Aproda`."
+                },
+                "aprodaAldc.bcquality.setEnvInWorkspace": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Set BCQUALITY_HOME in reconciled workspace settings."
+                },
+                "aprodaAldc.bcquality.autoFixWorkspacePath": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Keep BCQuality roots and settings aligned in project workspace files."
                 },
                 "aprodaAldc.source.mode": {
                     "type": "string",
@@ -132,9 +151,10 @@
         "watch": "node ./node_modules/typescript/lib/tsc.js -p . --watch",
         "package": "npm run compile && node ./node_modules/@vscode/vsce/vsce package --out dist/aproda-aldc.vsix",
         "lint": "node ./node_modules/typescript/lib/tsc.js --noEmit",
-        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js"
+        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js"
     },
     "dependencies": {
+        "jsonc-parser": "^3.3.1",
         "yaml": "^2.8.1"
     },
     "devDependencies": {

@@ -7,6 +7,9 @@ const section = "aprodaAldc";
 
 export const globalSettingKeys = [
     "devRoot",
+    "bcquality.path",
+    "bcquality.setEnvInWorkspace",
+    "bcquality.autoFixWorkspacePath",
     "source.mode",
     "source.forkPath",
     "source.repositoryUrl",
@@ -19,6 +22,18 @@ export const globalSettingKeys = [
 
 export function devRoot(): string {
     return vscode.workspace.getConfiguration(section).get<string>("devRoot", "").trim();
+}
+
+export function bcqualityPath(): string {
+    return vscode.workspace.getConfiguration(section).get<string>("bcquality.path", "").trim();
+}
+
+export function setBcqualityEnvInWorkspace(): boolean {
+    return vscode.workspace.getConfiguration(section).get<boolean>("bcquality.setEnvInWorkspace", true);
+}
+
+export function autoFixBcqualityWorkspacePath(): boolean {
+    return vscode.workspace.getConfiguration(section).get<boolean>("bcquality.autoFixWorkspacePath", true);
 }
 
 export function sourceMode(): SourceMode {

@@ -9,6 +9,9 @@ import { LayerSource } from "./source/layerSource";
 import { asMessage, runDoctor } from "./setup/doctor";
 import { offerInitialSetup, runSetupWizard } from "./setup/wizard";
 import { registerReadAldcConfigurationTool } from "./agent/readAldcConfigurationTool";
+import { installOrUpdateBcquality } from "./bcquality/install";
+import { resolveTargetRepo } from "./env/gitRoot";
+import { reconcileBcqualityWorkspace } from "./workspace/bcqualityRoot";
 
 export function activate(context: vscode.ExtensionContext): void {
   const logger = new Logger();
@@ -23,6 +26,13 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.initProject", () => initializeProject(layerSource, logger, false)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.previewChanges", () => initializeProject(layerSource, logger, true)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.checkForUpdates", () => checkForLayerUpdates(context, logger, true)));
+  context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.installBcQuality", async () => {
+    const bcqualityRoot = await installOrUpdateBcquality(logger);
+    const repositoryRoot = await resolveTargetRepo();
+    if (bcqualityRoot && repositoryRoot) {
+      await reconcileBcqualityWorkspace(repositoryRoot, bcqualityRoot, logger);
+    }
+  }));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.resetData", () => resetLocalData(context, layerSource, logger, () => startupCheck)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.repairCache", async () => {
     try {
