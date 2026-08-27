@@ -18,7 +18,8 @@ export const globalSettingKeys = [
     "pinnedVersion",
     "pwshPath",
     "startupCheck.enabled",
-    "startupCheck.intervalHours"
+    "startupCheck.intervalHours",
+    "extensionUpdate.enabled"
 ] as const;
 
 export function devRoot(): string {
@@ -71,6 +72,10 @@ export function startupChecksEnabled(): boolean {
 
 export function startupCheckIntervalHours(): number {
     return vscode.workspace.getConfiguration(section).get<number>("startupCheck.intervalHours", 24);
+}
+
+export function extensionUpdateChecksEnabled(): boolean {
+    return vscode.workspace.getConfiguration(section).get<boolean>("extensionUpdate.enabled", true);
 }
 
 export function updateGlobal<T>(key: string, value: T): Thenable<void> {

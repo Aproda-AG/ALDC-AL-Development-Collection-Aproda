@@ -4,6 +4,7 @@ import { Logger } from "../log";
 import { LayerSource } from "../source/layerSource";
 import { resetSetupState } from "../setup/wizard";
 import { resetUpdateCheckState } from "../startup/check";
+import { resetExtensionUpdateCheckState } from "./extensionUpdate";
 
 export async function resetLocalData(
     context: vscode.ExtensionContext,
@@ -28,6 +29,7 @@ export async function resetLocalData(
                 await layerSource.clearCache();
                 await resetGlobalSettings();
                 await resetUpdateCheckState(context);
+                await resetExtensionUpdateCheckState(context);
                 await resetSetupState(context);
             }
         );

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
-import { startupCheckIntervalHours, startupChecksEnabled } from "./config";
+import { extensionUpdateChecksEnabled, startupCheckIntervalHours, startupChecksEnabled } from "./config";
 import { resetLocalData } from "./commands/resetData";
 import { checkForLayerUpdates, markStartupCheckComplete, shouldRunStartupCheck } from "./startup/check";
 import { Logger } from "./log";
@@ -14,6 +14,7 @@ import { resolveTargetRepo } from "./env/gitRoot";
 import { reconcileBcqualityWorkspace } from "./workspace/bcqualityRoot";
 import { openGettingStarted } from "./commands/gettingStarted";
 import { validateInstallation } from "./commands/validate";
+import { checkForExtensionUpdates, shouldRunExtensionUpdateCheck } from "./commands/extensionUpdate";
 
 export function activate(context: vscode.ExtensionContext): void {
   const logger = new Logger();
@@ -28,6 +29,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.initProject", () => initializeProject(layerSource, logger, false)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.previewChanges", () => initializeProject(layerSource, logger, true)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.checkForUpdates", () => checkForLayerUpdates(context, logger, true)));
+  context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.checkExtensionUpdates", () => checkForExtensionUpdates(context, logger, true)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.installBcQuality", async () => {
     const bcqualityRoot = await installOrUpdateBcquality(logger);
     const repositoryRoot = await resolveTargetRepo();
@@ -58,6 +60,9 @@ export function activate(context: vscode.ExtensionContext): void {
   void offerInitialSetup(context, logger, layerSource);
   if (isAlProject && startupChecksEnabled() && shouldRunStartupCheck(context, startupCheckIntervalHours())) {
     startupCheck = checkForLayerUpdates(context, logger, false).finally(() => markStartupCheckComplete(context));
+  }
+  if (extensionUpdateChecksEnabled() && shouldRunExtensionUpdateCheck(context, startupCheckIntervalHours())) {
+    void checkForExtensionUpdates(context, logger, false);
   }
 }
 

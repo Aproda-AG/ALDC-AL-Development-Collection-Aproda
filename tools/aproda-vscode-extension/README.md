@@ -25,7 +25,7 @@ Download `aproda-aldc.vsix` from the internal GitHub release and install it with
 code --install-extension .\aproda-aldc.vsix
 ```
 
-Reinstall a newer VSIX from the same command. The extension does not update itself.
+The extension checks for a newer internal release at startup and through **Check for Extension Updates**. Selecting **Update Extension** signs in to GitHub when needed, downloads the release VSIX, installs it, and offers to reload VS Code.
 
 ## Release
 

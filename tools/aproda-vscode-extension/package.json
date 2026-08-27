@@ -63,6 +63,10 @@
                 "title": "Aproda ALDC: Check for Updates"
             },
             {
+                "command": "aprodaAldc.checkExtensionUpdates",
+                "title": "Aproda ALDC: Check for Extension Updates"
+            },
+            {
                 "command": "aprodaAldc.installBcQuality",
                 "title": "Aproda ALDC: Install / Update BCQuality"
             },
@@ -156,6 +160,11 @@
                     "default": 24,
                     "minimum": 1,
                     "markdownDescription": "Minimum time between automatic layer update checks."
+                },
+                "aprodaAldc.extensionUpdate.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Check for and offer to install newer Aproda ALDC VSIX releases."
                 }
             }
         },
@@ -210,7 +219,7 @@
         "watch": "node ./node_modules/typescript/lib/tsc.js -p . --watch",
         "package": "npm run compile && node ./node_modules/@vscode/vsce/vsce package --out dist/aproda-aldc.vsix",
         "lint": "node ./node_modules/typescript/lib/tsc.js --noEmit",
-        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js"
+        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/extension-version.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js"
     },
     "dependencies": {
         "jsonc-parser": "^3.3.1",
