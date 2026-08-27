@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- Activates after VS Code startup so first-run setup is offered in repositories without existing ALDC or AL files.
+- Offers to initialize an AL project containing `app.json` but no `aldc.yaml`, with a per-repository dismissal option.
+
 ## 0.1.1
 
 - Adds a GitHub sign-in retry path for private repository update checks.

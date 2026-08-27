@@ -1,22 +1,22 @@
 # Aproda ALDC for Visual Studio Code
 
-Internal Visual Studio Code tooling for Aproda ALDC projects. The extension guides configuration, applies the managed Aproda layer, manages a central BCQuality clone, and exposes the authoritative ALDC configuration to Copilot.
+Internal Visual Studio Code toolkit for Aproda ALDC projects. The extension guides configuration, applies the managed Aproda toolkit, manages a central BCQuality clone, and exposes the authoritative ALDC configuration to Copilot.
 
 ## Commands
 
 - **Open Get Started** opens the native VS Code walkthrough for first-time setup.
-- **Configure Settings** configures the developer root, layer source, channel, BCQuality location, and layer update checks.
-- **Preview Update Changes** calculates layer changes without modifying the project.
-- **Apply Layer to Project** initializes or updates the current repository.
+- **Configure Settings** configures the developer root, toolkit source, channel, BCQuality location, and toolkit update checks.
+- **Preview Update Changes** calculates toolkit changes without modifying the project.
+- **Apply Toolkit to Project** initializes or updates the current repository.
 - **Install / Update BCQuality** maintains the central external BCQuality-Aproda clone.
-- **Check for Updates** compares the project's installed layer version with the latest tagged release.
-- **Reset Layer Cache and Settings** removes extension-owned local data only; project files and local forks remain untouched.
+- **Check for Updates** compares the project's installed toolkit version with the latest tagged release.
+- **Reset Toolkit Cache and Settings** removes extension-owned local data only; project files and local forks remain untouched.
 
 Use **Open Onboarding Guide** for the external documentation or **Open Get Started** for the native VS Code walkthrough.
 
 ## Development
 
-Run `npm test` to compile and run focused tests. Run `npm run package` to produce `dist/aproda-aldc.vsix`.
+Run `npm test` to compile and run focused tests. Run `npm run package` to produce `dist/aproda-aldc-<version>.vsix`.
 
 ## Internal Installation
 

@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import { gettingStartedUrl } from "../config";
 
+const walkthroughId = "aprodaag.aproda-aldc#aprodaAldc.gettingStarted";
+
 export async function openGettingStarted(): Promise<void> {
     const url = gettingStartedUrl();
     if (!url) {
@@ -16,5 +18,5 @@ export async function openGettingStarted(): Promise<void> {
 }
 
 export async function openWalkthrough(): Promise<void> {
-    await vscode.commands.executeCommand("workbench.action.openWalkthrough", "aprodaAldc.gettingStarted");
+    await vscode.commands.executeCommand("workbench.action.openWalkthrough", walkthroughId);
 }

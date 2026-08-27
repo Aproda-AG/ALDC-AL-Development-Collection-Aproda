@@ -2,8 +2,9 @@ import * as vscode from "vscode";
 import { resetGlobalSettings } from "../config";
 import { Logger } from "../log";
 import { LayerSource } from "../source/layerSource";
-import { resetSetupState } from "../setup/wizard";
+import { offerInitialSetup, resetSetupState } from "../setup/wizard";
 import { resetUpdateCheckState } from "../startup/check";
+import { resetRepositoryInitializationState } from "../startup/repositoryInitialization";
 import { resetExtensionUpdateCheckState } from "./extensionUpdate";
 
 export async function resetLocalData(
@@ -30,11 +31,13 @@ export async function resetLocalData(
                 await resetGlobalSettings();
                 await resetUpdateCheckState(context);
                 await resetExtensionUpdateCheckState(context);
+                await resetRepositoryInitializationState(context);
                 await resetSetupState(context);
             }
         );
         logger.info("Aproda ALDC local cache, global settings, and update-check state were reset.");
         void vscode.window.showInformationMessage("Aproda ALDC local data was reset. Project files and local forks were not changed.");
+        void offerInitialSetup(context);
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         logger.error(`Could not reset Aproda ALDC local data: ${message}`);

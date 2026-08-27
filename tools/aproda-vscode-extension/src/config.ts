@@ -78,6 +78,11 @@ export function extensionUpdateChecksEnabled(): boolean {
     return vscode.workspace.getConfiguration(section).get<boolean>("extensionUpdate.enabled", true);
 }
 
+export function hasConfiguredValue(key: string): boolean {
+    const value = vscode.workspace.getConfiguration(section).inspect(key);
+    return value?.globalValue !== undefined || value?.workspaceValue !== undefined || value?.workspaceFolderValue !== undefined;
+}
+
 export function updateGlobal<T>(key: string, value: T): Thenable<void> {
     return vscode.workspace.getConfiguration(section).update(key, value, vscode.ConfigurationTarget.Global);
 }

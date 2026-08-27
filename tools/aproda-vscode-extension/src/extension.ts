@@ -15,6 +15,7 @@ import { reconcileBcqualityWorkspace } from "./workspace/bcqualityRoot";
 import { openGettingStarted, openWalkthrough } from "./commands/gettingStarted";
 import { validateInstallation } from "./commands/validate";
 import { checkForExtensionUpdates, shouldRunExtensionUpdateCheck } from "./commands/extensionUpdate";
+import { hasInitializedAlProject, offerRepositoryInitialization } from "./startup/repositoryInitialization";
 
 export function activate(context: vscode.ExtensionContext): void {
   const logger = new Logger();
@@ -25,7 +26,11 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.showLog", () => logger.show()));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.doctor", () => runDoctor(context, logger, layerSource)));
-  context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.setup", () => runSetupWizard(context, logger, layerSource)));
+  context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.setup", async () => {
+    if (await runSetupWizard(context, logger, layerSource)) {
+      await offerRepositoryInitialization(context, logger, layerSource);
+    }
+  }));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.initProject", () => initializeProject(layerSource, logger, false)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.previewChanges", () => initializeProject(layerSource, logger, true)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.checkForUpdates", () => checkForLayerUpdates(context, logger, true)));
@@ -43,8 +48,8 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.resetData", () => resetLocalData(context, layerSource, logger, () => startupCheck)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.repairCache", async () => {
     try {
-      await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: "Repairing Aproda ALDC layer cache" }, () => layerSource.repair());
-      void vscode.window.showInformationMessage("Aproda ALDC layer cache is ready.");
+      await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: "Repairing Aproda ALDC toolkit cache" }, () => layerSource.repair());
+      void vscode.window.showInformationMessage("Aproda ALDC toolkit cache is ready.");
     } catch (error) {
       logger.error(asMessage(error));
       void vscode.window.showErrorMessage(`Aproda ALDC cache repair failed: ${asMessage(error)}`, "Show Log").then((selection) => {
@@ -55,15 +60,27 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   }));
 
-  const isAlProject = isAlWorkspace();
-  void vscode.commands.executeCommand("setContext", "aprodaAldc.isAlProject", isAlProject);
   logger.info("Aproda ALDC extension activated.");
-  void offerInitialSetup(context, logger, layerSource);
-  if (isAlProject && startupChecksEnabled() && shouldRunStartupCheck(context, startupCheckIntervalHours())) {
-    startupCheck = checkForLayerUpdates(context, logger, false).finally(() => markStartupCheckComplete(context));
-  }
+  void startWorkspaceLifecycle();
   if (extensionUpdateChecksEnabled() && shouldRunExtensionUpdateCheck(context, startupCheckIntervalHours())) {
     void checkForExtensionUpdates(context, logger, false);
+  }
+
+  async function startWorkspaceLifecycle(): Promise<void> {
+    const isAlProject = isAlWorkspace();
+    const isInitializedProject = await hasInitializedAlProject();
+    await vscode.commands.executeCommand("setContext", "aprodaAldc.isAlProject", isAlProject);
+    const setupCompleted = await offerInitialSetup(context);
+    if (!setupCompleted) {
+      return;
+    }
+    if (isAlProject && !isInitializedProject) {
+      await offerRepositoryInitialization(context, logger, layerSource);
+      return;
+    }
+    if (isInitializedProject && startupChecksEnabled() && shouldRunStartupCheck(context, startupCheckIntervalHours())) {
+      startupCheck = checkForLayerUpdates(context, logger, false).finally(() => markStartupCheckComplete(context));
+    }
   }
 }
 

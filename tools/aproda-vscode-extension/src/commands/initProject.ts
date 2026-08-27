@@ -8,8 +8,8 @@ import { asMessage } from "../setup/doctor";
 import { resolveBcqualityPath } from "../bcquality/install";
 import { reconcileBcqualityWorkspace } from "../workspace/bcqualityRoot";
 
-export async function initializeProject(source: LayerSource, logger: Logger, preview: boolean): Promise<void> {
-    const repoRoot = await resolveTargetRepo();
+export async function initializeProject(source: LayerSource, logger: Logger, preview: boolean, targetRepositoryRoot?: string): Promise<void> {
+    const repoRoot = targetRepositoryRoot ?? await resolveTargetRepo();
     if (!repoRoot) {
         return;
     }
@@ -26,9 +26,9 @@ export async function initializeProject(source: LayerSource, logger: Logger, pre
             title: preview ? "Previewing Aproda ALDC changes" : "Initializing Aproda ALDC project",
             cancellable: false
         }, async (progress) => {
-            progress.report({ message: "Preparing layer source" });
+            progress.report({ message: "Preparing toolkit source" });
             const layer = await source.ensure();
-            progress.report({ message: preview ? "Calculating changes" : "Applying layer" });
+            progress.report({ message: preview ? "Calculating changes" : "Applying toolkit" });
             return runBootstrap(repoRoot, layer.path, preview, logger);
         });
         if (preview) {

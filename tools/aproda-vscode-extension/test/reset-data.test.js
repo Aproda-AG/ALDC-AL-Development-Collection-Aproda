@@ -22,6 +22,7 @@ Module._load = function (request, parent, isMain) {
 
 const { globalSettingKeys, resetGlobalSettings } = require("../dist/config");
 const { resetUpdateCheckState } = require("../dist/startup/check");
+const { resetRepositoryInitializationState } = require("../dist/startup/repositoryInitialization");
 const { LayerSource } = require("../dist/source/layerSource");
 Module._load = originalLoad;
 
@@ -35,10 +36,12 @@ async function main() {
         workspaceState: { update: async (key, value) => updates.push({ scope: "workspace", key, value }) }
     };
     await resetUpdateCheckState(context);
+    await resetRepositoryInitializationState(context);
     assert.deepStrictEqual(updates, [
         { scope: "global", key: "lastLayerUpdateCheck", value: undefined },
         { scope: "workspace", key: "skippedLayerVersion", value: undefined },
-        { scope: "workspace", key: "layerUpdateChecksDisabled", value: undefined }
+        { scope: "workspace", key: "layerUpdateChecksDisabled", value: undefined },
+        { scope: "global", key: "dismissedRepositoryInitialization", value: undefined }
     ]);
 
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aproda-aldc-reset-"));

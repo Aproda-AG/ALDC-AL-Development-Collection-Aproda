@@ -13,7 +13,7 @@ export async function validateInstallation(logger: Logger): Promise<void> {
     const validatorRoot = path.join(repositoryRoot, ".github", "tools", "aldc-validate");
     const validator = path.join(validatorRoot, "index.js");
     if (!await pathExists(validator)) {
-        void vscode.window.showErrorMessage("Aproda ALDC validator was not found. Apply the layer to this project first.");
+        void vscode.window.showErrorMessage("Aproda ALDC validator was not found. Apply the toolkit to this project first.");
         return;
     }
 

@@ -1,8 +1,8 @@
 {
     "name": "aproda-aldc",
     "displayName": "Aproda ALDC",
-    "description": "Aproda ALDC project tooling for Visual Studio Code.",
-    "version": "0.1.1",
+    "description": "Aproda ALDC toolkit for Visual Studio Code projects.",
+    "version": "0.1.2",
     "publisher": "aprodaag",
     "license": "MIT",
     "repository": {
@@ -18,15 +18,14 @@
     "icon": "media/A-ALDC Logo.png",
     "main": "./dist/extension.js",
     "activationEvents": [
-        "workspaceContains:**/app.json",
-        "workspaceContains:**/aldc.yaml"
+        "onStartupFinished"
     ],
     "contributes": {
         "languageModelTools": [
             {
                 "name": "aprodaAldc_readConfiguration",
                 "displayName": "Read ALDC Configuration",
-                "modelDescription": "Read the authoritative aldc.yaml configuration for the current ALDC project. Use this before making a decision that depends on ALDC configuration, including the toolkit root, plans root, Aproda layer version, or BCQuality settings. It resolves the repository root from workspace folders, so it works when the repository root is not itself a workspace folder. It is read-only and returns a structured result. Do not use it for general source-code questions.",
+                "modelDescription": "Read the authoritative aldc.yaml configuration for the current ALDC project. Use this before making a decision that depends on ALDC configuration, including the toolkit root, plans root, Aproda toolkit version, or BCQuality settings. It resolves the repository root from workspace folders, so it works when the repository root is not itself a workspace folder. It is read-only and returns a structured result. Do not use it for general source-code questions.",
                 "canBeReferencedInPrompt": true,
                 "toolReferenceName": "aldcConfiguration",
                 "userDescription": "Read authoritative ALDC project configuration",
@@ -44,7 +43,7 @@
             },
             {
                 "command": "aprodaAldc.repairCache",
-                "title": "Aproda ALDC: (Re)build Layer Cache"
+                "title": "Aproda ALDC: (Re)build Toolkit Cache"
             },
             {
                 "command": "aprodaAldc.showLog",
@@ -52,7 +51,7 @@
             },
             {
                 "command": "aprodaAldc.initProject",
-                "title": "Aproda ALDC: Apply Layer to Project"
+                "title": "Aproda ALDC: Apply Toolkit to Project"
             },
             {
                 "command": "aprodaAldc.previewChanges",
@@ -84,7 +83,7 @@
             },
             {
                 "command": "aprodaAldc.resetData",
-                "title": "Aproda ALDC: Reset Layer Cache and Settings"
+                "title": "Aproda ALDC: Reset Toolkit Cache and Settings"
             }
         ],
         "configuration": {
@@ -122,17 +121,17 @@
                         "managed",
                         "localFork"
                     ],
-                    "markdownDescription": "Layer source mode. Use `managed` unless you maintain the Aproda layer."
+                    "markdownDescription": "Toolkit source mode. Use `managed` unless you maintain the Aproda toolkit."
                 },
                 "aprodaAldc.source.forkPath": {
                     "type": "string",
                     "default": "",
-                    "markdownDescription": "Path to a local Aproda ALDC fork. Used only in `localFork` mode."
+                    "markdownDescription": "Path to a local Aproda ALDC toolkit fork. Used only in `localFork` mode."
                 },
                 "aprodaAldc.source.repositoryUrl": {
                     "type": "string",
                     "default": "https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda.git",
-                    "markdownDescription": "Repository used by the managed layer cache."
+                    "markdownDescription": "Repository used by the managed toolkit cache."
                 },
                 "aprodaAldc.channel": {
                     "type": "string",
@@ -142,12 +141,12 @@
                         "edge",
                         "pinned"
                     ],
-                    "markdownDescription": "Layer release channel."
+                    "markdownDescription": "Toolkit release channel."
                 },
                 "aprodaAldc.pinnedVersion": {
                     "type": "string",
                     "default": "",
-                    "markdownDescription": "Layer version to use when the channel is `pinned`, for example `1.2.0_aproda.9`."
+                    "markdownDescription": "Toolkit version to use when the channel is `pinned`, for example `1.2.0_aproda.9`."
                 },
                 "aprodaAldc.pwshPath": {
                     "type": "string",
@@ -157,13 +156,13 @@
                 "aprodaAldc.startupCheck.enabled": {
                     "type": "boolean",
                     "default": true,
-                    "markdownDescription": "Check for a newer Aproda ALDC layer when an AL project opens."
+                    "markdownDescription": "Check for a newer Aproda ALDC toolkit when an AL project opens."
                 },
                 "aprodaAldc.startupCheck.intervalHours": {
                     "type": "number",
                     "default": 24,
                     "minimum": 1,
-                    "markdownDescription": "Minimum time between automatic layer update checks."
+                    "markdownDescription": "Minimum time between automatic toolkit update checks."
                 },
                 "aprodaAldc.extensionUpdate.enabled": {
                     "type": "boolean",
@@ -175,8 +174,8 @@
         "walkthroughs": [
             {
                 "id": "aprodaAldc.gettingStarted",
-                "title": "Get Started with Aproda ALDC",
-                "description": "Configure the extension, preview or apply layer changes, and prepare the BCQuality knowledge base.",
+                "title": "Get Started with the Aproda ALDC Toolkit",
+                "description": "Configure the extension, apply the toolkit, and prepare the BCQuality knowledge base.",
                 "steps": [
                     {
                         "id": "configure",
@@ -189,11 +188,11 @@
                     },
                     {
                         "id": "applyLayer",
-                        "title": "Preview or apply layer changes",
-                        "description": "[Preview changes](command:aprodaAldc.previewChanges) or [apply the layer](command:aprodaAldc.initProject) to the current project.",
+                        "title": "Apply the toolkit",
+                        "description": "[Apply the toolkit](command:aprodaAldc.initProject) to the current project.",
                         "media": {
                             "image": "media/A-ALDC Logo.png",
-                            "altText": "Aproda ALDC layer workflow"
+                            "altText": "Aproda ALDC toolkit workflow"
                         }
                     },
                     {
@@ -221,7 +220,7 @@
     "scripts": {
         "compile": "node ./node_modules/typescript/lib/tsc.js -p .",
         "watch": "node ./node_modules/typescript/lib/tsc.js -p . --watch",
-        "package": "npm run compile && node ./node_modules/@vscode/vsce/vsce package --out dist/aproda-aldc.vsix",
+        "package": "npm run compile && node ./scripts/package.js",
         "lint": "node ./node_modules/typescript/lib/tsc.js --noEmit",
         "test": "npm run compile && node ./test/version-compare.test.js && node ./test/extension-version.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js"
     },

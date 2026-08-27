@@ -82,19 +82,18 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 ## Wie verwenden?
 
 > [!TIP]
-> Die interne VS Code Extension **Aproda ALDC** ist der empfohlene Einstieg. Sie verwaltet den Layer-Cache und die BCQuality-Einrichtung; ein lokaler Fork ist nur für Layer-Maintainer oder den nachfolgenden PowerShell-Fallback nötig.
+> Die interne VS Code Extension **Aproda ALDC** ist der empfohlene Einstieg. Sie verwaltet den Toolkit-Cache und die BCQuality-Einrichtung; ein lokaler Fork ist nur für Toolkit-Maintainer oder den nachfolgenden PowerShell-Fallback nötig.
 
 ### 1 — Installation und Projekt einrichten
 
 1. Die interne `aproda-aldc.vsix` aus dem GitHub Release installieren: VS Code Command Palette → **Extensions: Install from VSIX...**.
 2. VS Code bei Aufforderung neu laden und das Ziel-Git-Repository öffnen.
 3. Beim ersten Hinweis **Getting Started** wählen. Dadurch öffnet sich der native VS Code Walkthrough.
-4. Im Walkthrough **Configure Settings** ausführen. Der Wizard konfiguriert Developer Root, Layer-Quelle, Channel, BCQuality-Standort und Layer-Update-Checks.
-5. **Preview Update Changes** ausführen und das Ergebnis prüfen.
-6. **Apply Layer to Project** auswählen, wenn die Vorschau passt.
-7. **Install / Update BCQuality** ausführen und danach bei Bedarf **Validate Installation**.
+4. Im Walkthrough **Configure Settings** ausführen. Der Wizard konfiguriert Developer Root, Toolkit-Quelle, Channel, BCQuality-Standort und Toolkit-Update-Checks.
+5. **Apply Toolkit to Project** auswählen.
+6. **Install / Update BCQuality** ausführen und danach bei Bedarf **Validate Installation**.
 
-Für spätere Layer-Versionen stehen **Check for Updates** und **Preview Update Changes** bereit. Die Extension selbst prüft interne VSIX-Releases und bietet nach expliziter Bestätigung die Installation an.
+Für spätere Toolkit-Versionen stehen **Check for Updates** und optional **Preview Update Changes** bereit. Die Extension selbst prüft interne VSIX-Releases und bietet nach expliziter Bestätigung die Installation an.
 
 ### 2 — Routing: Komplexität bestimmt den Einstieg
 
@@ -140,12 +139,12 @@ Erzeugt Modul-Doku (`al-doc-update`) und PR-Beschreibung. Erst nach grünem Depl
 
 | Frage | Dokument |
 |-------|----------|
-| Layer-Struktur und Upgrade-Zyklus | [readme.aproda.md](readme.aproda.md) |
+| Toolkit-Struktur und Upgrade-Zyklus | [readme.aproda.md](readme.aproda.md) |
 | Warum ist es so strukturiert? | [decisions.aproda.md](decisions.aproda.md) (D-1…D-22) |
 | Infra-Details (K:, NST, SRP, Remote-PS) | [site-profile.aproda.md](site-profile.aproda.md) |
 | ALDC-Framework-Spec | [docs/framework/ALDC-Core-Spec-v1.2.md](../docs/framework/ALDC-Core-Spec-v1.2.md) |
 | Deploy-Run-Verify Cycle – Technisches | [skills/skill-aproda-deploy-run-verify/SKILL.md](../skills/skill-aproda-deploy-run-verify/SKILL.md) |
-| Layer selbst erweitern | [readme.aproda.md — TL;DR](readme.aproda.md#tldr--extend-aproda-aldc--the-two-rules) |
+| Toolkit selbst erweitern | [readme.aproda.md — TL;DR](readme.aproda.md#tldr--extend-aproda-aldc--the-two-rules) |
 
 ---
 

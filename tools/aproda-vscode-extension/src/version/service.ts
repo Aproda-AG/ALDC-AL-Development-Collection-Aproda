@@ -25,7 +25,7 @@ export class VersionService {
             return { status: "notInstalled", message: "Aproda ALDC is not installed in this project." };
         }
         if (!isLayerVersion(installed)) {
-            return { status: "invalid", installed, message: `Cannot compare installed layer version "${installed}".` };
+            return { status: "invalid", installed, message: `Cannot compare installed toolkit version "${installed}".` };
         }
 
         const available = await this.readAvailable();
@@ -34,7 +34,7 @@ export class VersionService {
         }
         const comparison = compareLayerVersions(installed, available);
         if (comparison === undefined) {
-            return { status: "invalid", installed, available, message: "Cannot compare Aproda ALDC layer versions." };
+            return { status: "invalid", installed, available, message: "Cannot compare Aproda ALDC toolkit versions." };
         }
         if (comparison < 0) {
             return { status: "outdated", installed, available, comparison, message: `Aproda ALDC update available: ${installed} -> ${available}.` };
@@ -52,7 +52,7 @@ export class VersionService {
             const version = document?.aproda?.layerVersion;
             return typeof version === "string" ? version.trim() : undefined;
         } catch (error) {
-            this.logger.info(`Could not read installed layer version from ${configPath}: ${asMessage(error)}`);
+            this.logger.info(`Could not read installed toolkit version from ${configPath}: ${asMessage(error)}`);
             return undefined;
         }
     }
@@ -62,7 +62,7 @@ export class VersionService {
         if (!repository) {
             throw new Error("The Aproda ALDC repository URL is not configured.");
         }
-        this.logger.info(`Checking layer release tags: ${repository}`);
+        this.logger.info(`Checking toolkit release tags: ${repository}`);
         const result = await run("git", ["ls-remote", "--tags", repository, "refs/tags/v*_aproda.*"], {
             env: { GIT_TERMINAL_PROMPT: "0" }
         });
@@ -78,7 +78,7 @@ export class VersionService {
             .sort((left, right) => compareLayerVersions(left, right) ?? 0)
             .at(-1);
         if (latest) {
-            this.logger.info(`Latest tagged layer version: ${latest}`);
+            this.logger.info(`Latest tagged toolkit version: ${latest}`);
         }
         return latest;
     }

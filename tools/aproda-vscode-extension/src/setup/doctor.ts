@@ -28,14 +28,14 @@ export async function runDoctor(context: vscode.ExtensionContext, logger: Logger
         logger.info(`Local fork path: ${forkPath() || "not configured"}`);
     }
     logger.info(`Extension global storage: ${context.globalStorageUri.fsPath}`);
-    logger.info(`Managed cache path: ${path.join(context.globalStorageUri.fsPath, "layer-cache", "fork")}`);
+    logger.info(`Managed toolkit cache path: ${path.join(context.globalStorageUri.fsPath, "layer-cache", "fork")}`);
     logger.info(`Channel: ${channel()}`);
 
     try {
         const status = await source.describe();
-        logger.info(`Layer source: ${status.message}`);
+        logger.info(`Toolkit source: ${status.message}`);
     } catch (error) {
-        logger.error(`Layer source: ${asMessage(error)}`);
+        logger.error(`Toolkit source: ${asMessage(error)}`);
     }
 
     logger.show();

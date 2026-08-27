@@ -29,16 +29,16 @@ export class LayerSource {
 
     async repair(): Promise<void> {
         if (sourceMode() === "localFork") {
-            throw new Error("Repair Layer Cache is available only in managed source mode.");
+            throw new Error("Repair Toolkit Cache is available only in managed source mode.");
         }
 
-        this.logger.info(`Removing managed layer cache: ${this.cachePath}`);
+        this.logger.info(`Removing managed toolkit cache: ${this.cachePath}`);
         await fs.rm(this.cachePath, { recursive: true, force: true });
         await this.ensureManagedCache();
     }
 
     async clearCache(): Promise<void> {
-        this.logger.info(`Removing managed layer cache: ${this.cachePath}`);
+        this.logger.info(`Removing managed toolkit cache: ${this.cachePath}`);
         await fs.rm(this.cachePath, { recursive: true, force: true });
     }
 
@@ -51,14 +51,14 @@ export class LayerSource {
         return {
             mode: "managed",
             path: this.cachePath,
-            message: exists ? "Managed cache is available." : "Managed cache has not been created yet."
+            message: exists ? "Managed toolkit cache is available." : "Managed toolkit cache has not been created yet."
         };
     }
 
     private async ensureManagedCache(): Promise<SourceStatus> {
         const repository = repositoryUrl();
         if (!repository) {
-            throw new Error("The managed layer repository URL is not configured.");
+            throw new Error("The managed toolkit repository URL is not configured.");
         }
 
         await fs.mkdir(path.dirname(this.cachePath), { recursive: true });
@@ -71,28 +71,28 @@ export class LayerSource {
         await this.git(["checkout", "--detach", reference], this.cachePath, false);
         await this.git(["reset", "--hard", reference], this.cachePath, false);
         await this.git(["clean", "-xfd"], this.cachePath, false);
-        this.logger.info(`Managed layer cache is ready at ${this.cachePath} (${reference}).`);
+        this.logger.info(`Managed toolkit cache is ready at ${this.cachePath} (${reference}).`);
 
         return {
             mode: "managed",
             path: this.cachePath,
             reference,
-            message: "Managed cache is ready."
+            message: "Managed toolkit cache is ready."
         };
     }
 
     private async cloneManagedCache(repository: string): Promise<void> {
-        this.logger.info("Creating managed layer cache using stored Git credentials.");
+        this.logger.info("Creating managed toolkit cache using stored Git credentials.");
         const initialClone = await run("git", ["clone", "--no-checkout", "--filter=blob:none", repository, this.cachePath], {
             env: { GIT_TERMINAL_PROMPT: "0" }
         });
         if (initialClone.code === 0) {
-            this.logger.info("Managed layer cache clone completed without interactive authentication.");
+            this.logger.info("Managed toolkit cache clone completed without interactive authentication.");
             return;
         }
 
         this.logger.info(initialClone.stderr.trim() || initialClone.stdout.trim());
-        const terminal = vscode.window.createTerminal({ name: "Aproda ALDC: Authenticate Layer Source" });
+        const terminal = vscode.window.createTerminal({ name: "Aproda ALDC: Authenticate Toolkit Source" });
         const command = [
             `$ErrorActionPreference = 'Stop'`,
             `Remove-Item -LiteralPath ${psQuote(this.cachePath)} -Recurse -Force -ErrorAction SilentlyContinue`,
@@ -104,13 +104,13 @@ export class LayerSource {
         terminal.show(true);
         terminal.sendText(`pwsh -NoProfile -Command ${psQuote(command)}`, true);
         const selection = await vscode.window.showInformationMessage(
-            "Git credentials were not available for the managed layer cache. Complete authentication in the Aproda ALDC terminal, then run Repair Layer Cache again.",
+            "Git credentials were not available for the managed toolkit cache. Complete authentication in the Aproda ALDC terminal, then run Repair Toolkit Cache again.",
             "Show Log"
         );
         if (selection === "Show Log") {
             this.logger.show();
         }
-        throw new Error("Managed-cache clone requires Git authentication. Complete the terminal command, then run Repair Layer Cache again.");
+        throw new Error("Managed toolkit cache clone requires Git authentication. Complete the terminal command, then run Repair Toolkit Cache again.");
     }
 
     private async ensureLocalFork(validate = true): Promise<SourceStatus> {
@@ -162,7 +162,7 @@ export class LayerSource {
         const tags = await this.git(["tag", "--list", "v*_aproda.*"], cwd, false);
         const latest = tags.stdout.trim().split(/\r?\n/).filter(Boolean).sort(compareLayerTags).at(-1);
         if (!latest) {
-            throw new Error("No Aproda layer release tags were found in the managed cache.");
+            throw new Error("No Aproda toolkit release tags were found in the managed cache.");
         }
         return latest;
     }
