@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3
+
+- Opens the Aproda ALDC walkthrough directly from the first-run notification and applies the toolkit from its second step.
+- Uses Toolkit terminology consistently in user-facing commands, messages, setup, and onboarding documentation.
+- Restores the initial setup notification after resetting extension-owned local data without resetting VS Code walkthrough progress.
+- Packages local VSIX artifacts with the extension version in their file name.
+
 ## 0.1.2
 
 - Activates after VS Code startup so first-run setup is offered in repositories without existing ALDC or AL files.
