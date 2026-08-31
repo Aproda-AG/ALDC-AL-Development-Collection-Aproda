@@ -49,7 +49,7 @@ The internal **Aproda ALDC** extension is the standard path for initializing and
 
 1. Install the internal VSIX as described in [the extension README](../tools/aproda-vscode-extension/README.md#internal-installation).
 2. Open the target Git repository in VS Code.
-3. On first activation, select **Getting Started** in the notification, then run **Configure Settings** in the native walkthrough.
+3. On first activation, select **Open Get Started** in the notification, then run **Configure Settings** in the native walkthrough.
 4. Run **Preview Update Changes** and review the result. Run **Apply Layer to Project** only after confirming the preview.
 5. Run **Install / Update BCQuality** when the walkthrough reaches that step. The wizard proposes a shared, standalone `BCQuality-Aproda` location outside project repositories.
 6. Follow the walkthrough's **Azure CLI setup** step (one-time per workstation) so `skill-aproda-ado`'s CLI operations work — see [Azure CLI setup](#azure-cli-setup-one-time-per-workstation) below.

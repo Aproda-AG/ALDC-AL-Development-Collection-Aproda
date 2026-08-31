@@ -88,7 +88,7 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 
 1. Die interne `aproda-aldc.vsix` aus dem GitHub Release installieren: VS Code Command Palette → **Extensions: Install from VSIX...**.
 2. VS Code bei Aufforderung neu laden und das Ziel-Git-Repository öffnen.
-3. Beim ersten Hinweis **Getting Started** wählen. Dadurch öffnet sich der native VS Code Walkthrough.
+3. Beim ersten Hinweis **Open Get Started** wählen, oder Command Palette (`Strg+Shift+P`) → **Aproda ALDC: Open Get Started** ausführen. Dadurch öffnet sich der native VS Code Walkthrough.
 4. Im Walkthrough **Configure Settings** ausführen. Der Wizard konfiguriert Developer Root, Toolkit-Quelle, Channel, BCQuality-Standort und Toolkit-Update-Checks.
 5. **Apply Toolkit to Project** auswählen.
 6. **Install / Update BCQuality** ausführen und danach bei Bedarf **Validate Installation**.
