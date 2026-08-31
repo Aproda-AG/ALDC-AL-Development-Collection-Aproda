@@ -427,3 +427,4 @@ The few places where we touched Upstream files in-place. This is the list the up
 | 2026-08-27 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.12` | Published the current approved Aproda toolkit state as the next CI-gated layer release revision. |
 | 2026-08-31 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.13` | ADO integration hardening (D-26) + `CHANGELOG.aproda.md` introduced (D-27); see CHANGELOG.aproda.md for the prose account. |
 | 2026-08-31 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.14` | `tools/aproda-sync/templates/gitignore-block.txt`: added `.github/audits/` and `.github/reports/` to the managed `.gitignore` block. |
+| 2026-08-31 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.15` | `memory.md` ownership gate and HITL status contract (D-28). |

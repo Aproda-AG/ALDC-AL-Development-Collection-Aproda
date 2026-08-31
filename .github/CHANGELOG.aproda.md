@@ -2,6 +2,11 @@
 
 > Curated release notes for the Aproda layer (`aldc.yaml` → `aproda.layerVersion`). The technical, per-commit record stays in the [Version / pin changelog](decisions.aproda.md#version--pin-changelog); this file is the human-readable summary maintained alongside each release, mirroring the style of [`tools/aproda-vscode-extension/CHANGELOG.md`](../tools/aproda-vscode-extension/CHANGELOG.md). See `skill-aproda-aldc-release` for when this file is updated.
 
+## 1.2.0_aproda.15
+
+- Enforces exclusive `memory.md` lifecycle ownership: implementation subagents cannot mutate requirement status, and the Conductor rejects a phase result when its pre-review `memory.md` snapshot changes.
+- Clarifies the HITL status contract: only delivery owners move a requirement to `review`; resolving all HITL issues keeps it in `review` until `al-pr-prepare` satisfies the Completion Gate.
+
 ## 1.2.0_aproda.14
 
 - Adds `.github/audits/` and `.github/reports/` to the managed `.gitignore` block so review/report scratch folders stay untracked in consuming projects.
