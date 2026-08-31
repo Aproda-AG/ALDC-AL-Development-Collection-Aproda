@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.6
+
+- Expands the Get Started walkthrough with contextual descriptions for every step (what happens, prerequisites, one-time vs. per-project) instead of bare command links.
+- Adds a Validate Installation step to the walkthrough, with a troubleshooting pointer to Environment Diagnostics and Show Log.
+- Notes that the Azure CLI setup step has no linked command and must be marked done manually.
+- Fixes a "Check for Extension Updates" sign-in/retry failure (`Invalid combination of options: forceNewSession, createIfNone`) by no longer combining both mutually exclusive authentication options.
+- Fixes an extension update install failure (`No Servers`) by installing the downloaded VSIX from a `file:` URI instead of one derived from `globalStorageUri`, which VS Code's extension installer rejected for install.
+
 ## 0.1.5
 
 - Clones the managed toolkit cache in full instead of as a partial (`--filter=blob:none`) clone, removing the on-demand blob fetch that failed with `RPC failed; HTTP 400 ... fatal: expected 'packfile'` on networks that mangle Git's smart-HTTP negotiation.

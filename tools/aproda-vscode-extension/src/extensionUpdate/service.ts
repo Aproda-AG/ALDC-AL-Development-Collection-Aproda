@@ -1,5 +1,6 @@
 import * as fs from "fs/promises";
 import * as https from "https";
+import * as path from "path";
 import * as vscode from "vscode";
 import { Logger } from "../log";
 import { run } from "../process";
@@ -58,12 +59,13 @@ export async function installExtensionUpdate(context: vscode.ExtensionContext, u
         throw new Error(`Release ${update.tag} does not contain ${vsixName}.`);
     }
 
-    const updateDirectory = vscode.Uri.joinPath(context.globalStorageUri, "extension-updates");
-    await fs.mkdir(updateDirectory.fsPath, { recursive: true });
-    const target = vscode.Uri.joinPath(updateDirectory, `aproda-aldc-${update.available}.vsix`);
-    await fs.writeFile(target.fsPath, await request(asset.url, session.accessToken, "application/octet-stream"));
+    const updateDirectory = path.join(context.globalStorageUri.fsPath, "extension-updates");
+    await fs.mkdir(updateDirectory, { recursive: true });
+    const targetPath = path.join(updateDirectory, `aproda-aldc-${update.available}.vsix`);
+    await fs.writeFile(targetPath, await request(asset.url, session.accessToken, "application/octet-stream"));
     logger.info(`Installing Aproda ALDC extension update ${update.current} -> ${update.available}.`);
-    await vscode.commands.executeCommand("workbench.extensions.installExtension", target);
+    // workbench.extensions.installExtension rejects with 'No Servers' for any Uri scheme other than file/vscode-remote.
+    await vscode.commands.executeCommand("workbench.extensions.installExtension", vscode.Uri.file(targetPath));
 }
 
 function currentExtensionVersion(): string {

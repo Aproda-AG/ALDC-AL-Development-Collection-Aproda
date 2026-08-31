@@ -2,7 +2,7 @@
     "name": "aproda-aldc",
     "displayName": "Aproda ALDC",
     "description": "Aproda ALDC toolkit for Visual Studio Code projects.",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "publisher": "aprodaag",
     "license": "MIT",
     "repository": {
