@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5
+
+- Clones the managed toolkit cache in full instead of as a partial (`--filter=blob:none`) clone, removing the on-demand blob fetch that failed with `RPC failed; HTTP 400 ... fatal: expected 'packfile'` on networks that mangle Git's smart-HTTP negotiation.
+- Detects an existing partial-clone cache and rebuilds it as a full clone automatically, with no manual Git configuration required on any developer's machine.
+
 ## 0.1.4
 
 - Retries a failed extension update check by forcing a fresh VS Code GitHub authentication session, then automatically re-running the check, instead of only opening a Git-credential terminal.

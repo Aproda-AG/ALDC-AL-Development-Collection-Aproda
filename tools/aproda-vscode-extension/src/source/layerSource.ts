@@ -64,6 +64,14 @@ export class LayerSource {
         await fs.mkdir(path.dirname(this.cachePath), { recursive: true });
         if (!await pathExists(path.join(this.cachePath, ".git"))) {
             await this.cloneManagedCache(repository);
+        } else if (await this.isPartialClone(this.cachePath)) {
+            // Partial clones (--filter=blob:none) lazy-fetch blobs during checkout; that
+            // on-demand fetch is unreliable on networks that mangle Git's smart-HTTP
+            // negotiation (proxies, TLS inspection). Self-heal transparently: no developer
+            // should have to diagnose or hand-edit Git config for this.
+            this.logger.info("Managed toolkit cache is a partial clone; rebuilding as a full clone to avoid unreliable lazy blob fetches.");
+            await fs.rm(this.cachePath, { recursive: true, force: true });
+            await this.cloneManagedCache(repository);
         }
 
         await this.git(["fetch", "--tags", "--prune"], this.cachePath, false);
@@ -83,7 +91,12 @@ export class LayerSource {
 
     private async cloneManagedCache(repository: string): Promise<void> {
         this.logger.info("Creating managed toolkit cache using stored Git credentials.");
-        const initialClone = await run("git", ["clone", "--no-checkout", "--filter=blob:none", repository, this.cachePath], {
+        // Full clone (no --filter=blob:none): a partial clone must lazy-fetch blobs during
+        // checkout, and that on-demand fetch is unreliable on networks that mangle Git's
+        // smart-HTTP negotiation (proxies, TLS inspection) - see the promisor-remote fetch
+        // failures this caused. A full clone costs more time/disk once, but every later
+        // checkout/reset is fully local and cannot fail on the network.
+        const initialClone = await run("git", ["clone", "--no-checkout", repository, this.cachePath], {
             env: { GIT_TERMINAL_PROMPT: "0" }
         });
         if (initialClone.code === 0) {
@@ -97,7 +110,7 @@ export class LayerSource {
             `$ErrorActionPreference = 'Stop'`,
             `Remove-Item -LiteralPath ${psQuote(this.cachePath)} -Recurse -Force -ErrorAction SilentlyContinue`,
             `New-Item -ItemType Directory -Force -Path ${psQuote(path.dirname(this.cachePath))} | Out-Null`,
-            `git clone --no-checkout --filter=blob:none ${psQuote(repository)} ${psQuote(this.cachePath)}`
+            `git clone --no-checkout ${psQuote(repository)} ${psQuote(this.cachePath)}`
         ].join("; ");
 
         this.logger.info("Opening a terminal for the initial managed-cache clone.");
@@ -145,6 +158,11 @@ export class LayerSource {
         }
 
         return { mode: "localFork", path: localPath, message: "Local fork is ready." };
+    }
+
+    private async isPartialClone(cwd: string): Promise<boolean> {
+        const result = await this.git(["config", "--get", "remote.origin.promisor"], cwd, true);
+        return result.stdout.trim() === "true";
     }
 
     private async resolveReference(cwd: string): Promise<string> {
