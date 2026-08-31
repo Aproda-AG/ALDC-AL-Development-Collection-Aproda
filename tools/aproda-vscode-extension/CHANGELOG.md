@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.7
+
+- Adds a scope suffix to each Get Started walkthrough step title ("one-time setup" vs. "per repository") so users can tell workstation-level setup apart from per-project actions at a glance.
+
 ## 0.1.6
 
 - Expands the Get Started walkthrough with contextual descriptions for every step (what happens, prerequisites, one-time vs. per-project) instead of bare command links.
