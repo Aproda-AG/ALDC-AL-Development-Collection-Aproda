@@ -42,7 +42,8 @@ flowchart LR
    E --> F["Apply Layer to Project"]
    F --> G["Install / Update BCQuality"]
    G --> H["Set up Azure CLI\n(one-time per workstation)"]
-   H --> I["Read the onboarding guide"]
+   H --> I["Validate Installation"]
+   I --> J["Read the onboarding guide"]
 ```
 
 The internal **Aproda ALDC** extension is the standard path for initializing and updating an open project repository. It owns a managed local cache of this fork, so project developers do not clone the fork themselves.
@@ -53,7 +54,9 @@ The internal **Aproda ALDC** extension is the standard path for initializing and
 4. Run **Preview Update Changes** and review the result. Run **Apply Layer to Project** only after confirming the preview.
 5. Run **Install / Update BCQuality** when the walkthrough reaches that step. The wizard proposes a shared, standalone `BCQuality-Aproda` location outside project repositories.
 6. Follow the walkthrough's **Azure CLI setup** step (one-time per workstation) so `skill-aproda-ado`'s CLI operations work — see [Azure CLI setup](#azure-cli-setup-one-time-per-workstation) below.
-7. Use **Validate Installation** after applying the layer. For later changes, use **Check for Updates** and **Check for Extension Updates**.
+7. Run the walkthrough's **Validate Installation** step. If it fails, use **Environment Diagnostics** or **Show Log** to troubleshoot.
+
+For later changes, use **Check for Updates** and **Check for Extension Updates**.
 
 For the full command reference, see [VS Code commands](#vs-code-commands) below.
 
@@ -63,7 +66,7 @@ All commands are available via the Command Palette (`Aproda ALDC: …`). Source 
 
 | Command | Function |
 |---------|----------|
-| **Open Get Started** | Opens the native VS Code walkthrough (configure → apply toolkit → install BCQuality → Azure CLI setup → read onboarding). |
+| **Open Get Started** | Opens the native VS Code walkthrough (configure → apply toolkit → install BCQuality → Azure CLI setup → validate installation → read onboarding). |
 | **Configure Settings** | Configures developer root, toolkit source/channel, BCQuality location, and toolkit/extension update checks. |
 | **Apply Toolkit to Project** | Initializes or updates the current repository from the managed toolkit cache (overlay-only, never deletes project files). |
 | **Preview Update Changes** | Calculates pending toolkit changes for the project without modifying anything. |

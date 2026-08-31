@@ -91,7 +91,9 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 3. Beim ersten Hinweis **Open Get Started** wählen, oder Command Palette (`Strg+Shift+P`) → **Aproda ALDC: Open Get Started** ausführen. Dadurch öffnet sich der native VS Code Walkthrough.
 4. Im Walkthrough **Configure Settings** ausführen. Der Wizard konfiguriert Developer Root, Toolkit-Quelle, Channel, BCQuality-Standort und Toolkit-Update-Checks.
 5. **Apply Toolkit to Project** auswählen.
-6. **Install / Update BCQuality** ausführen und danach bei Bedarf **Validate Installation**.
+6. **Install / Update BCQuality** ausführen.
+7. Den Walkthrough-Schritt **Azure CLI Setup** ausführen (einmalig pro Workstation, siehe Abschnitt 1b) und danach manuell als erledigt markieren.
+8. **Validate Installation** ausführen. Bei Fehlern **Environment Diagnostics** oder **Show Log** zur Fehlersuche nutzen.
 
 Für spätere Toolkit-Versionen stehen **Check for Updates** und optional **Preview Update Changes** bereit. Die Extension selbst prüft interne VSIX-Releases und bietet nach expliziter Bestätigung die Installation an.
 
@@ -168,6 +170,28 @@ Erzeugt Modul-Doku (`al-doc-update`) und PR-Beschreibung. Erst nach grünem Depl
 | ALDC-Framework-Spec | [docs/framework/ALDC-Core-Spec-v1.2.md](../docs/framework/ALDC-Core-Spec-v1.2.md) |
 | Deploy-Run-Verify Cycle – Technisches | [skills/skill-aproda-deploy-run-verify/SKILL.md](../skills/skill-aproda-deploy-run-verify/SKILL.md) |
 | Toolkit selbst erweitern | [readme.aproda.md — TL;DR](readme.aproda.md#tldr--extend-aproda-aldc--the-two-rules) |
+
+---
+
+## VS Code Commands
+
+Alle Befehle über die Command Palette (`Aproda ALDC: …`). Quelle der Wahrheit: `tools/aproda-vscode-extension/package.json` — bei Änderungen dort auch hier nachziehen.
+
+| Befehl | Funktion |
+|--------|----------|
+| **Open Get Started** | Öffnet den nativen VS Code Walkthrough (Configure → Toolkit anwenden → BCQuality installieren → Azure CLI Setup → Validate Installation → Onboarding lesen). |
+| **Configure Settings** | Konfiguriert Developer Root, Toolkit-Quelle/-Channel, BCQuality-Standort sowie Toolkit-/Extension-Update-Checks. |
+| **Apply Toolkit to Project** | Initialisiert oder aktualisiert das aktuelle Repository aus dem verwalteten Toolkit-Cache (Overlay-only, löscht nie Projektdateien). |
+| **Preview Update Changes** | Berechnet anstehende Toolkit-Änderungen für das Projekt, ohne etwas zu verändern. |
+| **Install / Update BCQuality** | Installiert oder aktualisiert den zentralen, eigenständigen `BCQuality-Aproda`-Clone und gleicht Projekt-Workspace-Roots/-Settings ab. |
+| **Check for Updates** | Vergleicht die installierte `aldc.yaml → aproda.layerVersion` des Projekts mit dem neuesten getaggten Fork-Release. |
+| **Check for Extension Updates** | Prüft auf ein neueres internes VSIX-Release und bietet Anmeldung, Download, Installation und Neustart an. |
+| **Validate Installation** | Führt den `aldc-validate`-Compliance-Check gegen das angewendete Toolkit im Projekt aus. |
+| **Environment Diagnostics** | Prüft die Umgebung (z. B. `pwsh`-, `git`-Verfügbarkeit) auf die Voraussetzungen des Toolkits. |
+| **(Re)build Toolkit Cache** | Baut den verwalteten lokalen Toolkit-Cache aus der konfigurierten Quelle neu auf; nutzen bei defektem oder veraltetem Cache. |
+| **Show Log** | Öffnet den Output-/Log-Kanal der Extension zur Fehlersuche. |
+| **Open Onboarding Guide** | Öffnet [`onboarding.aproda.md`](onboarding.aproda.md) (dieses Dokument). |
+| **Reset Toolkit Cache and Settings** | Entfernt ausschließlich extension-eigene lokale Daten; Projektdateien und lokale Forks bleiben unangetastet. |
 
 ---
 

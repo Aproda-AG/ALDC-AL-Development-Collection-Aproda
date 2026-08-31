@@ -175,12 +175,12 @@
             {
                 "id": "aprodaAldc.gettingStarted",
                 "title": "Get Started with the Aproda ALDC Toolkit",
-                "description": "Configure the extension, apply the toolkit, and prepare the BCQuality knowledge base.",
+                "description": "Configure the extension, apply the toolkit, install BCQuality, set up Azure CLI, validate the result, and read the onboarding guide.",
                 "steps": [
                     {
                         "id": "configure",
                         "title": "Configure settings",
-                        "description": "[Configure Aproda ALDC settings](command:aprodaAldc.setup).",
+                        "description": "Sets the developer root, toolkit source/channel, BCQuality location, and update checks. One-time per workstation; you can re-run this anytime.\n\n[Configure Aproda ALDC settings](command:aprodaAldc.setup).",
                         "media": {
                             "image": "media/A-ALDC Logo.png",
                             "altText": "Aproda ALDC configuration"
@@ -189,7 +189,7 @@
                     {
                         "id": "applyLayer",
                         "title": "Apply the toolkit",
-                        "description": "[Apply the toolkit](command:aprodaAldc.initProject) to the current project.",
+                        "description": "Initializes or updates the currently open AL project (a Git repository with an `app.json`) from the toolkit cache. Overlay-only — it never deletes project files.\n\n[Apply the toolkit](command:aprodaAldc.initProject) to the current project.",
                         "media": {
                             "image": "media/A-ALDC Logo.png",
                             "altText": "Aproda ALDC toolkit workflow"
@@ -198,7 +198,7 @@
                     {
                         "id": "installBcquality",
                         "title": "Install BCQuality",
-                        "description": "[Install or update BCQuality](command:aprodaAldc.installBcQuality).",
+                        "description": "BCQuality is the shared, external knowledge base used by code review (Dredd, review subagent). One-time per workstation, not per project.\n\n[Install or update BCQuality](command:aprodaAldc.installBcQuality).",
                         "media": {
                             "image": "media/A-ALDC Logo.png",
                             "altText": "BCQuality knowledge base"
@@ -207,16 +207,25 @@
                     {
                         "id": "azureCliSetup",
                         "title": "Set up Azure CLI for ADO integration",
-                        "description": "Run in a terminal:\n\n```powershell\naz extension add --name azure-devops\naz login --tenant 8ad57af3-4ca5-4c66-bc7d-a52dd71dc7c9 --subscription bdcf3613-1ee6-4c3c-9caf-962112b8a6aa\n```",
+                        "description": "Required only for `skill-aproda-ado`'s CLI operations (work item/PR fetch, PR creation, work item updates). One-time per workstation.\n\nRun in a terminal:\n\n```powershell\naz extension add --name azure-devops\naz login --tenant 8ad57af3-4ca5-4c66-bc7d-a52dd71dc7c9 --subscription bdcf3613-1ee6-4c3c-9caf-962112b8a6aa\n```\n\nIf `az boards`/`az repos` later reports a missing MSAL cache token, see the troubleshooting note in the onboarding guide. This step has no linked command — mark it done manually once complete.",
                         "media": {
                             "image": "media/A-ALDC Logo.png",
                             "altText": "Azure CLI setup"
                         }
                     },
                     {
+                        "id": "validate",
+                        "title": "Validate the installation",
+                        "description": "Runs a compliance check against the applied toolkit. If it fails, use **Environment Diagnostics** or **Show Log** from the Command Palette to troubleshoot.\n\n[Validate Installation](command:aprodaAldc.validate).",
+                        "media": {
+                            "image": "media/A-ALDC Logo.png",
+                            "altText": "Aproda ALDC installation validation"
+                        }
+                    },
+                    {
                         "id": "readOnboarding",
                         "title": "Read the onboarding guide",
-                        "description": "[Open the Aproda ALDC onboarding guide](command:aprodaAldc.gettingStarted).",
+                        "description": "Covers agent routing, ADO work item integration, and the Deploy-Run-Verify Cycle.\n\n[Open the Aproda ALDC onboarding guide](command:aprodaAldc.gettingStarted).",
                         "media": {
                             "image": "media/A-ALDC Logo.png",
                             "altText": "Aproda ALDC onboarding guide"
