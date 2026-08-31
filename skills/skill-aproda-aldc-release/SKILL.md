@@ -25,7 +25,7 @@ Do not compare or reuse versions across streams. A layer release does not requir
 1. Identify the changed stream. For a layer change, load `skill-aproda-aldc` and surface the relevant decision before changing the layer.
 2. Increase the corresponding version exactly once.
 3. Update the stream's changelog and relevant documentation:
-   - Layer: `aldc.yaml`, `.github/readme.aproda.md`, `.github/decisions.aproda.md`, and the layer inventory when applicable.
+   - Layer: `aldc.yaml`; `.github/CHANGELOG.aproda.md` (curated prose release notes); `.github/decisions.aproda.md` Version/pin changelog row (`Notes` kept to short technical keywords, not prose — D-27); `.github/readme.aproda.md`; and the layer inventory when applicable.
    - Extension: `package.json`, `CHANGELOG.md`, README when installation or update behavior changes.
 4. Run the applicable local validation and commit the complete release candidate.
 5. Merge the reviewed candidate to the `aproda` branch.

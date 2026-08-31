@@ -35,6 +35,7 @@
                 "copilot-instructions.md",
                 "decisions.aproda.md",
                 "readme.aproda.md",
+                "CHANGELOG.aproda.md",
                 "site-profile.aproda.md",
                 "plans/**"
             ]

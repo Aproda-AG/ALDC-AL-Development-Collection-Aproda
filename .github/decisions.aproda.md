@@ -297,6 +297,31 @@ this layer, not just ADO.
 
 ---
 
+### D-27 — A curated `CHANGELOG.aproda.md` alongside the technical Version/pin changelog
+
+The Aproda layer's only version history was the *Version / pin changelog* table above —
+terse, commit-diff-style notes meant for the upgrade reviewer. The VS Code extension, by
+contrast, already carries a prose `CHANGELOG.md` for its own releases. Asked directly,
+there was no equivalent human-readable summary for the layer itself, an inconsistency
+between the two release streams governed by the same `skill-aproda-aldc-release`.
+
+Added `.github/CHANGELOG.aproda.md`: a net-new, conflict-free file (`.aproda.` infix) that
+restates each `layerVersion` bump as short prose bullets, newest first, mirroring the
+extension's changelog style. It does not replace the Version/pin changelog (which stays
+the technical source of truth with dates and upstream refs) — it is the curated summary a
+human reads. `skill-aproda-aldc-release`'s "Before merge" step for the layer stream now
+lists it alongside `aldc.yaml`, `readme.aproda.md`, and `decisions.aproda.md`.
+
+The two changelogs' content now overlaps: the Version/pin changelog's `Notes` column and
+`CHANGELOG.aproda.md`'s prose bullets said the same thing twice, risking drift between
+them. **Going forward** (not retroactively — existing rows are left as written), the
+Version/pin changelog's `Notes` column is kept to short technical keywords; the full
+prose account of a release lives only in `CHANGELOG.aproda.md`. This preserves the
+Version/pin changelog's unique, non-duplicated value (date + upstream SHA pin per
+revision) without a second full prose copy.
+
+---
+
 ## Stacking vs. changing — practical guide
 
 | Intent | Mechanism | Touches Upstream? |

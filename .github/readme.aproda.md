@@ -227,7 +227,8 @@ This table **is** the Aproda index (D-17) — the one place to answer "what has 
 | Item | Path | Decision | Status |
 |------|------|----------|--------|
 | This README (= the inventory/index) | `.github/readme.aproda.md` | D-1 | live |
-| Design decisions | `.github/decisions.aproda.md` | D-1 | live (D-1…D-25) |
+| Design decisions | `.github/decisions.aproda.md` | D-1 | live (D-1…D-27) |
+| Layer changelog (curated release notes) | `.github/CHANGELOG.aproda.md` | D-27 | live |
 | Site profile (infra facts) | `.github/site-profile.aproda.md` | D-16 | live |
 | Deploy-Run-Verify Cycle skill | `.github/skills/skill-aproda-deploy-run-verify/` | D-8, D-15 | **VALIDATED** (27/27 green) |
 | Meta-skill (explain + extend the layer) | `.github/skills/skill-aproda-aldc/` | D-16 | live |
@@ -297,7 +298,7 @@ flowchart TD
 
 ### Pinning
 
-The ALDC base is **pinned** in `aldc.yaml → aproda.basePin` (analogous to the BCQuality SHA pin in `aldc.yaml → external.bcquality`) so upgrades are intentional and reproducible. Current pin: `a900263f51e416762cc7f85575deb9b30cd5b1e3` (upstream == fork, in sync 2026-06-25). On each adopted upgrade, bump `aproda.layerVersion` and add a row to the [Version / pin changelog](decisions.aproda.md). Scheme: `<ALDC core.version>_aproda.<n>` (D-17).
+The ALDC base is **pinned** in `aldc.yaml → aproda.basePin` (analogous to the BCQuality SHA pin in `aldc.yaml → external.bcquality`) so upgrades are intentional and reproducible. Current pin: `a900263f51e416762cc7f85575deb9b30cd5b1e3` (upstream == fork, in sync 2026-06-25). On each adopted upgrade, bump `aproda.layerVersion`, add a row to the [Version / pin changelog](decisions.aproda.md), and add a curated entry to [`CHANGELOG.aproda.md`](CHANGELOG.aproda.md) (D-27). Scheme: `<ALDC core.version>_aproda.<n>` (D-17).
 
 On every version bump (Upstream upgrade **or** Aproda-layer change), merge the validated candidate to `aproda`. The layer release workflow validates it, waits for the `aproda-layer-release` Environment approval, then creates the matching Git tag and GitHub Release. Do not create or push the tag manually. The tag name matches the composite version string exactly; this makes the exact fork state reproducible and lets projects record which layer version they pulled.
 
