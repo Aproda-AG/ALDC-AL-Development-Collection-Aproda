@@ -19,6 +19,7 @@
 | E-001 | Read-only upstream drift report for Aproda Sync | DSC `sync/upstream-2026-08-24` | High | Proposed |
 | E-002 | Official Microsoft Learn MCP endpoint pilot | Dynamic-Technology-Partners `feat/official-microsoft-docs-endpoint` | Medium | Proposed |
 | E-003 | Run Auto-Cleanup on task completion (Aproda VS Code extension command) | `todos.md` session note | Medium | Proposed |
+| E-004 | Next AL object ID suggestion via a rule-based system + global per-repo assignment | Session note (Aproda) | Medium | Proposed |
 
 ## Status Values
 
@@ -69,3 +70,17 @@
   - Relevant agent/prompt guidance recommends running the command at the delivery boundary, without claiming it runs automatically.
   - Documented fallback/rollback: `alOutline.codeActionsOnSave` setting remains available as the zero-code alternative.
 - **Approval Gate:** Approve a dedicated implementation plan (including the confirmed command ID) before code changes.
+
+## E-004 - Next AL Object ID Suggestion via a Rule-Based System + Global Per-Repo Assignment
+
+- **Status:** Proposed
+- **Source:** Session note (Aproda)
+- **Problem:** Multiple developers picking a "next free" AL object ID independently (e.g. from `app.json` `idRanges`) risk colliding IDs when several branches are worked on in parallel; there is no shared, authoritative record of which IDs are already claimed but not yet merged.
+- **Proposal:** Add a rule-based "next object ID" suggestion to the Aproda VS Code extension: derive candidate IDs from the project's `idRanges` and existing object IDs in the repo, then check/reserve the suggestion against a **global assignment record scoped per repository** (not per branch/worktree) so concurrent developers don't get the same suggestion. Complements, rather than replaces, the existing `al_get_free_id` MCP tool (personal `al-tools.md` note), which only looks at local `.alpackages` state.
+- **Constraints:** Must not write to shared BC objects or `app.json` automatically; suggestion only, human confirms before creating the object. The "global" assignment record must live somewhere reachable by every clone of the repo (e.g. a committed reservation file or a remote lookup) without becoming a merge-conflict-prone shared-write bottleneck. Extension-fork-only tooling classification (like other `tools/aproda-vscode-extension/` capabilities) unless a case is made for syncing it to projects.
+- **Acceptance Criteria:**
+  - Suggests the next free ID per object type, respecting `idRanges` boundaries and reserved sub-ranges.
+  - Cross-checks against a per-repo global record so two developers requesting a suggestion around the same time get different IDs.
+  - Never mutates `app.json` or creates objects; output is advisory only.
+  - Documented conflict-resolution path if two developers still collide (e.g. simultaneous offline work).
+- **Approval Gate:** Approve a dedicated implementation plan (including where the "global per-repo" record lives and how it stays authoritative) before code changes.
