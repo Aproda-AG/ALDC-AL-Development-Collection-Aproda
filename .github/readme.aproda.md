@@ -1,6 +1,6 @@
 ﻿# Aproda ALDC Layer — README
 
-> **Version:** `1.2.0_aproda.12` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) &nbsp;·&nbsp; **Release:** CI-gated — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17, D-25).
+> **Version:** `1.2.0_aproda.13` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) &nbsp;·&nbsp; **Release:** CI-gated — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17, D-25).
 > Aproda's customization layer on top of **ALDC** (AL Development Collection).
 > Fork: <https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda>
 > Upstream: ALDC Core (tracked via `upstream` remote).
@@ -40,6 +40,9 @@ flowchart LR
    C --> D["Configure Settings\nmanaged cache + BCQuality"]
    D --> E["Preview Update Changes"]
    E --> F["Apply Layer to Project"]
+   F --> G["Install / Update BCQuality"]
+   G --> H["Set up Azure CLI\n(one-time per workstation)"]
+   H --> I["Read the onboarding guide"]
 ```
 
 The internal **Aproda ALDC** extension is the standard path for initializing and updating an open project repository. It owns a managed local cache of this fork, so project developers do not clone the fork themselves.
@@ -49,7 +52,32 @@ The internal **Aproda ALDC** extension is the standard path for initializing and
 3. On first activation, select **Getting Started** in the notification, then run **Configure Settings** in the native walkthrough.
 4. Run **Preview Update Changes** and review the result. Run **Apply Layer to Project** only after confirming the preview.
 5. Run **Install / Update BCQuality** when the walkthrough reaches that step. The wizard proposes a shared, standalone `BCQuality-Aproda` location outside project repositories.
-6. Use **Validate Installation** after applying the layer. For later changes, use **Check for Updates** and **Check for Extension Updates**.
+6. Follow the walkthrough's **Azure CLI setup** step (one-time per workstation) so `skill-aproda-ado`'s CLI operations work — see [Azure CLI setup](#azure-cli-setup-one-time-per-workstation) below.
+7. Use **Validate Installation** after applying the layer. For later changes, use **Check for Updates** and **Check for Extension Updates**.
+
+For the full command reference, see [VS Code commands](#vs-code-commands) below.
+
+### VS Code commands
+
+All commands are available via the Command Palette (`Aproda ALDC: …`). Source of truth: `tools/aproda-vscode-extension/package.json` — keep this table in sync with it.
+
+| Command | Function |
+|---------|----------|
+| **Open Get Started** | Opens the native VS Code walkthrough (configure → apply toolkit → install BCQuality → Azure CLI setup → read onboarding). |
+| **Configure Settings** | Configures developer root, toolkit source/channel, BCQuality location, and toolkit/extension update checks. |
+| **Apply Toolkit to Project** | Initializes or updates the current repository from the managed toolkit cache (overlay-only, never deletes project files). |
+| **Preview Update Changes** | Calculates pending toolkit changes for the project without modifying anything. |
+| **Install / Update BCQuality** | Installs or updates the central, standalone `BCQuality-Aproda` clone and reconciles project workspace roots/settings. |
+| **Check for Updates** | Compares the project's installed `aldc.yaml → aproda.layerVersion` against the latest tagged fork release. |
+| **Check for Extension Updates** | Checks for a newer internal VSIX release and offers to sign in, download, install, and reload. |
+| **Validate Installation** | Runs the `aldc-validate` compliance checker against the applied toolkit in the project. |
+| **Environment Diagnostics** | Runs environment checks (e.g. `pwsh`, `git` availability) for the toolkit's prerequisites. |
+| **(Re)build Toolkit Cache** | Rebuilds the managed local toolkit cache from the configured source; use after a corrupted or stale cache. |
+| **Show Log** | Opens the extension's output/log channel for troubleshooting. |
+| **Open Onboarding Guide** | Opens [`onboarding.aproda.md`](onboarding.aproda.md) (external documentation). |
+| **Reset Toolkit Cache and Settings** | Removes extension-owned local data only; project files and local forks remain untouched. |
+
+---
 
 ## Fallback: Install via PowerShell initialization outside an open workspace
 
