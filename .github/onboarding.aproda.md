@@ -95,6 +95,24 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 
 Für spätere Toolkit-Versionen stehen **Check for Updates** und optional **Preview Update Changes** bereit. Die Extension selbst prüft interne VSIX-Releases und bietet nach expliziter Bestätigung die Installation an.
 
+### 1b — Azure CLI einrichten (einmalig pro Workstation)
+
+Für die CLI-Operationen von `skill-aproda-ado` (Work-Item-/PR-Abruf, PR-Erstellung, Work-Item-Updates):
+
+```powershell
+az extension add --name azure-devops
+az login --tenant 8ad57af3-4ca5-4c66-bc7d-a52dd71dc7c9 --subscription bdcf3613-1ee6-4c3c-9caf-962112b8a6aa
+```
+
+`--tenant` = Aproda AG, `--subscription` = Aproda-DevOps.
+Hinweis-Zeile: einmalig pro Workstation, nicht pro Projekt (wie BCQuality).
+Keine automatische Installation von Azure CLI selbst — siehe [readme.aproda.md](readme.aproda.md#azure-cli-setup-one-time-per-workstation).
+
+> **Troubleshooting:** Meldet ein `az boards`/`az repos`-Befehl "Can't find
+> token from MSAL cache" trotz erfolgreichem `az login`, fehlt der Token fuer
+> die ADO-Ressource. Einmalig beheben mit:
+> `az login --tenant 8ad57af3-4ca5-4c66-bc7d-a52dd71dc7c9 --scope 499b84ac-1321-427f-aa17-267ca6975798/.default`
+
 ### 2 — Routing: Komplexität bestimmt den Einstieg
 
 ```
@@ -113,10 +131,15 @@ Im Zweifel: `@AL Architecture & Design Specialist` fragen — er bewertet die Ko
 
 ```
 1. Work Item in ADO prüfen/ergänzen (Beschreibung, Akzeptanzkriterien)
-2. URL + Inhalt ins Chat-Prompt kopieren:
+2. URL ins Chat-Prompt kopieren:
    https://dev.azure.com/alphasol/<projekt>/_workitems/edit/<id>
 3. Agent bestimmt `req_name = {type}-{id}-{short-name}` und legt `.github/plans/{type}-{id}-{short-name}/` an
 ```
+
+Bei `Bug`/`User Story` lädt der Agent Titel, Beschreibung sowie Repro-Steps bzw.
+Akzeptanzkriterien jetzt per Azure CLI nach — kein manuelles Kopieren des
+Inhalts mehr nötig. Bei `Task`/`Feature` (kein eigenes Akzeptanzkriterien-/
+Repro-Steps-Feld) bleibt der zusätzliche Kontext ein manueller Copy-Schritt.
 
 ### 4 — Deploy-Run-Verify Cycle (OnPrem Gate)
 

@@ -205,6 +205,15 @@
                         }
                     },
                     {
+                        "id": "azureCliSetup",
+                        "title": "Set up Azure CLI for ADO integration",
+                        "description": "Run in a terminal:\n\n```powershell\naz extension add --name azure-devops\naz login --tenant 8ad57af3-4ca5-4c66-bc7d-a52dd71dc7c9 --subscription bdcf3613-1ee6-4c3c-9caf-962112b8a6aa\n```",
+                        "media": {
+                            "image": "media/A-ALDC Logo.png",
+                            "altText": "Azure CLI setup"
+                        }
+                    },
+                    {
                         "id": "readOnboarding",
                         "title": "Read the onboarding guide",
                         "description": "[Open the Aproda ALDC onboarding guide](command:aprodaAldc.gettingStarted).",

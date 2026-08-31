@@ -15,7 +15,7 @@ What the Aproda layer adds on top of upstream ALDC:
 
 | Feature | Description |
 |---------|-------------|
-| **ADO work item integration** | `skill-aproda-ado` — maps ADO work items (Bug/Task/US/Feature) to `req_name`, plans folder, and document headers; URL-based linking, no API fetch |
+| **ADO work item integration** | `skill-aproda-ado` — maps ADO work items to `req_name`, plans folder, and document headers; controlled Azure CLI operations fetch work item/PR context and create a PR / update a work item after HITL approval |
 | **Deploy-Run-Verify Cycle** | `skill-aproda-deploy-run-verify` — publish → sync → deploy → run → review cycle for on-premises BC instances (VALIDATED, 27/27 green) |
 | **HITL Validation instruction** | Auto-applied guardrail that wires the Deploy-Run-Verify Cycle into the HITL Validation phase |
 | **Layer meta-skill** | `skill-aproda-aldc` — explains and extends the Aproda customization layer itself; entry to `site-profile.aproda.md` |
@@ -95,6 +95,17 @@ git clone https://github.com/Aproda-AG/BCQuality-Aproda bcquality-aproda
 
 The folder must sit **next to** (not inside) the project repo so its `.al` files never enter the AL compiler's scope. Once cloned, it is available to all projects on the same workstation — no per-project setup needed. 
 
+### Azure CLI setup (one-time, per workstation)
+
+`skill-aproda-ado`'s CLI operations (work item/PR fetch, PR creation, work item updates) require the Azure CLI with the `azure-devops` extension, plus an interactive sign-in against the **Aproda AG** tenant and **Aproda-DevOps** subscription:
+
+```powershell
+az extension add --name azure-devops
+az login --tenant 8ad57af3-4ca5-4c66-bc7d-a52dd71dc7c9 --subscription bdcf3613-1ee6-4c3c-9caf-962112b8a6aa
+```
+
+No automatic installation (deliberately out of scope, see `skill-aproda-ado/SKILL.md`) — install Azure CLI itself following [Microsoft's official instructions](https://learn.microsoft.com/cli/azure/install-azure-cli) if it isn't already on the workstation. Once installed and signed in, it is available to all projects on the same workstation — no per-project setup needed.
+
 ### PowerShell fallback — target repo not in the selection list
 
 The script scans sibling folders of the fork for git repos. If the target project isn't found there (different drive, nested path, etc.):
@@ -112,31 +123,30 @@ The selection dialog is skipped entirely.
 
 ## Aproda process extensions
 
-### ADO work item integration (in work ⚠️)
+### ADO work item integration
 
 Requirements, bugs, and tasks are tracked in Azure DevOps and flow directly into the ALDC planning structure via `skill-aproda-ado`:
 
 - **Type-ID-short-name pattern** — the `req_name` (plans folder name) is derived as `{type}-{id}-{short-name}` (e.g. `bug-36370-posting-error`). The short name is derived from the work item title in kebab-case, with up to four or five meaningful words.
 - **ADO header** — every plan document gets an `**ADO**: [Bug 36370](…)` link at the top so context is never lost.
-- **Process** — the agent reads the work item description/acceptance criteria from the chat prompt (no API fetch). The planner creates `.github/plans/{type}-{id}-{short-name}/` with spec, architecture, and test-plan files using the ADO ID as the anchor throughout.
+- **Process** — the agent fetches title/type/status/description directly via Azure CLI (`Get-AdoWorkItem.ps1`), and for `Bug`/`User Story` also repro steps or acceptance criteria. The planner creates `.github/plans/{type}-{id}-{short-name}/` with spec, architecture, and test-plan files using the ADO ID as the anchor throughout.
 
 **How to start:**
 
    > **Tip:** You can also attach a technical specification document to the chat prompt — the agent will incorporate it when generating the plan.
-   > ⚠️ **Planned:** direct ADO read-out (likely via ADO MCP) will eliminate the manual copy step in a future version.
+   > Requires the one-time Azure CLI setup below.
 
 1. **Review the work item in ADO** — check title, description, and acceptance criteria. Add technical details, edge cases, or test scenarios directly in ADO if they are missing. The richer the work item, the better the generated spec.
-2. **Copy the work item URL and the relevant content into the chat prompt** — the agent cannot fetch ADO directly (no auth), so paste both:
-   - the work item URL (used for `req_name` derivation and the ADO header link):
+2. **Paste the work item URL into the chat prompt**:
      ```
      https://dev.azure.com/alphasol/GustavGerigAG/_workitems/edit/36370
      ```
-   - the work item content: title, description, acceptance criteria — everything the agent should use as the spec seed.
+   For `Bug`/`User Story`, the agent fetches title, description, and repro steps/acceptance criteria via Azure CLI — no manual copy needed. For `Task`/`Feature` (no equivalent acceptance-criteria/repro-steps field), also paste the relevant work item content as additional context.
 
-   Hand it to the appropriate agent (`@al-architect` for MEDIUM/HIGH complexity, or start with `/al-spec.create` for LOW). The agent confirms the derived `req_name` before creating any files.
+   Hand it to the appropriate agent (`@al-architect` for MEDIUM/HIGH complexity, or start with `/al-spec.create` for LOW). The agent confirms the derived `req_name` before creating any files — if a plan folder for that `req_name` already exists, it stops and asks whether to extend it or choose a different name.
 
 
-See `skill-aproda-ado` for the full naming and URL construction rules (`org = alphasol`, project from `aldc.yaml → ado.project`).
+See `skill-aproda-ado` for the full naming, URL construction, and CLI operation rules (`org = alphasol`, project from `aldc.yaml → ado.project`).
 
 ---
 

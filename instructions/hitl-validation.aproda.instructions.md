@@ -33,7 +33,8 @@ draft
        → {req}-hitl-validation-issues.md  (created on first feedback; appended on later rounds)
        → agent resolves TODO issues one-by-one + deploy-run-verify → DONE
        → when last issue = DONE: inform user — "all issues resolved, ready for al-pr-prepare"
-         (no status change needed — pr-prepare moves row to Completed)
+         (no status change needed — pr-prepare moves row to Completed once its
+         Completion Gate is satisfied: PR + ADO-Kommentar/State + al-doc-update)
   → al-pr-prepare: moves row to ## Completed Requirements
 ```
 

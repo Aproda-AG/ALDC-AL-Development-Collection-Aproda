@@ -15,6 +15,7 @@ These principles apply to ALL work in this repository:
 - **TDD / spec-driven** — Features follow the flow: `spec.create → architecture → test-plan → implementation → review`.
 - **Least privilege** — Generate only the minimum permissions required. Use XLIFF for all user-facing strings.
 - **Output language: English** — All persisted artifacts under `.github/plans/**` (architecture.md, spec.md, plan.md, phase-N-complete.md, plan-complete.md, test-plan.md, delivery.md, review reports, Dredd audit reports, BCQuality findings JSON) MUST be written in English regardless of the chat conversation language. Inline chat responses MAY follow the user's language; persisted artifacts stay in English.
+- **No named agent, same gates** — Even without an explicit `@`-agent: AL changes and ADO/PR actions follow the same HITL gates as `al-conductor`/`al-developer` (delivery-boundary `memory.md` updates) and `skill-aproda-ado` (explicit approval before `Create-AdoPullRequest.ps1`/`Update-AdoWorkItem.ps1`, never suppress the mandatory AI disclaimer).
 
 ## Agent Routing
 

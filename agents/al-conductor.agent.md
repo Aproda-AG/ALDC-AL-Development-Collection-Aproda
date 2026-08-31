@@ -123,7 +123,7 @@ Progress is by **phase** (N/Total), a real value — never invent per-task perce
 
 6. **🚨 HARD GATE — PLAN APPROVAL**: STOP and WAIT for explicit user approval. DO NOT start implementation until user confirms. If `test-plan.md` doesn't exist for this requirement, CREATE IT from template during planning. Verify requirement set: `.spec.md` + `.architecture.md` + `.test-plan.md`.
 
-7. **Write Plan File**: Once approved, write `.github/plans/<task-name>/<task-name>-plan.md`. If the requirement originates from an ADO work item, load **`skill-aproda-ado`** to derive `<task-name>` and embed the ADO header.
+7. **Write Plan File**: Once approved, write `.github/plans/<task-name>/<task-name>-plan.md`. If the requirement originates from an ADO work item, load **`skill-aproda-ado`** to derive `<task-name>` and embed the ADO header — if only an ADO ID/URL is given without a title, call `Get-AdoWorkItem.ps1` instead of asking the user to paste it, and apply Pattern 3 (existing-plan hard stop) before creating any files.
 
 8. **Create Phase 1 Completion File** (MANDATORY): Write `.github/plans/<task-name>/<task-name>-phase-1-complete.md` with:
    - Planning findings summary (from al-planning-subagent)
@@ -269,7 +269,7 @@ After the review verdict allows proceeding (APPROVED / APPROVED_WITH_RECOMMENDAT
 
 2. **🚨 MANDATORY memory.md update at completion**:
    Update `.github/plans/memory.md`:
-   - **Active Requirements table**: change Status from `in progress` → `review` (delivery hands off to the human for testing; `al-pr-prepare` moves to Completed after acceptance)
+   - **Active Requirements table**: change Status from `in progress` → `review` (delivery hands off to the human for testing; `al-pr-prepare` moves to Completed after acceptance) — this begins the HITL Validation phase, see `hitl-validation.aproda.instructions.md`
    - Append Inter-Session Context entry: date, who, what was done, what's next
    - Decisions taken during implementation
    - Deviations from spec/architecture (if any)

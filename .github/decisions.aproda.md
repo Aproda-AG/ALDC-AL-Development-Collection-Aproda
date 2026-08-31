@@ -278,6 +278,25 @@ Layer tags remain `v<core>_aproda.<revision>` and are the technical source for l
 
 ---
 
+### D-26 — HITL gates must be self-verified, not just narrated
+
+A live end-to-end test of the `skill-aproda-ado` CLI integration (2026-08-31) showed that
+an agent following `al-pr-prepare.prompt.md`'s Completion Gate step-by-step still skipped
+two of its own items (`/reports/pr-draft.md` deletion, the `memory.md` → Completed move)
+without noticing — the gate was described in prose but never actively checked before the
+agent declared the work done. A documented gate that isn't independently verified is not
+a guarantee it ran.
+
+Fix pattern (applied first to `al-pr-prepare.prompt.md`'s Completion Gate, mirroring
+`al-conductor.agent.md`'s existing "🚨 HARD GATE" phrasing): every HITL/completion gate
+must (a) require an explicit verification action (e.g. `git status --short`, a
+file-existence check) rather than trusting that an earlier step "should have" run it, and
+(b) require the gate's final report to render each item as ✅/❌ with the verification
+evidence, not a restatement of the checklist text. Applies to any future gate added to
+this layer, not just ADO.
+
+---
+
 ## Stacking vs. changing — practical guide
 
 | Intent | Mechanism | Touches Upstream? |
@@ -326,6 +345,15 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `docs/agents/*.agent.md` + `docs/agents/index.md` | Doc-drift fix: `**Model**` rows and agent overview tables re-synced to the D-22 pins. **Fork-only** (mkdocs site pages; not in `aldc.yaml`, therefore deliberately *not* added to `inPlaceEdits` — projects do not consume them) | D-2 / D-22 | 2026-08-20 |
 | `prompts/al-build`, `al-context.create`, `al-initialize`, `al-memory.create`, `al-pr-prepare` (both trees) | `model:` re-pinned off the retiring `Claude Sonnet 4.5` → `GPT-5.6 Terra` (deterministic procedures, tool loops, structured output) | D-2 / D-22 | 2026-08-20 |
 | `copilot-instructions.md`, `agents/al-conductor.agent.md`, `agents/al-triage.agent.md`, `agents/al-review-subagent.agent.md`, `agents/dredd.agent.md` | Added `#aldcConfiguration` usage rule and extension tool allowlist for authoritative root-level configuration in curated consumer workspaces | D-2 / D-24 | 2026-08-27 |
+| `skills/skill-aproda-ado/SKILL.md` + `scripts/` | Extended with controlled Azure CLI read/write operations (`Get-AdoWorkItem`, `Get-AdoPullRequest`, `Create-AdoPullRequest`, `Update-AdoWorkItem`) and Pattern 3 (existing-plan hard-stop check). Net-new Aproda skill (D-4) — not an Upstream in-place edit, so not added to `aproda-sync.json → inPlaceEdits` | D-4 | 2026-08-31 |
+| `agents/al-architect.agent.md`, `agents/al-conductor.agent.md`, `agents/al-triage.agent.md` | Added CLI-fetch fallback (`Get-AdoWorkItem.ps1` when only an ADO ID/URL is given) and Pattern 3 existing-plan hard stop at the `skill-aproda-ado` load points | D-2 | 2026-08-31 |
+| `agents/al-conductor.agent.md`, `agents/al-developer.agent.md` | One-line cross-reference to the HITL Validation phase at the `Status: in progress → review` transition, linking to `hitl-validation.aproda.instructions.md` instead of restating the definition | D-2 | 2026-08-31 |
+| `instructions/hitl-validation.aproda.instructions.md` | Cross-reference to `al-pr-prepare.prompt.md`'s new Completion Gate at the "ready for al-pr-prepare" signal, without duplicating its checklist | D-11 | 2026-08-31 |
+| `prompts/al-pr-prepare.prompt.md` | Heading rename `## What` → `## Summary`; new "Aproda: ADO Pull Request Creation" + "Aproda: ADO Completion Comment" sections (ADO-hosted repos, via `skill-aproda-ado`); `/reports/pr-draft.md` deleted after PR creation; new Completion Gate gates the `memory.md` move; Documentation Update reordered before the move | D-2 / D-14 | 2026-08-31 |
+| `readme.aproda.md`, `onboarding.aproda.md` | Corrected the "no API fetch" statement to reflect the new CLI capability; added Azure CLI setup (one-time, per workstation) documentation | D-4 | 2026-08-31 |
+| `tools/aproda-vscode-extension/package.json` | New walkthrough step `azureCliSetup` between `installBcquality` and `readOnboarding` | D-21 | 2026-08-31 |
+| `prompts/al-pr-prepare.prompt.md` | Completion Gate upgraded from a narrated checklist to a self-verified HARD GATE (`git status --short` + file-existence checks, ✅/❌ report required); `memory.md` completion step requires a commit, not just an edit; `pr-draft.md` deletion check made conditional on actual PR creation (not a gate failure if creation failed or repo is GitHub-hosted); added a real completeness check against `{req_name}-hitl-validation-issues.md`'s Status-Board before allowing the move | D-2 / D-26 | 2026-08-31 |
+| `copilot-instructions.md` | Added a Core Principles line: AL/ADO HITL gates (`al-conductor`/`al-developer` delivery-boundary updates, `skill-aproda-ado` write approvals + AI disclaimer) apply even without an explicit `@`-agent | D-2 | 2026-08-31 |
 
 ---
 
