@@ -7,6 +7,8 @@
 
 /aldc.yaml
 .github/README.md
+.github/audits/
+.github/reports/
 .github/copilot-instructions.md
 .github/decisions.aproda.md
 .github/readme.aproda.md
