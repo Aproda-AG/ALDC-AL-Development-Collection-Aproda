@@ -42,7 +42,8 @@ export async function checkForExtensionUpdates(context: vscode.ExtensionContext,
         const selection = await vscode.window.showErrorMessage("Aproda ALDC extension update failed. Sign in to GitHub, then retry.", "Sign In / Retry", "Show Log");
         if (selection === "Sign In / Retry") {
             // Uses VS Code's own GitHub auth (separate from Git Credential Manager) - force a fresh session, then retry.
-            await vscode.authentication.getSession("github", ["repo"], { createIfNone: true, forceNewSession: true });
+            // createIfNone and forceNewSession are mutually exclusive in the VS Code API; forceNewSession alone also creates a session if none exists.
+            await vscode.authentication.getSession("github", ["repo"], { forceNewSession: true });
             await checkForExtensionUpdates(context, logger, manual);
         }
         if (selection === "Show Log") {

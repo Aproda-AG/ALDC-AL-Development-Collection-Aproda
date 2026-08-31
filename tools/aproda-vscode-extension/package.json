@@ -240,7 +240,7 @@
         "watch": "node ./node_modules/typescript/lib/tsc.js -p . --watch",
         "package": "npm run compile && node ./scripts/package.js",
         "lint": "node ./node_modules/typescript/lib/tsc.js --noEmit",
-        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/extension-version.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js"
+        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/extension-version.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js && node ./test/extension-update.test.js"
     },
     "dependencies": {
         "jsonc-parser": "^3.3.1",
