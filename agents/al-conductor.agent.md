@@ -158,6 +158,10 @@ For each phase in the plan, execute this 4-step cycle:
 
 #### 2A. Implement Phase
 
+**🚨 HARD GATE — memory.md ownership**: Immediately before invoking AL Implementation Subagent, take an exact content snapshot (or SHA-256 hash) of `.github/plans/memory.md`. The implementation subagent has **no authority** to write this file or alter a requirement Status. When it returns, compare the current file with the snapshot **before** accepting its Phase Implementation Summary or invoking review:
+- Unchanged → continue to 2B.
+- Changed → **REJECT** the phase result. Do not normalize, retain, or treat the change as part of the implementation loop; stop, report the unexpected mutation and its diff to the user, and wait for an explicit decision on the file state before retrying or reviewing.
+
 Invoke **AL Implementation Subagent** (💻) via `#runSubagent` with:
 - Phase number and objective
 - **Phase-relevant context excerpts inline** (per §"Passing Context to Subagents"): the spec section for this phase's objects, the architecture decisions it must honor, and the test-plan tests scoped to it — not bare file references. Include the file paths as the escape hatch.
@@ -169,7 +173,7 @@ Invoke **AL Implementation Subagent** (💻) via `#runSubagent` with:
 - **Mandatory testing skill**: any phase that writes/changes tests MUST load `skill-testing` and build master/document data via the standard MS libraries (`Library - Sales`/`Inventory`/`Manufacturing`/`ERM`) — the proof token `🧠 skill-testing·MSLibraries` must appear in the phase summary; if it's absent, REJECT the phase
 - **The 7 always-on instruction micro-rules inline** + **domain skill hints** for this phase (per §"Passing Context to Subagents" — the subagent loads the `SKILL.md` on demand, not you)
 - Instruction: work autonomously, only ask user on critical implementation decisions
-- **NOT** to proceed to next phase or write completion files (you handle this)
+- **NOT** to proceed to next phase, write completion files, or edit `.github/plans/memory.md` (you exclusively own its status transitions and delivery entries)
 - **RETURN** structured summary: objects created, **event subscribers (exact base object + event name + signature)**, tests created, build status, issues, and the **symbolic skills line** (`📐 instr ✓ · 🧠 skill-x·tag`)
 
 **⛔ TDD ENFORCEMENT**: If subagent returns code without tests, REJECT the phase result and re-invoke with explicit TDD instruction. **Zero tests = phase FAILED.**

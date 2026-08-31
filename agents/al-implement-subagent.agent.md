@@ -123,6 +123,7 @@ end;
 
 - You **MUST NOT** proceed to the next phase — the Conductor handles phase transitions
 - You **MUST NOT** write phase completion files — the Conductor handles documentation
+- You **MUST NOT** create, edit, move, or delete `.github/plans/memory.md`, including its requirement Status values or Inter-Session Context — the Conductor exclusively owns those delivery-boundary writes
 - You **MUST NOT** interact with the user — return results to the Conductor
 - You **MUST NOT** modify base objects — extension-only
 - You **MUST** follow the spec and architecture documents provided by the Conductor

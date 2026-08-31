@@ -322,6 +322,29 @@ revision) without a second full prose copy.
 
 ---
 
+### D-28 — memory.md lifecycle transitions have exclusive owners
+
+An implementation subagent could edit `.github/plans/memory.md` because it had general
+edit access and was prohibited only from writing phase-completion files. This allowed an
+unreviewed implementation to advance a requirement to `review`, leaving the Conductor to
+repair the state before independent review. A later correction is not a gate: the
+incorrect state was already visible to subsequent agents.
+
+The Active Requirements table is therefore a controlled lifecycle index. `draft` belongs
+to the Architect/spec workflow, `in progress` and `review` belong to the Conductor (or the
+direct LOW-path implementation specialist), and only `al-pr-prepare` moves a row to
+Completed. Subagents never write `memory.md`; resolved HITL issues leave the requirement
+in `review` until the Completion Gate succeeds.
+
+Defense in depth is required for conductor-managed work: snapshot `memory.md` before
+invoking the implementation subagent and compare it immediately on return. Any mutation
+rejects the result and stops for an explicit human decision; it is never absorbed or
+silently repaired as ordinary implementation progress. This is an in-place behavioral
+change under D-2. No foundation or Claude-distribution synchronization is required,
+because those channels are not used by Aproda.
+
+---
+
 ## Stacking vs. changing — practical guide
 
 | Intent | Mechanism | Touches Upstream? |
@@ -373,7 +396,9 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `skills/skill-aproda-ado/SKILL.md` + `scripts/` | Extended with controlled Azure CLI read/write operations (`Get-AdoWorkItem`, `Get-AdoPullRequest`, `Create-AdoPullRequest`, `Update-AdoWorkItem`) and Pattern 3 (existing-plan hard-stop check). Net-new Aproda skill (D-4) — not an Upstream in-place edit, so not added to `aproda-sync.json → inPlaceEdits` | D-4 | 2026-08-31 |
 | `agents/al-architect.agent.md`, `agents/al-conductor.agent.md`, `agents/al-triage.agent.md` | Added CLI-fetch fallback (`Get-AdoWorkItem.ps1` when only an ADO ID/URL is given) and Pattern 3 existing-plan hard stop at the `skill-aproda-ado` load points | D-2 | 2026-08-31 |
 | `agents/al-conductor.agent.md`, `agents/al-developer.agent.md` | One-line cross-reference to the HITL Validation phase at the `Status: in progress → review` transition, linking to `hitl-validation.aproda.instructions.md` instead of restating the definition | D-2 | 2026-08-31 |
+| `agents/al-conductor.agent.md`, `agents/al-implement-subagent.agent.md` | Exclusive `memory.md` ownership: implementation subagent prohibition plus Conductor snapshot-and-reject gate before independent review | D-2 / D-28 | 2026-08-31 |
 | `instructions/hitl-validation.aproda.instructions.md` | Cross-reference to `al-pr-prepare.prompt.md`'s new Completion Gate at the "ready for al-pr-prepare" signal, without duplicating its checklist | D-11 | 2026-08-31 |
+| `instructions/hitl-validation.aproda.instructions.md` | Replaced ambiguous status vocabulary with exclusive writers; removed invalid `HITL Validation — All DONE` terminal status | D-11 / D-28 | 2026-08-31 |
 | `prompts/al-pr-prepare.prompt.md` | Heading rename `## What` → `## Summary`; new "Aproda: ADO Pull Request Creation" + "Aproda: ADO Completion Comment" sections (ADO-hosted repos, via `skill-aproda-ado`); `/reports/pr-draft.md` deleted after PR creation; new Completion Gate gates the `memory.md` move; Documentation Update reordered before the move | D-2 / D-14 | 2026-08-31 |
 | `readme.aproda.md`, `onboarding.aproda.md` | Corrected the "no API fetch" statement to reflect the new CLI capability; added Azure CLI setup (one-time, per workstation) documentation | D-4 | 2026-08-31 |
 | `tools/aproda-vscode-extension/package.json` | New walkthrough step `azureCliSetup` between `installBcquality` and `readOnboarding` | D-21 | 2026-08-31 |

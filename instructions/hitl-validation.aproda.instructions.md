@@ -12,20 +12,22 @@ applyTo: "**/*.al"
 
 > Stacking instruction (additive; no Upstream behaviour is changed). Rationale: `decisions.aproda.md` D-10..D-13.
 
-## Status vocabulary (`memory.md` → `## Active Requirements` → Status column)
+## Status contract (`memory.md` → `## Active Requirements` → Status column)
 
-| Status | Meaning |
-|--------|---------|
-| `draft` | Not yet in active implementation (design, spec, backlog) |
-| `in progress` | Conductor / impl-specialist actively implementing |
-| `review` | Delivered; user testing; issues file has open TODOs |
-| *(row moved to Completed)* | `al-pr-prepare` executed |
+| Status | Meaning | Exclusive writer |
+|--------|---------|------------------|
+| `draft` | Not yet in active implementation (design, spec, backlog) | Architect or spec workflow |
+| `in progress` | Approved implementation is active | Conductor, or direct implementation specialist in the LOW path |
+| `review` | Delivered; independent review and delivery validation passed; user testing may have open or resolved issues | Conductor, or direct implementation specialist in the LOW path |
+| *(row moved to Completed)* | Completion Gate satisfied | `al-pr-prepare` only |
+
+Subagents never write `memory.md`. In conductor-managed work, only the Conductor may change a Status, and it may set `review` only after accepting the independent review result and the delivery validation.
 
 ## Phase lifecycle
 
 ```
 draft
-  → conductor / impl-specialist starts → sets memory.md Status = 'in progress'
+  → Conductor / direct LOW-path implementation specialist starts → sets memory.md Status = 'in progress'
   → implements + deploy-run-verify
   → on delivery: sets memory.md Status = 'review'
   → [review phase begins]
@@ -88,7 +90,7 @@ When the file exists:
 4. **Implement** the fix/extension for that one issue only.
 5. **Run the Deploy-Run-Verify Cycle** (`skill-aproda-deploy-run-verify`).
 6. **Set `Status = DONE`** for that issue (and update the Status-Board row).
-7. **If no more TODO issues remain:** update `memory.md` → Active Requirements → Status to `HITL Validation — All DONE` and add an Inter-Session Context entry (date, who, what resolved).
+7. **If no more TODO issues remain:** keep `memory.md` Status = `review`; inform the user that all issues are resolved and the requirement is ready for `al-pr-prepare`. The Completion Gate alone moves the row to Completed.
 
 ## Rules
 
