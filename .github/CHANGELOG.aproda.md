@@ -2,6 +2,12 @@
 
 > Curated release notes for the Aproda layer (`aldc.yaml` → `aproda.layerVersion`). The technical, per-commit record stays in the [Version / pin changelog](decisions.aproda.md#version--pin-changelog); this file is the human-readable summary maintained alongside each release, mirroring the style of [`tools/aproda-vscode-extension/CHANGELOG.md`](../tools/aproda-vscode-extension/CHANGELOG.md). See `skill-aproda-aldc-release` for when this file is updated.
 
+## 1.2.0_aproda.13
+
+- Adds a completion-gate hardening for ADO work items: automatic title retrieval (`Get-AdoWorkItem.ps1`) when a work item has none, explicit human-approval scripts for creating/updating ADO pull requests and work items, and Azure CLI setup guidance in the extension's onboarding.
+- Upgrades `al-pr-prepare`'s Completion Gate to a self-verified HARD GATE (D-26): required verification actions (`git status --short`, file-existence checks) and a mandatory ✅/❌ report, instead of a narrated checklist.
+- Introduces this curated layer changelog (`CHANGELOG.aproda.md`, D-27) alongside the technical Version/pin changelog, and slims that changelog's `Notes` column to short technical keywords going forward.
+
 ## 1.2.0_aproda.12
 
 - Published the current approved Aproda toolkit state as the next CI-gated layer release revision.
