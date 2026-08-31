@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4
+
+- Retries a failed extension update check by forcing a fresh VS Code GitHub authentication session, then automatically re-running the check, instead of only opening a Git-credential terminal.
+
 ## 0.1.3
 
 - Opens the Aproda ALDC walkthrough directly from the first-run notification and applies the toolkit from its second step.
