@@ -31,9 +31,9 @@ async function reconcileFile(workspacePath: string, desiredPath: string, bcquali
         return;
     }
     const folders = Array.isArray(document.folders) ? document.folders : [];
-    const index = folders.findIndex((folder) => /bcquality-aproda/i.test(folder.path ?? ""));
+    const index = folders.findIndex((folder) => /BCQuality-Aproda/i.test(folder.path ?? ""));
     let updated = applyModification(source, ["folders"], folders);
-    updated = applyModification(updated, index >= 0 ? ["folders", index, "path"] : ["folders", folders.length], index >= 0 ? desiredPath : { name: "BCQuality (knowledge - not compiled)", path: desiredPath });
+    updated = applyModification(updated, index >= 0 ? ["folders", index, "path"] : ["folders", folders.length], index >= 0 ? desiredPath : { name: "BCQuality (Aproda ALDC)", path: desiredPath });
     if (setBcqualityEnvInWorkspace()) {
         updated = applyModification(updated, ["settings", "terminal.integrated.env.windows", "BCQUALITY_HOME"], bcqualityRoot);
     }

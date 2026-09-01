@@ -9,7 +9,7 @@
     //                       Rename / duplicate this entry for each app in your repo
     //                       (e.g. Base, App, Module, …). Paths are relative to the git root.
     //   3) <Test>         — Test AL extension (compiled separately; adjust name & path).
-    //   4) ../bcquality-aproda   — BCQuality knowledge base (NOT compiled; consumed by al-review-subagent
+    //   4) ../BCQuality-Aproda   — BCQuality knowledge base (NOT compiled; consumed by al-review-subagent
     //                             and Dredd only). Cloned outside the AL project so its .al files
     //                             never pollute the error list. Run: tools/bcquality/install.sh
     //
@@ -32,8 +32,8 @@
             "path": "Test"
         },
         {
-            "name": "BCQuality (knowledge — not compiled)",
-            "path": "../bcquality-aproda"
+            "name": "BCQuality (Aproda ALDC)",
+            "path": "../BCQuality-Aproda"
         }
     ],
     "settings": {

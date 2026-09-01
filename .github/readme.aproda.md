@@ -99,7 +99,7 @@ The bootstrap performs an initial layer pull, a second framework settle-pull, an
 
 Commit the project configuration and persistent working documents created or maintained by the initialization:
 
-- `aldc.code-workspace`, created when absent, with `.github`, `App`, `Test`, and `../bcquality-aproda` roots. Rename or remove the `App` and `Test` placeholders to match the repository layout before committing.
+- `aldc.code-workspace`, created when absent, with `.github`, `App`, `Test`, and `../BCQuality-Aproda` roots. Rename or remove the `App` and `Test` placeholders to match the repository layout before committing.
 - The workspace setting `chat.useCustomizationsInParentRepositories: true`; existing parseable workspace files are supplemented with the `.github` and BCQuality roots and this setting.
 - `.github/plans/memory.md`, seeded once, and the requirement-specific planning documents beneath `.github/plans/`.
 - Project-specific documentation and the root `.gitignore` update.
@@ -118,10 +118,10 @@ The syncer is an allowlist-only overlay: it copies the toolkit layer but never d
 
 BCQuality defines three layers: **MS** (official Microsoft guidelines), **Community** (supplementary patterns), and **Custom** (company-specific rules). The Aproda fork [`Aproda-AG/BCQuality-Aproda`](https://github.com/Aproda-AG/BCQuality-Aproda) populates the Custom layer with initial Aproda-specific additions.
 
-The extension manages the recommended central clone at the configured developer root and reconciles project workspace files automatically. For the PowerShell fallback, clone it once alongside projects at `../bcquality-aproda`:
+The extension manages the recommended central clone at the configured developer root and reconciles project workspace files automatically. For the PowerShell fallback, clone it once alongside projects at `../BCQuality-Aproda`:
 
 ```
-git clone https://github.com/Aproda-AG/BCQuality-Aproda bcquality-aproda
+git clone https://github.com/Aproda-AG/BCQuality-Aproda BCQuality-Aproda
 ```
 
 The folder must sit **next to** (not inside) the project repo so its `.al` files never enter the AL compiler's scope. Once cloned, it is available to all projects on the same workstation — no per-project setup needed. 

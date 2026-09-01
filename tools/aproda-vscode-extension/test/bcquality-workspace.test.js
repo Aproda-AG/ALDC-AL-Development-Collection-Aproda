@@ -24,7 +24,7 @@ async function main() {
     try {
         await fs.writeFile(workspacePath, `{
   // Preserve this comment.
-  "folders": [{ "name": "BCQuality", "path": "../bcquality-aproda" }],
+  "folders": [{ "name": "BCQuality", "path": "../BCQuality-Aproda" }],
   "settings": {}
 }`);
         const logger = { info: () => undefined, error: () => undefined };
