@@ -2,6 +2,12 @@
 
 > Curated release notes for the Aproda layer (`aldc.yaml` → `aproda.layerVersion`). The technical, per-commit record stays in the [Version / pin changelog](decisions.aproda.md#version--pin-changelog); this file is the human-readable summary maintained alongside each release, mirroring the style of [`tools/aproda-vscode-extension/CHANGELOG.md`](../tools/aproda-vscode-extension/CHANGELOG.md). See `skill-aproda-aldc-release` for when this file is updated.
 
+## 1.2.0_aproda.16
+
+- Fixes BCQuality clone path casing: the workspace seed template and `Initialize-AprodaProject.ps1`'s fallback workspace writer now consistently use `../BCQuality-Aproda` (previously `bcquality-aproda` / `BCquality-Aproda`, mismatched casing across files).
+- Aligns the workspace-folder display name to `BCQuality (Aproda ALDC)` in the fallback initializer, matching the seed template.
+- Removes a stale, dead `.gitignore` entry (`Base/tools/bcquality-aproda/`) that never matched any generated path.
+
 ## 1.2.0_aproda.15
 
 - Enforces exclusive `memory.md` lifecycle ownership: implementation subagents cannot mutate requirement status, and the Conductor rejects a phase result when its pre-review `memory.md` snapshot changes.

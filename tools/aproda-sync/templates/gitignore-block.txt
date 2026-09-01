@@ -18,7 +18,6 @@
 .github/instructions/
 .github/prompts/
 .github/tools/
-Base/tools/bcquality-aproda/
 # Skills: ignore framework + Aproda skills individually so that NEW project-specific can be added
 .github/skills/index.md
 .github/skills/skill-agent-instructions/
