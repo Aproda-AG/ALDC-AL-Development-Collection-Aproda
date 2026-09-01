@@ -72,12 +72,32 @@ if ([string]::IsNullOrWhiteSpace($descriptionContent)) {
     Write-Error "DescriptionFile '$DescriptionFile' is empty."
     return
 }
+
+# A pr-draft delivery preview may also contain the proposed title and ADO comment.
+# Pass only its PR Description section to Azure DevOps; legacy drafts keep their full content.
+$descriptionSection = [regex]::Match(
+    $descriptionContent,
+    '(?ms)^## PR Description\s*\r?\n(.*?)(?=^##\s|\z)')
+if ($descriptionSection.Success) {
+    $descriptionContent = $descriptionSection.Groups[1].Value.Trim()
+    if ([string]::IsNullOrWhiteSpace($descriptionContent)) {
+        Write-Error "DescriptionFile '$DescriptionFile' has an empty 'PR Description' section."
+        return
+    }
+
+    $temporaryDescriptionFile = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "aproda-ado-pr-description-$([guid]::NewGuid()).md")
+    Set-Content -LiteralPath $temporaryDescriptionFile -Value $descriptionContent -NoNewline -Encoding utf8
+    $DescriptionFile = $temporaryDescriptionFile
+}
 # az CLI's generic "@file" syntax reads the value straight from disk, so embedded newlines
 # and " survive intact -- az.cmd's Windows command-line re-parsing never sees them.
 $descriptionArg = "@$DescriptionFile"
 
 if ($SourceBranch -eq $TargetBranch) {
     Write-Error "SourceBranch and TargetBranch must differ ('$SourceBranch')."
+    if ($temporaryDescriptionFile -and (Test-Path -LiteralPath $temporaryDescriptionFile)) {
+        Remove-Item -LiteralPath $temporaryDescriptionFile -Force
+    }
     return
 }
 
@@ -105,22 +125,32 @@ if ($existing.Count -gt 0) {
         id      = $first.pullRequestId
         url     = "$orgUrl/$projectSegment/_git/$repositorySegment/pullrequest/$($first.pullRequestId)"
     } | ConvertTo-Json -Depth 5
+    if ($temporaryDescriptionFile -and (Test-Path -LiteralPath $temporaryDescriptionFile)) {
+        Remove-Item -LiteralPath $temporaryDescriptionFile -Force
+    }
     return
 }
 
-if ($PSCmdlet.ShouldProcess("$Repository ($SourceBranch -> $TargetBranch)", "Create pull request '$Title'")) {
-    $titleSafe = $Title -replace '"', "'"
-    $createdRaw = az repos pr create --repository $Repository --source-branch $SourceBranch --target-branch $TargetBranch --title $titleSafe --description $descriptionArg --work-items $WorkItemId --organization $Organization --project $Project --output json --only-show-errors 2>$null
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($createdRaw)) {
-        Write-Error "Failed to create the pull request. No fallback performed."
-        return
-    }
+try {
+    if ($PSCmdlet.ShouldProcess("$Repository ($SourceBranch -> $TargetBranch)", "Create pull request '$Title'")) {
+        $titleSafe = $Title -replace '"', "'"
+        $createdRaw = az repos pr create --repository $Repository --source-branch $SourceBranch --target-branch $TargetBranch --title $titleSafe --description $descriptionArg --work-items $WorkItemId --organization $Organization --project $Project --output json --only-show-errors 2>$null
+        if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($createdRaw)) {
+            Write-Error "Failed to create the pull request. No fallback performed."
+            return
+        }
 
-    $created = $createdRaw | ConvertFrom-Json
-    [ordered]@{
-        created = $true
-        id      = $created.pullRequestId
-        url     = "$orgUrl/$projectSegment/_git/$repositorySegment/pullrequest/$($created.pullRequestId)"
-        status  = $created.status
-    } | ConvertTo-Json -Depth 5
+        $created = $createdRaw | ConvertFrom-Json
+        [ordered]@{
+            created = $true
+            id      = $created.pullRequestId
+            url     = "$orgUrl/$projectSegment/_git/$repositorySegment/pullrequest/$($created.pullRequestId)"
+            status  = $created.status
+        } | ConvertTo-Json -Depth 5
+    }
+}
+finally {
+    if ($temporaryDescriptionFile -and (Test-Path -LiteralPath $temporaryDescriptionFile)) {
+        Remove-Item -LiteralPath $temporaryDescriptionFile -Force
+    }
 }

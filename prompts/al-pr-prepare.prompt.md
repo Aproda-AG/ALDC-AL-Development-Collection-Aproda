@@ -5,19 +5,18 @@ description: 'Prepare a clean, documented pull request draft for AL features or 
 tools: [vscode/getProjectSetupInfo, vscode/installExtension, vscode/newWorkspace, vscode/runCommand, vscode/vscodeAPI, vscode/extensions, execute/runNotebookCell, execute/getTerminalOutput, execute/createAndRunTask, execute/runInTerminal, execute/runTests, read/getNotebookSummary, read/problems, read/readFile, read/readNotebookCellOutput, read/terminalSelection, read/terminalLastCommand, agent, edit, search, web, 'github/*', 'github/*', 'github/*', 'microsoft-learn/microsoft_docs_fetch', microsoft-learn/microsoft_docs_search, 'al-symbols-mcp/*', ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, SShadowSdk.al-lsp-for-agents/bclsp_goToDefinition, SShadowSdk.al-lsp-for-agents/bclsp_hover, SShadowSdk.al-lsp-for-agents/bclsp_findReferences, SShadowSdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, SShadowSdk.al-lsp-for-agents/bclsp_incomingCalls, SShadowSdk.al-lsp-for-agents/bclsp_outgoingCalls, SShadowSdk.al-lsp-for-agents/bclsp_codeLens, SShadowSdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, SShadowSdk.al-lsp-for-agents/bclsp_documentSymbols, SShadowSdk.al-lsp-for-agents/bclsp_renameSymbol, todo]
 
 ---
-
 # AL Pull Request Preparation
 
-Your goal is to prepare a **pull request draft** for the branch `${input:Branch}` summarizing all modifications, test evidence, and validation steps — and to execute all finalization steps at the end of this file (memory.md update, documentation update).
+Your goal is to prepare a **pull request draft** for the branch `${input:Branch}` summarizing all modifications, test evidence, and validation steps. At the delivery boundary, update module documentation before creating the PR, then execute the approved ADO delivery actions and finally close the requirement in `memory.md`.
 
-## 🔒 Human Gate: Pre-PR Review
+## Pre-PR Review
 
 **Before generating PR draft document:**
 
 1. **Review code changes** - Present summary of all modifications
 2. **Security check** - Confirm no sensitive data in commits
 3. **Quality validation** - Verify tests pass and build succeeds
-4. **Human approval required** - Obtain confirmation before creating PR draft
+4. **Delivery readiness** - Confirm the requirement is accepted and no HITL issues remain open
 
 ## Process
 
@@ -70,29 +69,57 @@ Scan commit messages and PR description for:
 **Identify Reviewers:**
 If `${input:Reviewer}` is specified, include in the draft.
 
-### 3. Generate PR Draft
+### 3. Aproda: Documentation Update (D-13 / D-14)
 
-Create `/reports/pr-draft.md` with this compact structure:
+Before creating a PR, refresh the durable per-module documentation:
+
+```
+@workspace use al-doc-update
+```
+
+This updates `.github/documentation/<Module>/`:
+- `<Module>.reference.md` — technical reference (English)
+- `<Module>.Handbuch.de-CH.md` — user handbook (de-CH)
+
+Run once per affected module at the delivery boundary (all HITL issues DONE, spec frozen). Commit and push all delivery changes, including these documentation updates, before creating an ADO PR. Never commit `/reports/pr-draft.md`.
+
+### 4. Generate PR Draft
+
+Create `/reports/pr-draft.md` with the delivery preview in this compact structure:
 
 ```markdown
-## Summary
+## PR Title Proposal
+[Concise imperative title]
+
+## PR Description
+
+### Summary
 [1-2 sentences: what was implemented/fixed and why]
 
-## References
+### References
 - Req: `{req_name}` · Spec: `.github/plans/{req_name}/{req_name}.spec.md`
 - #[work-item] *(ADO) or* AB#[work-item] *(GitHub + Azure Boards)*
 
-## DB Changes
+### DB Changes
 > none
 <!-- or: TableExt 50xxx — field "XYZ" added (no upgrade codeunit required) -->
 
-## Test Result
+### Test Result
 - Deploy-Run-Verify: ✅ / ❌
 - Open HITL issues: none / [link to {req_name}-hitl-validation-issues.md]
 
-## Deployment
+### Deployment
 > no special steps
 <!-- or: list steps beyond standard AL-Go release here -->
+
+## ADO Work Item Completion Comment Proposal
+<!-- ADO-hosted repositories only; substitute <PR_ID> only after the PR exists. -->
+✅ Gelöst via PR #<PR_ID>: <Kurztitel>
+
+Lösung: <1–2 Sätze, was/wie>
+Getestet: <Deploy-Run-Verify ✅/❌ + 1 Zeile, oder Link auf hitl-validation-issues>
+Setup/Datenupgrade: keine | <1–2 Bulletpoints>
+Zu beachten: keine | <1 Zeile Caveat/Follow-up>
 ```
 
 **Rules:**
@@ -100,6 +127,7 @@ Create `/reports/pr-draft.md` with this compact structure:
 - DB Changes: only fill in if new tables, new fields, or changed keys are present.
 - Deployment: only fill in if steps beyond the standard AL-Go release are required.
 - Do NOT list AL objects — changed files in GH/ADO already show this.
+- The ADO completion-comment proposal applies only to ADO-hosted repositories. Fill `Setup/Datenupgrade` and `Zu beachten` with `keine` when no content applies.
 
 **Primary:** `/reports/pr-draft.md`
 **Format:** Compact markdown — only sections with real content
@@ -111,59 +139,32 @@ Create `/reports/pr-draft.md` with this compact structure:
 - ✅ Work item reference present (`#123` for ADO, `AB#123` for GitHub + Azure Boards)
 - ✅ DB Changes explicitly stated (or explicitly "none")
 - ✅ Deploy-Run-Verify result documented
+- ✅ PR title and, for ADO-hosted repositories, ADO completion-comment proposals included
 
-## Aproda: ADO Pull Request Creation (ADO-hosted repositories only)
+## 🔒 Aproda: ADO Delivery Gate (ADO-hosted repositories only)
 
-> Applies only when the remote origin was auto-detected as ADO-hosted (§2, `#123` pattern). For GitHub-hosted repos (with or without an `AB#123` Azure Boards link), `/reports/pr-draft.md` remains a manual-submission draft — skip this section and go straight to the Aproda sections below.
+> Applies only when the remote origin was auto-detected as ADO-hosted (§2, `#123` pattern). For GitHub-hosted repos (with or without an `AB#123` Azure Boards link), `/reports/pr-draft.md` remains a manual-submission draft — skip this section and go straight to the Completion Gate below.
 
-Load **`skill-aproda-ado`** (SRP-safe execution, see its `SKILL.md`) and run `Create-AdoPullRequest.ps1`:
+Load **`skill-aproda-ado`** (SRP-safe execution, see its `SKILL.md`). Before either ADO write, show the delivery preview from `/reports/pr-draft.md`:
 
-1. Show the user the PR title (the "Summary" first sentence), the full `/reports/pr-draft.md` content as the description, the source/target branch, and the linked work item. Get **explicit approval** to create exactly this PR.
-2. Call `Create-AdoPullRequest.ps1` with `-DescriptionFile` pointing at `/reports/pr-draft.md` (reused verbatim — no second analysis pass), `-SourceBranch ${input:Branch}`, `-TargetBranch` (ask once if not obvious from the repo default), and the linked `-WorkItemId`.
-3. On `created: true` **or** `existing-open-pull-request`, continue to the ADO Completion Comment below. On failure, stop and report — do not retry silently.
+- proposed PR title and complete PR description
+- proposed work-item completion comment, with the literal `<PR_ID>` placeholder
+- source branch, target branch, and linked work item
 
-## Aproda: ADO Completion Comment (ADO-hosted repositories only)
+Obtain **one explicit approval** authorizing exactly these two writes: create (or reuse) this PR, then post this exact completion comment with `<PR_ID>` replaced only by the returned PR ID. Any changed text, branch, or work item requires a new explicit confirmation.
 
-After the pull request exists (created or already open), render a compact completion comment from the **same facts** as `/reports/pr-draft.md` (no second analysis pass):
+1. Call `Create-AdoPullRequest.ps1` with the title proposal, `-DescriptionFile` pointing at `/reports/pr-draft.md` (the script extracts its `PR Description` section), `-SourceBranch ${input:Branch}`, `-TargetBranch` (ask once if not obvious from the repo default), and the linked `-WorkItemId`.
+2. On `created: true` **or** `existing-open-pull-request`, replace only `<PR_ID>` in the approved completion-comment proposal with the returned ID and call `Update-AdoWorkItem.ps1 -Comment`. On PR creation failure, stop and report — do not retry silently or post a comment.
+3. On completion-comment failure, stop and report. Do not move the requirement to Completed; a retry needs a fresh preview and approval.
 
-```text
-✅ Gelöst via PR #<id>: <Kurztitel>
-
-Lösung: <1–2 Sätze, was/wie>
-Getestet: <Deploy-Run-Verify ✅/❌ + 1 Zeile, oder Link auf hitl-validation-issues>
-Setup/Datenupgrade: keine | <1–2 Bulletpoints>
-Zu beachten: keine | <1 Zeile Caveat/Follow-up>
-```
-
-Rules (same principle as `pr-draft.md`: little text, high information density):
-
-- Empty lines (`Setup/Datenupgrade`, `Zu beachten`) are filled with `keine`, never omitted (the ADO discussion field is one-shot, not structured Markdown like GitHub).
-- No object list, no repetition of the PR description.
-- Show the rendered text in chat and get **explicit approval** before calling `Update-AdoWorkItem.ps1 -Comment "<text>"` for real (not just the technical `-WhatIf`/`ShouldProcess` gate).
-- Ask **separately** whether to also set `-State` (e.g. `Resolved`) — a state transition is independent of posting the comment and is usually more appropriate once the `memory.md` move below actually happens.
-
-Once the comment (and optional state transition) is confirmed and posted, delete `/reports/pr-draft.md` — it must not be committed to the repo. No `.gitignore` entry as a safety net (deliberately omitted); the explicit delete is the only measure.
-
-## Aproda: Documentation Update (D-13 / D-14)
-
-Before finalizing the PR, refresh the durable per-module documentation:
-
-```
-@workspace use al-doc-update
-```
-
-This updates `.github/documentation/<Module>/`:
-- `<Module>.reference.md` — technical reference (English)
-- `<Module>.Handbuch.de-CH.md` — user handbook (de-CH)
-
-Run once per affected module at the delivery boundary (all UAT issues DONE, spec frozen). Mandatory alongside `al-pr-prepare` (D-14).
+After the PR and comment both succeed, delete `/reports/pr-draft.md` — it must not be committed to the repo. No `.gitignore` entry as a safety net (deliberately omitted); the explicit delete is the only measure.
 
 ## 🔒 Completion Gate (before moving the req to Completed)
 
 - [ ] PR created (`Create-AdoPullRequest.ps1` → `created:true` or `existing-open-pull-request`) — ADO-hosted repos only; for GitHub-hosted repos, the PR is submitted manually from `/reports/pr-draft.md`
 - [ ] `/reports/pr-draft.md` deleted — **only if the PR was actually created** in this run (ADO-hosted repos); if PR creation failed, was never attempted, or the repo is GitHub-hosted, the file is expected to still exist and its presence is not a gate failure
-- [ ] ADO completion comment posted / state transition executed (or explicitly declined by the user) — ADO-hosted repos only
-- [ ] `al-doc-update` run for the affected module(s)
+- [ ] ADO completion comment posted — ADO-hosted repos only
+- [ ] `al-doc-update` run and its changes committed and pushed before PR creation
 - [ ] No open `TODO` issues remain in `{req_name}-hitl-validation-issues.md` (if the file exists)
 
 **🚨 HARD GATE — this is a verification step, not a checklist to narrate.** A documented
@@ -198,14 +199,16 @@ user) → proceed to the `memory.md` move below.
 
 ## Aproda: memory.md Completion Update
 
-Before finalizing the PR, update `.github/plans/memory.md`:
+Only after the Completion Gate passes, update `.github/plans/memory.md`:
 
 1. **Move the req row** from `## Active Requirements` to `## Completed Requirements`:
    - Add row: `| {req_name} | {YYYY-MM-DD} | No |`
    - Remove the row from Active Requirements table
 2. **Append Inter-Session Context** entry (date, who = al-pr-prepare, what = PR created, branch, PR number if known).
-3. **Commit this file change** — an uncommitted `memory.md` edit is equivalent to not having
-   made it; verify with `git status --short` per the Completion Gate above.
+3. **Commit and push this file change** — an uncommitted or unpushed `memory.md` edit is
+   equivalent to not having made it. After the commit, run `git status --short` and confirm
+   that `memory.md` no longer appears as modified/untracked; when an upstream branch exists,
+   verify that the delivery commit has been pushed.
 
 > This is the only step that signals delivery acceptance to all agents. Without it, the req stays in `review` forever.
 

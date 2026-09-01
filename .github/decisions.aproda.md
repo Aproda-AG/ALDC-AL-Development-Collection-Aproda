@@ -345,6 +345,34 @@ because those channels are not used by Aproda.
 
 ---
 
+### D-29 — One delivery approval covers PR creation and its matching work-item comment
+
+Creating the pull request and posting its completion comment remain two independently
+bounded Azure DevOps mutations: a PR returns its ID, and the comment necessarily refers
+to that ID. They are nevertheless one business delivery action when both texts, branches,
+and work item have already been rendered from the same reviewed facts. Requiring two
+separate user confirmations added friction without adding a meaningful decision point.
+
+`al-pr-prepare` therefore renders a delivery preview in `reports/pr-draft.md`: proposed
+PR title, PR description, and a compact work-item completion comment containing only a
+`<PR_ID>` placeholder. One explicit approval authorizes exactly the creation (or reuse) of
+that PR and posting that exact comment after replacing the placeholder with the returned
+ID. Any changed text, branch, or work item requires a new explicit confirmation. A PR
+failure prevents the comment; a comment failure prevents moving the requirement to
+Completed.
+
+Module documentation must be refreshed, committed, and pushed before this delivery gate,
+so it is included in the branch under review. `memory.md` remains the final local lifecycle
+transition after the delivery gate succeeds and is committed and pushed separately. The
+general `al-memory.create` workflow is not a substitute for this controlled transition.
+
+The delivery preview has more content than the Azure DevOps PR description itself.
+`Create-AdoPullRequest.ps1` extracts the `PR Description` section when present and passes
+only that section to Azure DevOps; legacy description files are retained unchanged. This is
+an in-place flow change under D-2, extending the documentation delivery rule in D-14.
+
+---
+
 ## Stacking vs. changing — practical guide
 
 | Intent | Mechanism | Touches Upstream? |
@@ -404,6 +432,7 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `tools/aproda-vscode-extension/package.json` | New walkthrough step `azureCliSetup` between `installBcquality` and `readOnboarding` | D-21 | 2026-08-31 |
 | `prompts/al-pr-prepare.prompt.md` | Completion Gate upgraded from a narrated checklist to a self-verified HARD GATE (`git status --short` + file-existence checks, ✅/❌ report required); `memory.md` completion step requires a commit, not just an edit; `pr-draft.md` deletion check made conditional on actual PR creation (not a gate failure if creation failed or repo is GitHub-hosted); added a real completeness check against `{req_name}-hitl-validation-issues.md`'s Status-Board before allowing the move | D-2 / D-26 | 2026-08-31 |
 | `copilot-instructions.md` | Added a Core Principles line: AL/ADO HITL gates (`al-conductor`/`al-developer` delivery-boundary updates, `skill-aproda-ado` write approvals + AI disclaimer) apply even without an explicit `@`-agent | D-2 | 2026-08-31 |
+| `prompts/al-pr-prepare.prompt.md`, `skills/skill-aproda-ado/scripts/Create-AdoPullRequest.ps1` | Reordered module documentation before PR delivery; added title and ADO completion-comment proposals to `pr-draft.md`; one bounded approval now authorizes PR creation plus the matching comment, while state transitions remain separate. The script extracts only `PR Description` from the preview before creating the PR. | D-2 / D-14 / D-29 | 2026-09-01 |
 
 ---
 
