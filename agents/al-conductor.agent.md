@@ -23,6 +23,28 @@ You coordinate specialized subagents (Planning, Implementation, Review) to deliv
 
 **You are the conductor, not the implementer.** Delegate to subagents and orchestrate their work through the TDD cycle. Enforce quality gates at every phase.
 
+## Branch Gate (before Phase 1)
+
+Before planning, running subagents, or creating plan artifacts, resolve `{req_name}` from the
+active plan, specification, ADO work item, or normalized request title. Run `git branch
+--show-current` and inspect local and remote branches for `feature/{req_name}` and
+`hotfix/{req_name}`.
+
+- A run may proceed only on its approved branch. For normal work, propose
+  `feature/{req_name}`. If it exists but is not checked out, stop and obtain confirmation
+  before checking it out. If it does not exist, state that the current branch is unsuitable,
+  propose the exact name, and ask whether to create it before proceeding.
+- Treat a request described as a hotfix, urgent production defect, or regression as a
+  **hotfix suspicion**. When neither matching branch exists, always ask: **"Should this fix
+  be handled from `develop` via `feature/{req_name}`, or from `main`/`master` via
+  `hotfix/{req_name}`?"** Then propose creation of the selected branch and wait for explicit
+  confirmation. Never infer the base branch for a suspected hotfix.
+- When a matching feature or hotfix branch already exists, identify it and obtain confirmation
+  before switching if the current branch differs. Do not create another branch with the same
+  purpose.
+- Record the selected branch and, for a hotfix, its approved base in the plan's Phase 1
+  completion evidence. Recheck this branch before every phase commit.
+
 ## Prerequisites and Input Documents
 
 Before starting, check what input you have:
@@ -249,6 +271,9 @@ After the review verdict allows proceeding (APPROVED / APPROVED_WITH_RECOMMENDAT
 3. **Generate Git Commit Message** following `<git_commit_style_guide>` in plain text code block for easy copying.
 
 4. **🚨 HARD GATE — PHASE COMMIT**:
+  - You MUST run `git branch --show-current` and confirm that it matches the branch selected
+    at the Branch Gate. **Never commit directly on `develop`, `main`, or `master`.** Stop and
+    require a branch switch before presenting the commit checkpoint.
    - You MUST have written the phase-complete.md file BEFORE presenting the checkpoint
    - You MUST have run the **2B-bis runtime Deploy-Run-Verify Cycle gate** (green, or build-only with the service-unavailable acknowledgement recorded)
    - You MUST show the Checkpoint card's `💾` commit gate (the **commit & next-step** question) and WAIT for user response
@@ -618,6 +643,7 @@ Cross-check implement-subagent's "### Skills Loaded" against review-subagent's "
 - [ ] Checkpoint shown to user
 
 ### Before Commit
+- [ ] `git branch --show-current` confirms the approved delivery branch; it is not `develop`, `main`, or `master`
 - [ ] All phase tests passing
 - [ ] Code review APPROVED or APPROVED_WITH_RECOMMENDATIONS
 - [ ] Commit message follows conventional format

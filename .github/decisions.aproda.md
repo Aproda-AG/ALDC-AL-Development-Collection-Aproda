@@ -373,6 +373,27 @@ an in-place flow change under D-2, extending the documentation delivery rule in 
 
 ---
 
+### D-30 — Conductor requires an approved delivery branch and never commits protected branches
+
+Multi-phase work needs a named branch before it creates plans, invokes implementation
+subagents, or produces phase commits. The Conductor derives `feature/{req_name}` from the
+active plan or its authoritative input and verifies the current branch at run start. A missing
+target branch is never created implicitly: the user first confirms its exact name and creation.
+An existing target is likewise not checked out implicitly, because switching can disrupt an
+in-progress worktree.
+
+Hotfix suspicion is a genuine release-routing decision, not a naming heuristic. When neither
+`feature/{req_name}` nor `hotfix/{req_name}` exists, the Conductor asks whether the fix starts
+from `develop` as a feature branch or from `main`/`master` as a hotfix branch, then requires
+explicit confirmation before creating the selected branch. It does not guess the base.
+
+The Conductor verifies the approved branch again before every phase commit and stops on
+`develop`, `main`, or `master`. These branches remain integration/release bases; commits must
+be made through a feature or hotfix branch and their review flow. This is an in-place behavior
+change under D-2.
+
+---
+
 ## Stacking vs. changing — practical guide
 
 | Intent | Mechanism | Touches Upstream? |
@@ -432,7 +453,8 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `tools/aproda-vscode-extension/package.json` | New walkthrough step `azureCliSetup` between `installBcquality` and `readOnboarding` | D-21 | 2026-08-31 |
 | `prompts/al-pr-prepare.prompt.md` | Completion Gate upgraded from a narrated checklist to a self-verified HARD GATE (`git status --short` + file-existence checks, ✅/❌ report required); `memory.md` completion step requires a commit, not just an edit; `pr-draft.md` deletion check made conditional on actual PR creation (not a gate failure if creation failed or repo is GitHub-hosted); added a real completeness check against `{req_name}-hitl-validation-issues.md`'s Status-Board before allowing the move | D-2 / D-26 | 2026-08-31 |
 | `copilot-instructions.md` | Added a Core Principles line: AL/ADO HITL gates (`al-conductor`/`al-developer` delivery-boundary updates, `skill-aproda-ado` write approvals + AI disclaimer) apply even without an explicit `@`-agent | D-2 | 2026-08-31 |
-| `prompts/al-pr-prepare.prompt.md`, `skills/skill-aproda-ado/scripts/Create-AdoPullRequest.ps1` | Reordered module documentation before PR delivery; added title and ADO completion-comment proposals to `pr-draft.md`; one bounded approval now authorizes PR creation plus the matching comment, while state transitions remain separate. The script extracts only `PR Description` from the preview before creating the PR. | D-2 / D-14 / D-29 | 2026-09-01 |
+| `prompts/al-pr-prepare.prompt.md`, `skills/skill-aproda-ado/scripts/Create-AdoPullRequest.ps1` | Reordered module documentation before PR delivery; added title and ADO completion-comment proposals to `pr-draft.md`; one bounded approval now authorizes PR creation plus the matching comment. Work-item state changes are outside `al-pr-prepare`. The script extracts only `PR Description` from the preview before creating the PR. | D-2 / D-14 / D-29 | 2026-09-01 |
+| `agents/al-conductor.agent.md` | Added the run-start Branch Gate, mandatory hotfix routing decision when no matching branch exists, and protected-branch blocks at both phase-commit checks. | D-2 / D-30 | 2026-09-01 |
 
 ---
 
