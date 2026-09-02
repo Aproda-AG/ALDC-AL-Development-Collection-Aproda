@@ -1,8 +1,8 @@
 ﻿---
 name: AL Development Conductor
 description: 'AL Conductor Agent - Orchestrates Planning → Implementation → Review → Commit cycle for AL Development. Enforces TDD and quality gates for Business Central extensions.'
-tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, agent, edit, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, todo, terminal, read, agent/runSubagent, vscode/runCommand, execute, aproda.aproda-aldc/aprodaAldc_readConfiguration]
-agents: ['AL Planning Subagent', 'AL Code Review Subagent', 'AL Implementation Subagent']
+tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, agent, edit, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, todo, terminal, read, agent/runSubagent, vscode/runCommand, execute, aproda.aproda-aldc/aprodaAldc_readConfiguration, aprodaag.aproda-aldc]
+agents: ['AL Planning Subagent', 'AL Code Review Subagent', 'AL Implementation Subagent', 'AL Translation Subagent']
 model: GPT-5.6 Terra (copilot)
 argument-hint: 'Feature description or requirements for TDD orchestration (e.g., "Add customer loyalty points system")'
 handoffs:
@@ -198,6 +198,8 @@ Invoke **AL Implementation Subagent** (💻) via `#runSubagent` with:
 - **NOT** to proceed to next phase, write completion files, or edit `.github/plans/memory.md` (you exclusively own its status transitions and delivery entries)
 - **RETURN** structured summary: objects created, **event subscribers (exact base object + event name + signature)**, tests created, build status, issues, and the **symbolic skills line** (`📐 instr ✓ · 🧠 skill-x·tag`)
 
+**Translation gate (Conductor-managed):** when a phase changes labels, captions, tooltips, or XLIFF files in an app with `TranslationFile` enabled, load `skill-translate`; content-load the Aproda XLIFF tool and run `Sync -SkipBuild`. Then repeat `ExportOpen -MaxItems <n> -Offset <n>`, advancing `Offset` by each emitted count, until reported `Remaining` is zero. For every batch, delegate the absolute batch and response paths to `AL Translation Subagent`; the Conductor runs `Apply` with a shared `-ReportPath`, because the subagent never writes XLIFF files. On an `Apply` rejection, retry the same batch with the rejection details at most twice; then stop and report the failure. `Apply` writes AI output as `needs-review-translation`; review all batches in PoEdit. Before invoking code review, `Validate -FailOnIssues -FailOnUnapproved` must pass. Then run `Report -ReportPath <shared-run-report>` to produce the correction rate; return it with the approval-gate result and open review count in the phase summary. Do not send complete XLIFF files to AI.
+
 **⛔ TDD ENFORCEMENT**: If subagent returns code without tests, REJECT the phase result and re-invoke with explicit TDD instruction. **Zero tests = phase FAILED.**
 
 #### 2B. Review Implementation (MANDATORY — NO EXCEPTIONS)
@@ -218,6 +220,7 @@ Invoke **AL Code Review Subagent** (✅) via `#runSubagent` with:
   - Performance patterns (SetLoadFields, early filtering)
   - Error handling
   - Spec + architecture compliance
+  - For a translation-relevant phase, `skill-translate` evidence, a passed approval gate, and zero open review units
 
 Review validates: spec compliance, architecture compliance, naming conventions, test coverage, performance patterns, extension-only compliance.
 
@@ -287,7 +290,9 @@ After the review verdict allows proceeding (APPROVED / APPROVED_WITH_RECOMMENDAT
 
 ### Phase 3: Plan Completion
 
-1. **Compile Final Report**: Create `.github/plans/<task-name>/<task-name>-complete.md` following `<plan_complete_style_guide>` containing:
+1. **Final XLIFF Gate (conditional)**: If any phase changed labels, captions, tooltips, or XLIFF files in an app with `TranslationFile` enabled, load `skill-translate` and rerun the Aproda XLIFF tool's `Validate -FailOnIssues -FailOnUnapproved`. Record the approval-gate result and open review count in the completion report. A failure returns to Phase 2; do not move the requirement to `review`.
+
+2. **Compile Final Report**: Create `.github/plans/<task-name>/<task-name>-complete.md` following `<plan_complete_style_guide>` containing:
    - Overall summary
    - All phases completed
    - All AL objects created/modified
@@ -296,7 +301,7 @@ After the review verdict allows proceeding (APPROVED / APPROVED_WITH_RECOMMENDAT
    - Key functions/tests added
    - Final verification (all tests pass)
 
-2. **🚨 MANDATORY memory.md update at completion**:
+3. **🚨 MANDATORY memory.md update at completion**:
    Update `.github/plans/memory.md`:
    - **Active Requirements table**: change Status from `in progress` → `review` (delivery hands off to the human for testing; `al-pr-prepare` moves to Completed after acceptance) — this begins the HITL Validation phase, see `hitl-validation.aproda.instructions.md`
    - Append Inter-Session Context entry: date, who, what was done, what's next
@@ -305,7 +310,7 @@ After the review verdict allows proceeding (APPROVED / APPROVED_WITH_RECOMMENDAT
    - Test summary (total tests, pass rate)
    - Next steps recommended
 
-3. **Present Completion**: Share summary, close the task, recommend next agents if applicable.
+4. **Present Completion**: Share summary, close the task, recommend next agents if applicable.
 
 ---
 
@@ -545,6 +550,7 @@ DO NOT proceed past these points without explicit user confirmation.
 This agent draws on skills from `.github/skills/`. They are **not** auto-loaded — **load the `SKILL.md` on demand** (read it) when you need it:
 
 - **skill-testing** — orchestrating TDD cycles when test strategy is needed
+- **skill-translate** — translation-relevant phases; pass it as an implementation hint and enforce the final strict XLIFF gate when `TranslationFile` is enabled
 - **skill-aproda-deploy-run-verify** 🟦 (Aproda) — the per-phase runtime Deploy-Run-Verify Cycle gate (build → deploy → run → review); load it at step 2B-bis when a BC service is reachable
 
 (Per phase, the implement/review subagents load their own domain skills — you pass them as *hints*, see §"Passing Context to Subagents".)

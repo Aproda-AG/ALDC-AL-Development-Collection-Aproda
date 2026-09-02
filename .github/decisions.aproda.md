@@ -394,6 +394,56 @@ change under D-2.
 
 ---
 
+### D-31 — Lean, SRP-safe XLIFF build and synchronization tool ships through the Aproda overlay
+
+Generated Business Central XLIFF files must be refreshed after an AL build, but the installed
+VS Code XLIFF Sync command is interactive and cannot be invoked deterministically by an agent.
+The upstream `ps-xliff-sync` module provides the required synchronization and validation logic,
+but its module loader uses path-based dot-sourcing, which Software Restriction Policy blocks.
+
+The layer therefore vendors only the three runtime source files needed for this path:
+`XlfDocument.ps1`, `Sync-XliffTranslations.ps1`, and `Test-XliffTranslations.ps1`. Tests,
+module manifests, loaders, and unused commands are excluded. The MIT license and a short
+`UPSTREAM.md` pin the source to `rvanbekkum/ps-xliff-sync` commit
+`3f9413d9642360e58312847e68c7cb45906d8014` (version `1.10.0.0`).
+
+`Invoke-AprodaBuildXliffSync.ps1` content-loads those files, neutralizing module-export calls.
+Its explicit actions are `Sync` (build unless skipped, discover `*.g.xlf`, and synchronize to
+`de-CH` by default), `ExportOpen` (write only missing units to a compact AI batch), `Apply`
+(validate an AI response completely before modifying any XLIFF file), and `Validate` (check
+missing translations and technical consistency). Batches contain stable unit keys, source hashes,
+context, placeholders, and any discoverable XLIFF `maxwidth`; AI returns only key/target pairs.
+The batch lists target-file paths once rather than repeating them per unit. `Apply` rejects an
+unknown, duplicate, stale, empty, placeholder-invalid, or overlength response before writes.
+`-SkipBuild`, `-Language`, `-AppPath`, and `-FailOnIssues` expose the small set of operational
+controls without duplicating build or translation logic.
+
+The non-conventional `tools/aproda-ps-xliffsync/**` path is explicitly added to the D-18
+allowlist. It is therefore overlaid in both directions like the other Aproda layer files, while
+Foundation distribution remains deliberately untouched.
+
+---
+
+### D-32 — Stage 0 translation workflow delegates model work and gates human approval
+
+Stage 0 extends D-31 with a strict approval state model: only XLIFF state `translated` is
+approved; all other and unknown states are unapproved. `Apply` writes all machine-produced
+targets as `needs-review-translation`. A reviewer processes that queue in PoEdit, where
+confirmation writes `translated` and unfinished work remains `needs-l10n`.
+
+Model work is delegated to `AL Translation Subagent`. Its callers supply only the absolute
+`batch.ai.json` path and response path; it writes the response and never reads a manifest or
+writes an XLIFF file. The caller applies the response, retries a rejected batch at most twice,
+and stops after the second retry. `ExportOpen` separates the model payload in `batch.ai.json`
+from the tool-internal `batch.manifest.json`; response correlation uses `<ordinal>-<hash3>` keys.
+
+Delivery is blocked by `Validate -FailOnUnapproved` until the PoEdit review leaves no open
+units. `al-pr-prepare` is evidence-only: it reports the recorded approval-gate result and open
+review count, and never runs the XLIFF tool. This changes existing framework behaviour in place
+under D-2; the four affected files are registered below for upstream conflict review.
+
+---
+
 ## Stacking vs. changing — practical guide
 
 | Intent | Mechanism | Touches Upstream? |
@@ -455,6 +505,7 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `copilot-instructions.md` | Added a Core Principles line: AL/ADO HITL gates (`al-conductor`/`al-developer` delivery-boundary updates, `skill-aproda-ado` write approvals + AI disclaimer) apply even without an explicit `@`-agent | D-2 | 2026-08-31 |
 | `prompts/al-pr-prepare.prompt.md`, `skills/skill-aproda-ado/scripts/Create-AdoPullRequest.ps1` | Reordered module documentation before PR delivery; added title and ADO completion-comment proposals to `pr-draft.md`; one bounded approval now authorizes PR creation plus the matching comment. Work-item state changes are outside `al-pr-prepare`. The script extracts only `PR Description` from the preview before creating the PR. | D-2 / D-14 / D-29 | 2026-09-01 |
 | `agents/al-conductor.agent.md` | Added the run-start Branch Gate, mandatory hotfix routing decision when no matching branch exists, and protected-branch blocks at both phase-commit checks. | D-2 / D-30 | 2026-09-01 |
+| `skills/skill-translate/SKILL.md`, `agents/al-developer.agent.md`, `agents/al-conductor.agent.md`, `prompts/al-pr-prepare.prompt.md` | Replaced the inline single-batch translation flow with the delegated two-artefact Stage 0 contract, PoEdit review, approval gate, and evidence-only PR reporting. | D-2 / D-7 / D-32 | 2026-09-01 |
 
 ---
 
@@ -478,4 +529,4 @@ The few places where we touched Upstream files in-place. This is the list the up
 | 2026-08-27 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.12` | Published the current approved Aproda toolkit state as the next CI-gated layer release revision. |
 | 2026-08-31 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.13` | ADO integration hardening (D-26) + `CHANGELOG.aproda.md` introduced (D-27); see CHANGELOG.aproda.md for the prose account. |
 | 2026-08-31 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.14` | `tools/aproda-sync/templates/gitignore-block.txt`: added `.github/audits/` and `.github/reports/` to the managed `.gitignore` block. |
-| 2026-09-01 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.16` | BCQuality clone path casing fixed: `bcquality-aproda`/`BCquality-Aproda` → `BCQuality-Aproda` in the workspace seed template and `Initialize-AprodaProject.ps1` fallback writer; workspace-folder display name aligned to `BCQuality (Aproda ALDC)`; stale dead `.gitignore` entry `Base/tools/bcquality-aproda/` removed |
+| 2026-08-31 | `a900263f51e416762cc7f85575deb9b30cd5b1e3` | `1.2.0_aproda.15` | `memory.md` ownership gate and HITL status contract (D-28). |
