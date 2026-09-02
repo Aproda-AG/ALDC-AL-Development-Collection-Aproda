@@ -18,6 +18,13 @@ codeunit 50900 "Translation Test Mgt"
         exit(DefaultResponsibleEmployeeTxt);
     end;
 
+    procedure ShowCustomerNotFoundAgain(CustomerNo: Code[20])
+    begin
+        // second wave: reuses the exact source + context class (Codeunit|NamedType|Label)
+        // of CustomerNotFoundErr below, which is approved by the time stage 1 runs
+        Message(CustomerNotFoundAltErr, CustomerNo);
+    end;
+
     var
         SingleParameterMsg: Label 'Translation test for item %1.', Comment = '%1 = Item No.';
         FourParameterMsg: Label 'Item %1 (%2), responsible: %3, posting date: %4.', Comment = '%1 = Item No.; %2 = Description; %3 = Responsible Employee; %4 = Posting Date';
@@ -53,4 +60,10 @@ codeunit 50900 "Translation Test Mgt"
         // term pair (Customer/Vendor) and a fuzzy-tier-3 near-duplicate at once
         CustomerNotFoundErr: Label 'Customer %1 not found.', Comment = '%1 = Customer No.';
         VendorNotFoundErr: Label 'Vendor %1 not found.', Comment = '%1 = Vendor No.';
+        // second wave: reuses the exact source + context class (Codeunit|NamedType|Label)
+        // of ReleaseStatusTxt above for a genuine tier-2 exact-reuse candidate
+        ReleaseStatusAltTxt: Label 'Release';
+        // second wave: reuses the exact source + context class of CustomerNotFoundErr
+        // above, invoked from ShowCustomerNotFoundAgain
+        CustomerNotFoundAltErr: Label 'Customer %1 not found.', Comment = '%1 = Customer No.';
 }

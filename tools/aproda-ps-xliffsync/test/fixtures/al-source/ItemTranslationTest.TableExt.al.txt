@@ -55,5 +55,24 @@ tableextension 50900 "Item Translation Test" extends Item
             // caption) - exercises "longer n-gram wins, drop the shorter overlap"
             Caption = 'Posting Description';
         }
+        field(50908; "Second Release"; Boolean)
+        {
+            // second wave: reuses the exact source + context class (Table|Field|Caption)
+            // of the existing "Release" field above, which is approved by the time stage 1
+            // runs - a genuine tier-2 exact-reuse candidate, not a first occurrence
+            Caption = 'Release';
+        }
+        field(50909; "Alt Posting Date"; Date)
+        {
+            // second wave: reuses the exact source + context class of the existing
+            // "Posting Date" field above for the same tier-2 exact-reuse purpose
+            Caption = 'Posting Date';
+        }
+        field(50910; "Third Description"; Text[100])
+        {
+            // second wave: reuses the exact source + context class of "Second
+            // Description" above (already approved from an earlier round)
+            Caption = 'Description';
+        }
     }
 }

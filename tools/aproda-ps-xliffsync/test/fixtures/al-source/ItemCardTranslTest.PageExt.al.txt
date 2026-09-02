@@ -57,6 +57,21 @@ pageextension 50901 "Item Card Transl. Test" extends "Item Card"
                     Rec."Test Status" := Rec."Test Status"::Released;
                 end;
             }
+            action(SecondReleaseAction)
+            {
+                // second wave: reuses the exact source + context class
+                // (Page|Action|Caption) of ReleaseAction above for a genuine tier-2
+                // exact-reuse candidate; a distinct ToolTip keeps this dimension unmatched
+                ApplicationArea = All;
+                Caption = 'Release';
+                Image = ReleaseDoc;
+                ToolTip = 'Releases the second batch of items so it can no longer be edited.';
+
+                trigger OnAction()
+                begin
+                    Rec."Test Status" := Rec."Test Status"::Released;
+                end;
+            }
         }
     }
 }
