@@ -2,6 +2,12 @@
 
 > Curated release notes for the Aproda layer (`aldc.yaml` → `aproda.layerVersion`). The technical, per-commit record stays in the [Version / pin changelog](decisions.aproda.md#version--pin-changelog); this file is the human-readable summary maintained alongside each release, mirroring the style of [`tools/aproda-vscode-extension/CHANGELOG.md`](../tools/aproda-vscode-extension/CHANGELOG.md). See `skill-aproda-aldc-release` for when this file is updated.
 
+## 1.2.0_aproda.17
+
+- Ships the tiered AI translation workflow for XLIFF (E-005): Stage 0 (delegated AI batch translation with a PoEdit approval gate) and Stage 1 (deterministic invariant/project-memory resolution) are implemented and validated against a real BC app.
+- Adds `tools/aproda-ps-xliffsync/` (D-31), wired into `skill-translate`'s Sync → Resolve → Export/Apply → Review → Validate workflow (D-32); documented in `readme.aproda.md` and `onboarding.aproda.md`.
+- creates extension-backlog plan folders out of `.github/plans/` (reserved for the ALDC tool itself) into the new `_A-ALDC-Plans/{id}-{req_name}/` root folder, excluded from `aproda-sync` via `neverTouch`.
+
 ## 1.2.0_aproda.16
 
 - Fixes BCQuality clone path casing: the workspace seed template and `Initialize-AprodaProject.ps1`'s fallback workspace writer now consistently use `../BCQuality-Aproda` (previously `bcquality-aproda` / `BCquality-Aproda`, mismatched casing across files).

@@ -1,6 +1,6 @@
 ﻿# Aproda ALDC Layer — README
 
-> **Version:** `1.2.0_aproda.15` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) &nbsp;·&nbsp; **Release:** CI-gated — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17, D-25).
+> **Version:** `1.2.0_aproda.17` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) &nbsp;·&nbsp; **Release:** CI-gated — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17, D-25).
 > Aproda's customization layer on top of **ALDC** (AL Development Collection).
 > Fork: <https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda>
 > Upstream: ALDC Core (tracked via `upstream` remote).
