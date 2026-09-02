@@ -357,6 +357,10 @@ function Invoke-AprodaXliffValidation {
 
     $statistics = Get-AprodaTranslationStatistics -TargetFiles $TargetFiles
     Write-AprodaTranslationStatistics -Statistics $statistics
+    # Orthography/placeholder issues apply regardless of approval state; surface them even without -Strict.
+    foreach ($issue in $issues) {
+        Write-Warning $issue
+    }
     if ($issues.Count -gt 0 -and $Strict) {
         throw "XLIFF validation found $($issues.Count) issue(s)."
     }
