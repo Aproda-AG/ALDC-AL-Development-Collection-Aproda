@@ -368,15 +368,15 @@ Review needs no custom artefact. PoEdit is already the manual translation tool, 
 - Reads as *Needs Work*: `needs-adaptation`, `needs-l10n` unconditionally; `new`, `needs-translation`, `needs-review-translation`, `needs-review-l10n` when a target text is present.
 - Writes for XLIFF 1.2 exactly three values: `translated` (confirmed), `needs-l10n` (still needs work), `needs-translation` (empty). **It never writes `final` or `signed-off`**, so C-11 cannot be triggered from the review side.
 - Does **not** map `needs-review-adaptation` to Needs Work — we therefore never write that state.
-- Removes `state-qualifier` on save (harmless here).
-- Parses `maxwidth` / `minwidth` with `size-unit="char"`, which BC emits — the reviewer sees the length limit directly.
+- Keeps `state-qualifier` on units the reviewer does not touch (measured; the source drops it only where it rewrites the target).
+- Does **not** surface `maxwidth` to the reviewer (measured on 3.9.1), even though BC emits it with `size-unit="char"`. The length limit is therefore enforced by tooling only — the batch carries `maxwidth`, `Apply` rejects overlength targets and `Validate` reports them. A reviewer typing an overlong text is caught at `Apply`/`Validate`, not in PoEdit.
 - Surfaces the `Developer` and `Xliff Generator` notes as comments — the reviewer gets the BC context for free.
 
 **Workflow:** open the target `.xlf` in PoEdit → filter to Needs Work → confirm or correct → save. Confirmation sets `translated`, which is precisely the approval predicate the gate and the memory read.
 
 This removes the review worksheet, the `Promote` round-trip and the markdown parser from the design entirely.
 
-**Empirically verify before adopting as the standard workflow:** PoEdit saves with pugixml `format_raw` and inserts whitespace nodes to indent new `<target>` elements, which is the round-trip-preserving approach and should produce minimal diffs. Confirm this once against a real BC XLF file.
+**Empirically verified (PoEdit 3.9.1, BC-shaped XLF, 2026-09-02):** opening the file, confirming one unit and saving produced exactly one semantic change — that unit's `state` from `needs-review-translation` to `translated`. All six other units were byte-identical in content, including placeholders, Swiss orthography, `maxwidth`, `size-unit`, `xml:space`, the namespace declarations and both note kinds. The only further difference was serialization of empty elements (`<note …></note>` written as `<note …/>`), which is semantically identical and does not grow the diff beyond the affected lines. The Needs-Work queue contained exactly the five expected units: the four `needs-review-translation` entries plus the `needs-l10n` entry, while the empty `needs-translation` unit counted as untranslated rather than Needs Work — confirming that PoEdit treats that state as fuzzy only when a target text is present.
 
 ### 4.11 Promotion to shared knowledge — **decided**
 
@@ -504,7 +504,8 @@ Nothing blocks implementation. Stage 0 can start.
 |---|---|
 | Vendor maps only three states; unknown → `MissingTranslation` | `vendor/XliffSync/Model/XlfDocument.ps1` |
 | Sync preserves foreign states; Test decides "missing" on text, not state | same file, merge and `HasMissingTranslation` paths |
-| PoEdit Needs-Work read set; writes only `translated` / `needs-l10n` / `needs-translation`; ignores `needs-review-adaptation`; parses `maxwidth` with `size-unit="char"` | `vslavik/poedit`, `src/catalog_xliff.cpp` |
+| PoEdit Needs-Work read set; writes only `translated` / `needs-l10n` / `needs-translation`; ignores `needs-review-adaptation` | `vslavik/poedit`, `src/catalog_xliff.cpp` |
+| Round trip changes only the confirmed unit; `maxwidth` is not shown to the reviewer; `state-qualifier` survives on untouched units | Measured against a BC-shaped XLF, PoEdit 3.9.1, 2026-09-02 |
 | Fuzzy in-context examples and glossary terms improve quality and terminology adherence | Moslem et al., EAMT 2023 (arXiv:2301.13294) |
 
 ### Next step
