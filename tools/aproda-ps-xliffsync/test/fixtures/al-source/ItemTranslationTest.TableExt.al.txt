@@ -1,0 +1,30 @@
+namespace Aproda.Base;
+
+using Microsoft.Inventory.Item;
+
+tableextension 50900 "Item Translation Test" extends Item
+{
+    fields
+    {
+        field(50900; "Region Responsible"; Text[100])
+        {
+            Caption = 'Region Responsible';
+        }
+        field(50901; "Translation Remark"; Text[250])
+        {
+            Caption = 'Translation Remark';
+        }
+        field(50902; "Test Status"; Option)
+        {
+            Caption = 'Test Status';
+            OptionMembers = " ",Open,Released,Blocked;
+            // comma count must be preserved exactly
+            OptionCaption = ' ,Open,Released,Blocked';
+        }
+        field(50903; "Second Description"; Text[100])
+        {
+            // deliberately identical to an existing caption: exercises exact reuse
+            Caption = 'Description';
+        }
+    }
+}

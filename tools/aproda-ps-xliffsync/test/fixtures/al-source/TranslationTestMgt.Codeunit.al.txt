@@ -1,0 +1,38 @@
+namespace Aproda.Base;
+
+codeunit 50900 "Translation Test Mgt"
+{
+    procedure ShowSingleParameterMessage(ItemNo: Code[20])
+    begin
+        Message(SingleParameterMsg, ItemNo);
+    end;
+
+    procedure ShowFourParameterMessage(ItemNo: Code[20]; Description: Text[100]; ResponsibleEmployee: Text[100]; PostingDate: Date)
+    begin
+        Message(FourParameterMsg, ItemNo, Description, ResponsibleEmployee, PostingDate);
+    end;
+
+    procedure GetDefaultResponsibleEmployee(): Text[100]
+    begin
+        // literal name incl. sharp-S ("ß") for translation/encoding testing
+        exit(DefaultResponsibleEmployeeTxt);
+    end;
+
+    var
+        SingleParameterMsg: Label 'Translation test for item %1.', Comment = '%1 = Item No.';
+        FourParameterMsg: Label 'Item %1 (%2), responsible: %3, posting date: %4.', Comment = '%1 = Item No.; %2 = Description; %3 = Responsible Employee; %4 = Posting Date';
+        DefaultResponsibleEmployeeTxt: Label 'Hans Maßrichter';
+        // must NOT appear in the generated XLIFF
+        TechnicalKeyTok: Label 'ItemNo=%1;Qty=%2', Locked = true;
+        // XML-significant characters must survive escaping and the round trip
+        SpecialCharsQst: Label 'Save & close "%1" <draft>?', Comment = '%1 = Document No.';
+        // classic dialog placeholder style
+        ProgressMsg: Label 'Processing item    #1##########';
+        // no letters at all: nothing to translate, target must equal source
+        RatioTok: Label '%1 / %2', Comment = '%1 = Numerator; %2 = Denominator';
+        // same domain term in two labels: terminology must stay consistent
+        DeliveryNoteCreatedMsg: Label 'The delivery note for %1 was created.', Comment = '%1 = Customer Name';
+        DeliveryNotePrintErr: Label 'The delivery note could not be printed.';
+        // length-constrained caption
+        ShortQuantityTxt: Label 'Qty.', MaxLength = 10;
+}

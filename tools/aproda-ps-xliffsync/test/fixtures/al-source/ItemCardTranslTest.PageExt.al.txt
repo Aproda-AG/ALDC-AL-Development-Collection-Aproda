@@ -1,0 +1,47 @@
+namespace Aproda.Base;
+
+using Microsoft.Inventory.Item;
+
+pageextension 50901 "Item Card Transl. Test" extends "Item Card"
+{
+    layout
+    {
+        addlast(Item)
+        {
+            field("Region Responsible"; Rec."Region Responsible")
+            {
+                ApplicationArea = All;
+                Caption = 'Region Responsible';
+                ToolTip = 'Specifies the employee responsible for this item, e.g. Hans Maßrichter.';
+            }
+            field("Translation Remark"; Rec."Translation Remark")
+            {
+                ApplicationArea = All;
+                Caption = 'Translation Remark';
+                ToolTip = 'Specifies a free-text remark used for translation testing.';
+            }
+        }
+    }
+
+    actions
+    {
+        addlast(processing)
+        {
+            action(TranslationTestAction)
+            {
+                ApplicationArea = All;
+                Caption = 'Run Translation Test';
+                Image = TestReport;
+                ToolTip = 'Runs the translation test messages for this item.';
+
+                trigger OnAction()
+                var
+                    TranslationTestMgt: Codeunit "Translation Test Mgt";
+                begin
+                    TranslationTestMgt.ShowSingleParameterMessage(Rec."No.");
+                    TranslationTestMgt.ShowFourParameterMessage(Rec."No.", Rec.Description, Rec."Region Responsible", WorkDate());
+                end;
+            }
+        }
+    }
+}
