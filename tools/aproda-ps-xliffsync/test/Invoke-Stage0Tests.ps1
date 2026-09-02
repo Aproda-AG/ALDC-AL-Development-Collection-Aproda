@@ -302,6 +302,11 @@ try {
         $savedBytes = [System.IO.File]::ReadAllBytes($path)
         Assert-Stage0 (-not ($savedBytes.Length -ge 3 -and $savedBytes[0] -eq 0xEF -and $savedBytes[1] -eq 0xBB -and $savedBytes[2] -eq 0xBF)) 'A byte order mark was written; Business Central emits none, so the first line would differ on every run.'
     }
+    Invoke-Stage0Case 'T29' {
+        $project = New-Stage0Project; $export = Export-Stage0Batch $project
+        $captionItem = @($export.Batch.items | Where-Object { $_.s -eq 'Customer Name' })[0]
+        Assert-Stage0 ($null -ne $captionItem -and $captionItem.c -eq 'Table Customer|Field|Caption') "ExportOpen did not pass through the Xliff Generator note; got '$($captionItem.c)'. Every direct LoadFromPath call must set developerNoteDesignation/xliffGeneratorNoteDesignation via Get-AprodaXlfDocument, or note lookups silently return empty."
+    }
 }
 finally {
     Remove-Item -LiteralPath $workRoot -Recurse -Force -ErrorAction SilentlyContinue

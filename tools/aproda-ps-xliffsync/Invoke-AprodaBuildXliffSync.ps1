@@ -101,6 +101,21 @@ function Get-AprodaTargetXliffPath {
     return Join-Path $SourceFile.DirectoryName "$baseName.$TargetLanguage.xlf"
 }
 
+function Get-AprodaXlfDocument {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    # LoadFromPath alone leaves note-designation properties unset (null), so every note lookup
+    # (Xliff Generator, Developer) silently returns empty - Sync/Test-XliffTranslations set these
+    # themselves; every other call site must do the same explicitly.
+    [XlfDocument]$document = [XlfDocument]::LoadFromPath($Path)
+    $document.developerNoteDesignation = 'Developer'
+    $document.xliffGeneratorNoteDesignation = 'Xliff Generator'
+    return $document
+}
+
 function Get-AprodaSourceHash {
     param(
         [Parameter(Mandatory)]
@@ -289,7 +304,7 @@ function Get-AprodaTranslationStatistics {
     $needsReview = 0
     $approved = 0
     foreach ($targetFile in $TargetFiles) {
-        [XlfDocument]$document = [XlfDocument]::LoadFromPath($targetFile.FullName)
+        [XlfDocument]$document = Get-AprodaXlfDocument -Path $targetFile.FullName
         foreach ($unit in $document.TranslationUnitNodes()) {
             if (-not $document.GetUnitNeedsTranslation($unit)) {
                 continue
@@ -339,7 +354,7 @@ function Invoke-AprodaXliffValidation {
     $unapproved = @()
     foreach ($targetFile in $TargetFiles) {
         $issues += @(Test-XliffTranslations -targetPath $targetFile.FullName -checkForMissing -checkForProblems -translationRules @('Placeholders', 'OptionMemberCount', 'OptionLeadingSpaces', 'ConsecutiveSpacesConsistent') -printProblems)
-        [XlfDocument]$document = [XlfDocument]::LoadFromPath($targetFile.FullName)
+        [XlfDocument]$document = Get-AprodaXlfDocument -Path $targetFile.FullName
         foreach ($unit in $document.TranslationUnitNodes()) {
             if (-not $document.GetUnitNeedsTranslation($unit)) {
                 continue
@@ -392,7 +407,7 @@ function Export-AprodaOpenTranslations {
     $items = @()
     for ($fileIndex = 0; $fileIndex -lt $TargetFiles.Count; $fileIndex++) {
         $targetFile = $TargetFiles[$fileIndex]
-        [XlfDocument]$document = [XlfDocument]::LoadFromPath($targetFile.FullName)
+        [XlfDocument]$document = Get-AprodaXlfDocument -Path $targetFile.FullName
         foreach ($unit in $document.TranslationUnitNodes()) {
             if (-not $document.GetUnitNeedsTranslation($unit)) {
                 continue
@@ -602,7 +617,7 @@ function Apply-AprodaTranslations {
         }
         $targetFile = Get-Item -LiteralPath $manifest.files[$targetFileIndex] -ErrorAction Stop
         if (-not $documentsByPath.ContainsKey($targetFile.FullName)) {
-            $documentsByPath[$targetFile.FullName] = [XlfDocument]::LoadFromPath($targetFile.FullName)
+            $documentsByPath[$targetFile.FullName] = Get-AprodaXlfDocument -Path $targetFile.FullName
         }
         [XlfDocument]$document = $documentsByPath[$targetFile.FullName]
         $unit = $document.FindTranslationUnit($manifestItem.unitId)
@@ -657,7 +672,7 @@ function Get-AprodaReviewReport {
         [System.IO.FileInfo[]]$TargetFiles
     )
 
-    $documents = @($TargetFiles | ForEach-Object { [XlfDocument]::LoadFromPath($_.FullName) })
+    $documents = @($TargetFiles | ForEach-Object { Get-AprodaXlfDocument -Path $_.FullName })
     $pending = 0
     $accepted = 0
     $corrected = 0
