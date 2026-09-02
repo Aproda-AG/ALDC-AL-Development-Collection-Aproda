@@ -156,3 +156,53 @@ a rejected batch. That is what makes L1 safe.
 - Cheaper models are weaker at register, idiom and disambiguation. Those failures are *not*
   machine-detectable and must be covered by context (L7) or review.
 - The CHF figures assume 15 s per review item; calibrate against actual correction rates.
+
+---
+
+## 5. Measured baselines (real runs, for comparison against stage 1)
+
+Unlike §2's structural estimates, these are **actual** `Validate`/`Report` outputs from the same real
+app (Gustav Gerig AG Base), recorded so a stage 1 run against the *same* corpus can be compared
+before/after the deterministic tiers exist. Record the app's total/open counts at measurement time,
+because both change as fixtures are extended.
+
+### Run A — 2026-09-02, 20-unit fixture set (first round-trip)
+
+- Corpus at the time: 3860 translatable units total, 20 open (first version of the test fixtures).
+- `ExportOpen` → subagent (`AL Translation Subagent`, `GPT-5.6 Luna`) → `Apply`: 20/20 applied, 0
+  rejected.
+- Pre-review `Validate`: 20 `needsReview`, 0 `missing`.
+- Post-review (PoEdit pass) `Report`: 18 accepted, 2 corrected, 0 pending, 0 stale —
+  **correction rate 0.1 (10 %)**. The 2 corrections were both `Hans Maßrichter` → the subagent had
+  written `ss` per the de-CH rule; a human reviewer restored `ß` because it is a proper noun.
+
+### Run B — 2026-09-02, 34-unit fixture set (extended fixtures, stage 1/2/3 test material)
+
+Corpus after extending the AL source fixtures (§ this repo's `stage-1.spec.md` test-fixture work):
+3874 translatable units total, 34 open (the fixture extension's new units).
+
+- `Sync` → `ExportOpen -MaxItems 80` (cap unused; only 34 were open) → subagent → `Apply`: **34/34
+  applied, 0 rejected**.
+- Anomaly, non-impacting: the subagent's own one-line chat summary said `translated 35/35`, but the
+  written `response.json` contained the correct 34/34 entries matching the batch exactly. `Apply`'s
+  completeness check (exact ordinals `1…N`, each once) does not trust that summary at all — it re-derives
+  the count from the response file itself, so the wrong spoken number had no effect on the applied data.
+  This is the design working as intended (L9): the model's self-report is not a source of truth anywhere
+  in the pipeline.
+- Pre-review `Validate`/XML check: 3874 units, 0 missing, 34 `needsReview`, no BOM, correct namespace.
+- Post-review (PoEdit pass) `Validate -FailOnUnapproved`: 0 missing, 0 needsReview, 3874 valid, 0
+  unapproved, gate **passed**, exit 0.
+- Post-review `Report`: **34 accepted, 0 corrected, 0 pending, 0 stale — correction rate 0 (0 %)**.
+- 2 pre-existing `ß` warnings remain in unrelated, previously-approved units (down from 4 before Run A's
+  PoEdit pass fixed two) — outside this batch's scope, not blocking (`-FailOnIssues` not set).
+
+**Reading these two together:** correction rate varies a lot at n = 20/34 (10 % vs 0 %) — both samples
+are too small to treat as *the* correction rate; they are two data points, not a trend. What is stable
+across both: `Apply`'s validation caught everything it is designed to catch, no XLIFF corruption
+occurred, and PoEdit round-tripped cleanly both times.
+
+**Use for stage 1:** this fixture set (34 open units, deliberately containing the invariant/ambiguity/
+glossary-overlap/fuzzy-pair cases from `stage-1.spec.md`) is the intended pre-stage-1 baseline referenced
+in that spec's §9 open point 2. Re-run `Resolve` against this exact corpus once stage 1 exists and
+compare `totals.invariant` / `totals.memoryExact` against the "34 open, 0 invariant, 0 memory" baseline
+implied here (stage 0 has no such tiers, so every open unit reached AI).

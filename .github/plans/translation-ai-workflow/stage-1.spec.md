@@ -293,7 +293,7 @@ closed by this stage's D16).
 | # | Item | Needed by |
 |---|---|---|
 | 1 | Confirm the real `Xliff Generator` note format against an actual `.g.xlf` before finalising `Get-AprodaContextClass` (§4.1) | sub-cycle 1, before T12/T13 are written against a guessed shape |
-| 2 | Which real BC app supplies acceptance criterion 2's "genuine repeats" corpus — the Gustav Gerig app already used for stage 0, or a second project? (Raised, unresolved, at the end of the stage 0 readiness discussion — this stage should settle it, not defer it again.) | before closing criterion 2 |
+| 2 | ~~Which real BC app supplies acceptance criterion 2's corpus~~ — **resolved 2026-09-02**: Gustav Gerig AG Base, using the extended 34-open-unit fixture set. Baseline recorded in `ai-cost-model.md` §5 ("Run B"): 34 open, 0 invariant/memoryExact (stage 0 has no tiers), correction rate 0 %. Re-run `Resolve` against this exact corpus once implemented and compare | before closing criterion 2 |
 
 No fallback-model question, no D-number question — both stage-0 open points were specific to that
 stage's subagent and its architecture registration, and do not recur here.
