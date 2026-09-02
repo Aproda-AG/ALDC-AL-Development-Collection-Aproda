@@ -1,6 +1,6 @@
 # Stage 0 — Delegated Execution: Implementation Specification
 
-**Status:** Ready to implement
+**Status:** Implemented and validated — all acceptance criteria (§8) met against a real BC app, 2026-09-02
 **Normative reference:** `translation-architecture-options.md` §4 (target architecture). This spec does
 **not** restate architecture decisions — it references them and specifies only what they leave open:
 files, functions, parameters, messages and tests. If an implementation detail here would contradict §4,
@@ -261,11 +261,22 @@ a source with no letters.
 | T16 | Report after simulated review (one target edited, both set `translated`) | `correctionRate` = 0.5 |
 | T17 | `GetState` for `needs-review-translation` and `needs-l10n` | returns the matching enum member, not `MissingTranslation` |
 | T18 | PoEdit-written `needs-l10n` with text | counted as `needsReview`, **not** `missing` |
+| T19 | Multi-file batch, injected failure on the second commit replacement | both target files roll back byte-for-byte; rejection names the replacement |
+| T20 | Manifest file missing | reject |
+| T21 | Manifest file malformed JSON | reject |
+| T22 | Response `v` (schema version) mismatch | reject, message names the schema version |
+| T23 | Pre-existing `ß` in an already-`translated` unit | `Validate` reports it (`IssueCount > 0`), independent of approval state |
+| T24 | All units set to `translated` after `Apply` | `-FailOnUnapproved` passes |
+| T25 | Independent `-FailOnIssues` / `-FailOnUnapproved` gates | each fails on its own condition, unaffected by the other passing |
+| T26 | `Get-AprodaAlBuildArguments` | emits `/project`, `/packagecachepath`, `/out` so the compiler resolves symbols and writes outside the project |
+| T27 | Vendor `useSelfClosingTags` default + `Sync` passing it + a `Validate`-only save | patched default survives re-vendoring guard; no empty-element expansion (`</target>`/`</note>`) on an unchanged file |
+| T28 | All targets filled, `state` attribute removed everywhere | `Missing=0`, `NeedsReview=0`, `Approved=5`; `-FailOnUnapproved` passes (§4.8 amendment) |
 
 T13 is the regression guard for the atomicity property and must run after every rejection case.
 T17 guards the vendor patch: re-vendoring without re-applying it must fail here.
 T18 must pass **with or without** the patch — it verifies the §5.3 classification, which is the actual
-fix.
+fix. T19 is the regression guard for the two-phase multi-file commit (§5.5). T28 is the regression guard
+for the §4.8 approval-predicate amendment (state-less filled targets).
 
 ---
 
@@ -291,7 +302,7 @@ the register receives a single accurate entry.
 
 ## 8. Acceptance criteria
 
-1. All T1–T18 pass.
+1. All T1–T28 pass.
 2. A run against a real app produces a run report containing `ai[]`, and `Report` computes a correction
    rate from it after a PoEdit pass.
 3. `Get-AprodaTranslationStatistics` reports no unit with text as `missing`.

@@ -1,6 +1,6 @@
 # Aproda ALDC Translation Handling — Solution Options and Recommendation
 
-**Status:** Architecture accepted 2026-09-01 — implementation unblocked, one item open (§7)
+**Status:** Architecture accepted 2026-09-01 — implementation unblocked, no open items (§7)
 **Companion:** `translation-architecture-context.md` (evidence, constraints, principles)
 **Decision owner:** Florian Köll
 
