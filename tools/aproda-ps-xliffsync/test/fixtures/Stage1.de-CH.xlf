@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff version="1.2">
+  <file source-language="en-US" target-language="de-CH" datatype="x-al" original="Stage1">
+    <body>
+      <group id="body">
+        <trans-unit id="inv1" translate="yes"><source>123-45</source><target state="needs-translation" /><note from="Xliff Generator">Table Number Test - Field Amount - Property Caption</note></trans-unit>
+        <trans-unit id="inv2" translate="yes"><source>%1</source><target state="needs-translation" /><note from="Xliff Generator">Table Number Test - Field Amount - Property Caption</note></trans-unit>
+        <trans-unit id="inv3" translate="yes"><source>42</source><target state="needs-translation" /><note from="Xliff Generator">Codeunit Test Mgt - NamedType SomeErr</note></trans-unit>
+        <trans-unit id="mixed1" translate="yes"><source>Item 123</source><target state="needs-translation" /><note from="Xliff Generator">Table Item Test - Field Description - Property Caption</note></trans-unit>
+        <trans-unit id="mem-a1" translate="yes"><source>Post the document</source><target state="translated">Buchen Sie das Dokument</target><note from="Xliff Generator">TableExtension Sales Ext - Field DocStatus - Property Caption</note></trans-unit>
+        <trans-unit id="mem-a2" translate="yes"><source>Post the document</source><target state="translated">Buchen Sie das Dokument</target><note from="Xliff Generator">TableExtension Sales Ext - Field DocStatus - Property Caption</note></trans-unit>
+        <trans-unit id="mem-open" translate="yes"><source>Post the document</source><target state="needs-translation" /><note from="Xliff Generator">TableExtension Sales Ext - Field DocStatus - Property Caption</note></trans-unit>
+        <trans-unit id="amb-a1" translate="yes"><source>Release now</source><target state="translated">Jetzt freigeben</target><note from="Xliff Generator">TableExtension Release Ext - Field Status - Property Caption</note></trans-unit>
+        <trans-unit id="amb-a2" translate="yes"><source>Release now</source><target state="translated">Jetzt frei geben</target><note from="Xliff Generator">TableExtension Release Ext - Field Status - Property Caption</note></trans-unit>
+        <trans-unit id="amb-open" translate="yes"><source>Release now</source><target state="needs-translation" /><note from="Xliff Generator">TableExtension Release Ext - Field Status - Property Caption</note></trans-unit>
+        <trans-unit id="mw-approved" translate="yes"><source>Confirm</source><target state="translated">Bestätigen bitte</target><note from="Xliff Generator">TableExtension Confirm Ext - Field Flag - Property Caption</note></trans-unit>
+        <trans-unit id="mw-open" translate="yes" maxwidth="5"><source>Confirm</source><target state="needs-translation" /><note from="Xliff Generator">TableExtension Confirm Ext - Field Flag - Property Caption</note></trans-unit>
+        <trans-unit id="ctx-approved" translate="yes"><source>Status</source><target state="translated">Zustand</target><note from="Xliff Generator">Table Status Test - Field State - Property Caption</note></trans-unit>
+        <trans-unit id="ctx-open" translate="yes"><source>Status</source><target state="needs-translation" /><note from="Xliff Generator">Codeunit Status Mgt - NamedType StatusErr</note></trans-unit>
+        <trans-unit id="ph-approved" translate="yes"><source>Post %1</source><target state="translated">Buchen %1</target><note from="Xliff Generator">TableExtension Post Ext - Field Line - Property Caption</note></trans-unit>
+        <trans-unit id="ph-open" translate="yes"><source>Post %1 %2</source><target state="needs-translation" /><note from="Xliff Generator">TableExtension Post Ext - Field Line - Property Caption</note></trans-unit>
+        <trans-unit id="noparse-approved" translate="yes"><source>Whatever text here</source><target state="translated">Was auch immer</target></trans-unit>
+        <trans-unit id="noparse-open" translate="yes"><source>Some Text Value</source><target state="needs-translation" /></trans-unit>
+      </group>
+    </body>
+  </file>
+</xliff>

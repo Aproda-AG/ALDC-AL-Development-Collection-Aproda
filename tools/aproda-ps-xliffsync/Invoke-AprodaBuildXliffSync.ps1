@@ -11,7 +11,7 @@ param(
     [string]$AppPath = (Get-Location).Path,
     [ValidatePattern('^[a-z]{2,3}-[A-Z]{2}$')]
     [string]$Language = 'de-CH',
-    [ValidateSet('Sync', 'ExportOpen', 'Apply', 'Validate', 'Report')]
+    [ValidateSet('Sync', 'Resolve', 'ExportOpen', 'Apply', 'Validate', 'Report')]
     [string]$Action = 'Sync',
     [string]$BatchPath,
     [string]$ResponsePath,
@@ -217,6 +217,203 @@ function Test-AprodaSwissOrthography {
     )
 
     return $Text -notmatch 'ß'
+}
+
+function Get-AprodaContextClass {
+    param(
+        [Parameter(Mandatory)]
+        [XlfDocument]$Document,
+        [Parameter(Mandatory)]
+        [System.Xml.XmlNode]$Unit
+    )
+
+    $note = $Document.GetUnitXliffGeneratorNote($Unit)
+    if ([string]::IsNullOrWhiteSpace($note)) {
+        return $null
+    }
+
+    $segments = @($note -split ' - ')
+    if ($segments.Count -eq 2) {
+        # Two segments: no Property part - a label has nothing to name a property after.
+        $objectTypeMatch = [regex]::Match($segments[0], '^(\S+)\s')
+        $elementTypeMatch = [regex]::Match($segments[1], '^(\S+)\s')
+        if (-not $objectTypeMatch.Success -or -not $elementTypeMatch.Success) {
+            return $null
+        }
+        return '{0}|{1}|Label' -f $objectTypeMatch.Groups[1].Value, $elementTypeMatch.Groups[1].Value
+    }
+    if ($segments.Count -eq 3) {
+        $objectTypeMatch = [regex]::Match($segments[0], '^(\S+)\s')
+        $elementTypeMatch = [regex]::Match($segments[1], '^(\S+)\s')
+        $propertyMatch = [regex]::Match($segments[2], '^Property\s+(\S+)\s*$')
+        if (-not $objectTypeMatch.Success -or -not $elementTypeMatch.Success -or -not $propertyMatch.Success) {
+            return $null
+        }
+        return '{0}|{1}|{2}' -f $objectTypeMatch.Groups[1].Value, $elementTypeMatch.Groups[1].Value, $propertyMatch.Groups[1].Value
+    }
+    return $null
+}
+
+function Test-AprodaInvariant {
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [string]$SourceText
+    )
+
+    return $SourceText -notmatch '\p{L}'
+}
+
+function Get-AprodaNormalisedSource {
+    param(
+        [AllowEmptyString()]
+        [string]$Text
+    )
+
+    if ([string]::IsNullOrEmpty($Text)) {
+        return ''
+    }
+    return ($Text.Trim() -replace '\s+', ' ')
+}
+
+function Resolve-AprodaInvariantTier {
+    param(
+        [Parameter(Mandatory)]
+        [System.IO.FileInfo[]]$TargetFiles,
+        [Parameter(Mandatory)]
+        [hashtable]$DocumentsByPath
+    )
+
+    $countsByFile = @{}
+    $totalResolved = 0
+    foreach ($targetFile in $TargetFiles) {
+        [XlfDocument]$document = $DocumentsByPath[$targetFile.FullName]
+        $resolvedCount = 0
+        foreach ($unit in $document.TranslationUnitNodes()) {
+            if (-not $document.GetUnitNeedsTranslation($unit)) {
+                continue
+            }
+            $translation = $document.GetUnitTranslation($unit)
+            if (-not [string]::IsNullOrWhiteSpace($translation)) {
+                continue
+            }
+
+            $source = $document.GetUnitSourceText($unit)
+            if (-not (Test-AprodaInvariant -SourceText $source)) {
+                continue
+            }
+
+            $targetNode = [XlfDocument]::GetNode('target', $unit)
+            $targetNode.InnerText = $source
+            Set-AprodaUnitState -Document $document -Unit $unit -State 'translated'
+            $resolvedCount++
+        }
+        $countsByFile[$targetFile.FullName] = $resolvedCount
+        $totalResolved += $resolvedCount
+    }
+
+    return [pscustomobject]@{ Total = $totalResolved; ByFile = $countsByFile }
+}
+
+function Get-AprodaApprovedMemoryIndex {
+    param(
+        [Parameter(Mandatory)]
+        [System.IO.FileInfo[]]$TargetFiles,
+        [Parameter(Mandatory)]
+        [hashtable]$DocumentsByPath
+    )
+
+    $index = @{}
+    foreach ($targetFile in $TargetFiles) {
+        [XlfDocument]$document = $DocumentsByPath[$targetFile.FullName]
+        foreach ($unit in $document.TranslationUnitNodes()) {
+            if (-not $document.GetUnitNeedsTranslation($unit)) {
+                continue
+            }
+            if (-not (Test-AprodaApproved -Document $document -Unit $unit)) {
+                continue
+            }
+
+            $contextClass = Get-AprodaContextClass -Document $document -Unit $unit
+            if ($null -eq $contextClass) {
+                continue
+            }
+
+            $source = $document.GetUnitSourceText($unit)
+            $normalisedSource = Get-AprodaNormalisedSource -Text $source
+            $placeholderSignature = (Get-AprodaPlaceholders -Text $source) -join '|'
+            $key = '{0}::{1}::{2}' -f $normalisedSource, $contextClass, $placeholderSignature
+
+            if (-not $index.ContainsKey($key)) {
+                $index[$key] = [System.Collections.Generic.HashSet[string]]::new()
+            }
+            [void]$index[$key].Add($document.GetUnitTranslation($unit))
+        }
+    }
+    return $index
+}
+
+function Resolve-AprodaMemoryTier {
+    param(
+        [Parameter(Mandatory)]
+        [System.IO.FileInfo[]]$TargetFiles,
+        [Parameter(Mandatory)]
+        [hashtable]$MemoryIndex,
+        [Parameter(Mandatory)]
+        [hashtable]$DocumentsByPath
+    )
+
+    $countsByFile = @{}
+    $ambiguous = @()
+    $totalResolved = 0
+    foreach ($targetFile in $TargetFiles) {
+        [XlfDocument]$document = $DocumentsByPath[$targetFile.FullName]
+        $resolvedCount = 0
+        foreach ($unit in $document.TranslationUnitNodes()) {
+            if (-not $document.GetUnitNeedsTranslation($unit)) {
+                continue
+            }
+            $translation = $document.GetUnitTranslation($unit)
+            if (-not [string]::IsNullOrWhiteSpace($translation)) {
+                continue
+            }
+
+            $contextClass = Get-AprodaContextClass -Document $document -Unit $unit
+            if ($null -eq $contextClass) {
+                continue
+            }
+
+            $source = $document.GetUnitSourceText($unit)
+            $normalisedSource = Get-AprodaNormalisedSource -Text $source
+            $placeholderSignature = (Get-AprodaPlaceholders -Text $source) -join '|'
+            $key = '{0}::{1}::{2}' -f $normalisedSource, $contextClass, $placeholderSignature
+
+            if (-not $MemoryIndex.ContainsKey($key)) {
+                continue
+            }
+
+            $candidates = $MemoryIndex[$key]
+            if ($candidates.Count -gt 1) {
+                $ambiguous += [pscustomobject]@{ unitId = $unit.Attributes['id'].Value; candidateCount = $candidates.Count }
+                continue
+            }
+
+            $candidateTarget = @($candidates)[0]
+            $maxLength = Get-AprodaMaxLength -Unit $unit
+            if ($null -ne $maxLength -and $candidateTarget.Length -gt $maxLength) {
+                continue
+            }
+
+            $targetNode = [XlfDocument]::GetNode('target', $unit)
+            $targetNode.InnerText = $candidateTarget
+            Set-AprodaUnitState -Document $document -Unit $unit -State 'translated'
+            $resolvedCount++
+        }
+        $countsByFile[$targetFile.FullName] = $resolvedCount
+        $totalResolved += $resolvedCount
+    }
+
+    return [pscustomobject]@{ Total = $totalResolved; ByFile = $countsByFile; Ambiguous = $ambiguous }
 }
 
 function Get-AprodaShortKey {
@@ -760,6 +957,37 @@ switch ($Action) {
 
         $targetFiles = Get-AprodaTargetFiles -ProjectPath $resolvedAppPath -TargetLanguage $Language
         Invoke-AprodaXliffValidation -TargetFiles $targetFiles -Strict:$FailOnIssues -RequireApproved:$FailOnUnapproved
+        break
+    }
+    'Resolve' {
+        $runId = [guid]::NewGuid().ToString()
+        if (-not $ReportPath) {
+            $ReportPath = Get-AprodaDefaultReportPath -ProjectPath $resolvedAppPath -RunId $runId
+        }
+        $targetFiles = Get-AprodaTargetFiles -ProjectPath $resolvedAppPath -TargetLanguage $Language
+        $documentsByPath = @{}
+        foreach ($targetFile in $targetFiles) {
+            $documentsByPath[$targetFile.FullName] = Get-AprodaXlfDocument -Path $targetFile.FullName
+        }
+        $invariantResult = Resolve-AprodaInvariantTier -TargetFiles $targetFiles -DocumentsByPath $documentsByPath
+        $memoryIndex = Get-AprodaApprovedMemoryIndex -TargetFiles $targetFiles -DocumentsByPath $documentsByPath
+        $memoryResult = Resolve-AprodaMemoryTier -TargetFiles $targetFiles -MemoryIndex $memoryIndex -DocumentsByPath $documentsByPath
+        if (($invariantResult.Total + $memoryResult.Total) -gt 0) {
+            Invoke-AprodaAtomicXliffCommit -DocumentsByPath $documentsByPath
+        }
+        $statistics = Get-AprodaTranslationStatistics -TargetFiles $targetFiles
+
+        $runReport = Get-AprodaRunReport -Path $ReportPath -RunId $runId -Language $Language
+        $totals = [pscustomobject]@{
+            translatable = $statistics.Total
+            open         = $statistics.Missing
+            invariant    = $invariantResult.Total
+            memoryExact  = $memoryResult.Total
+        }
+        $runReport | Add-Member -NotePropertyName totals -NotePropertyValue $totals -Force
+        $runReport | Add-Member -NotePropertyName ambiguous -NotePropertyValue @($memoryResult.Ambiguous) -Force
+        Write-AprodaRunReport -Report $runReport -Path $ReportPath
+        Write-Host "XLIFF resolve: $($totals.translatable) translatable, $($totals.invariant) invariant, $($totals.memoryExact) memory-exact, $($totals.open) open; $(@($runReport.ambiguous).Count) ambiguous."
         break
     }
     'ExportOpen' {
