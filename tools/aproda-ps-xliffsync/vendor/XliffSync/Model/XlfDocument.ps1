@@ -18,7 +18,9 @@ class XlfDocument {
     [boolean] $preserveTargetAttributesOrder;
     [string] $parseFromDeveloperNoteSeparator;
     [string] $missingTranslation;
-    [boolean] $useSelfClosingTags;
+    # Local patch: default to self-closing. BC and PoEdit both emit <note … />, so expanding empty
+    # elements rewrites every note in the file and buries the real change in the diff.
+    [boolean] $useSelfClosingTags = $true;
 
     [boolean] Valid() {
         $hasRoot = $null -ne $this.root;
@@ -659,6 +661,18 @@ class XlfDocument {
         }
 
         $this.root.OwnerDocument.Save($filePath);
+
+        # Local patch: XmlWriter emits "<x />" and a BOM, Business Central emits "<x/>" without one.
+        # Rewrite only when it actually differs, so an already-normalized file is left untouched.
+        if ($this.useSelfClosingTags) {
+            $rawBytes = [System.IO.File]::ReadAllBytes($filePath);
+            $hasByteOrderMark = $rawBytes.Length -ge 3 -and $rawBytes[0] -eq 0xEF -and $rawBytes[1] -eq 0xBB -and $rawBytes[2] -eq 0xBF;
+            $content = [System.IO.File]::ReadAllText($filePath);
+            $normalized = $content.Replace(' />', '/>');
+            if ($hasByteOrderMark -or $normalized -ne $content) {
+                [System.IO.File]::WriteAllText($filePath, $normalized, [System.Text.UTF8Encoding]::new($false));
+            }
+        }
     }
 
     hidden [System.Xml.XmlNode[]] GetGroupTranslationUnitNodes([System.Xml.XmlNode] $rootNode) {

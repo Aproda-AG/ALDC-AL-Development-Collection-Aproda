@@ -17,9 +17,24 @@ Vendored runtime files:
 The upstream module loader is deliberately excluded because it uses path-based
 dot-sourcing, which is blocked by this estate's Software Restriction Policy.
 
-## Local additive patch
+## Local additive patches
 
-`vendor/XliffSync/Model/XlfDocument.ps1` has a local additive patch on top of
-the pinned upstream commit. `XlfTranslationState`, `GetState`, and
-`UpdateStateAttributes` support `needs-review-translation` and `needs-l10n`.
-No upstream enum value or state mapping was changed.
+`vendor/XliffSync/Model/XlfDocument.ps1` carries three local patches on top of the pinned
+upstream commit.
+
+1. `XlfTranslationState`, `GetState`, and `UpdateStateAttributes` support
+   `needs-review-translation` and `needs-l10n`. No upstream enum value or state mapping
+   was changed.
+2. `useSelfClosingTags` defaults to `$true`. Upstream defaults it to `$false`, which expands
+   every empty element on save. Since Business Central and PoEdit both emit `<note … />`,
+   that rewrote roughly 3500 notes in a real customer file and buried the actual change in
+   the diff. `Sync-XliffTranslations` assigns the value from its own switch, so the wrapper
+   passes `-useSelfClosingTags` there as well.
+3. `SaveToFilePath` normalizes the written file to Business Central's serialization: .NET's
+   `XmlWriter` emits `<x />` and a byte order mark, Business Central emits `<x/>` and none.
+   Without this, every empty element and the first line differ on every run. The rewrite is
+   skipped when the output already matches, so an unchanged file is not touched. On a real
+   customer file this reduced a synchronization diff from about 7200 lines to 126 — the
+   20 units that actually changed.
+
+All three patches are guarded by tests; re-vendoring without re-applying them fails the suite.

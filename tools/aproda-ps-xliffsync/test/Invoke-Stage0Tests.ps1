@@ -70,22 +70,22 @@ function Export-Stage0Batch {
     $batchPath = Join-Path $ProjectPath 'batch.ai.json'
     $exportResult = Invoke-Stage0Tool @{ AppPath = $ProjectPath; Action = 'ExportOpen'; BatchPath = $batchPath; MaxItems = $MaxItems; Offset = $Offset }
     return [pscustomobject]@{
-        BatchPath = $batchPath
+        BatchPath    = $batchPath
         ManifestPath = Join-Path $ProjectPath 'batch.manifest.json'
-        Batch = Get-Content -LiteralPath $batchPath -Raw | ConvertFrom-Json -Depth 10
-        Manifest = Get-Content -LiteralPath (Join-Path $ProjectPath 'batch.manifest.json') -Raw | ConvertFrom-Json -Depth 10
-        Result = $exportResult
+        Batch        = Get-Content -LiteralPath $batchPath -Raw | ConvertFrom-Json -Depth 10
+        Manifest     = Get-Content -LiteralPath (Join-Path $ProjectPath 'batch.manifest.json') -Raw | ConvertFrom-Json -Depth 10
+        Result       = $exportResult
     }
 }
 
 function New-Stage0Response {
     param([object]$Batch, [string]$BatchId = $Batch.b)
     $translations = @{
-        'caption' = 'Kundenname'
+        'caption'      = 'Kundenname'
         'placeholders' = 'Gebucht %1 von %2'
-        'maxwidth' = 'Grösse'
-        'option' = 'Offen,Geschlossen'
-        'invariant' = '123-45'
+        'maxwidth'     = 'Grösse'
+        'option'       = 'Offen,Geschlossen'
+        'invariant'    = '123-45'
     }
     $targets = @()
     foreach ($item in @($Batch.items)) {
@@ -267,6 +267,25 @@ try {
         $captionTarget.InnerText = 'Kundenname'; $captionTarget.SetAttribute('state', 'needs-review-translation'); $xml.Save((Join-Path $project 'Stage0.de-CH.xlf'))
         [void](Invoke-Stage0Tool @{ AppPath = $project; Action = 'Validate'; FailOnIssues = $true })
         $approvalMessage = $null; try { Invoke-Stage0Tool @{ AppPath = $project; Action = 'Validate'; FailOnUnapproved = $true } } catch { $approvalMessage = $_.Exception.Message }; Assert-Stage0 ($approvalMessage -match 'approval gate') 'FailOnUnapproved did not fail independently of issues.'
+    }
+    Invoke-Stage0Case 'T26' {
+        $toolPath = Join-Path $toolDirectory 'Invoke-AprodaBuildXliffSync.ps1'; $ast = [System.Management.Automation.Language.Parser]::ParseFile($toolPath, [ref]$null, [ref]$null); $definition = @($ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $args[0].Name -eq 'Get-AprodaAlBuildArguments' }, $true))[0]
+        Assert-Stage0 ($null -ne $definition) 'Get-AprodaAlBuildArguments is missing.'; . ([scriptblock]::Create($definition.Extent.Text)); $buildArguments = @(Get-AprodaAlBuildArguments -ProjectPath 'C:\App' -PackageCachePath 'C:\App\.alpackages' -OutputPath 'C:\Temp\out.app')
+        Assert-Stage0 ($buildArguments -contains '/packagecachepath:C:\App\.alpackages') 'The build does not pass a package cache path; the compiler then resolves no symbols.'
+        Assert-Stage0 ($buildArguments -contains '/out:C:\Temp\out.app') 'The build does not redirect its output; artifacts would land in the project.'
+        Assert-Stage0 ($buildArguments -contains '/project:C:\App') 'The build does not pass the project path.'
+    }
+    Invoke-Stage0Case 'T27' {
+        $vendorSource = Get-Content -LiteralPath (Join-Path $toolDirectory 'vendor\XliffSync\Model\XlfDocument.ps1') -Raw
+        Assert-Stage0 ($vendorSource -match '\[boolean\]\s*\$useSelfClosingTags\s*=\s*\$true') 'The vendored default for useSelfClosingTags was lost; re-apply the patch after re-vendoring.'
+        Assert-Stage0 ((Get-Content -LiteralPath (Join-Path $toolDirectory 'Invoke-AprodaBuildXliffSync.ps1') -Raw) -match 'Sync-XliffTranslations[^\r\n]*-useSelfClosingTags') 'Sync does not pass -useSelfClosingTags, which overrides the patched default.'
+        $project = New-Stage0Project; $path = Join-Path $project 'Stage0.de-CH.xlf'
+        [void](Invoke-Stage0Tool @{ AppPath = $project; Action = 'Validate' })
+        $raw = Get-Content -LiteralPath $path -Raw
+        Assert-Stage0 ($raw -notmatch '></target>' -and $raw -notmatch '></note>') 'Empty elements were expanded on save, which rewrites every note and buries the real change in the diff.'
+        Assert-Stage0 ($raw -notmatch ' />') 'Empty elements were written as "<x />"; Business Central writes "<x/>", so every one of them shows up as a diff line.'
+        $savedBytes = [System.IO.File]::ReadAllBytes($path)
+        Assert-Stage0 (-not ($savedBytes.Length -ge 3 -and $savedBytes[0] -eq 0xEF -and $savedBytes[1] -eq 0xBB -and $savedBytes[2] -eq 0xBF)) 'A byte order mark was written; Business Central emits none, so the first line would differ on every run.'
     }
 }
 finally {

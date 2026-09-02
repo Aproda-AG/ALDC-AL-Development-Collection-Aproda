@@ -71,6 +71,24 @@ function Find-AprodaAlCompiler {
     return $compiler
 }
 
+function Get-AprodaAlBuildArguments {
+    param(
+        [Parameter(Mandatory)]
+        [string]$ProjectPath,
+        [Parameter(Mandatory)]
+        [string]$PackageCachePath,
+        [Parameter(Mandatory)]
+        [string]$OutputPath
+    )
+
+    # Without an explicit package cache the compiler resolves no symbols at all, down to base tables.
+    return @(
+        "/project:$ProjectPath",
+        "/packagecachepath:$PackageCachePath",
+        "/out:$OutputPath"
+    )
+}
+
 function Get-AprodaTargetXliffPath {
     param(
         [Parameter(Mandatory)]
@@ -226,11 +244,11 @@ function Get-AprodaRunReport {
     }
     return [pscustomobject][ordered]@{
         schemaVersion = 1
-        runId = $RunId
-        language = $Language
-        batches = @()
-        ai = @()
-        validation = [pscustomobject]@{ issues = 0; strict = $false }
+        runId         = $RunId
+        language      = $Language
+        batches       = @()
+        ai            = @()
+        validation    = [pscustomobject]@{ issues = 0; strict = $false }
     }
 }
 
@@ -336,8 +354,8 @@ function Invoke-AprodaXliffValidation {
     }
 
     return [pscustomobject]@{
-        Statistics = $statistics
-        IssueCount = $issues.Count
+        Statistics      = $statistics
+        IssueCount      = $issues.Count
         UnapprovedCount = $unapproved.Count
     }
 }
@@ -406,11 +424,11 @@ function Export-AprodaOpenTranslations {
         }
         $aiItems += [pscustomobject]$aiItem
         $manifestItems += [pscustomobject][ordered]@{
-            k = $key
-            file = $item.FileIndex
-            unitId = $item.UnitId
+            k       = $key
+            file    = $item.FileIndex
+            unitId  = $item.UnitId
             srcHash = $item.SourceHash
-            ph = @($item.Placeholders)
+            ph      = @($item.Placeholders)
         }
     }
     $batch = [ordered]@{ v = 1; b = $batchId; lang = $TargetLanguage; items = $aiItems }
@@ -654,10 +672,10 @@ function Get-AprodaReviewReport {
         }
     }
     $review = [pscustomobject]@{
-        pending = $pending
-        accepted = $accepted
-        corrected = $corrected
-        stale = $stale
+        pending        = $pending
+        accepted       = $accepted
+        corrected      = $corrected
+        stale          = $stale
         correctionRate = if (($accepted + $corrected) -eq 0) { $null } else { $corrected / ($accepted + $corrected) }
     }
     $RunReport | Add-Member -NotePropertyName review -NotePropertyValue $review -Force
@@ -679,16 +697,24 @@ switch ($Action) {
     'Sync' {
         if (-not $SkipBuild) {
             $compiler = Find-AprodaAlCompiler
+            $packageCachePath = Join-Path $resolvedAppPath '.alpackages'
+            if (-not (Test-Path -LiteralPath $packageCachePath)) {
+                throw "Symbol cache '$packageCachePath' not found. Download symbols first, or rerun with -SkipBuild."
+            }
+
+            # The build runs only to regenerate *.g.xlf; the app artifact itself is disposable.
+            $buildOutputPath = Join-Path ([System.IO.Path]::GetTempPath()) ('aproda-xliffsync-{0}.app' -f [guid]::NewGuid())
             Write-Host "Building AL app '$resolvedAppPath'."
             Push-Location -LiteralPath $resolvedAppPath
             try {
-                & $compiler "/project:$resolvedAppPath"
+                & $compiler @(Get-AprodaAlBuildArguments -ProjectPath $resolvedAppPath -PackageCachePath $packageCachePath -OutputPath $buildOutputPath)
                 if ($LASTEXITCODE -ne 0) {
                     throw "AL build failed with exit code $LASTEXITCODE."
                 }
             }
             finally {
                 Pop-Location
+                Remove-Item -LiteralPath $buildOutputPath -Force -ErrorAction SilentlyContinue
             }
         }
 
@@ -699,7 +725,7 @@ switch ($Action) {
 
         foreach ($sourceFile in $sourceFiles) {
             Write-Host "Synchronizing '$($sourceFile.Name)' to '$Language'."
-            Sync-XliffTranslations -sourcePath $sourceFile.FullName -targetLanguage $Language -detectSourceTextChanges $true
+            Sync-XliffTranslations -sourcePath $sourceFile.FullName -targetLanguage $Language -detectSourceTextChanges $true -useSelfClosingTags
         }
 
         $targetFiles = Get-AprodaTargetFiles -ProjectPath $resolvedAppPath -TargetLanguage $Language
