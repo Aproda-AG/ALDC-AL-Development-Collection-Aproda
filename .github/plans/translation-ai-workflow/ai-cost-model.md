@@ -233,23 +233,22 @@ saved at `evidence/run-c-batch.ai.json`. It shows the 41 open units are not the 
 second-wave duplicates (the other 3 are the *original* Run-B instances); `Posting Date` appears 3 times
 (`k9,29,30`) against an intended 2; and, most tellingly, `Region Responsible` (`k26,32`) and
 `Translation Remark` (`k28,41`) — fields that predate *all* of today's fixture work and were never
-duplicated by any edit in this session — each appear **twice**. Leading hypothesis, not yet confirmed:
-the fixture AL objects exist **twice** in the compiled app (e.g. an earlier copy under a different path
-alongside the one refreshed in this session), so the compiler emits two trans-units per source text —
-one carrying the prior approval, one fresh and open. This must be verified (a project-wide search for a
-duplicate copy of `ItemTranslationTest.TableExt`/`ItemCardTranslTest.PageExt`/`TranslationTestMgt.Codeunit`
-under another path) before this run is trusted as "N genuine second-wave duplicates, M pre-existing
-leftovers" for a stage-1 comparison.
+duplicated by any edit in this session — each appear **twice**. **Checked and disproven:** only one copy
+of each fixture file (`ItemTranslationTest.TableExt.al`, `ItemCardTranslTest.PageExt.al`,
+`TranslationTestMgt.Codeunit.al`) exists anywhere under the Gustav Gerig repo — this is not a duplicate
+compiled object. The cause of the 41-vs-7 discrepancy is still open; re-derive it once the note-designation
+fix below is in and the context class per unit is actually visible, which makes distinguishing genuine
+second-wave duplicates from pre-existing leftovers far easier than counting raw source-text repeats.
 
-**Second, independent finding — likely more consequential for stage 1:** every single item in the batch
-carries `"c": ""` — the XLIFF Generator note is **empty** for all 41 units in this real project, not just
-the newly added ones. Stage 1's `Get-AprodaContextClass` (`stage-1.spec.md` §4.1) derives the context
-class from exactly this note and returns `$null` when it is empty, which excludes a unit from tier 2
-entirely (§5.2/5.3: "a unit with no parseable context class ... is excluded from both the index and
-resolution"). If this project's `.g.xlf` genuinely never populates the generator note, tier 2 cannot
-resolve **anything** in it, regardless of how many real duplicates exist — a materially different
-finding from "0 memoryExact because no duplicates exist yet" (Run B's reading). §9 open point 1 (verify
-the real note format before finalising the parser) must now also confirm *whether the note is populated
-at all* for this app, not only its shape when present — check a `Table|Page|Codeunit` unit's raw
-`<note from="Xliff Generator">` element directly in `Gustav Gerig AG Base.g.xlf` before writing the
-parser against an assumption this evidence already contradicts.
+**Second finding — confirmed as a real script bug, now fixed.** Every item in the batch carried
+`"c": ""`. This was **not** an empty note in the real project — a raw excerpt of the actual `.g.xlf`
+confirmed a correctly populated
+`<note from="Xliff Generator">Codeunit Translation Test Mgt - NamedType DeliveryNoteCreatedMsg</note>`.
+The bug was in `Invoke-AprodaBuildXliffSync.ps1`: every direct `[XlfDocument]::LoadFromPath(...)` call
+outside the two vendor functions (`Sync-XliffTranslations`, `Test-XliffTranslations`) left
+`developerNoteDesignation`/`xliffGeneratorNoteDesignation` unset, so every note lookup silently matched
+nothing. Fixed by routing all five call sites through a new `Get-AprodaXlfDocument` helper that sets both
+designations after loading; regression-guarded by Stage0 test T29 (`ExportOpen`'s `c` field must equal the
+fixture's actual note). This was more consequential than the duplicate-count anomaly above: without the
+fix, `Get-AprodaContextClass` (`stage-1.spec.md` §4.1) would have seen an empty note on **every** unit in
+**every** real project, not just this one, and tier 2 would never have resolved anything anywhere.

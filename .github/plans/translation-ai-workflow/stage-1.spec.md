@@ -84,13 +84,21 @@ function Get-AprodaContextClass {
 ```
 
 Derives the three-part class of §4.2 (`<ObjectType>|<ElementType>|<Property>`) from
-`GetUnitXliffGeneratorNote($Unit)`. **Verify the exact note format against a real generated `.g.xlf`
-before writing the parser** — do not assume the synthetic stage-0 fixtures' shorthand notation
-(`Table Customer|Field|Caption`) is what the AL compiler actually emits; the fixtures were written for
-`ExportOpen`'s `c` field (passed through verbatim) and were never required to match tier-2 parsing.
-Confirm the real separator and per-segment shape (expected to be dash-separated, e.g.
-`Table MyTable - Field MyField - Property Caption`, but confirm, do not guess) against a project's own
-`.g.xlf` before finalizing the regex.
+`GetUnitXliffGeneratorNote($Unit)`. **Partially confirmed against a real `.g.xlf` (2026-09-02, Gustav
+Gerig AG Base)** — a label unit's note reads
+`Codeunit Translation Test Mgt - NamedType DeliveryNoteCreatedMsg`: dash-separated (`" - "`, not the
+synthetic fixtures' `|`), each segment `<Word> <Name>`, object type / element type are each segment's
+**first word**, matching the general shape assumed below. **Still unconfirmed:** whether a *field
+property* note (e.g. a table field's `Caption`) carries a third `Property` segment the way §4.2's example
+table shows (`Table|Field|Caption`) — the only note verified so far is a `NamedType` (label), which has
+**two** segments, not three, because a label has no property to name. Confirm the field-caption case
+(three segments vs. two) against the same `.g.xlf` before finalizing the regex; do not assume the
+`Table MyTable - Field MyField - Property Caption` shape used below is correct until a field's own note
+has been read directly. Note also: the stage-0 fixtures' `c` field passthrough was itself unaffected by
+the note format (verbatim passthrough needs no parsing) — the bug found while investigating this
+(`Get-AprodaXlfDocument` not setting note designations on most `LoadFromPath` calls, so `c` came back
+empty for *every* unit regardless of note format) is already fixed in stage 0's codebase; this stage's
+parser only needs to handle the note *content*, not chase a second bug in reading it.
 
 **Contract:**
 - Returns a string in the form `ObjectType|ElementType|Property` on success.
@@ -293,7 +301,7 @@ closed by this stage's D16).
 
 | # | Item | Needed by |
 |---|---|---|
-| 1 | Confirm the real `Xliff Generator` note format against an actual `.g.xlf` before finalising `Get-AprodaContextClass` (§4.1) | sub-cycle 1, before T12/T13 are written against a guessed shape |
+| 1 | **Partially resolved 2026-09-02** (§4.1): label notes confirmed dash-separated, two segments, first-word-per-segment. **Still open:** confirm whether a field-property note carries a third `Property` segment, using a real field's own `.g.xlf` note (not yet observed) | sub-cycle 1, before T12/T13 are written against a guessed shape |
 | 2 | ~~Which real BC app supplies acceptance criterion 2's corpus~~ — **resolved 2026-09-02**: Gustav Gerig AG Base, using the extended 34-open-unit fixture set. Baseline recorded in `ai-cost-model.md` §5 ("Run B"): 34 open, 0 invariant/memoryExact (stage 0 has no tiers), correction rate 0 %. Re-run `Resolve` against this exact corpus once implemented and compare | before closing criterion 2 |
 
 No fallback-model question, no D-number question — both stage-0 open points were specific to that
