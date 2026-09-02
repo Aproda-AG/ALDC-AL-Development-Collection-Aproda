@@ -126,6 +126,7 @@
         ".AL-Go/**",
         "*.code-workspace",
         "tools/aproda-vscode-extension/**",
+        "tools/aproda-ps-xliffsync/test/**", // layer-internal test suite; projects get the runtime only
         "skills/skill-aproda-aldc-release/**"
     ],
     // Exceptions to neverTouch: Aproda-owned files that happen to live under a
