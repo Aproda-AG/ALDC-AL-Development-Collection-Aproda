@@ -206,3 +206,50 @@ glossary-overlap/fuzzy-pair cases from `stage-1.spec.md`) is the intended pre-st
 in that spec's §9 open point 2. Re-run `Resolve` against this exact corpus once stage 1 exists and
 compare `totals.invariant` / `totals.memoryExact` against the "34 open, 0 invariant, 0 memory" baseline
 implied here (stage 0 has no such tiers, so every open unit reached AI).
+
+### Run C — 2026-09-02, second-wave duplicates (real tier-2 exact-reuse candidates)
+
+After Run B, its 34 units were `translated`/approved, so a second wave of 7 fields/labels was added to
+the AL source, each reusing the exact source + context class of an already-approved unit from Run B
+(`Second Release`, `Alt Posting Date`, `Third Description`, `ReleaseStatusAltTxt`,
+`CustomerNotFoundAltErr`, `SecondReleaseAction`, plus its `ToolTip`) — this is the corpus that turns
+tier 2 into a real, non-trivial win instead of a first-occurrence no-op (see the analysis that led to
+this second wave, above §9's open point 2 discussion).
+
+- `Sync`: reported **41** open units, not the 7 expected from the second-wave addition alone. Corpus
+  grew from 3874 → **3881** translatable units total (+7, consistent with the intended addition), so the
+  total-count side is unsurprising; only the **open-count** side (41 vs. 7) is the anomaly.
+- `ExportOpen -MaxItems 80` → subagent → `Apply`: **41/41 applied, 0 rejected**.
+- Pre-review `Report`: 41 pending, 0 accepted, 0 corrected, 0 stale.
+- Pre-review XML check: 3881 units, 0 missing, 41 `needsReview`, no BOM, correct namespace.
+- Post-review (PoEdit pass) `Validate -FailOnUnapproved`: 0 missing, 0 needsReview, 3881 valid, 0
+  unapproved, gate **passed**, exit 0.
+- 2 pre-existing `ß` warnings remain (unchanged from Run B) — still outside any reviewed batch's scope.
+
+**The 41-vs-7 anomaly, resolved from the batch evidence.** The actual `batch.ai.json` for this run is
+saved at `evidence/run-c-batch.ai.json`. It shows the 41 open units are not the 7 new fields/labels plus
+34 leftovers — they include **duplicates of units that should already have been approved in Run B**:
+`Release` appears 6 times (`k12,13,20,22,33,35`, all sharing hash `e02`) where only 3 are the intended
+second-wave duplicates (the other 3 are the *original* Run-B instances); `Posting Date` appears 3 times
+(`k9,29,30`) against an intended 2; and, most tellingly, `Region Responsible` (`k26,32`) and
+`Translation Remark` (`k28,41`) — fields that predate *all* of today's fixture work and were never
+duplicated by any edit in this session — each appear **twice**. Leading hypothesis, not yet confirmed:
+the fixture AL objects exist **twice** in the compiled app (e.g. an earlier copy under a different path
+alongside the one refreshed in this session), so the compiler emits two trans-units per source text —
+one carrying the prior approval, one fresh and open. This must be verified (a project-wide search for a
+duplicate copy of `ItemTranslationTest.TableExt`/`ItemCardTranslTest.PageExt`/`TranslationTestMgt.Codeunit`
+under another path) before this run is trusted as "N genuine second-wave duplicates, M pre-existing
+leftovers" for a stage-1 comparison.
+
+**Second, independent finding — likely more consequential for stage 1:** every single item in the batch
+carries `"c": ""` — the XLIFF Generator note is **empty** for all 41 units in this real project, not just
+the newly added ones. Stage 1's `Get-AprodaContextClass` (`stage-1.spec.md` §4.1) derives the context
+class from exactly this note and returns `$null` when it is empty, which excludes a unit from tier 2
+entirely (§5.2/5.3: "a unit with no parseable context class ... is excluded from both the index and
+resolution"). If this project's `.g.xlf` genuinely never populates the generator note, tier 2 cannot
+resolve **anything** in it, regardless of how many real duplicates exist — a materially different
+finding from "0 memoryExact because no duplicates exist yet" (Run B's reading). §9 open point 1 (verify
+the real note format before finalising the parser) must now also confirm *whether the note is populated
+at all* for this app, not only its shape when present — check a `Table|Page|Codeunit` unit's raw
+`<note from="Xliff Generator">` element directly in `Gustav Gerig AG Base.g.xlf` before writing the
+parser against an assumption this evidence already contradicts.
