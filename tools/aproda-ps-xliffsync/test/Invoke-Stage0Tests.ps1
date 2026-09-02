@@ -307,6 +307,13 @@ try {
         $captionItem = @($export.Batch.items | Where-Object { $_.s -eq 'Customer Name' })[0]
         Assert-Stage0 ($null -ne $captionItem -and $captionItem.c -eq 'Table Customer|Field|Caption') "ExportOpen did not pass through the Xliff Generator note; got '$($captionItem.c)'. Every direct LoadFromPath call must set developerNoteDesignation/xliffGeneratorNoteDesignation via Get-AprodaXlfDocument, or note lookups silently return empty."
     }
+    Invoke-Stage0Case 'T30' {
+        $project = New-Stage0Project
+        $warnings = Invoke-Stage0Tool @{ AppPath = $project; Action = 'Validate' } 3>&1 | Where-Object { $_ -is [System.Management.Automation.WarningRecord] }
+        Assert-Stage0 ($warnings.Count -gt 0) 'A fresh project with missing translations produced no warnings to check.'
+        Assert-Stage0 (@($warnings | Where-Object { $_.Message -match 'System\.Xml\.XmlElement' }).Count -eq 0) "Test-XliffTranslations returns raw XmlNode units for missing/need-work findings; Write-Warning must format them, not stringify them to 'System.Xml.XmlElement'."
+        Assert-Stage0 (@($warnings | Where-Object { $_.Message -match "^Translation issue: unit '" }).Count -gt 0) 'Missing-translation findings from Test-XliffTranslations were not surfaced as a readable warning.'
+    }
 }
 finally {
     Remove-Item -LiteralPath $workRoot -Recurse -Force -ErrorAction SilentlyContinue

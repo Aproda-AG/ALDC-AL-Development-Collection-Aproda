@@ -570,8 +570,16 @@ function Invoke-AprodaXliffValidation {
     $statistics = Get-AprodaTranslationStatistics -TargetFiles $TargetFiles
     Write-AprodaTranslationStatistics -Statistics $statistics
     # Orthography/placeholder issues apply regardless of approval state; surface them even without -Strict.
+    # Test-XliffTranslations returns raw XmlNode units for missing/need-work findings, not strings -
+    # format those into a readable message instead of letting Write-Warning stringify them to
+    # "System.Xml.XmlElement".
     foreach ($issue in $issues) {
-        Write-Warning $issue
+        if ($issue -is [System.Xml.XmlNode]) {
+            Write-Warning "Translation issue: unit '$($issue.Attributes['id'].Value)' is missing or needs work."
+        }
+        else {
+            Write-Warning $issue
+        }
     }
     if ($issues.Count -gt 0 -and $Strict) {
         throw "XLIFF validation found $($issues.Count) issue(s)."
