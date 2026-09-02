@@ -1,0 +1,85 @@
+namespace Aproda.Base;
+
+using Microsoft.Inventory.Item;
+
+tableextension 50900 "Item Translation Test" extends Item
+{
+    fields
+    {
+        field(50900; "Region Responsible"; Text[100])
+        {
+            Caption = 'Region Responsible';
+        }
+        field(50901; "Translation Remark"; Text[250])
+        {
+            Caption = 'Translation Remark';
+        }
+        field(50902; "Test Status"; Option)
+        {
+            Caption = 'Test Status';
+            OptionMembers = " ",Open,Released,Blocked;
+            // comma count must be preserved exactly
+            OptionCaption = ' ,Open,Released,Blocked';
+        }
+        field(50903; "Second Description"; Text[100])
+        {
+            // deliberately identical to an existing caption: exercises exact reuse
+            Caption = 'Description';
+        }
+        field(50904; "Sequence"; Option)
+        {
+            // OptionCaption has no Unicode letter: a second invariant-tier instance,
+            // in a context (Table|Field|OptionCaption) the existing invariant case
+            // (a Codeunit label) does not cover
+            OptionMembers = One,Two,Three;
+            OptionCaption = '1,2,3';
+        }
+        field(50905; "Release"; Boolean)
+        {
+            // same source text as the page action "Release" and the codeunit label
+            // "Release", but a different context class (Table|Field|Caption) each time:
+            // must never cross-match tier 2, and is the classic ambiguous BC term
+            Caption = 'Release';
+        }
+        field(50906; "Posting Date"; Date)
+        {
+            // shares the "Posting" token with "Posting Description" below (n-gram
+            // overlap for glossary term-selection) and the source text "Posting Date"
+            // recurs verbatim as a Codeunit label in a different context class
+            Caption = 'Posting Date';
+        }
+        field(50907; "Posting Description"; Text[100])
+        {
+            // overlaps two glossary terms at once: the "Posting" prefix (vs. "Posting
+            // Date" above) and the "Description" suffix (vs. the existing Description
+            // caption) - exercises "longer n-gram wins, drop the shorter overlap"
+            Caption = 'Posting Description';
+        }
+        field(50908; "Second Release"; Boolean)
+        {
+            // second wave: reuses the exact source + context class (Table|Field|Caption)
+            // of the existing "Release" field above, which is approved by the time stage 1
+            // runs - a genuine tier-2 exact-reuse candidate, not a first occurrence
+            Caption = 'Release';
+        }
+        field(50909; "Alt Posting Date"; Date)
+        {
+            // second wave: reuses the exact source + context class of the existing
+            // "Posting Date" field above for the same tier-2 exact-reuse purpose
+            Caption = 'Posting Date';
+        }
+        field(50910; "Third Description"; Text[100])
+        {
+            // second wave: reuses the exact source + context class of "Second
+            // Description" above (already approved from an earlier round)
+            Caption = 'Description';
+        }
+        field(50911; "Fourth Description"; Text[100])
+        {
+            // third wave: reuses the exact source + context class (Table|Field|Caption)
+            // of "Second Description"/"Third Description" above, both approved by the
+            // time this runs - a genuine tier-2 exact-reuse candidate for stage 1
+            Caption = 'Description';
+        }
+    }
+}

@@ -1,0 +1,90 @@
+namespace Aproda.Base;
+
+using Microsoft.Inventory.Item;
+
+pageextension 50901 "Item Card Transl. Test" extends "Item Card"
+{
+    layout
+    {
+        addlast(Item)
+        {
+            field("Region Responsible"; Rec."Region Responsible")
+            {
+                ApplicationArea = All;
+                Caption = 'Region Responsible';
+                ToolTip = 'Specifies the employee responsible for this item, e.g. Hans Maßrichter.';
+            }
+            field("Translation Remark"; Rec."Translation Remark")
+            {
+                ApplicationArea = All;
+                Caption = 'Translation Remark';
+                ToolTip = 'Specifies a free-text remark used for translation testing.';
+            }
+        }
+    }
+
+    actions
+    {
+        addlast(processing)
+        {
+            action(TranslationTestAction)
+            {
+                ApplicationArea = All;
+                Caption = 'Run Translation Test';
+                Image = TestReport;
+                ToolTip = 'Runs the translation test messages for this item.';
+
+                trigger OnAction()
+                var
+                    TranslationTestMgt: Codeunit "Translation Test Mgt";
+                begin
+                    TranslationTestMgt.ShowSingleParameterMessage(Rec."No.");
+                    TranslationTestMgt.ShowFourParameterMessage(Rec."No.", Rec.Description, Rec."Region Responsible", WorkDate());
+                end;
+            }
+            action(ReleaseAction)
+            {
+                // same source text as the table field "Release" and the codeunit label
+                // "Release", each a different context class (Page|Action|Caption here):
+                // completes the three-way ambiguity set, this is the verb/action reading
+                ApplicationArea = All;
+                Caption = 'Release';
+                Image = ReleaseDoc;
+                ToolTip = 'Releases the item so it can no longer be edited.';
+
+                trigger OnAction()
+                begin
+                    Rec."Test Status" := Rec."Test Status"::Released;
+                end;
+            }
+            action(SecondReleaseAction)
+            {
+                // second wave: reuses the exact source + context class
+                // (Page|Action|Caption) of ReleaseAction above for a genuine tier-2
+                // exact-reuse candidate; a distinct ToolTip keeps this dimension unmatched
+                ApplicationArea = All;
+                Caption = 'Release';
+                Image = ReleaseDoc;
+                ToolTip = 'Releases the second batch of items so it can no longer be edited.';
+
+                trigger OnAction()
+                begin
+                    Rec."Test Status" := Rec."Test Status"::Released;
+                end;
+            }
+            action(VersionInfoAction)
+            {
+                // third wave: Caption has no Unicode letter (digits and a period only) -
+                // a genuine tier-1 invariant candidate in a new context class
+                // (Page|Action|Caption), distinct from the existing Table/Codeunit cases
+                ApplicationArea = All;
+                Caption = '2.0';
+                ToolTip = 'Shows the current test object version.';
+
+                trigger OnAction()
+                begin
+                end;
+            }
+        }
+    }
+}

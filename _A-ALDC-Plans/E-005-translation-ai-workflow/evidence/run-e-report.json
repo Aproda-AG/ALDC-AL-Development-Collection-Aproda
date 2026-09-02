@@ -1,0 +1,25 @@
+{
+    "schemaVersion": 1,
+    "runId": "8c5e91f9-a678-4bb7-9250-a556f2167256",
+    "language": "de-CH",
+    "batches": [
+        {
+            "batchId": "8c5e91f9-a678-4bb7-9250-a556f2167256",
+            "items": 38,
+            "applied": 38,
+            "rejected": 0,
+            "rejectReason": null
+        }
+    ],
+    "validation": {
+        "issues": 0,
+        "strict": false
+    },
+    "review": {
+        "pending": 0,
+        "accepted": 38,
+        "corrected": 0,
+        "stale": 0,
+        "correctionRate": 0
+    }
+}

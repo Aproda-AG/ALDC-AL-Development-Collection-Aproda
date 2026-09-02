@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff version="1.2">
+  <file source-language="en-US" datatype="x-al" original="Stage0">
+    <body>
+      <group id="body">
+        <trans-unit id="caption" translate="yes"><source>Customer Name</source><note from="Xliff Generator">Table Customer|Field|Caption</note><note from="Developer">Customer card heading</note></trans-unit>
+        <trans-unit id="placeholders" translate="yes"><source>Posted %1 of %2</source><note from="Xliff Generator">Page Posted|Action|Caption</note></trans-unit>
+        <trans-unit id="maxwidth" translate="yes" maxwidth="10"><source>Size</source><note from="Xliff Generator">Table Item|Field|Caption</note></trans-unit>
+        <trans-unit id="option" translate="yes"><source>Open,Closed</source><note from="Xliff Generator">Table Status|Field|OptionCaption</note></trans-unit>
+        <trans-unit id="invariant" translate="yes"><source>123-45</source><note from="Xliff Generator">Codeunit Test|NamedType|Label</note></trans-unit>
+      </group>
+    </body>
+  </file>
+</xliff>

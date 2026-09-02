@@ -8,7 +8,7 @@
 
 ## Was ist Aproda ALDC?
 
-ALDC ersetzt ad-hoc KI-Codegenerierung durch kontrollierten Engineering-Prozess in Form von **Spec-Driven Development** und nutzt Test-Driven-Development-Prinzipien: Spec → Architektur → Tests → Code → Review. Aproda ergänzt das Framework um echte AL-Test-Ausführung (Deploy-Run-Verify Cycle gegen ASINST-Umgebung), strukturiertes HITL-Validation-Issue-Tracking, automatische Modul-Dokumentation und ADO-Integration.
+ALDC ersetzt ad-hoc KI-Codegenerierung durch kontrollierten Engineering-Prozess in Form von **Spec-Driven Development** und nutzt Test-Driven-Development-Prinzipien: Spec → Architektur → Tests → Code → Review. Aproda ergänzt das Framework um echte AL-Test-Ausführung (Deploy-Run-Verify Cycle gegen ASINST-Umgebung), strukturiertes HITL-Validation-Issue-Tracking, automatische Modul-Dokumentation, ADO-Integration sowie einen gestuften KI-Übersetzungsworkflow für XLIFF (Sync/Resolve/Review/Validate).
 
 Das Framework arbeitet mit **spezialisierten Agent-Persönlichkeiten** je nach Aufgabe und Komplexität: der **Architekt** für komplexe Anforderungen (Lösungsdesign, Datenmodell), der **Conductor** als Umsetzungs-Orchestrator (orchestriert Planung → Implementierung → Review, bei mittlerer/hoher Komplexität oder arbeitet Issues aus der HITL Validation ab.), der **Implementation Specialist** für direktes Codieren (eigenständig bei einfachen Aufgaben, oder angewiesen vom Conductor). Ergänzend: der **Triage-Agent** für Problemanalyse und Diagnose, der **Pre-Sales-Agent** für Aufwandschätzungen, und **Dredd** — der unabhängige Auditor, der bestehende Lösungen via BCQuality auf Security, Performance, Guidelines und Patterns prüft und bewertet.
 
@@ -22,6 +22,7 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 → HITL Validation       → Entwickler prüft in ASINST; ggf. Kunden-Sandbox; ggf. Berater/Kunde
                           Befunde werden in hitl-validation-issues.md getrackt → KI arbeitet nach, Deploy-Run-Verify Cycle läuft erneut
 → al-pr-prepare         → PR + Technische Modul-Doku & Handbuch.de-CH aktualisiert (repo-weit)
+                          Bei neuen/geänderten Labels vorher: KI-Übersetzungsworkflow (Sync → Resolve → Review → Validate)
 ```
 > Pro Work Item/Anforderung entsteht ein eigener `plans/{req}/`-Ordner (Spec, Architektur, Test-Plan, HITL-Validation-Issues). Doku und Handbuch gelten **repo-weit** — immer Vollstand, nicht nur Delta des letzten Work Items.
 
@@ -64,6 +65,7 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 | **ADO-Integration** | `skill-aproda-ado` — `req_name = {type}-{id}-{short-name}` (z.B. `bug-36370-posting-error`), ADO-URL in jedem Plan-Dokument |
 | **HITL Validation** | Strukturiertes Issue-Tracking in `{req}-hitl-validation-issues.md` über mehrere Pre-PR Feedback-Runden ([Bitte Lesen](readme.aproda.md#hitl-validation)) |
 | **Modul-Doku** | `al-doc-update`-Workflow — `<Modul>.reference.md` (EN) + `<Modul>.Handbuch.de-CH.md` |
+| **AI-Übersetzung (XLIFF)** | `skill-translate` — gestaffelter Workflow (Sync → Resolve → Export/Apply → PoEdit-Review → Validate); Stage 0/1 produktiv, Stage 2/3 in Planung ([readme.aproda.md](readme.aproda.md#ai-translation-workflow-xliff)) |
 
 ### Workflows / Prompts
 
@@ -157,6 +159,8 @@ Konfiguration: `Test/deploy-run-verify.config.jsonc` + `launch.json` im Projekt.
 @workspace use al-pr-prepare
 ```
 Erzeugt Modul-Doku (`al-doc-update`) und PR-Beschreibung. Erst nach grünem Deploy-Run-Verify Cycle und HITL Validation Sign-off ausführen.
+
+Bei neuen oder geänderten Labels/Captions läuft vorher zusätzlich der KI-Übersetzungsworkflow (`skill-translate`): Sync → Resolve → Export/Apply → PoEdit-Review → Validate.
 
 ---
 

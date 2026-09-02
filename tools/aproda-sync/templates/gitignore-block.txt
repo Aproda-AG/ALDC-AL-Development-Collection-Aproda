@@ -4,6 +4,7 @@
 .github/tools/aproda-sync/Start-Pull.ps1
 **/PowerShell/_temp/
 **/PowerShell/_runner/
+**/.aproda/translation/.cache/
 
 /aldc.yaml
 .github/README.md

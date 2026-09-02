@@ -63,7 +63,8 @@
     ],
     "includeGlobs": [
         "**/*.aproda.*", // every net-new Aproda file (infix convention)
-        "skills/skill-aproda-*/**" // every Aproda skill folder
+        "skills/skill-aproda-*/**", // every Aproda skill folder
+        "tools/aproda-ps-xliffsync/**" // lean XLIFF build/sync tool (D-31)
     ],
     // 2) NAMED net-new files that do NOT carry the .aproda. infix (historical /
     //    fixed-name artifacts). Keep explicit.
@@ -105,6 +106,7 @@
         "prompts/al-initialize.prompt.md",
         "prompts/al-memory.create.prompt.md",
         "skills/skill-testing/SKILL.md",
+        "skills/skill-translate/SKILL.md",
         "tools/aldc-validate/index.js"
     ],
     // 4) ALDC framework files. When true, the syncer additionally treats the
@@ -118,12 +120,14 @@
     //    these (they are simply not listed); this is a redundant tripwire only.
     "neverTouch": [
         "plans/**",
+        "_A-ALDC-Plans/**", // fork-only extension backlog plans, never synced (E-005 note)
         "documentation/**",
         "workflows/**", // AL-Go owns workflows; Aproda's own CI is named below as an exception
         "AL-Go-Settings.json",
         ".AL-Go/**",
         "*.code-workspace",
         "tools/aproda-vscode-extension/**",
+        "tools/aproda-ps-xliffsync/test/**", // layer-internal test suite; projects get the runtime only
         "skills/skill-aproda-aldc-release/**"
     ],
     // Exceptions to neverTouch: Aproda-owned files that happen to live under a

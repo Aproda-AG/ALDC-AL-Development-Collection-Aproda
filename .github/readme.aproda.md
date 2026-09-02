@@ -1,6 +1,6 @@
 ﻿# Aproda ALDC Layer — README
 
-> **Version:** `1.2.0_aproda.15` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) &nbsp;·&nbsp; **Release:** CI-gated — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17, D-25).
+> **Version:** `1.2.0_aproda.17` &nbsp;·&nbsp; **ALDC base:** `a900263` (in sync with upstream, 2026-06-25) &nbsp;·&nbsp; **Release:** CI-gated — scheme `<ALDC core.version>_aproda.<n>` ([`decisions.aproda.md`](decisions.aproda.md) D-17, D-25).
 > Aproda's customization layer on top of **ALDC** (AL Development Collection).
 > Fork: <https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda>
 > Upstream: ALDC Core (tracked via `upstream` remote).
@@ -17,6 +17,7 @@ What the Aproda layer adds on top of upstream ALDC:
 |---------|-------------|
 | **ADO work item integration** | `skill-aproda-ado` — maps ADO work items to `req_name`, plans folder, and document headers; controlled Azure CLI operations fetch work item/PR context and create a PR / update a work item after HITL approval |
 | **Deploy-Run-Verify Cycle** | `skill-aproda-deploy-run-verify` — publish → sync → deploy → run → review cycle for on-premises BC instances (VALIDATED, 27/27 green) |
+| **AI translation workflow (XLIFF)** | `skill-translate` + `tools/aproda-ps-xliffsync/` — tiered Adaptive Waterfall for XLIFF translation (Stage 0 delegated batch translation with a PoEdit approval gate; Stage 1 deterministic invariant/memory resolution); Stage 0/1 VALIDATED against a real BC app |
 | **HITL Validation instruction** | Auto-applied guardrail that wires the Deploy-Run-Verify Cycle into the HITL Validation phase |
 | **Layer meta-skill** | `skill-aproda-aldc` — explains and extends the Aproda customization layer itself; entry to `site-profile.aproda.md` |
 | **Steward guardrail** | HITL instruction that triggers on any proposed layer edit — all changes require explicit confirmation |
@@ -193,6 +194,20 @@ This loop is wired into both `al-developer` and `al-conductor` as a pre-PR gate.
 
 ---
 
+### AI Translation Workflow (XLIFF)
+
+`skill-translate` (loaded by `al-developer` / `al-conductor` whenever translatable strings change) runs a tiered, cost-and-quality-optimized "Adaptive Waterfall" over `tools/aproda-ps-xliffsync/Invoke-AprodaBuildXliffSync.ps1` instead of a single AI batch pass:
+
+- **Sync** — build the app, then synchronize `*.g.xlf` into the target language file.
+- **Resolve (Stage 1)** — writes tier 1 (invariant) and tier 2 (project-derived exact memory) units directly as `translated`, deterministically, with no AI or review involvement.
+- **ExportOpen / Apply (Stage 0)** — exports only the remaining open units as a small AI batch (never a complete `.xlf` file); the `AL Translation Subagent` returns translations, and `Apply` validates placeholders, `maxwidth`, and batch integrity before writing them as `needs-review-translation`.
+- **Review** — a human confirms or corrects each unit in PoEdit; confirming sets the approved `translated` state.
+- **Validate / Report** — `Validate -FailOnIssues -FailOnUnapproved` is the approval gate that blocks delivery while any unit remains unapproved; `Report` produces the correction-rate and tier counts used as PR evidence.
+
+Stage 0 and Stage 1 are implemented and validated against a real BC app; Stage 2 (terminology/glossary) and Stage 3 (adaptive retrieval) are design-only. See `_A-ALDC-Plans/E-005-translation-ai-workflow/` for the design rationale, cost model, and measured evidence, and `decisions.aproda.md` D-31/D-32 for the adopted decisions.
+
+---
+
 ### HITL Validation
 
 After the Deploy-Run-Verify Cycle is green, the feature moves to **HITL Validation** — human verification against real business scenarios, either in the **ASINST environment** (the most recent app build is already deployed there from the Deploy-Run-Verify Cycle and ready to test immediately) or in a customer development environment.
@@ -270,6 +285,7 @@ This table **is** the Aproda index (D-17) — the one place to answer "what has 
 | Fleet management tools (fork-only: status / update / gather) | `tools/aproda-sync/fleet/` | D-21 | live |
 | VS Code extension (fork-only: guided project setup and updates) | `tools/aproda-vscode-extension/` | D-21 | live |
 | Release skill (fork-only: tag and GitHub Release governance) | `skills/skill-aproda-aldc-release/` | D-25 | live |
+| Lean XLIFF build/sync tool (AI translation workflow engine) | `tools/aproda-ps-xliffsync/` | D-31 | **VALIDATED** (Stage 0/1) |
 
 ### In-place Upstream edits (deliberate merge-points)
 
@@ -367,3 +383,5 @@ We touch Upstream files in-place only where additive discovery requires it — c
 - [`site-profile.aproda.md`](site-profile.aproda.md) — concrete infrastructure facts (K:, NST servers, SRP, remote-PS).
 - [`skills/skill-aproda-aldc/SKILL.md`](skills/skill-aproda-aldc/SKILL.md) — meta-skill: explain & extend this layer.
 - [`skills/skill-aproda-deploy-run-verify/SKILL.md`](skills/skill-aproda-deploy-run-verify/SKILL.md) — Deploy-Run-Verify Cycle (VALIDATED, 27/27).
+- [`skills/skill-translate/SKILL.md`](skills/skill-translate/SKILL.md) — AI translation workflow (XLIFF), Stage 0/1 VALIDATED.
+- [`_A-ALDC-Plans/E-005-translation-ai-workflow/`](../_A-ALDC-Plans/E-005-translation-ai-workflow/) — translation workflow design rationale, cost model, and measured evidence.

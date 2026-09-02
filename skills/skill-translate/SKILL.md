@@ -60,63 +60,87 @@ Each text entry includes:
 - `maxLength` — character limit (if set in AL source)
 - `comments` — notes about placeholders (%1, %2)
 
-### Pattern 3: Batch Translation
+### Pattern 2A: Aproda Token-Efficient AI Batch
 
-Translate multiple texts in a single operation:
+When `tools/aproda-ps-xliffsync/Invoke-AprodaBuildXliffSync.ps1` is available,
+use it for deterministic XLIFF work. Resolve this path from the toolkit root:
+projects place it at `.github/tools/aproda-ps-xliffsync/...`, while this fork
+places it at `tools/aproda-ps-xliffsync/...`. It is SRP-safe only when
+content-loaded; do not use `Import-Module` or path-based dot-sourcing.
 
-```
-saveTranslatedTexts
-  filePath: "Translations/MyApp.es-ES.xlf"
-  translations: [
-    {
-      "id": "Table_ContosoProject_Field_Description_Caption",
-      "targetText": "Descripción",
-      "targetState": "translated"
-    },
-    {
-      "id": "Page_ContosoProjectCard_Action_Release_Caption",
-      "targetText": "Lanzar",
-      "targetState": "translated"
-    },
-    {
-      "id": "Codeunit_ContosoMgt_Error_CustomerNotFound",
-      "targetText": "Cliente %1 no encontrado.",
-      "targetState": "translated"
-    }
-  ]
+```powershell
+$tool = '<toolkit-root>/tools/aproda-ps-xliffsync/Invoke-AprodaBuildXliffSync.ps1'
+$env:APRODA_XLIFFSYNC_SCRIPTDIR = Split-Path $tool -Parent
+& ([ScriptBlock]::Create((Get-Content -LiteralPath $tool -Raw))) -Action Sync -AppPath '<app-root>'
+& ([ScriptBlock]::Create((Get-Content -LiteralPath $tool -Raw))) -Action Resolve -AppPath '<app-root>' -ReportPath '<cache-dir>/run.json'
+& ([ScriptBlock]::Create((Get-Content -LiteralPath $tool -Raw))) -Action ExportOpen -AppPath '<app-root>' -BatchPath '<cache-dir>/batch.ai.json' -MaxItems 30 -Offset 0
 ```
 
-**Translation rules:**
-1. **Preserve placeholders** — `%1`, `%2`, `%3` must appear in the same order
-2. **Respect `maxLength`** — abbreviate if needed, never exceed
-3. **Match context** — same English word may have different translations depending on `type`
-4. **Follow Microsoft terminology** — use base app translations for standard BC terms
+`Sync` builds unless `-SkipBuild` is set, synchronizes each `*.g.xlf` to the
+target language (`de-CH` by default), and reports missing/review/valid counts.
+`Resolve` runs after `Sync` and before `ExportOpen` (stage 1, deterministic —
+never the reverse: a resolved unit must not appear in an AI batch). It removes
+units from the AI workload with no model call: tier 1 (invariant — the source
+has no Unicode letter) and tier 2 (project-derived exact memory — normalised
+source + context class + placeholder signature match exactly one approved
+target that fits `maxwidth`). Both tiers write `translated` directly (no
+review needed) and share the same `-ReportPath` as `Apply`/`Report`, adding
+`totals.invariant`/`totals.memoryExact`/`totals.open` and `ambiguous[]` (units
+with more than one distinct approved target for the same key — never
+auto-resolved, left for `ExportOpen`).
+`ExportOpen` emits open units in batches of at most `-MaxItems` (30 by default)
+after `-Offset`, reports `Remaining`, and writes two artefacts: `batch.ai.json` for the model and
+`batch.manifest.json` for the tool. Do not send the manifest or complete XLIFF
+files to AI. Each model item uses a `<ordinal>-<hash3>` key.
+
+Delegate `batch.ai.json` and the response path to `AL Translation Subagent`.
+The response contract is:
+
+```json
+{"v":1,"b":"<batchId>","t":[{"k":"1-a3f","t":"Freigeben"}]}
+```
+
+The subagent copies `v`, `b`, and every `k` verbatim, then returns only its
+one-line completion summary. It never reads the manifest or writes XLIFF files.
+
+```powershell
+& ([ScriptBlock]::Create((Get-Content -LiteralPath $tool -Raw))) -Action Apply -AppPath '<app-root>' -BatchPath '<cache-dir>/batch.ai.json' -ResponsePath '<cache-dir>/response.json' -ReportPath '<cache-dir>/run.json'
+& ([ScriptBlock]::Create((Get-Content -LiteralPath $tool -Raw))) -Action Validate -AppPath '<app-root>' -FailOnIssues -FailOnUnapproved
+& ([ScriptBlock]::Create((Get-Content -LiteralPath $tool -Raw))) -Action Report -AppPath '<app-root>' -ReportPath '<cache-dir>/run.json'
+```
+
+`Apply` validates complete key coverage, the batch ID, the manifest hash
+fragment, current source, placeholders, and any XLIFF `maxwidth` before writing.
+It writes AI output as `needs-review-translation`, never `translated`. Review
+the queue in PoEdit; confirmed units become `translated`. The approval gate is
+`Validate -FailOnUnapproved`, which blocks delivery while any unit remains
+unapproved.
+
+### Pattern 3: Legacy Batch Translation Reference
+
+This is reference material for non-Aproda tooling and must not be used in the
+Stage 0 workflow. Do not use `saveTranslatedTexts` or set
+`targetState: "translated"`; only a human review in PoEdit may approve a unit.
 
 ### Pattern 4: Translation Quality Review
 
 Use translation states to implement a review workflow:
 
-| State | Meaning | Who |
+| State | Meaning | Set by |
 |---|---|---|
-| `translated` | Initial translation done | Translator |
-| `needs-review-translation` | Flagged for review | Translator / QA |
-| `final` | Reviewed and approved | Reviewer |
-| `signed-off` | Production-ready | Language lead |
+| `needs-translation` | no translation yet | `Sync` |
+| `needs-review-translation` | machine-translated, awaiting review | `Apply` |
+| `needs-adaptation` / `needs-l10n` | technical problem, source changed, or reviewer left it as needs-work | `Sync` / `Validate` / PoEdit |
+| `translated` | **approved** | reviewer confirming in PoEdit |
+| *(no `state` attribute, target filled)* | **approved** — legacy translation predating this tooling | pre-existing project data |
 
-```
-// Find texts needing review
-getTranslatedTextsByState
-  filePath: "Translations/MyApp.es-ES.xlf"
-  translationStateFilter: "needs-review-translation"
-  limit: 0
+`translated`, and a filled target with no `state` attribute at all, are the only approved cases. `final`
+and `signed-off` are deliberately **not** used: the approval gate treats every other *present* state
+value as unapproved, so a stray state blocks delivery instead of passing silently — only the absence of
+a state attribute is treated as legacy-approved, not an unrecognised value.
 
-// After review, promote to final
-saveTranslatedTexts
-  filePath: "Translations/MyApp.es-ES.xlf"
-  translations: [
-    { "id": "...", "targetText": "...", "targetState": "final" }
-  ]
-```
+Review the queue in PoEdit — filter to "Needs Work", confirm or correct, save. Confirming sets
+`translated`, which is exactly the predicate the gate and the memory read.
 
 **Common quality issues:**
 
@@ -139,7 +163,8 @@ Context: Table name     → "Correo"    ✅  (different meaning!)
 
 ### Pattern 5: Translation Memory and Glossary
 
-Use existing translations for consistency:
+Existing translations can provide terminology background. Translation-memory
+retrieval is deferred beyond Stage 0 and is not required before translating a batch:
 
 ```
 // Get all translated texts as a reference map
@@ -157,8 +182,7 @@ getTextsByKeyword
 ```
 
 **Glossary approach:**
-- Before translating a batch, retrieve existing translations with `getTranslatedTextsMap`
-- Search for related terms with `getTextsByKeyword` to ensure consistent terminology
+- Search related translations with `getTextsByKeyword` when terminology context is needed
 - Standard BC terms should match Microsoft's official base app translations
 
 ### Pattern 6: Regional Variations
@@ -190,35 +214,41 @@ getTranslatedTextsMap
 
 ## Workflow
 
-### Step 1: Setup
+The operative procedure is **Pattern 2A**. The patterns above document XLIFF concepts and alternative
+tooling as reference; they are not a second workflow to follow.
 
-1. Build the extension to generate the `.g.xlf` file: `al_build`
-2. Create language file for each target locale (Pattern 1)
-3. If language files already exist, refresh them (Pattern 2)
+### Step 1: Sync
 
-### Step 2: Translate
+Build the app, then synchronise `*.g.xlf` into the target language file. `Sync -SkipBuild` when the
+caller has already built.
 
-1. Retrieve untranslated texts with `getTextsToTranslate` (paginate with `limit`/`offset`)
-2. Check translation memory for consistency (Pattern 5)
-3. Translate in batches of 20-50 items (Pattern 3)
-4. Save progress frequently — use `targetState: "translated"`
+### Step 2: Resolve
 
-### Step 3: Review
+Run `Resolve -ReportPath <shared-run-report>` after `Sync` and before exporting. It writes tier 1
+(invariant) and tier 2 (project-derived exact memory) units directly as `translated`, with no AI or
+review involvement, and records `totals`/`ambiguous[]` in the shared run report. This step is
+deterministic and idempotent — running it twice in a row is a no-op.
 
-1. Retrieve texts by state: `getTranslatedTextsByState` with `"translated"` filter
-2. Validate:
-   - All placeholders preserved (`%1`, `%2`, etc.)
-   - Character limits respected
-   - Context-appropriate translations
-   - Consistent terminology across the extension
-3. Mark reviewed texts: `targetState: "needs-review-translation"` → `"final"`
+### Step 3: Export and translate
 
-### Step 4: Finalize
+1. Repeat `ExportOpen -MaxItems <n> -Offset <n>` until its reported `Remaining` is zero; advance
+  `Offset` by the emitted count after each batch. It writes `batch.ai.json` for the model and
+  `batch.manifest.json` for the tool. Never send a complete `.xlf` file to a model.
+2. For each batch, the `AL Translation Subagent` writes the response and `Apply` validates it before
+  writing anything, sets `needs-review-translation`, and receives a shared `-ReportPath`. A rejected
+  batch is retried at most twice.
 
-1. Verify no untranslated texts remain: `getTextsToTranslate` with `limit: 0`
-2. Promote all `final` texts to `signed-off`
-3. Build the extension to verify XLF integration: `al_build`
-4. Test the UI in the target language
+### Step 4: Review
+
+Open the target `.xlf` in PoEdit, filter to "Needs Work", confirm or correct each unit, save.
+Confirming sets `translated`. PoEdit shows the BC context notes and the `maxwidth` limit.
+
+### Step 5: Validate and report
+
+`Validate -FailOnIssues -FailOnUnapproved` must pass: no missing translations, no technical findings,
+and every translatable unit approved. Run `Report -ReportPath <shared-run-report>` to produce the
+Stage 0 correction rate (now alongside stage 1's tier counts in the same report), then build the app to
+verify XLF integration.
 
 ## Common Language Codes
 
@@ -246,5 +276,7 @@ getTranslatedTextsMap
 - Do NOT edit `.g.xlf` files manually — they are compiler-generated
 - Do NOT remove or reorder placeholders (`%1`, `%2`) in translations
 - Do NOT exceed `maxLength` character limits defined in AL source
-- Do NOT translate without checking existing translation memory first (consistency)
+- When the Aproda XLIFF tool is available, export only open units as an AI batch;
+  do NOT send complete `.xlf` files to AI
+- Use `Apply` followed by `Validate -FailOnIssues -FailOnUnapproved` before claiming the batch is complete
 - Translation testing in UI → `skill-testing.md` | Page captions and tooltips → `skill-pages.md`

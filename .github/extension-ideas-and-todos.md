@@ -11,6 +11,10 @@
 > create a dedicated `.github/plans/{req_name}/` folder with the required
 > specification, architecture, and test plan. Record enduring architectural
 > decisions in `decisions.aproda.md` only after adoption.
+>
+> `.github/plans/` is reserved for the ALDC tool itself. Plans for proposed
+> **extensions** to the tool (this backlog) are worked on in `_A-ALDC-Plans/{id}-{req_name}/`
+> at the repo root instead.
 
 ## Status Board
 
@@ -20,6 +24,7 @@
 | E-002 | Official Microsoft Learn MCP endpoint pilot | Dynamic-Technology-Partners `feat/official-microsoft-docs-endpoint` | Medium | Proposed |
 | E-003 | Run Auto-Cleanup on task completion (Aproda VS Code extension command) | `todos.md` session note | Medium | Proposed |
 | E-004 | Next AL object ID suggestion via a rule-based system + global per-repo assignment | Session note (Aproda) | Medium | Proposed |
+| E-005 | Tiered AI translation workflow for XLIFF (Adaptive Waterfall) | Session note (Aproda) | High | In Progress |
 
 ## Status Values
 
@@ -84,3 +89,10 @@
   - Never mutates `app.json` or creates objects; output is advisory only.
   - Documented conflict-resolution path if two developers still collide (e.g. simultaneous offline work).
 - **Approval Gate:** Approve a dedicated implementation plan (including where the "global per-repo" record lives and how it stays authoritative) before code changes.
+
+## E-005 - Tiered AI Translation Workflow for XLIFF (Adaptive Waterfall)
+
+- **Status:** In Progress
+- **Source:** Session note (Aproda)
+- **Plans folder:** `_A-ALDC-Plans/E-005-translation-ai-workflow/`
+- **Summary:** Cost-and-quality-optimized, staged AI translation workflow for BC/AL XLIFF files (Stage 0 delegated execution, Stage 1 deterministic resolution, Stage 2 terminology/glossary, Stage 3 adaptive retrieval). Stage 0 and Stage 1 are implemented and validated against a real BC app; Stage 2/3 are still design-only.

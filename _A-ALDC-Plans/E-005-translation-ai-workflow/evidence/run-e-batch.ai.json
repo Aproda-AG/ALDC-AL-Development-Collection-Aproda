@@ -1,0 +1,208 @@
+{
+    "v": 1,
+    "b": "8c5e91f9-a678-4bb7-9250-a556f2167256",
+    "lang": "de-CH",
+    "items": [
+        {
+            "k": "1-0a5",
+            "s": "Customer %1 not found.",
+            "c": "Codeunit Translation Test Mgt - NamedType CustomerNotFoundAltErr",
+            "d": "%1 = Customer No."
+        },
+        {
+            "k": "2-0a5",
+            "s": "Customer %1 not found.",
+            "c": "Codeunit Translation Test Mgt - NamedType CustomerNotFoundErr",
+            "d": "%1 = Customer No."
+        },
+        {
+            "k": "3-85a",
+            "s": "Hans Maßrichter",
+            "c": "Codeunit Translation Test Mgt - NamedType DefaultResponsibleEmployeeTxt"
+        },
+        {
+            "k": "4-c89",
+            "s": "The delivery note for %1 was created.",
+            "c": "Codeunit Translation Test Mgt - NamedType DeliveryNoteCreatedMsg",
+            "d": "%1 = Customer Name"
+        },
+        {
+            "k": "5-9cf",
+            "s": "The delivery note could not be printed.",
+            "c": "Codeunit Translation Test Mgt - NamedType DeliveryNotePrintErr"
+        },
+        {
+            "k": "6-e70",
+            "s": "Item %1 (%2), responsible: %3, posting date: %4.",
+            "c": "Codeunit Translation Test Mgt - NamedType FourParameterMsg",
+            "d": "%1 = Item No.; %2 = Description; %3 = Responsible Employee; %4 = Posting Date"
+        },
+        {
+            "k": "7-5f7",
+            "s": "Posted %1 of %3.",
+            "c": "Codeunit Translation Test Mgt - NamedType PostedRatioAltMsg",
+            "d": "%1 = Current; %3 = Grand total"
+        },
+        {
+            "k": "8-728",
+            "s": "Posted %1 of %2.",
+            "c": "Codeunit Translation Test Mgt - NamedType PostedRatioMsg",
+            "d": "%1 = Current; %2 = Total"
+        },
+        {
+            "k": "9-b47",
+            "s": "Posting Date",
+            "c": "Codeunit Translation Test Mgt - NamedType PostingDateLbl"
+        },
+        {
+            "k": "10-cb9",
+            "s": "Processing item    #1##########",
+            "c": "Codeunit Translation Test Mgt - NamedType ProgressMsg"
+        },
+        {
+            "k": "11-e02",
+            "s": "Release",
+            "c": "Codeunit Translation Test Mgt - NamedType ReleaseStatusAltTxt"
+        },
+        {
+            "k": "12-e02",
+            "s": "Release",
+            "c": "Codeunit Translation Test Mgt - NamedType ReleaseStatusTxt"
+        },
+        {
+            "k": "13-390",
+            "s": "Qty.",
+            "c": "Codeunit Translation Test Mgt - NamedType ShortQuantityTxt",
+            "m": 10
+        },
+        {
+            "k": "14-a5e",
+            "s": "Translation test for item %1 and %2.",
+            "c": "Codeunit Translation Test Mgt - NamedType SingleParameterAltMsg",
+            "d": "%1 = Item No.; %2 = Second Item No."
+        },
+        {
+            "k": "15-0f6",
+            "s": "Translation test for item %1.",
+            "c": "Codeunit Translation Test Mgt - NamedType SingleParameterMsg",
+            "d": "%1 = Item No."
+        },
+        {
+            "k": "16-c48",
+            "s": "Save & close \"%1\" <draft>?",
+            "c": "Codeunit Translation Test Mgt - NamedType SpecialCharsQst",
+            "d": "%1 = Document No."
+        },
+        {
+            "k": "17-ced",
+            "s": "Vendor %1 not found.",
+            "c": "Codeunit Translation Test Mgt - NamedType VendorNotFoundErr",
+            "d": "%1 = Vendor No."
+        },
+        {
+            "k": "18-d4e",
+            "s": "Releases the item so it can no longer be edited.",
+            "c": "PageExtension Item Card Transl. Test - Action ReleaseAction - Property ToolTip"
+        },
+        {
+            "k": "19-e02",
+            "s": "Release",
+            "c": "PageExtension Item Card Transl. Test - Action ReleaseAction - Property Caption"
+        },
+        {
+            "k": "20-6c1",
+            "s": "Releases the second batch of items so it can no longer be edited.",
+            "c": "PageExtension Item Card Transl. Test - Action SecondReleaseAction - Property ToolTip"
+        },
+        {
+            "k": "21-e02",
+            "s": "Release",
+            "c": "PageExtension Item Card Transl. Test - Action SecondReleaseAction - Property Caption"
+        },
+        {
+            "k": "22-0ef",
+            "s": "Runs the translation test messages for this item.",
+            "c": "PageExtension Item Card Transl. Test - Action TranslationTestAction - Property ToolTip"
+        },
+        {
+            "k": "23-3d6",
+            "s": "Run Translation Test",
+            "c": "PageExtension Item Card Transl. Test - Action TranslationTestAction - Property Caption"
+        },
+        {
+            "k": "24-89e",
+            "s": "Shows the current test object version.",
+            "c": "PageExtension Item Card Transl. Test - Action VersionInfoAction - Property ToolTip"
+        },
+        {
+            "k": "25-c32",
+            "s": "Specifies the employee responsible for this item, e.g. Hans Maßrichter.",
+            "c": "PageExtension Item Card Transl. Test - Control Region Responsible - Property ToolTip"
+        },
+        {
+            "k": "26-186",
+            "s": "Region Responsible",
+            "c": "PageExtension Item Card Transl. Test - Control Region Responsible - Property Caption"
+        },
+        {
+            "k": "27-405",
+            "s": "Specifies a free-text remark used for translation testing.",
+            "c": "PageExtension Item Card Transl. Test - Control Translation Remark - Property ToolTip"
+        },
+        {
+            "k": "28-6f9",
+            "s": "Translation Remark",
+            "c": "PageExtension Item Card Transl. Test - Control Translation Remark - Property Caption"
+        },
+        {
+            "k": "29-b47",
+            "s": "Posting Date",
+            "c": "TableExtension Item Translation Test - Field Alt Posting Date - Property Caption"
+        },
+        {
+            "k": "30-b47",
+            "s": "Posting Date",
+            "c": "TableExtension Item Translation Test - Field Posting Date - Property Caption"
+        },
+        {
+            "k": "31-cb4",
+            "s": "Posting Description",
+            "c": "TableExtension Item Translation Test - Field Posting Description - Property Caption"
+        },
+        {
+            "k": "32-186",
+            "s": "Region Responsible",
+            "c": "TableExtension Item Translation Test - Field Region Responsible - Property Caption"
+        },
+        {
+            "k": "33-e02",
+            "s": "Release",
+            "c": "TableExtension Item Translation Test - Field Release - Property Caption"
+        },
+        {
+            "k": "34-e02",
+            "s": "Release",
+            "c": "TableExtension Item Translation Test - Field Second Release - Property Caption"
+        },
+        {
+            "k": "35-074",
+            "s": "Sequence",
+            "c": "TableExtension Item Translation Test - Field Sequence - Property Caption"
+        },
+        {
+            "k": "36-328",
+            "s": "Test Status",
+            "c": "TableExtension Item Translation Test - Field Test Status - Property Caption"
+        },
+        {
+            "k": "37-e3d",
+            "s": " ,Open,Released,Blocked",
+            "c": "TableExtension Item Translation Test - Field Test Status - Property OptionCaption"
+        },
+        {
+            "k": "38-6f9",
+            "s": "Translation Remark",
+            "c": "TableExtension Item Translation Test - Field Translation Remark - Property Caption"
+        }
+    ]
+}
