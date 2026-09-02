@@ -275,8 +275,20 @@ This is carried entirely by the XLIFF `state` attribute. No sidecar, no custom n
 
 | | States |
 |---|---|
-| **Approved** | `translated` — and nothing else |
-| **Not approved** | everything else, including any unknown value |
+| **Approved** | `translated` **or** a filled target with no `state` attribute at all |
+| **Not approved** | any filled target carrying an unknown/pending state (`needs-review-translation`, `needs-l10n`, or anything else); empty targets |
+
+**Amendment (2026-09-02, supersedes the original "unknown state = not approved" wording below).** A
+real customer corpus surfaced ~3155 units with translated text and **no `state` attribute at all** —
+legacy translations written before this tooling existed, never carrying a state because nothing ever
+wrote one. Classifying them as "not approved" would manufacture a multi-thousand-unit review backlog
+out of translations already in production, with no reviewer able to distinguish them from genuinely
+pending AI output. Decided: **absence of a `state` attribute on a filled target is approved** — it is
+distinct from an explicit pending state (`needs-review-translation`, `needs-l10n`), which still blocks.
+Only a filled target with an explicit non-`translated` state is "not approved"; a missing attribute is
+treated as legacy-approved, not as unknown. `Test-AprodaApproved` implements this: text present and no
+`state` attribute → approved, without inspecting `GetState`; text present with a `state` attribute →
+approved only if `GetState` returns `translated`, exactly as before.
 
 **The state is written by the tier that produced the unit — never by model self-assessment.**
 
@@ -294,9 +306,11 @@ AI output is *never* auto-approved, regardless of how confident the model claims
 
 **`final` / `signed-off` are not used at all.** PoEdit cannot emit them, and the project file needs to
 answer only one question: is this good enough to ship? A three-step translator/reviewer/lead ladder
-encodes a distinction nothing branches on. **Unknown states classify as not approved** — so if `final`
-ever appeared in a file, the gate would block rather than silently pass. That is the correct direction
-for a failure, and re-admitting it later is one line in the classifier.
+encodes a distinction nothing branches on. **An unknown state *attribute* still classifies as not
+approved** — so if `final` ever appeared in a file, the gate would block rather than silently pass. Only
+the *absence* of a state attribute (a filled target with no `state` at all) is treated as approved, per
+the amendment above; a present-but-unrecognised value is not. That is the correct direction for a
+failure, and re-admitting it later is one line in the classifier.
 
 The question *"should this become organisation-wide knowledge?"* is a different question with a
 different risk profile, and it is answered in Git, not in the XLF (§4.11).
@@ -306,7 +320,7 @@ different risk profile, and it is answered in Git, not in the XLF (§4.11).
 - `Sync-XliffTranslations` imports the existing `<target>` node wholesale and only forces `translated` when it *newly* finds a translation — foreign states survive a sync.
 - `Test-XliffTranslations` decides "missing" on the translation **text**, not the state — a `needs-review-translation` unit with text is neither flagged nor overwritten.
 
-**No cut-over needed.** Existing translations already carry `translated`, written by the current toolchain, and they are in production. They are approved by definition. Projects without existing translations start with an empty memory, which is correct.
+**No cut-over needed.** Existing translations already carry `translated` or no `state` attribute at all — both written by tooling that predates this workflow — and they are in production. They are approved by definition (amendment above). Projects without existing translations start with an empty memory, which is correct.
 
 **The feedback loop is closed by construction.** Memory reads approved units only. AI output is not approved. No filter logic, no provenance record, no promotion path is required to keep the loop shut.
 
@@ -476,9 +490,9 @@ Two honest notes on ordering:
 | 7 | Tier 4 runs in a **delegated subagent on a fast, inexpensive model**, backed by mandatory deterministic checks |
 | 8 | Review is kept **minimal by tooling, not by postponement**: no bespoke worksheet, no promotion round-trip |
 | 9 | Model selection is a **script rule** (§4.9), never a model call |
-| 4 · 10 | **Approval is carried by the XLIFF `state` attribute** (§4.8). `translated` = approved; AI output always writes `needs-review-translation`. No provenance sidecar, no notes, no cut-over — the vendored enum is patched additively for the two states in use (decision 21). The feedback loop is closed by construction |
+| 4 · 10 | **Approval is carried by the XLIFF `state` attribute** (§4.8). `translated`, or a filled target with no `state` attribute at all (amended 2026-09-02, legacy corpora), = approved; AI output always writes `needs-review-translation`. No provenance sidecar, no notes, no cut-over — the vendored enum is patched additively for the two states in use (decision 21). The feedback loop is closed by construction |
 | 11 | **PoEdit is the review surface** (§4.10). Its native Needs-Work filter is the queue; confirming sets `translated`. The review worksheet and `Promote` action are dropped |
-| 12 | **`final` / `signed-off` are not used.** `translated` is the only approved state; unknown values classify as not approved, so a stray state blocks rather than passes |
+| 12 | **`final` / `signed-off` are not used.** `translated`, and a filled target with no `state` attribute at all, are the only approved cases; any *present* unrecognised state value classifies as not approved, so a stray state blocks rather than passes (amended 2026-09-02, see §4.8) |
 | 13 | The approval gate is a **script check** in `Validate` — every translatable unit must be `translated`, controllable via `-FailOnUnapproved`. `al-pr-prepare` consumes its recorded result and never runs the tool itself |
 | 15 | **The batch is split into an AI view and a tool manifest** (§4.4). Bookkeeping fields never enter the model message; the old contract sent roughly two thirds useless payload |
 | 16 | **Correlation key is `<ordinal>-<hash3>`** — about a quarter the cost of the full identifier and stronger than a bare ordinal, because a shifted ordinal fails the check fragment |

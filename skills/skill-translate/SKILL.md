@@ -121,10 +121,12 @@ Use translation states to implement a review workflow:
 | `needs-review-translation` | machine-translated, awaiting review | `Apply` |
 | `needs-adaptation` / `needs-l10n` | technical problem, source changed, or reviewer left it as needs-work | `Sync` / `Validate` / PoEdit |
 | `translated` | **approved** | reviewer confirming in PoEdit |
+| *(no `state` attribute, target filled)* | **approved** — legacy translation predating this tooling | pre-existing project data |
 
-`translated` is the only approved state. `final` and `signed-off` are deliberately **not** used: the
-approval gate treats every other value as unapproved, so a stray state blocks delivery instead of
-passing silently.
+`translated`, and a filled target with no `state` attribute at all, are the only approved cases. `final`
+and `signed-off` are deliberately **not** used: the approval gate treats every other *present* state
+value as unapproved, so a stray state blocks delivery instead of passing silently — only the absence of
+a state attribute is treated as legacy-approved, not an unrecognised value.
 
 Review the queue in PoEdit — filter to "Needs Work", confirm or correct, save. Confirming sets
 `translated`, which is exactly the predicate the gate and the memory read.

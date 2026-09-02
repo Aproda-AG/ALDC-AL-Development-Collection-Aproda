@@ -114,7 +114,7 @@ reader. One reading path, not two.
 
 | Function | Purpose |
 |---|---|
-| `Test-AprodaApproved` | `$document.GetState($unit) -eq [XlfTranslationState]::Translated`. Everything else, including any value the enum does not know, is not approved (§4.8). |
+| `Test-AprodaApproved` | Approved when the target has text and either no `state` attribute at all (legacy corpora, amended 2026-09-02, §4.8), or `$document.GetState($unit) -eq [XlfTranslationState]::Translated`. Any *present* state value other than `Translated` is not approved. |
 | `Set-AprodaUnitState` | Write a state the vendor's `SetState` can now express. Use `SetState` to create a missing `<target>` node first. |
 | `Test-AprodaSwissOrthography` | `$text -notmatch 'ß'`. Used by both `Apply` and `Validate` (§4.9). |
 | `Get-AprodaShortKey` | `'{0}-{1}' -f $ordinal, $sourceHash.Substring(0,3)`. |
