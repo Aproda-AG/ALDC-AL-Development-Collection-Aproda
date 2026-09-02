@@ -35,4 +35,22 @@ codeunit 50900 "Translation Test Mgt"
         DeliveryNotePrintErr: Label 'The delivery note could not be printed.';
         // length-constrained caption
         ShortQuantityTxt: Label 'Qty.', MaxLength = 10;
+        // same source as the table field "Release" and the page action "Release";
+        // completes the three-way cross-context-class ambiguity set (§4.2)
+        ReleaseStatusTxt: Label 'Release';
+        // near-duplicate of SingleParameterMsg with one extra placeholder: same
+        // normalised wording, different placeholder signature - must not tier-2-match,
+        // and is fuzzy-tier-3 context for the other
+        SingleParameterAltMsg: Label 'Translation test for item %1 and %2.', Comment = '%1 = Item No.; %2 = Second Item No.';
+        // the architecture's own canonical fuzzy pair (§4.3): identical modulo the
+        // placeholder index, recognised as near-identical only after placeholder masking
+        PostedRatioMsg: Label 'Posted %1 of %2.', Comment = '%1 = Current; %2 = Total';
+        PostedRatioAltMsg: Label 'Posted %1 of %3.', Comment = '%1 = Current; %3 = Grand total';
+        // recurs verbatim as the table field caption "Posting Date" in a different
+        // context class (Codeunit|NamedType|Label vs. Table|Field|Caption)
+        PostingDateLbl: Label 'Posting Date';
+        // structurally identical sentence with the domain noun swapped: a glossary
+        // term pair (Customer/Vendor) and a fuzzy-tier-3 near-duplicate at once
+        CustomerNotFoundErr: Label 'Customer %1 not found.', Comment = '%1 = Customer No.';
+        VendorNotFoundErr: Label 'Vendor %1 not found.', Comment = '%1 = Vendor No.';
 }

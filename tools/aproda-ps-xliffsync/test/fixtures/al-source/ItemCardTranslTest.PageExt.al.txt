@@ -42,6 +42,21 @@ pageextension 50901 "Item Card Transl. Test" extends "Item Card"
                     TranslationTestMgt.ShowFourParameterMessage(Rec."No.", Rec.Description, Rec."Region Responsible", WorkDate());
                 end;
             }
+            action(ReleaseAction)
+            {
+                // same source text as the table field "Release" and the codeunit label
+                // "Release", each a different context class (Page|Action|Caption here):
+                // completes the three-way ambiguity set, this is the verb/action reading
+                ApplicationArea = All;
+                Caption = 'Release';
+                Image = ReleaseDoc;
+                ToolTip = 'Releases the item so it can no longer be edited.';
+
+                trigger OnAction()
+                begin
+                    Rec."Test Status" := Rec."Test Status"::Released;
+                end;
+            }
         }
     }
 }
