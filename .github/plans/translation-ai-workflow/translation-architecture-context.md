@@ -36,10 +36,10 @@ Already implemented and validated (see `translation-ai-workflow-plan.md`, `D-31`
 | Gap | Impact |
 |---|---|
 | `ExportOpen` has no size limit | A large app can produce a batch too big for one AI turn; contradicts the plan's own "bounded batch" requirement |
-| No reuse layer | Every open unit goes to AI, even ones translated identically ten times before |
+| No reuse layer (stage 0) | Every open unit goes to AI, even ones translated identically ten times before — closed by stage 1's tier 1/2 (`Resolve`) for the deterministic subset; fuzzy retrieval remains stage 3 |
 | No terminology injection | Consistency depends entirely on model memory across turns |
-| Conductor says `Sync`, not `Sync -SkipBuild` | Triggers a redundant second AL build |
-| `skill-translate` contains a competing legacy workflow | Generic NAB-oriented steps and a Translation-Memory requirement that is not implemented (`E-005`) |
+| ~~Conductor says `Sync`, not `Sync -SkipBuild`~~ — **not a gap**: stage 0's D8/D9 already wired `Sync -SkipBuild` into both `al-developer.agent.md` and `al-conductor.agent.md` (verified 2026-09-02, stage-1.spec.md §2) | — |
+| ~~`skill-translate` contains a competing legacy workflow~~ — **substantially closed**: stage 0's D7 marked the legacy patterns reference-only and disclaimed; stage 1's D16 documents `Resolve` as the new pipeline step between `Sync` and `ExportOpen` | — |
 | No structured run report | Evidence for review/PR is prose, not machine-readable |
 
 ---

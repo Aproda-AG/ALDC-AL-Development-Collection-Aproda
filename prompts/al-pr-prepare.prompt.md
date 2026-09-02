@@ -106,7 +106,7 @@ Create `/reports/pr-draft.md` with the delivery preview in this compact structur
 
 ### Test Result
 - Deploy-Run-Verify: ✅ / ❌
-- XLIFF (`de-CH`, when translations changed): approval gate ✅/❌, open review units: 0 / [count] / n/a; strict validation: 0 issues / ❌ / n/a
+- XLIFF (`de-CH`, when translations changed): approval gate ✅/❌, open review units: 0 / [count] / n/a; strict validation: 0 issues / ❌ / n/a; resolved deterministically (tier 1 invariant / tier 2 memory-exact): [count] / [count] / n/a
 - Open HITL issues: none / [link to {req_name}-hitl-validation-issues.md]
 
 ### Deployment
@@ -140,7 +140,7 @@ Zu beachten: keine | <1 Zeile Caveat/Follow-up>
 - ✅ Work item reference present (`#123` for ADO, `AB#123` for GitHub + Azure Boards)
 - ✅ DB Changes explicitly stated (or explicitly "none")
 - ✅ Deploy-Run-Verify result documented
-- ✅ XLIFF approval-gate result, open review count, and strict-validation evidence documented when translations changed; this workflow only consumes evidence and never runs the XLIFF tool
+- ✅ XLIFF approval-gate result, open review count, strict-validation evidence, and (since stage 1) `Resolve`'s tier 1/tier 2 counts documented when translations changed; this workflow only consumes evidence and never runs the XLIFF tool
 - ✅ PR title and, for ADO-hosted repositories, ADO completion-comment proposals included
 
 ## 🔒 Aproda: ADO Delivery Gate (ADO-hosted repositories only)

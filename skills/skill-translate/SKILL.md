@@ -72,11 +72,22 @@ content-loaded; do not use `Import-Module` or path-based dot-sourcing.
 $tool = '<toolkit-root>/tools/aproda-ps-xliffsync/Invoke-AprodaBuildXliffSync.ps1'
 $env:APRODA_XLIFFSYNC_SCRIPTDIR = Split-Path $tool -Parent
 & ([ScriptBlock]::Create((Get-Content -LiteralPath $tool -Raw))) -Action Sync -AppPath '<app-root>'
+& ([ScriptBlock]::Create((Get-Content -LiteralPath $tool -Raw))) -Action Resolve -AppPath '<app-root>' -ReportPath '<cache-dir>/run.json'
 & ([ScriptBlock]::Create((Get-Content -LiteralPath $tool -Raw))) -Action ExportOpen -AppPath '<app-root>' -BatchPath '<cache-dir>/batch.ai.json' -MaxItems 30 -Offset 0
 ```
 
 `Sync` builds unless `-SkipBuild` is set, synchronizes each `*.g.xlf` to the
 target language (`de-CH` by default), and reports missing/review/valid counts.
+`Resolve` runs after `Sync` and before `ExportOpen` (stage 1, deterministic —
+never the reverse: a resolved unit must not appear in an AI batch). It removes
+units from the AI workload with no model call: tier 1 (invariant — the source
+has no Unicode letter) and tier 2 (project-derived exact memory — normalised
+source + context class + placeholder signature match exactly one approved
+target that fits `maxwidth`). Both tiers write `translated` directly (no
+review needed) and share the same `-ReportPath` as `Apply`/`Report`, adding
+`totals.invariant`/`totals.memoryExact`/`totals.open` and `ambiguous[]` (units
+with more than one distinct approved target for the same key — never
+auto-resolved, left for `ExportOpen`).
 `ExportOpen` emits open units in batches of at most `-MaxItems` (30 by default)
 after `-Offset`, reports `Remaining`, and writes two artefacts: `batch.ai.json` for the model and
 `batch.manifest.json` for the tool. Do not send the manifest or complete XLIFF
@@ -211,7 +222,14 @@ tooling as reference; they are not a second workflow to follow.
 Build the app, then synchronise `*.g.xlf` into the target language file. `Sync -SkipBuild` when the
 caller has already built.
 
-### Step 2: Export and translate
+### Step 2: Resolve
+
+Run `Resolve -ReportPath <shared-run-report>` after `Sync` and before exporting. It writes tier 1
+(invariant) and tier 2 (project-derived exact memory) units directly as `translated`, with no AI or
+review involvement, and records `totals`/`ambiguous[]` in the shared run report. This step is
+deterministic and idempotent — running it twice in a row is a no-op.
+
+### Step 3: Export and translate
 
 1. Repeat `ExportOpen -MaxItems <n> -Offset <n>` until its reported `Remaining` is zero; advance
   `Offset` by the emitted count after each batch. It writes `batch.ai.json` for the model and
@@ -220,16 +238,17 @@ caller has already built.
   writing anything, sets `needs-review-translation`, and receives a shared `-ReportPath`. A rejected
   batch is retried at most twice.
 
-### Step 3: Review
+### Step 4: Review
 
 Open the target `.xlf` in PoEdit, filter to "Needs Work", confirm or correct each unit, save.
 Confirming sets `translated`. PoEdit shows the BC context notes and the `maxwidth` limit.
 
-### Step 4: Validate and report
+### Step 5: Validate and report
 
 `Validate -FailOnIssues -FailOnUnapproved` must pass: no missing translations, no technical findings,
 and every translatable unit approved. Run `Report -ReportPath <shared-run-report>` to produce the
-Stage 0 correction rate, then build the app to verify XLF integration.
+Stage 0 correction rate (now alongside stage 1's tier counts in the same report), then build the app to
+verify XLF integration.
 
 ## Common Language Codes
 
