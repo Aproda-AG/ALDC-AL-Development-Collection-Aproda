@@ -285,16 +285,18 @@ closed by this stage's D16).
 
 1. All of `Invoke-Stage1Tests.ps1` (T1–T13) pass, and all of stage 0's `Invoke-Stage0Tests.ps1` (T1–T28)
    still pass unmodified — this stage must not regress stage 0.
-2. A `Resolve` run against Gustav Gerig AG Base, on the exact 34-open-unit corpus recorded as
-   **"Run B"** in `ai-cost-model.md` §5, shows `totals.invariant > 0` and/or `totals.memoryExact > 0` —
-   compare directly against that pre-stage-1 baseline (34 open, 0 invariant, 0 memoryExact, correction
-   rate 0 %). A corpus with zero reused strings is not a valid demonstration of this stage's value.
-3. `Get-AprodaTranslationStatistics` and the approval gate (`Validate -FailOnUnapproved`) are unaffected
-   by `Resolve` having run — tier 1/2 write `translated` directly (§4.8), so the gate must pass on a
-   fully `Resolve`d project with no AI involvement and no PoEdit pass, which is the whole point of a
-   deterministic tier.
-4. Running `Resolve` twice in a row produces zero further writes (T9, and confirmed once against the
-   same real app as criterion 2).
+2. ~~A `Resolve` run against Gustav Gerig AG Base... shows `totals.invariant > 0` and/or
+   `totals.memoryExact > 0`~~ — **validated 2026-09-02** ("Run D", `ai-cost-model.md` §5): a third fixture
+   wave added one genuine invariant candidate and one genuine memory-exact candidate; `Resolve` reported
+   `3 invariant, 3 memory-exact` (the extra memory-exact hits came from matching real, pre-existing
+   approved translations elsewhere in the base app, not just same-session duplicates — a stronger result
+   than the plan required).
+3. ~~`Get-AprodaTranslationStatistics` and the approval gate ... are unaffected by `Resolve` having
+   run~~ — **validated 2026-09-02** (Run D): post-`Resolve`, `Validate -FailOnUnapproved` reported exactly
+   40 unapproved (38 genuinely missing + 2 pre-existing, unrelated), not 44 — the 6 units `Resolve`
+   touched were already approved, with zero AI calls and zero PoEdit review.
+4. Running `Resolve` twice in a row produces zero further writes (T9, and **confirmed 2026-09-02** against
+   the same real app as criterion 2 — Run D's second call reported `0 invariant, 0 memory-exact`).
 5. `npm test` green; `git diff --check` clean; no `packages/foundation/**` changes; no vendor file
    touched (this stage needs no vendor patch).
 6. The two stale "known gaps" in `translation-architecture-context.md` §2 are corrected (D21).

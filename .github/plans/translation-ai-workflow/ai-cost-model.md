@@ -273,3 +273,65 @@ open point 1 needed.** From this run's batch:
   type (`Table`, `Page`) `translation-architecture-options.md` §4.2's example table shows — a base
   object's own field (never seen in this project, which only ships extensions) would presumably read
   `Table|Field|Caption`, but that is unverified; every note observed so far is from an extension object.
+
+### Run D — 2026-09-02, first real `Resolve` run (Stage 1 live validation, Gustav Gerig AG Base)
+
+After Stage 1 was implemented, reviewed, fixed and merged (see `stage-1.spec.md`), a third fixture wave
+added one genuine tier-1 candidate (`VersionInfoAction` Caption `'2.0'`, no Unicode letter, a new
+`Page|Action|Caption` context for invariance) and one genuine tier-2 candidate (`Fourth Description`,
+reusing the `Description` / `Table|Field|Caption` key already used by `Second Description` /
+`Third Description`). `Sync` reopened, as established in Run C, the entire translation surface of the
+three touched objects: **44 open** (41 from before + 3 new).
+
+- `Resolve -Language de-CH`: **`3884 translatable, 3 invariant, 3 memory-exact, 38 open, 0 ambiguous`**.
+  The 3rd memory-exact hit was unexpected in a good way: with everything reopened, tier 2's approved-memory
+  index is built from the **entire 3884-unit corpus**, not just this session's fixtures — so all three of
+  `Second Description`/`Third Description`/`Fourth Description` (all currently open, all sharing the
+  `Description`/`Table|Field|Caption` key) matched against an **already-approved `Description` field
+  elsewhere in the base app's own translations**, not against each other. This is a stronger result than
+  planned: tier 2 works against real production translation memory, not only against same-session
+  duplicates.
+- Post-`Resolve` `Validate -FailOnUnapproved`: exit 1, **40 unapproved** (38 genuinely missing + 2
+  pre-existing, unrelated `needs-work` units) — critically, **not 44**. The 6 units `Resolve` touched
+  (3 invariant + 3 memory-exact) are **not** in the unapproved list; they were written `translated`
+  directly, with zero AI calls and zero PoEdit review. This is Stage 1 acceptance criterion 3, confirmed
+  on real data, not just the synthetic `Invoke-Stage1Tests.ps1` fixtures.
+- Second `Resolve` call (idempotence check): **`0 invariant, 0 memory-exact`** — confirmed idempotent on
+  the same real file, not just in the synthetic T9 test.
+- Run report: `evidence` not saved for this run (small, single-purpose demo — the totals above are the
+  complete record); the 38 remaining open units were left as-is, ready for a future `ExportOpen`/subagent
+  round rather than folded into this demo.
+
+**A second real bug found and fixed during this run.** `Sync`'s `-FailOnIssues`-independent finding
+surfacing (today's earlier `Write-Warning` visibility fix) turned out to have its own defect:
+`Test-XliffTranslations` returns raw `XmlNode` unit objects for missing/need-work findings, not strings
+(`.Parameter printProblems`'s own doc comment says only the unit ID is normally returned, but the
+pipeline output is the node, not the ID string). `Write-Warning` on those objects stringified them to
+`System.Xml.XmlElement`, producing 17 useless warning lines instead of readable messages. Fixed by
+formatting `XmlNode` issues into `"Translation issue: unit '<id>'."` before warning; string issues (the
+`ß` check) pass through unchanged. Regression-guarded by Stage0 test T30 (asserts no
+`System.Xml.XmlElement` substring appears in captured warnings, and that a readable message does).
+
+### Run E — 2026-09-02, completing the 38 remaining units (full Stage 0 round-trip after Resolve)
+
+Follow-up to Run D: the 38 units `Resolve` left open were carried through the ordinary Stage 0 pipeline
+(`Sync` → `Resolve` → `ExportOpen` → `AL Translation Subagent` → `Apply` → PoEdit → `Validate`/`Report`),
+using the updated prompt (`stage0-20units-run-prompt.md` in the Gustav Gerig repo, now step-0'd with
+`Resolve` and pointed at the project's own tool copy). Evidence saved at `evidence/run-e-batch.ai.json`,
+`run-e-batch.manifest.json`, `run-e-response.json`, `run-e-report.json`.
+
+- `Sync`: 3884 units. `Resolve`: 3 invariant + 3 memory-exact (same as Run D — idempotent, nothing new
+  since Run D). Open for AI: **38, 0 ambiguous**.
+- `ExportOpen` → `AL Translation Subagent` → `Apply`: **38/38 exported, translated, applied, 0 rejected**.
+  Build succeeded.
+- Pre-review gate status: 3884 units, 0 missing, 40 "Needs Work" (38 new + 2 pre-existing unrelated),
+  3844 valid.
+- Post-review (PoEdit pass) `Validate -FailOnUnapproved`: **passed** — 3884 units, 0 missing, 0 review,
+  0 unapproved.
+- `Report`: **38 accepted, 0 corrected, 0 pending, 0 stale — correction rate 0 (0 %)**.
+- Base app build: succeeded, 0 warnings. The 2 pre-existing `ß` warnings remain, unrelated, non-blocking.
+
+**Combined with Run D, Gustav Gerig AG Base is now fully approved end-to-end**: 3 invariant + 3
+memory-exact (zero AI, zero review) + 38 AI-translated-and-reviewed = all 44 units that were open after
+the third fixture wave, gate passing, 0 issues blocking. This is the first time in this project a Stage 0
+*and* Stage 1 run have been fully closed out together on the same real corpus.

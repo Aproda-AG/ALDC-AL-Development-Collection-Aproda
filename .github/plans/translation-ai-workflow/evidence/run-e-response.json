@@ -1,0 +1,158 @@
+{
+    "v": 1,
+    "b": "8c5e91f9-a678-4bb7-9250-a556f2167256",
+    "t": [
+        {
+            "k": "1-0a5",
+            "t": "Kunde %1 nicht gefunden."
+        },
+        {
+            "k": "2-0a5",
+            "t": "Kunde %1 nicht gefunden."
+        },
+        {
+            "k": "3-85a",
+            "t": "Hans Massrichter"
+        },
+        {
+            "k": "4-c89",
+            "t": "Der Lieferschein für %1 wurde erstellt."
+        },
+        {
+            "k": "5-9cf",
+            "t": "Der Lieferschein konnte nicht gedruckt werden."
+        },
+        {
+            "k": "6-e70",
+            "t": "Artikel %1 (%2), Verantwortlich: %3, Buchungsdatum: %4."
+        },
+        {
+            "k": "7-5f7",
+            "t": "Gebucht %1 von %3."
+        },
+        {
+            "k": "8-728",
+            "t": "Gebucht %1 von %2."
+        },
+        {
+            "k": "9-b47",
+            "t": "Buchungsdatum"
+        },
+        {
+            "k": "10-cb9",
+            "t": "Artikel wird verarbeitet    #1##########"
+        },
+        {
+            "k": "11-e02",
+            "t": "Freigegeben"
+        },
+        {
+            "k": "12-e02",
+            "t": "Freigegeben"
+        },
+        {
+            "k": "13-390",
+            "t": "Menge"
+        },
+        {
+            "k": "14-a5e",
+            "t": "Übersetzungstest für Artikel %1 und %2."
+        },
+        {
+            "k": "15-0f6",
+            "t": "Übersetzungstest für Artikel %1."
+        },
+        {
+            "k": "16-c48",
+            "t": "Speichern & schliessen \"%1\" <draft>?"
+        },
+        {
+            "k": "17-ced",
+            "t": "Lieferant %1 nicht gefunden."
+        },
+        {
+            "k": "18-d4e",
+            "t": "Gibt den Artikel frei, sodass er nicht mehr bearbeitet werden kann."
+        },
+        {
+            "k": "19-e02",
+            "t": "Freigeben"
+        },
+        {
+            "k": "20-6c1",
+            "t": "Gibt die zweite Artikelcharge frei, sodass sie nicht mehr bearbeitet werden kann."
+        },
+        {
+            "k": "21-e02",
+            "t": "Freigeben"
+        },
+        {
+            "k": "22-0ef",
+            "t": "Führt die Übersetzungstestmeldungen für diesen Artikel aus."
+        },
+        {
+            "k": "23-3d6",
+            "t": "Übersetzungstest ausführen"
+        },
+        {
+            "k": "24-89e",
+            "t": "Zeigt die aktuelle Version des Testobjekts an."
+        },
+        {
+            "k": "25-c32",
+            "t": "Gibt den für diesen Artikel verantwortlichen Mitarbeiter an, z. B. Hans Massrichter."
+        },
+        {
+            "k": "26-186",
+            "t": "Verantwortliche Region"
+        },
+        {
+            "k": "27-405",
+            "t": "Gibt eine Freitextbemerkung für Übersetzungstests an."
+        },
+        {
+            "k": "28-6f9",
+            "t": "Übersetzungsbemerkung"
+        },
+        {
+            "k": "29-b47",
+            "t": "Buchungsdatum"
+        },
+        {
+            "k": "30-b47",
+            "t": "Buchungsdatum"
+        },
+        {
+            "k": "31-cb4",
+            "t": "Buchungsbeschreibung"
+        },
+        {
+            "k": "32-186",
+            "t": "Verantwortliche Region"
+        },
+        {
+            "k": "33-e02",
+            "t": "Freigabe"
+        },
+        {
+            "k": "34-e02",
+            "t": "Freigabe"
+        },
+        {
+            "k": "35-074",
+            "t": "Sequenz"
+        },
+        {
+            "k": "36-328",
+            "t": "Teststatus"
+        },
+        {
+            "k": "37-e3d",
+            "t": " ,Offen,Freigegeben,Gesperrt"
+        },
+        {
+            "k": "38-6f9",
+            "t": "Übersetzungsbemerkung"
+        }
+    ]
+}
