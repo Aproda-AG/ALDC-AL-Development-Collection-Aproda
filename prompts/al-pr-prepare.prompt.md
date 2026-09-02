@@ -15,7 +15,7 @@ Your goal is to prepare a **pull request draft** for the branch `${input:Branch}
 
 1. **Review code changes** - Present summary of all modifications
 2. **Security check** - Confirm no sensitive data in commits
-3. **Quality validation** - Verify tests pass and build succeeds
+3. **Quality validation** - Verify tests pass, build succeeds, and, when translations changed, recorded `skill-translate` evidence shows the approval gate passed with zero open review units and strict XLIFF validation has zero issues; do not run the XLIFF tool here
 4. **Delivery readiness** - Confirm the requirement is accepted and no HITL issues remain open
 
 ## Process
@@ -106,6 +106,7 @@ Create `/reports/pr-draft.md` with the delivery preview in this compact structur
 
 ### Test Result
 - Deploy-Run-Verify: ✅ / ❌
+- XLIFF (`de-CH`, when translations changed): approval gate ✅/❌, open review units: 0 / [count] / n/a; strict validation: 0 issues / ❌ / n/a
 - Open HITL issues: none / [link to {req_name}-hitl-validation-issues.md]
 
 ### Deployment
@@ -139,6 +140,7 @@ Zu beachten: keine | <1 Zeile Caveat/Follow-up>
 - ✅ Work item reference present (`#123` for ADO, `AB#123` for GitHub + Azure Boards)
 - ✅ DB Changes explicitly stated (or explicitly "none")
 - ✅ Deploy-Run-Verify result documented
+- ✅ XLIFF approval-gate result, open review count, and strict-validation evidence documented when translations changed; this workflow only consumes evidence and never runs the XLIFF tool
 - ✅ PR title and, for ADO-hosted repositories, ADO completion-comment proposals included
 
 ## 🔒 Aproda: ADO Delivery Gate (ADO-hosted repositories only)
@@ -165,6 +167,7 @@ After the PR and comment both succeed, delete `/reports/pr-draft.md` — it must
 - [ ] `/reports/pr-draft.md` deleted — **only if the PR was actually created** in this run (ADO-hosted repos); if PR creation failed, was never attempted, or the repo is GitHub-hosted, the file is expected to still exist and its presence is not a gate failure
 - [ ] ADO completion comment posted — ADO-hosted repos only
 - [ ] `al-doc-update` run and its changes committed and pushed before PR creation
+- [ ] XLIFF approval gate passed with zero open review units and strict-validation evidence shows zero issues when translations changed; this workflow does not run the tool
 - [ ] No open `TODO` issues remain in `{req_name}-hitl-validation-issues.md` (if the file exists)
 
 **🚨 HARD GATE — this is a verification step, not a checklist to narrate.** A documented
@@ -187,7 +190,7 @@ as unproven until actively checked:
    requirement is **not** done — refuse the move, tell the user which issue(s) remain open,
    instead of silently marking it "Completed". If the file doesn't exist, this item counts
    as satisfied (no HITL feedback ever occurred).
-4. Your final response in this workflow MUST render all five checklist items above as an
+4. Your final response in this workflow MUST render all applicable checklist items above as an
    explicit ✅/❌ list with the verification evidence (e.g. `git status` output,
    file-existence check, Status-Board scan) — not a restatement of the checklist text. A
    skipped or unverified item is reported as ❌, not silently omitted.

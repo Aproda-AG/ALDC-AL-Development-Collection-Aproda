@@ -41,7 +41,7 @@ current one — but it is a change, so §5 needs updating alongside this spec.
 
 | # | Path | Action |
 |---|---|---|
-| D1 | `agents/al-translate-subagent.agent.md` | create |
+| D1 | `agents/al-translate-subagent.aproda.agent.md` | create |
 | D2 | `tools/aproda-ps-xliffsync/Invoke-AprodaBuildXliffSync.ps1` | modify |
 | D3 | `tools/aproda-ps-xliffsync/vendor/XliffSync/Model/XlfDocument.ps1` | **patch** — extend the state vocabulary (§5.8) |
 | D4 | `tools/aproda-ps-xliffsync/UPSTREAM.md` | record the patch |
