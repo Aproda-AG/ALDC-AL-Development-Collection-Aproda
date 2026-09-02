@@ -162,6 +162,17 @@ function Test-AprodaApproved {
         [System.Xml.XmlNode]$Unit
     )
 
+    $translation = $Document.GetUnitTranslation($Unit)
+    if ([string]::IsNullOrWhiteSpace($translation)) {
+        return $false
+    }
+
+    $targetNode = $Unit.SelectSingleNode("./*[local-name()='target']")
+    $hasStateAttribute = $targetNode -and $targetNode.Attributes -and $targetNode.Attributes['state']
+    if (-not $hasStateAttribute) {
+        return $true
+    }
+
     return $Document.GetState($Unit) -eq [XlfTranslationState]::Translated
 }
 

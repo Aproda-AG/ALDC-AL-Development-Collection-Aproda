@@ -225,6 +225,21 @@ try {
         $validation = Invoke-Stage0Tool @{ AppPath = $project; Action = 'Validate' }
         Assert-Stage0 ($validation.Statistics.NeedsReview -eq 1 -and $validation.Statistics.Missing -eq 4) 'Text with an unmapped state was not classified as needsReview.'
     }
+    Invoke-Stage0Case 'T28' {
+        $project = New-Stage0Project; [xml]$xml = Get-Content -LiteralPath (Join-Path $project 'Stage0.de-CH.xlf')
+        foreach ($unit in $xml.SelectNodes("//*[local-name()='trans-unit']")) {
+            $source = $unit.SelectSingleNode("./*[local-name()='source']").InnerText
+            $target = $unit.SelectSingleNode("./*[local-name()='target']")
+            $target.InnerText = $source
+            if ($target.Attributes['state']) {
+                [void]$target.Attributes.RemoveNamedItem('state')
+            }
+        }
+        $xml.Save((Join-Path $project 'Stage0.de-CH.xlf'))
+        $validation = Invoke-Stage0Tool @{ AppPath = $project; Action = 'Validate'; FailOnUnapproved = $true }
+        Assert-Stage0 ($validation.Statistics.Missing -eq 0 -and $validation.Statistics.NeedsReview -eq 0 -and $validation.Statistics.Approved -eq 5) 'Filled targets without state were not treated as approved.'
+        Assert-Stage0 ($validation.UnapprovedCount -eq 0) 'Approval gate still counted state-less filled targets as unapproved.'
+    }
     Invoke-Stage0Case 'T19' {
         $project = New-Stage0Project -IncludeSecondTarget; $export = Export-Stage0Batch $project; $responsePath = Write-Stage0Response $project (New-Stage0Response $export.Batch); $before = Get-Stage0TargetHashes $project; $previousFailureAtCommit = $env:APRODA_XLIFFSYNC_TEST_FAIL_COMMIT_AT; $env:APRODA_XLIFFSYNC_TEST_FAIL_COMMIT_AT = '2'
         try {
