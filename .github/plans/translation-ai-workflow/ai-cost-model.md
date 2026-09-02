@@ -207,48 +207,69 @@ in that spec's §9 open point 2. Re-run `Resolve` against this exact corpus once
 compare `totals.invariant` / `totals.memoryExact` against the "34 open, 0 invariant, 0 memory" baseline
 implied here (stage 0 has no such tiers, so every open unit reached AI).
 
-### Run C — 2026-09-02, second-wave duplicates (real tier-2 exact-reuse candidates)
+### Run C — 2026-09-02, second-wave duplicates (real tier-2 exact-reuse candidates), re-run after the note-designation fix
 
 After Run B, its 34 units were `translated`/approved, so a second wave of 7 fields/labels was added to
 the AL source, each reusing the exact source + context class of an already-approved unit from Run B
 (`Second Release`, `Alt Posting Date`, `Third Description`, `ReleaseStatusAltTxt`,
 `CustomerNotFoundAltErr`, `SecondReleaseAction`, plus its `ToolTip`) — this is the corpus that turns
 tier 2 into a real, non-trivial win instead of a first-occurrence no-op (see the analysis that led to
-this second wave, above §9's open point 2 discussion).
+this second wave, above §9's open point 2 discussion). This run used the fixed tool (`c` field populated
+— see "second finding" below) and is the version to treat as the recorded stage 0 result; the earlier
+same-day attempt with the empty-`c` bug is superseded by it.
 
-- `Sync`: reported **41** open units, not the 7 expected from the second-wave addition alone. Corpus
-  grew from 3874 → **3881** translatable units total (+7, consistent with the intended addition), so the
-  total-count side is unsurprising; only the **open-count** side (41 vs. 7) is the anomaly.
-- `ExportOpen -MaxItems 80` → subagent → `Apply`: **41/41 applied, 0 rejected**.
-- Pre-review `Report`: 41 pending, 0 accepted, 0 corrected, 0 stale.
-- Pre-review XML check: 3881 units, 0 missing, 41 `needsReview`, no BOM, correct namespace.
-- Post-review (PoEdit pass) `Validate -FailOnUnapproved`: 0 missing, 0 needsReview, 3881 valid, 0
-  unapproved, gate **passed**, exit 0.
-- 2 pre-existing `ß` warnings remain (unchanged from Run B) — still outside any reviewed batch's scope.
+- New batch, after the fix was deployed to the project's tool copy: `393582c6-f7fa-4390-a9df-9f1e23f7da8f`.
+- `Sync` → `ExportOpen -MaxItems 80` → subagent → `Apply`: **41/41 exported, translated and applied, 0
+  rejected**. Technical response check passed (batch ID, key order, no `ß`).
+- Pre-review `Validate`: 3881 units, 0 missing; 43 units in review (41 from this batch + 2 pre-existing,
+  unrelated).
+- Post-review (PoEdit pass) **strict** `Validate -FailOnIssues -FailOnUnapproved`: 3881/3881 valid, 0
+  missing, 0 needsReview, 0 unapproved, 0 technical issues, gate **passed**, exit 0.
+- Post-review `Report`: **41 accepted, 0 corrected, 0 pending, 0 stale — correction rate 0 (0 %)**.
+- Base app build: succeeded, 0 warnings.
+- 2 pre-existing `ß` warnings remain (unchanged from Run B), unrelated to this batch, non-blocking.
+- Evidence saved: `evidence/run-c-batch.ai.json`, `run-c-batch.manifest.json`, `run-c-response.json`,
+  `run-c-report.json` (all four artefacts of this run; supersede the earlier, pre-fix `run-c-batch.ai.json`).
 
-**The 41-vs-7 anomaly, resolved from the batch evidence.** The actual `batch.ai.json` for this run is
-saved at `evidence/run-c-batch.ai.json`. It shows the 41 open units are not the 7 new fields/labels plus
-34 leftovers — they include **duplicates of units that should already have been approved in Run B**:
-`Release` appears 6 times (`k12,13,20,22,33,35`, all sharing hash `e02`) where only 3 are the intended
-second-wave duplicates (the other 3 are the *original* Run-B instances); `Posting Date` appears 3 times
-(`k9,29,30`) against an intended 2; and, most tellingly, `Region Responsible` (`k26,32`) and
-`Translation Remark` (`k28,41`) — fields that predate *all* of today's fixture work and were never
-duplicated by any edit in this session — each appear **twice**. **Checked and disproven:** only one copy
-of each fixture file (`ItemTranslationTest.TableExt.al`, `ItemCardTranslTest.PageExt.al`,
-`TranslationTestMgt.Codeunit.al`) exists anywhere under the Gustav Gerig repo — this is not a duplicate
-compiled object. The cause of the 41-vs-7 discrepancy is still open; re-derive it once the note-designation
-fix below is in and the context class per unit is actually visible, which makes distinguishing genuine
-second-wave duplicates from pre-existing leftovers far easier than counting raw source-text repeats.
+**The 41-vs-7 anomaly, now fully explained from the manifest.** Cross-referencing `evidence/run-c-batch.manifest.json`'s
+`unitId`s against the batch's `c` (context) values shows the 41 open units are **exactly** every
+translatable unit belonging to the three touched AL objects — `Codeunit 4157415965` ("Translation Test
+Mgt", 18 units), `PageExtension 4123091762` ("Item Card Transl. Test", 10 units), `TableExtension
+3276313895` ("Item Translation Test", 13 units) — 18 + 10 + 13 = 41 exactly. This includes units that
+predate *all* of today's fixture work (`Region Responsible`, `Translation Remark`, `Run Translation
+Test`) and units approved earlier the same day in Run B (`CustomerNotFoundErr`, `ReleaseStatusTxt`,
+`PostingDateLbl`, …) — not a mix of "new + a few stale leftovers", but the **entire** translation surface
+of these three objects, every time. The earlier duplicate-file hypothesis is confirmed disproven (only
+one copy of each fixture file exists). Practical consequence for future test-corpus planning: editing
+any of these three specific AL objects reopens their whole translation surface for review, not just the
+newly added units — realistic for "this object changed, re-review it", but it means a stage-1 comparison
+against this corpus must count `totals.memoryExact` against *all 41*, not just the 7 intentionally
+duplicated ones, when judging whether tier 2 resolved the right subset.
 
-**Second finding — confirmed as a real script bug, now fixed.** Every item in the batch carried
-`"c": ""`. This was **not** an empty note in the real project — a raw excerpt of the actual `.g.xlf`
-confirmed a correctly populated
+**Second finding — confirmed as a real script bug, now fixed.** The first same-day attempt at this run
+had every item carrying `"c": ""`. This was **not** an empty note in the real project — a raw excerpt of
+the actual `.g.xlf` confirmed a correctly populated
 `<note from="Xliff Generator">Codeunit Translation Test Mgt - NamedType DeliveryNoteCreatedMsg</note>`.
 The bug was in `Invoke-AprodaBuildXliffSync.ps1`: every direct `[XlfDocument]::LoadFromPath(...)` call
 outside the two vendor functions (`Sync-XliffTranslations`, `Test-XliffTranslations`) left
 `developerNoteDesignation`/`xliffGeneratorNoteDesignation` unset, so every note lookup silently matched
 nothing. Fixed by routing all five call sites through a new `Get-AprodaXlfDocument` helper that sets both
 designations after loading; regression-guarded by Stage0 test T29 (`ExportOpen`'s `c` field must equal the
-fixture's actual note). This was more consequential than the duplicate-count anomaly above: without the
-fix, `Get-AprodaContextClass` (`stage-1.spec.md` §4.1) would have seen an empty note on **every** unit in
-**every** real project, not just this one, and tier 2 would never have resolved anything anywhere.
+fixture's actual note). This re-run, using the fixed tool copy, confirms the fix: every one of the 41
+items in `evidence/run-c-batch.ai.json` now carries its real, non-empty context note. This was more
+consequential than the duplicate-count anomaly above: without the fix, `Get-AprodaContextClass`
+(`stage-1.spec.md` §4.1) would have seen an empty note on **every** unit in **every** real project, not
+just this one, and tier 2 would never have resolved anything anywhere.
+
+**Third finding — the real `Xliff Generator` note format, now confirmed for both cases stage-1.spec.md's
+open point 1 needed.** From this run's batch:
+- **Codeunit label (`NamedType`), two segments, no `Property`:** `Codeunit Translation Test Mgt -
+  NamedType CustomerNotFoundAltErr` — a label has nothing to name a property after.
+- **Field/control/action, three segments, explicit `Property <Name>`:** `TableExtension Item Translation
+  Test - Field Region Responsible - Property Caption` and `PageExtension Item Card Transl. Test - Action
+  ReleaseAction - Property ToolTip`.
+- Separator is `" - "` (space-dash-space); each segment is `<Word> <Name>`, and the object-type word for
+  an *extension* object is the extension type itself (`TableExtension`, `PageExtension`), not the base
+  type (`Table`, `Page`) `translation-architecture-options.md` §4.2's example table shows — a base
+  object's own field (never seen in this project, which only ships extensions) would presumably read
+  `Table|Field|Caption`, but that is unverified; every note observed so far is from an extension object.

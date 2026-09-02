@@ -84,29 +84,33 @@ function Get-AprodaContextClass {
 ```
 
 Derives the three-part class of §4.2 (`<ObjectType>|<ElementType>|<Property>`) from
-`GetUnitXliffGeneratorNote($Unit)`. **Partially confirmed against a real `.g.xlf` (2026-09-02, Gustav
-Gerig AG Base)** — a label unit's note reads
-`Codeunit Translation Test Mgt - NamedType DeliveryNoteCreatedMsg`: dash-separated (`" - "`, not the
-synthetic fixtures' `|`), each segment `<Word> <Name>`, object type / element type are each segment's
-**first word**, matching the general shape assumed below. **Still unconfirmed:** whether a *field
-property* note (e.g. a table field's `Caption`) carries a third `Property` segment the way §4.2's example
-table shows (`Table|Field|Caption`) — the only note verified so far is a `NamedType` (label), which has
-**two** segments, not three, because a label has no property to name. Confirm the field-caption case
-(three segments vs. two) against the same `.g.xlf` before finalizing the regex; do not assume the
-`Table MyTable - Field MyField - Property Caption` shape used below is correct until a field's own note
-has been read directly. Note also: the stage-0 fixtures' `c` field passthrough was itself unaffected by
-the note format (verbatim passthrough needs no parsing) — the bug found while investigating this
-(`Get-AprodaXlfDocument` not setting note designations on most `LoadFromPath` calls, so `c` came back
-empty for *every* unit regardless of note format) is already fixed in stage 0's codebase; this stage's
-parser only needs to handle the note *content*, not chase a second bug in reading it.
+`GetUnitXliffGeneratorNote($Unit)`. **Confirmed against a real `.g.xlf` (2026-09-02, Gustav Gerig AG
+Base), both shapes that occur:**
+
+- **Field / control / action (three segments):** `TableExtension Item Translation Test - Field Region
+  Responsible - Property Caption` and `PageExtension Item Card Transl. Test - Action ReleaseAction -
+  Property ToolTip`. Separator is `" - "` (space-dash-space); each segment is `<Word> <Name>`; the third
+  segment is always literally `Property <PropertyName>`.
+- **Codeunit label (`NamedType`), two segments, no `Property`:** `Codeunit Translation Test Mgt -
+  NamedType CustomerNotFoundAltErr` — a label has nothing to name a property after, so there is no third
+  segment at all, not an empty one.
+- **Extension object types are the extension keyword, not the base type:** `TableExtension`/
+  `PageExtension`, not `Table`/`Page` — every note observed in this project is from an extension object;
+  a base object's own field note (not observed here) may or may not follow the same convention and is
+  unverified. Document this if a project shipping base-object translations is ever used as a corpus.
 
 **Contract:**
 - Returns a string in the form `ObjectType|ElementType|Property` on success.
-- Returns `$null` when the note is empty, missing, or does not parse into three segments — such a unit
-  is invisible to tier 2 (never matched, never matched against), but still flows through every other
-  tier unaffected. Never throw.
-- Object type / element type are the **first word** of their segment (`Table`, `Page`, `Codeunit`,
-  `Report`, `Field`, `Action`, `NamedType`, `Label`, …), not the object/element name.
+- For the two-segment (`NamedType`) shape, synthesize the third part as the literal `Label` — this is
+  what makes a label's context class read `Codeunit|NamedType|Label`, matching §4.2's own example, even
+  though the raw note never spells out a `Property` segment for labels.
+- Returns `$null` when the note is empty, missing, or does not parse into two or three `<Word> <Name>`
+  segments — such a unit is invisible to tier 2 (never matched, never matched against), but still flows
+  through every other tier unaffected. Never throw.
+- Object type / element type are the **first word** of their segment (`Table`, `TableExtension`, `Page`,
+  `PageExtension`, `Codeunit`, `Report`, `Field`, `Action`, `Control`, `NamedType`, …), not the
+  object/element name. The `Property` segment's word after `Property ` is used verbatim (`Caption`,
+  `ToolTip`, `OptionCaption`, …), not just its first word.
 
 ### 4.2 `Test-AprodaInvariant`
 
@@ -301,7 +305,7 @@ closed by this stage's D16).
 
 | # | Item | Needed by |
 |---|---|---|
-| 1 | **Partially resolved 2026-09-02** (§4.1): label notes confirmed dash-separated, two segments, first-word-per-segment. **Still open:** confirm whether a field-property note carries a third `Property` segment, using a real field's own `.g.xlf` note (not yet observed) | sub-cycle 1, before T12/T13 are written against a guessed shape |
+| 1 | ~~Confirm the real note format~~ — **resolved 2026-09-02** (§4.1): both shapes confirmed from a real `.g.xlf` (Gustav Gerig AG Base) — two-segment `NamedType`/label notes and three-segment field/control/action notes with an explicit `Property <Name>` segment. Also confirmed: extension objects report `TableExtension`/`PageExtension`, not `Table`/`Page`, as the object-type word | none — closed |
 | 2 | ~~Which real BC app supplies acceptance criterion 2's corpus~~ — **resolved 2026-09-02**: Gustav Gerig AG Base, using the extended 34-open-unit fixture set. Baseline recorded in `ai-cost-model.md` §5 ("Run B"): 34 open, 0 invariant/memoryExact (stage 0 has no tiers), correction rate 0 %. Re-run `Resolve` against this exact corpus once implemented and compare | before closing criterion 2 |
 
 No fallback-model question, no D-number question — both stage-0 open points were specific to that
