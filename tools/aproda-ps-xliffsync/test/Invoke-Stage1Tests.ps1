@@ -110,7 +110,7 @@ function Import-Stage1ContextClassFunctions {
     . ([scriptblock]::Create((Get-Content -LiteralPath (Join-Path $toolDirectory 'vendor\XliffSync\Model\XlfDocument.ps1') -Raw)))
     $toolSource = Get-Content -LiteralPath $toolPath -Raw
     $ast = [System.Management.Automation.Language.Parser]::ParseInput($toolSource, [ref]$null, [ref]$null)
-    foreach ($functionName in @('Get-AprodaXlfDocument', 'Get-AprodaContextClass')) {
+    foreach ($functionName in @('Get-AprodaXlfDocument', 'Get-AprodaNormalisedObjectType', 'Get-AprodaContextClass')) {
         $definition = @($ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $args[0].Name -eq $functionName }, $true))[0]
         Assert-Stage1 ($null -ne $definition) "Function '$functionName' is missing from the tool script."
         . ([scriptblock]::Create($definition.Extent.Text))
@@ -252,8 +252,8 @@ try {
     }
     Invoke-Stage1Case 'T12' {
         $cases = @(
-            @{ Note = 'TableExtension Item Translation Test - Field Region Responsible - Property Caption'; Expected = 'TableExtension|Field|Caption' },
-            @{ Note = 'PageExtension Item Card Transl. Test - Action ReleaseAction - Property ToolTip'; Expected = 'PageExtension|Action|ToolTip' },
+            @{ Note = 'TableExtension Item Translation Test - Field Region Responsible - Property Caption'; Expected = 'Table|Field|Caption' },
+            @{ Note = 'PageExtension Item Card Transl. Test - Action ReleaseAction - Property ToolTip'; Expected = 'Page|Action|ToolTip' },
             @{ Note = 'Codeunit Translation Test Mgt - NamedType CustomerNotFoundAltErr'; Expected = 'Codeunit|NamedType|Label' },
             @{ Note = 'Report Item List Test - Label TotalCaption - Property Caption'; Expected = 'Report|Label|Caption' }
         )
@@ -273,6 +273,26 @@ try {
             $actual = Get-AprodaContextClass -Document $document -Unit $unit
             Assert-Stage1 ($null -eq $actual) "Context class for note '$note' should be `$null but was '$actual'."
         }
+    }
+    Invoke-Stage1Case 'T14' {
+        # Base vs. extension is a compilation technicality, not a translation difference: any
+        # "...Extension" object type must normalise to its base type, generically (not a
+        # hardcoded Table/Page pair) - a Field/Action/NamedType distinction must still stay separate.
+        $cases = @(
+            @{ Note = 'Table Item - Field Description - Property Caption'; Expected = 'Table|Field|Caption' },
+            @{ Note = 'TableExtension Item Translation Test - Field Second Description - Property Caption'; Expected = 'Table|Field|Caption' },
+            @{ Note = 'ReportExtension Sales Invoice Ext - Label FooterTxt - Property Caption'; Expected = 'Report|Label|Caption' },
+            @{ Note = 'EnumExtension Item Type Ext - EnumValue Service - Property Caption'; Expected = 'Enum|EnumValue|Caption' },
+            @{ Note = 'PermissionSetExtension Base Ext - NamedType Foo'; Expected = 'PermissionSet|NamedType|Label' }
+        )
+        foreach ($case in $cases) {
+            $path = New-Stage1NoteDocument -Note $case.Note
+            $document = Get-AprodaXlfDocument -Path $path
+            $unit = $document.FindTranslationUnit('u1')
+            $actual = Get-AprodaContextClass -Document $document -Unit $unit
+            Assert-Stage1 ($actual -eq $case.Expected) "Context class for note '$($case.Note)' was '$actual', expected '$($case.Expected)'."
+        }
+        Assert-Stage1 ($cases[0].Expected -eq $cases[1].Expected) 'Table and TableExtension must normalise to the identical context class so tier 2 can match across them.'
     }
 }
 finally {

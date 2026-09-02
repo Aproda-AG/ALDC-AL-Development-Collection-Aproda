@@ -219,6 +219,20 @@ function Test-AprodaSwissOrthography {
     return $Text -notmatch 'ß'
 }
 
+function Get-AprodaNormalisedObjectType {
+    param(
+        [Parameter(Mandatory)]
+        [string]$ObjectType
+    )
+
+    # Base vs. extension is a compilation technicality, not a translation difference: a
+    # TableExtension field behaves identically to a Table field. Strips ANY "...Extension"
+    # suffix generically (TableExtension, PageExtension, ReportExtension, EnumExtension,
+    # PermissionSetExtension, ...), not a hardcoded list, so new BC extension object types
+    # are covered without a code change here.
+    return $ObjectType -replace 'Extension$', ''
+}
+
 function Get-AprodaContextClass {
     param(
         [Parameter(Mandatory)]
@@ -240,7 +254,8 @@ function Get-AprodaContextClass {
         if (-not $objectTypeMatch.Success -or -not $elementTypeMatch.Success) {
             return $null
         }
-        return '{0}|{1}|Label' -f $objectTypeMatch.Groups[1].Value, $elementTypeMatch.Groups[1].Value
+        $objectType = Get-AprodaNormalisedObjectType -ObjectType $objectTypeMatch.Groups[1].Value
+        return '{0}|{1}|Label' -f $objectType, $elementTypeMatch.Groups[1].Value
     }
     if ($segments.Count -eq 3) {
         $objectTypeMatch = [regex]::Match($segments[0], '^(\S+)\s')
@@ -249,7 +264,8 @@ function Get-AprodaContextClass {
         if (-not $objectTypeMatch.Success -or -not $elementTypeMatch.Success -or -not $propertyMatch.Success) {
             return $null
         }
-        return '{0}|{1}|{2}' -f $objectTypeMatch.Groups[1].Value, $elementTypeMatch.Groups[1].Value, $propertyMatch.Groups[1].Value
+        $objectType = Get-AprodaNormalisedObjectType -ObjectType $objectTypeMatch.Groups[1].Value
+        return '{0}|{1}|{2}' -f $objectType, $elementTypeMatch.Groups[1].Value, $propertyMatch.Groups[1].Value
     }
     return $null
 }
