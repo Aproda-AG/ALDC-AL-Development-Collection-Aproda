@@ -74,5 +74,12 @@ tableextension 50900 "Item Translation Test" extends Item
             // Description" above (already approved from an earlier round)
             Caption = 'Description';
         }
+        field(50911; "Fourth Description"; Text[100])
+        {
+            // third wave: reuses the exact source + context class (Table|Field|Caption)
+            // of "Second Description"/"Third Description" above, both approved by the
+            // time this runs - a genuine tier-2 exact-reuse candidate for stage 1
+            Caption = 'Description';
+        }
     }
 }

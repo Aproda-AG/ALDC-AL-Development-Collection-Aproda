@@ -72,6 +72,19 @@ pageextension 50901 "Item Card Transl. Test" extends "Item Card"
                     Rec."Test Status" := Rec."Test Status"::Released;
                 end;
             }
+            action(VersionInfoAction)
+            {
+                // third wave: Caption has no Unicode letter (digits and a period only) -
+                // a genuine tier-1 invariant candidate in a new context class
+                // (Page|Action|Caption), distinct from the existing Table/Codeunit cases
+                ApplicationArea = All;
+                Caption = '2.0';
+                ToolTip = 'Shows the current test object version.';
+
+                trigger OnAction()
+                begin
+                end;
+            }
         }
     }
 }
