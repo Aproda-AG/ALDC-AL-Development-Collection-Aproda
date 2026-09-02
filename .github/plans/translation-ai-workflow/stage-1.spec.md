@@ -273,9 +273,10 @@ closed by this stage's D16).
 
 1. All of `Invoke-Stage1Tests.ps1` (T1–T13) pass, and all of stage 0's `Invoke-Stage0Tests.ps1` (T1–T28)
    still pass unmodified — this stage must not regress stage 0.
-2. A `Resolve` run against a real BC app (the same one used for stage 0's criterion 2, or another) shows
-   `totals.invariant > 0` and/or `totals.memoryExact > 0` on a corpus with genuine repeats — a project
-   with zero reused strings is not a valid demonstration of this stage's value.
+2. A `Resolve` run against Gustav Gerig AG Base, on the exact 34-open-unit corpus recorded as
+   **"Run B"** in `ai-cost-model.md` §5, shows `totals.invariant > 0` and/or `totals.memoryExact > 0` —
+   compare directly against that pre-stage-1 baseline (34 open, 0 invariant, 0 memoryExact, correction
+   rate 0 %). A corpus with zero reused strings is not a valid demonstration of this stage's value.
 3. `Get-AprodaTranslationStatistics` and the approval gate (`Validate -FailOnUnapproved`) are unaffected
    by `Resolve` having run — tier 1/2 write `translated` directly (§4.8), so the gate must pass on a
    fully `Resolve`d project with no AI involvement and no PoEdit pass, which is the whole point of a
