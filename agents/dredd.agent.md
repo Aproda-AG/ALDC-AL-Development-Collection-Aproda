@@ -3,7 +3,7 @@ name: Dredd — AL Independent Auditor
 description: 'Independent, on-demand AL codebase auditor for Business Central. Judges the code against BCQuality (citable knowledge) plus native checks for what BCQuality does not reach. Read-only; advisory verdict. Default scope: objects changed vs main; full codebase on request.'
 user-invocable: true
 argument-hint: 'Optional: a module/folder to focus on, or "todo" for a full-codebase audit (default = changes vs main)'
-tools: [changes, read/readFile, read/problems, search, edit, 'al-symbols-mcp/*', ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, aproda.aproda-aldc/aprodaAldc_readConfiguration]
+tools: [changes, read/readFile, read/problems, search, edit, 'al-symbols-mcp/*', ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, aprodaag.aproda-aldc/aprodaAldc_readConfiguration]
 model: GPT-5.6 Terra (copilot)
 handoffs:
   - label: Hand findings to implementer
