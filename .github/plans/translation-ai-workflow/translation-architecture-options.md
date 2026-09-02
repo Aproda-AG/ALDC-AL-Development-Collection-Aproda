@@ -492,11 +492,9 @@ Two honest notes on ordering:
 
 ### Open
 
-| # | Item | Blocks | Note |
-|---|---|---|---|
-| 6 | `D-` entry recording this architecture | registration, not implementation | To be authored with the stage 0 commit, since D-32 was deliberately deferred |
+None. Item 6 (the `D-` entry recording this architecture) is closed — `D-32` is authored and registered.
 
-Nothing blocks implementation. Stage 0 can start.
+One stage 0 acceptance criterion is still outstanding, and it is not a decision: criterion 2, an end-to-end run against a real BC app producing `ai[]` and a measured correction rate. It needs an AL project with symbols and a build, so it cannot run in the framework repository. Take that measurement before stage 1 lands — once the deterministic tiers change which units reach the model, the stage 0 baseline can no longer be obtained.
 
 ### Verified sources
 
