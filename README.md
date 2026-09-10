@@ -62,6 +62,17 @@ Then, from the Command Palette:
 - `AL Collection: Update Toolkit` — merges a new version, preserving your customizations
 - `AL Collection: Validate Installation` — verifies compliance
 
+### GitHub Copilot (Plugin Marketplace)
+
+ALDC also ships as an installable Copilot plugin — `plugin.json` declares the agents (`agents/`), skills (`skills/`), and prompts (`prompts/`) that get installed, for editors that support the Copilot plugin marketplace:
+
+```bash
+copilot plugin marketplace add javiarmesto/ALDC-AL-Development-Collection
+copilot plugin install aldc@aldc-marketplace
+```
+
+The agents, skills, and prompts are installed under your Copilot plugins folder and become available immediately, no `.github/` copy step required.
+
 ### Claude Code (Plugin)
 
 ```bash

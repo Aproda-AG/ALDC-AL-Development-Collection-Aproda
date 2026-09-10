@@ -1,0 +1,58 @@
+{
+  "name": "aldc",
+  "version": "4.2.0",
+  "description": "AI-Native AL Development Collection for Microsoft Dynamics 365 Business Central. Agents (architect, developer, conductor, pre-sales, agent-builder, triage, dredd) + TDD subagents, skills, and workflows for extension-only development with TDD, BCQuality-cited review/audit, event-driven architecture, and HITL gates.",
+  "author": {
+    "name": "javiarmesto",
+    "url": "https://github.com/javiarmesto"
+  },
+  "homepage": "https://github.com/javiarmesto/ALDC-AL-Development-Collection",
+  "repository": "https://github.com/javiarmesto/ALDC-AL-Development-Collection",
+  "license": "MIT",
+  "keywords": [
+    "AL",
+    "Business Central",
+    "Dynamics 365",
+    "ERP",
+    "extension-development",
+    "TDD",
+    "event-driven",
+    "Microsoft",
+    "architecture",
+    "testing",
+    "API",
+    "debugging"
+  ],
+  "agents" : "agents/",
+  "skills" : "skills/",
+  "commands" : "prompts/",
+  "mcpServers": {
+    "al-symbols-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@nicholasglazer/al-symbols-mcp"]
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "microsoft-docs": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
+    }
+  },
+  "userConfig": {
+    "bcSandboxUrl": {
+      "type": "string",
+      "title": "BC Sandbox URL",
+      "description": "URL of your Business Central sandbox environment (e.g., https://businesscentral.dynamics.com/your-tenant)",
+      "sensitive": false
+    },
+    "publisherName": {
+      "type": "string",
+      "title": "Publisher Name",
+      "description": "Your extension publisher name for app.json",
+      "sensitive": false
+    }
+  }
+}
