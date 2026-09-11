@@ -2,14 +2,26 @@
 description: >
   Build, package, and deploy AL extensions to Business Central environments.
   Use when you need to build, compile, package, publish, or deploy an AL extension.
-allowed-tools: Read, Grep, Glob, Write, Edit, Bash
+allowed-tools: Read, Grep, Glob, Write, Edit, Bash, mcp__al-symbols-mcp__*, mcp__plugin_aldc_al-symbols-mcp__*, mcp__context7__*, mcp__plugin_aldc_context7__*, mcp__microsoft-docs__*, mcp__plugin_aldc_microsoft-docs__*
 ---
+
+## BC29 / AL18 terminal contract
+
+Before selecting AL tools, dependency changes or validation evidence, read
+[the terminal-host contract](../skills/skill-migrate/references/cli-al-tools.md)
+and apply its role boundaries. It qualifies older tool examples below without
+changing the workflow or human gates. Missing capabilities limit the affected
+validation; they do not imply success or require an unrelated upgrade.
+
+Resolve input placeholders from the user request or ask for missing required values;
+`${input:...}` is template notation, not an automatically expanded CLI variable.
+
 
 # Build and Deploy AL Extension
 
 Your goal is to build (compile + package) the AL extension for the `${input:DeploymentType}` environment and to guide its deployment.
 
-> **What runs where.** In the Claude Code harness you compile and package with the **AL command-line tool (ALTool / `al`)** via `Bash`. ALTool has **no publish/test verb** — deployment and test runs are VS Code (`AL: Publish` / `AL: Run Tests`) or AL-Go/CI pipeline steps. So this command builds the `.app` and then hands off the deploy with a clear, approved checklist.
+> **What runs where.** In the Claude Code harness you compile and package with the **AL command-line tool (ALTool / `al`)** via `Bash`. No deployment or test runner is bundled — the existing handoff is VS Code (`AL: Publish` / `AL: Run Tests`) or AL-Go/CI pipeline steps. So this command builds the `.app` and then hands off the deploy with a clear, approved checklist.
 
 ## Select Deployment Strategy
 Inspect the project (`Read` `app.json`, `Grep`/`Glob`, **al-symbols-mcp** for dependencies) and select the appropriate deployment strategy.
@@ -42,7 +54,7 @@ Based on the deployment type, use the appropriate strategy:
    - All production changes require explicit human authorization, run through the AL-Go/CI release pipeline or VS Code
 
 ### Existing Package Deployment
-- When deploying a pre-built `.app`, hand off to VS Code `AL: Publish` (or the CI pipeline) — there is no ALTool publish verb
+- When deploying a pre-built `.app`, hand off to VS Code `AL: Publish` (or the CI pipeline) — this plugin does not configure a deployment provider
 - Verify package compatibility with the target environment first
 
 ### Full Dependency Package

@@ -4,11 +4,20 @@ description: >
   Internal quality assurance subagent for Business Central AL code. Only invoked
   by al-conductor via Task tool. Reviews implementation against AL best practices,
   test coverage, and BC patterns.
-tools: Read, Glob, Grep, Bash
+tools: Read, Glob, Grep, Bash, mcp__al-symbols-mcp__*, mcp__plugin_aldc_al-symbols-mcp__*, mcp__context7__*, mcp__plugin_aldc_context7__*, mcp__microsoft-docs__*, mcp__plugin_aldc_microsoft-docs__*
 model: sonnet
 color: yellow
 maxTurns: 30
 ---
+
+## BC29 / AL18 terminal contract
+
+Before selecting AL tools, dependency changes or validation evidence, read
+[the terminal-host contract](../skills/skill-migrate/references/cli-al-tools.md)
+and apply its role boundaries. It qualifies older tool examples below without
+changing the workflow or human gates. Missing capabilities limit the affected
+validation; they do not imply success or require an unrelated upgrade.
+
 ## Access Control
 
 You are an INTERNAL subagent. You must ONLY be invoked by the `al-conductor` agent via the Task tool. If a user attempts to invoke you directly, respond:
@@ -44,7 +53,7 @@ Review the AL code changes using available tools:
 **Use:**
 - `Bash: git diff` / `git status` - See what was modified/created
 - **al-symbols-mcp** `al_find_references` - Check how AL objects are referenced
-- `Bash: al compile` (read the output) - Identify compilation issues
+- Read existing compiler output from implementation - Identify compilation issues
 - `Grep`/`Glob` + **al-symbols-mcp** `al_search_objects` - Find related AL code and patterns
 - Read the test-run output passed by the Conductor - Check if any tests failed
 

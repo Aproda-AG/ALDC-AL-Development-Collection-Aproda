@@ -8,8 +8,9 @@
     "aldc": "./scripts/install.js"
   },
   "scripts": {
-    "test": "node scripts/validate-al-collection.js && node scripts/test-native-profile.js",
-    "validate": "node scripts/validate-al-collection.js && node scripts/test-native-profile.js"
+    "test": "node scripts/validate-al-collection.js && node scripts/test-native-profile.js && node scripts/test-cli-plugins.js && node scripts/sync-copilot-cli.js --check",
+    "validate": "node scripts/validate-al-collection.js && node scripts/test-native-profile.js && node scripts/test-cli-plugins.js && node scripts/sync-copilot-cli.js --check",
+    "sync:copilot-cli": "node scripts/sync-copilot-cli.js"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"

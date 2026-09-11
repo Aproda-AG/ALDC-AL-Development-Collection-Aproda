@@ -3,8 +3,20 @@ description: >
   Initialize AL development environment and workspace for Business Central.
   Use when setting up a new project, initializing the workspace, or configuring
   the development environment.
-allowed-tools: Read, Grep, Glob, Write, Edit, Bash, WebSearch
+allowed-tools: Read, Grep, Glob, Write, Edit, Bash, WebSearch, mcp__al-symbols-mcp__*, mcp__plugin_aldc_al-symbols-mcp__*, mcp__context7__*, mcp__plugin_aldc_context7__*, mcp__microsoft-docs__*, mcp__plugin_aldc_microsoft-docs__*
 ---
+
+## BC29 / AL18 terminal contract
+
+Before selecting AL tools, dependency changes or validation evidence, read
+[the terminal-host contract](../skills/skill-migrate/references/cli-al-tools.md)
+and apply its role boundaries. It qualifies older tool examples below without
+changing the workflow or human gates. Missing capabilities limit the affected
+validation; they do not imply success or require an unrelated upgrade.
+
+Resolve input placeholders from the user request or ask for missing required values;
+`${input:...}` is template notation, not an automatically expanded CLI variable.
+
 
 # AL Environment Initialization
 
@@ -167,7 +179,7 @@ ${input:ProjectName}/
 
 ### Download Symbols
 
-Download required symbols (no ALTool verb — a human/pipeline step): run VS Code `AL: Download Symbols`, or restore the symbol package cache in CI.
+Download required symbols (use verified local restore or a human/pipeline step): run VS Code `AL: Download Symbols`, or restore the symbol package cache in CI.
 
 Verify all base application dependencies are available.
 

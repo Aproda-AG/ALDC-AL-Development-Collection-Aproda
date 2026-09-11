@@ -21,6 +21,12 @@ This skill should be loaded when:
 
 ## Core Patterns
 
+For BC29 / AL18, first read [AL18 capability checks](references/al18-capabilities.md)
+when selecting new manifest, public-resource, isolation, testing or translation
+features. Apply only the sections needed by the requirement; distinguish announced
+capabilities from locally verified declarations. Keep BC28 configuration unchanged
+unless an upgrade is part of the approved task.
+
 ### Pattern 1: App.json Platform Update
 
 Update the three version-sensitive properties in `app.json`:

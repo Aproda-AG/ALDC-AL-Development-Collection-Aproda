@@ -3,8 +3,20 @@ description: >
   Generate AL code for Business Central Agent SDK task integration. Applies patterns
   from skill-agent-task-patterns to generate production-ready codeunits, page
   extensions, and event subscribers. Use when implementing agent task integrations.
-allowed-tools: Read, Grep, Glob, Write, Edit, Bash
+allowed-tools: Read, Grep, Glob, Write, Edit, Bash, mcp__al-symbols-mcp__*, mcp__plugin_aldc_al-symbols-mcp__*, mcp__context7__*, mcp__plugin_aldc_context7__*, mcp__microsoft-docs__*, mcp__plugin_aldc_microsoft-docs__*
 ---
+
+## BC29 / AL18 terminal contract
+
+Before selecting AL tools, dependency changes or validation evidence, read
+[the terminal-host contract](../skills/skill-migrate/references/cli-al-tools.md)
+and apply its role boundaries. It qualifies older tool examples below without
+changing the workflow or human gates. Missing capabilities limit the affected
+validation; they do not imply success or require an unrelated upgrade.
+
+Resolve input placeholders from the user request or ask for missing required values;
+`${input:...}` is template notation, not an automatically expanded CLI variable.
+
 
 # Workflow: Generate Agent Task Integration Code
 

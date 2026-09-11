@@ -1,6 +1,7 @@
 # ALDC canónico: perfil nativo BC29 / AL18
 
-Adaptación optativa para **GitHub Copilot Chat en VS Code**. Mantiene los diez
+Adaptación optativa para **GitHub Copilot Chat en VS Code**, con contratos propios
+para los plugins de **Claude Code y Copilot CLI**. Mantiene los diez
 agentes, los documentos, las aprobaciones y el Conductor completo. No incorpora
 la orquestación de ALDC Graph. No es una release ni una certificación de BC29.
 
@@ -20,7 +21,8 @@ Se reutilizan decisiones de herramientas, no sus agentes, Doctor ni contratos de
 | --- | --- | --- |
 | `agents/`, `prompts/`, `instructions/`, `skills/` | `packages/foundation/` | Editar raíz; ejecutar `sync-foundation.js`. Nunca editar el espejo a mano. |
 | Agentes y prompts de raíz | Instalador npm/local | BC28 copia original; BC29 proyecta permisos y contratos al instalar. |
-| `claude-plugin/` | `.claude/` | Fuente independiente; sin cambios ni traslado de nombres VS Code. |
+| `claude-plugin/` | `.claude/` | Fuente Claude actualizada; espejo regenerado con `sync-claude-workspace.js`. |
+| `claude-plugin/` + modelos de `agents/` | `copilot-cli-plugin/` | Proyección específica y reproducible con `sync-copilot-cli.js`; entrada `aldc-cli` en el catálogo Copilot. |
 | `agents/` y `skills/` | Plugin Copilot de raíz | Conserva su superficie actual; el nuevo perfil se selecciona con el instalador. |
 | `docs/agents/`, `docs/prompts/` | Documentación histórica | No son la fuente de instalación; la matriz de este documento describe el perfil nuevo. |
 
@@ -28,7 +30,8 @@ Se reutilizan decisiones de herramientas, no sus agentes, Doctor ni contratos de
 completa de los agentes. La proyección falla si aparece un agente sin asignación
 de permisos o cambia la sección del Developer que necesita adaptación.
 Las skills existentes incorporan conocimiento condicionado a la versión; su
-espejo `foundation` se regenera. No se ha cambiado la distribución Claude.
+espejo `foundation` se regenera. Claude incorpora las mismas referencias AL18 y un contrato propio de terminal;
+Copilot CLI se genera desde esa fuente con adaptación explícita del host.
 
 Los workflows versionados publican documentación con push a `main` y releases con
 tags `v*.*.*` o ejecución manual. Crear esta rama no activa esos destinos. La PR
@@ -81,7 +84,8 @@ y skills si eliges una ubicación diferente de `.github`.
 Recarga VS Code y comprueba qué definición de cada agente ha cargado. Evita tener
 simultáneamente el plugin canónico y la instalación local con los mismos nombres.
 Instalar el plugin Marketplace actual **no selecciona BC29**. Copilot CLI, Claude
-Code y Codex requieren adaptación/validación propia; no uses este perfil allí.
+Code disponen ahora de la adaptación descrita más abajo; no usan este perfil
+VS Code. Codex queda fuera de esta propuesta.
 No se exige BC Atlas ni el puente comunitario de símbolos/LSP. Las operaciones
 no cubiertas por lo nativo se anotan como limitación; no se presupone equivalencia.
 BCQuality sigue siendo opcional mediante el proveedor/plugin que tengas disponible.
@@ -177,6 +181,7 @@ npm run validate
 node scripts/check-conformance.js
 node scripts/sync-foundation.js --check
 node scripts/sync-claude-workspace.js --check
+node scripts/sync-copilot-cli.js --check
 git diff --check
 ```
 
@@ -184,3 +189,109 @@ git diff --check
 directorios temporales y el modo offline de npm; no ejecutan AL ni conectan a BC.
 El validador de colección conserva 77 avisos preexistentes y 0 errores; la prueba
 de esta adaptación no declara esos avisos como capacidades verificadas.
+
+
+## Plugins de Claude Code y Copilot CLI
+
+Los cambios están en la misma rama, sin release, publicación ni cambio de versión.
+Los catálogos de `main` no adquieren esta adaptación hasta que se integre y publique
+según el proceso del mantenedor. Para revisar ahora, carga el checkout de la rama.
+El VSIX y el plugin Copilot de raíz conservan sus primitivas originales; esta
+adaptación de terminal no activa el perfil nativo dentro de la extensión VS Code.
+
+| Superficie | Fuente / distribución | Selección |
+| --- | --- | --- |
+| Claude Code | `claude-plugin/` y espejo `.claude/` | BC28 sigue válido; aplicar AL18 solo ante requisito/target BC29. |
+| Copilot CLI | `copilot-cli-plugin/`, generado; plugin `aldc-cli` | Mismo alcance condicional; herramientas terminal/MCP, sin nombres LM de VS Code. |
+| Copilot Chat | Instalador `--profile bc29-native` | Mantiene selección explícita BC28/BC29 descrita arriba. |
+
+Se mantienen diez agentes y diez comandos. Las quince skills Claude se conservan;
+cinco incorporan las referencias nuevas. El cuerpo original del Conductor Claude
+se preserva byte a byte tras añadir el contrato; CLI conserva el cuerpo completo
+con traducciones de vocabulario del host. Claude conserva sus modelos y Copilot CLI
+usa `claude-sonnet-4.6`, equivalente al modelo actual de los agentes Copilot de raíz.
+No se seleccionan modelos a partir de novedades de agentes integrados en BC.
+
+Los agentes y comandos enlazan directamente el contrato dentro de la skill de
+migración; no dependen de cargar el `CLAUDE.md` del plugin. Se corrigen los permisos
+MCP de Claude para los servidores ya declarados y se traducen explícitamente a
+permisos CLI. Los alias `Task` de Claude se conservan por compatibilidad (`Agent`
+en versiones nuevas). Los nombres MCP deben verificarse en la sesión activa.
+
+Architect/spec/Planning consumen diagnósticos y proponen dependencias; la ejecución
+AL y el grafo corresponden a Developer/Implementer. Review/Dredd contrastan la
+prueba bruta. Conductor mantiene coordinación y gates. Build/setup solo ejecutan
+su trabajo propio. La búsqueda de entorno no se atribuye al puente comunitario:
+requiere un proveedor realmente disponible y su esquema, o se declara pendiente.
+El test runner y otras capacidades AL18 requieren comprobación de versión/help.
+No se añaden servicios MCP, permisos automáticos de despliegue ni hooks Claude a CLI.
+BCQuality sigue opcional con el backstop nativo existente.
+
+### Prueba local exacta
+
+Usa una copia de proyecto separada, con el checkout de esta rama en otra carpeta.
+Confirma el commit con `git rev-parse HEAD`. Registra también las versiones de
+`claude --version` / `copilot --version`, ALTool y BC.
+
+Claude Code, desde tu copia de proyecto:
+
+```powershell
+claude --plugin-dir C:\src\ALDC-native29\claude-plugin
+```
+
+Comprueba `/plugin`, `/context` o `/agents`, los comandos `/aldc:` y `/mcp`. Pide a
+`aldc:al-architect` leer el contrato de terminal y localizar un objeto conocido.
+Conserva la traza de lectura, el nombre MCP expuesto, sus argumentos y el resultado.
+Para actualizar la prueba, vuelve a iniciar con `--plugin-dir` (o usa la recarga
+que soporte tu versión). No presupongas que el número de versión 4.2.0 renueva una
+instalación Marketplace en caché.
+
+Copilot CLI:
+
+```powershell
+copilot plugin install C:\src\ALDC-native29\copilot-cli-plugin
+copilot plugin list
+```
+
+Reinicia, revisa `/agent`, `/skills list` y `/mcp`. Comprueba diez agentes, las skills
+y los diez comandos mediante la ayuda del host; invoca los flujos por su nombre
+si tu versión usa otro prefijo de comandos. Reinstala la ruta tras cada cambio para
+renovar la caché. Evita duplicados del plugin `aldc` y definiciones de usuario/proyecto
+que oculten `aldc-cli`. `al-initialize` adapta las reglas a `.github/instructions`
+y `applyTo`, preservando archivos existentes; ejecútalo solo en la copia de prueba.
+
+En ambos hosts, pide a Developer comprobar ALTool/version/help y compilar App y Test
+sin publicar. Solicita una consulta de grafo útil solo si está disponible. Haz pasar
+las salidas reales a Review/Dredd y una fase completa por Conductor. Separa siempre
+herramienta declarada, referencia leída y operación ejecutada. La ausencia de un
+runner, grafo o proveedor de entorno no se convierte en un resultado satisfactorio.
+
+**Límite pendiente de carga:** Architect y Conductor completos superan los 30.000
+caracteres de la referencia genérica de custom agents. No se han reducido ni
+externalizado. La referencia específica de CLI no aclara ese límite: comprueba
+que tu versión los carga enteros y no los rechaza/trunca. Si no los admite, ese
+flujo queda pendiente de una decisión de compatibilidad, no validado por estas pruebas.
+
+### Validación de las distribuciones
+
+153 comprobaciones estáticas adicionales cubren manifiesto/catálogo, permisos,
+referencias incluidas, preservación completa del Conductor, modelos, instrucciones
+de CLI y rechazo de herramientas desconocidas en el generador. `npm run validate`
+incluye estas pruebas y la comprobación de drift de los 52 archivos de Copilot CLI.
+El espejo Claude contiene 40 archivos comprobados. No se dispuso de los ejecutables
+Claude/Copilot ni de un entorno BC: la instalación/carga en esos hosts y las
+operaciones AL quedan pendientes del guion anterior.
+
+Para regenerar tras editar las fuentes:
+
+```bash
+node scripts/sync-claude-workspace.js
+node scripts/sync-copilot-cli.js
+npm run validate
+```
+
+Fuentes: [plugins CLI](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference),
+[agentes CLI](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agents-reference),
+[límite genérico](https://docs.github.com/en/copilot/reference/custom-agents-configuration),
+[prueba de plugins Claude](https://code.claude.com/docs/en/plugins),
+[permisos Claude](https://code.claude.com/docs/en/sub-agents).

@@ -1,0 +1,47 @@
+{
+  "name": "aldc-cli",
+  "version": "4.2.0",
+  "description": "ALDC for Copilot CLI: terminal-adapted agents, skills and commands; conditional BC29/AL18 capability checks and canonical human gates.",
+  "author": {
+    "name": "javiarmesto",
+    "url": "https://github.com/javiarmesto"
+  },
+  "homepage": "https://github.com/javiarmesto/ALDC-AL-Development-Collection",
+  "repository": "https://github.com/javiarmesto/ALDC-AL-Development-Collection",
+  "license": "MIT",
+  "keywords": [
+    "AL",
+    "Business Central",
+    "Dynamics 365",
+    "ERP",
+    "extension-development",
+    "TDD",
+    "event-driven",
+    "Microsoft",
+    "architecture",
+    "testing",
+    "API",
+    "debugging"
+  ],
+  "agents": "agents/",
+  "skills": "skills/",
+  "commands": "commands/",
+  "mcpServers": {
+    "al-symbols-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@nicholasglazer/al-symbols-mcp"
+      ]
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "microsoft-docs": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
+    }
+  }
+}

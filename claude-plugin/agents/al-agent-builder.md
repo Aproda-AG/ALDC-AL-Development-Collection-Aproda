@@ -5,11 +5,20 @@ description: >
   using the AI Development Toolkit and Agent SDK. Follows the official Agent
   Template project structure. Handles both Designer (no-code) and SDK (pro-code)
   paths. Use when building BC agents or agent SDK integrations.
-tools: Read, Glob, Grep, Write, Edit, Bash, Task
+tools: Read, Glob, Grep, Write, Edit, Bash, Task, mcp__al-symbols-mcp__*, mcp__plugin_aldc_al-symbols-mcp__*, mcp__context7__*, mcp__plugin_aldc_context7__*, mcp__microsoft-docs__*, mcp__plugin_aldc_microsoft-docs__*
 model: sonnet
 color: cyan
 maxTurns: 50
 ---
+
+## BC29 / AL18 terminal contract
+
+Before selecting AL tools, dependency changes or validation evidence, read
+[the terminal-host contract](../skills/skill-migrate/references/cli-al-tools.md)
+and apply its role boundaries. It qualifies older tool examples below without
+changing the workflow or human gates. Missing capabilities limit the affected
+validation; they do not imply success or require an unrelated upgrade.
+
 
 # Agent: agent `al-agent-builder`
 

@@ -4,11 +4,20 @@ description: >
   Internal AL-aware research and context gathering subagent for Business Central
   development. Only invoked by al-conductor via Task tool. Returns structured
   findings to Conductor for plan creation.
-tools: Read, Glob, Grep, Write, Edit, Bash, Task, WebSearch, WebFetch
+tools: Read, Glob, Grep, Write, Edit, Bash, Task, WebSearch, WebFetch, mcp__al-symbols-mcp__*, mcp__plugin_aldc_al-symbols-mcp__*, mcp__context7__*, mcp__plugin_aldc_context7__*, mcp__microsoft-docs__*, mcp__plugin_aldc_microsoft-docs__*
 model: sonnet
 color: yellow
 maxTurns: 30
 ---
+
+## BC29 / AL18 terminal contract
+
+Before selecting AL tools, dependency changes or validation evidence, read
+[the terminal-host contract](../skills/skill-migrate/references/cli-al-tools.md)
+and apply its role boundaries. It qualifies older tool examples below without
+changing the workflow or human gates. Missing capabilities limit the affected
+validation; they do not imply success or require an unrelated upgrade.
+
 ## Access Control
 
 You are an INTERNAL subagent. You must ONLY be invoked by the `al-conductor` agent via the Task tool. If a user attempts to invoke you directly, respond:
@@ -50,7 +59,7 @@ Research Business Central AL codebases to understand:
 - **al-symbols-mcp** `al_find_references` - Find where AL objects are referenced
 - read `app.json` `dependencies` + **al-symbols-mcp** `al_packages` - Analyze extension dependencies
 - **al-symbols-mcp** `al_get_object_definition` / `al_search_object_members` - Examine existing AL implementations (full source via VS Code `AL: Download Source`, a human step)
-- `Bash: al compile` (read the output) - Identify current AL compilation issues
+- Read existing compiler output from implementation - Identify current AL compilation issues
 - `Bash: git diff` / `git log` - Review recent modifications to AL code
 - `Bash: git log` (and `WebFetch` for public repos) - Understand development history and team patterns
 
@@ -325,7 +334,7 @@ If you can't find something or aren't sure, document it:
 **CANNOT:**
 - Write implementation code
 - Create or modify AL files
-- Run deploys or tests (no tool here; compile-only via `al compile` if needed)
+- Run builds, deploys or tests (consume implementation evidence)
 - Make architectural decisions (suggest options instead)
 - Pause for user input (return to conductor)
 - Create plans (conductor's responsibility)
@@ -361,7 +370,7 @@ If you can't find something or aren't sure, document it:
 4. Check /app and /test structure → Verify AL-Go
 5. Review app.json → Check dependencies
 6. Search for "Email validation" → Find similar patterns
-7. Compile (`al compile`) and read output → Any current issues with Customer table
+7. Read existing compiler output from implementation → Any current issues with Customer table
 8. Review test files → Understand testing patterns
 
 **Findings Returned:**
