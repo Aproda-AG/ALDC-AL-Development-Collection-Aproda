@@ -48,6 +48,10 @@ ALDC (AL Development Collection) transforms how you develop Business Central ext
 
 ## Installation
 
+For the opt-in **BC29 / AL18 native profile in Copilot Chat**, see
+[installation, role changes and local validation](docs/native-bc29.md).
+BC28 remains the default; marketplace and Claude distributions keep their current surface.
+
 ### GitHub Copilot
 
 Install from the VS Code Marketplace or:

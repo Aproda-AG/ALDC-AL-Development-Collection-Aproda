@@ -68,6 +68,7 @@ function parseArgs(argv) {
     targetDir: null,
     yes: false,
     force: false,
+    profile: null,
     // withPacks removed — bc-agents components are now regular optional content
   };
 
@@ -75,6 +76,11 @@ function parseArgs(argv) {
     const a = args[i];
     if (a === '--target-dir' && args[i + 1]) {
       parsed.targetDir = args[++i];
+    } else if (a === '--profile') {
+      if (!args[i + 1] || !['bc28', 'bc29-native'].includes(args[i + 1])) {
+        throw new Error('--profile must be bc28 or bc29-native');
+      }
+      parsed.profile = args[++i];
     } else if (a === '--yes' || a === '-y') {
       parsed.yes = true;
     } else if (a === '--force' || a === '-f') {
@@ -103,7 +109,7 @@ function ensureDir(dir) {
  * @param {boolean} force  Overwrite existing files
  * @returns {{ copied: number, skipped: number }}
  */
-function copyDir(src, dst, force = false, depth = 0) {
+function copyDir(src, dst, force = false, depth = 0, transform = null) {
   if (!fs.existsSync(src)) return { copied: 0, skipped: 0 };
   ensureDir(dst);
 
@@ -122,11 +128,12 @@ function copyDir(src, dst, force = false, depth = 0) {
     const stat = fs.statSync(srcPath);
 
     if (stat.isDirectory()) {
-      const r = copyDir(srcPath, dstPath, force, depth + 1);
+      const r = copyDir(srcPath, dstPath, force, depth + 1, transform);
       copied += r.copied;
       skipped += r.skipped;
     } else if (force || !fs.existsSync(dstPath)) {
-      fs.copyFileSync(srcPath, dstPath);
+      if (transform) fs.writeFileSync(dstPath, transform(srcPath, fs.readFileSync(srcPath)));
+      else fs.copyFileSync(srcPath, dstPath);
       ok(path.relative(dst, dstPath) || item);
       copied++;
     } else {
@@ -209,8 +216,33 @@ async function install(opts) {
   const projectDir = process.cwd();
   const targetDir = path.resolve(projectDir, opts.targetDir || '.github');
 
+  const markerPath = path.join(targetDir, 'aldc-profile.json');
+  const previousProfile = fs.existsSync(markerPath)
+    ? JSON.parse(fs.readFileSync(markerPath, 'utf8')).profile : 'bc28';
+  const profile = opts.profile || previousProfile;
+  if (!['bc28', 'bc29-native'].includes(profile)) throw new Error('Unknown installed ALDC profile');
+  const existingPrimitives = ['agents', 'prompts', 'skills', 'instructions'].some(dir => fs.existsSync(path.join(targetDir, dir)));
+  if (profile !== previousProfile && existingPrimitives && !opts.force) {
+    throw new Error('Profile switch requires --force to replace managed toolkit files coherently. Review/back up local customizations first.');
+  }
+  // Preflight every projection before writing any installation files.
+  let transform = null;
+  if (profile === 'bc29-native') {
+    const { project } = require('./native-profile');
+    const projected = new Map();
+    for (const dir of ['agents', 'prompts']) {
+      for (const name of fs.readdirSync(path.join(packageDir, dir))) {
+        const src = path.join(packageDir, dir, name);
+        projected.set(src, project(`${dir}/${name}`, fs.readFileSync(src)));
+      }
+    }
+    if (!fs.existsSync(path.join(packageDir, 'docs/framework/native-al-tools.md'))) throw new Error('Native contract missing from package');
+    transform = (src, data) => projected.get(src) || data;
+  }
+
   banner();
   header('ALDC Core v1.1 — Installer');
+  info(`Profile: ${profile} (selection does not certify installed AL capabilities)`);
 
   info('Components to install:');
   for (const c of COMPONENTS) {
@@ -259,7 +291,7 @@ async function install(opts) {
     header(`Installing ${comp.name} (${comp.count})`);
     const src = path.join(packageDir, comp.src);
     const dst = path.join(targetDir, comp.src);
-    const r = copyDir(src, dst, opts.force);
+    const r = copyDir(src, dst, opts.force, 0, transform);
     totalCopied += r.copied;
     totalSkipped += r.skipped;
   }
@@ -354,6 +386,7 @@ async function install(opts) {
   }
 
   // ─── Summary ──────────────────────────────────────────────────────────────
+  fs.writeFileSync(markerPath, JSON.stringify({ profile, surface: 'copilot-chat-vscode' }, null, 2) + '\n');
   header('Installation Complete');
   log(`Files copied:  ${totalCopied}`, C.green);
   if (totalSkipped > 0) {
@@ -466,6 +499,7 @@ ${C.cyan}Commands:${C.reset}
   --help      Show this help
 
 ${C.cyan}Options:${C.reset}
+  --profile <name>    bc28 (default for new installs) or bc29-native (Copilot Chat)
   --target-dir <dir>  Installation directory (default: .github)
   --yes, -y           Skip confirmation prompts
   --force, -f         Overwrite existing files
