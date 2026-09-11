@@ -1,7 +1,7 @@
 # Native AL tools for the canonical workflow
 
 Applies only to the opt-in `bc29-native` profile in **GitHub Copilot Chat in VS Code**.
-Read before the first native operation or decision involving graph evidence, then
+Read before the first tool, dependency or evidence decision under this profile, then
 reuse within that invocation. The existing role, human gates, TDD flow and plans
 remain authoritative. This is not ALDC Graph orchestration. Copilot CLI requires
 an independent check; these names and schemas do not apply to Claude Code or Codex.
@@ -157,6 +157,10 @@ An instruction to read is not proof it was read. A rendered manifest is not proo
 of execution. Reviewers check the actual outputs; Conductor transfers references.
 BCQuality remains optional via a configured provider or installed plugin. Preserve
 its actual provenance; use existing native review when absent, without requiring a fork.
+Legacy provider-specific clone instructions apply only when that provider is selected;
+an installed plugin may supply the knowledge instead. BC Atlas and community symbol/LSP
+bridges are not prerequisites. When native coverage is insufficient, record the gap
+and use available source or a bounded human check, without claiming semantic parity.
 
 ## Source and status
 
