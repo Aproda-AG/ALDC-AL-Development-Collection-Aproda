@@ -40,6 +40,45 @@ git -C $extensionRoot rev-parse --show-toplevel
 Para esta adaptación, la rama es `feat/canonical-bc29-al18`. Anota el SHA que
 devuelve `rev-parse HEAD` junto al VSIX generado.
 
+## Paso previo: crear el checkout de prueba
+
+Parte de tu checkout habitual, pero no construyas el VSIX dentro de él. Crea una
+copia independiente de la rama y conserva el checkout habitual tal como está.
+
+```powershell
+$sourceRepo = 'C:\Users\JavierArmestoGonzále\Documents\AL\ALDC'
+$testRepo = 'C:\ALDC-Forge-Tests\ALDC-native29'
+$branch = 'feat/canonical-bc29-al18'
+
+git -C $sourceRepo fetch origin $branch
+git clone --branch $branch --single-branch `
+  https://github.com/javiarmesto/ALDC-AL-Development-Collection.git $testRepo
+
+git -C $testRepo status --short
+git -C $testRepo branch --show-current
+git -C $testRepo rev-parse HEAD
+```
+
+El último comando debe mostrar el commit que vayas a probar. En el checkout nuevo
+no aparecerá `toolbox/`, porque se excluye de Git. Copia la fuente de la extensión
+desde tu checkout habitual. No copies `node_modules`, `templates` ni artefactos
+VSIX: se regeneran en los pasos siguientes.
+
+```powershell
+$sourceExtension = Join-Path $sourceRepo 'toolbox\al-coding-agent-collection'
+$testExtension = Join-Path $testRepo 'toolbox\al-coding-agent-collection'
+
+robocopy $sourceExtension $testExtension /E /XD node_modules templates .git /XF *.vsix
+if ($LASTEXITCODE -ge 8) { throw "No se pudo copiar la extensión (robocopy: $LASTEXITCODE)" }
+
+Get-ChildItem $testExtension -File -Name
+```
+
+`robocopy` devuelve códigos de `0` a `7` incluso cuando ha copiado archivos; solo
+`8` o más indica un error. Si el directorio `C:\ALDC-Forge-Tests\ALDC-native29`
+ya existe, elige otro nombre o elimínalo únicamente si sabes que es una copia de
+prueba prescindible.
+
 ## Contrato actual de `prepare-package.js`
 
 El script elimina `templates/` y la reconstruye. Por eso no se edita ni se usa
