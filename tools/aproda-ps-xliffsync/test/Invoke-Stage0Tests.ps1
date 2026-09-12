@@ -125,11 +125,11 @@ function Invoke-Stage0Case {
     param([string]$Name, [scriptblock]$Body)
     try {
         & $Body
-        $script:results += [pscustomobject]@{ Name = $Name; Result = 'PASS'; Detail = '' }
+        $script:results = @($script:results) + [pscustomobject]@{ Name = $Name; Result = 'PASS'; Detail = '' }
         Write-Host "$Name PASS"
     }
     catch {
-        $script:results += [pscustomobject]@{ Name = $Name; Result = 'FAIL'; Detail = $_.Exception.Message }
+        $script:results = @($script:results) + [pscustomobject]@{ Name = $Name; Result = 'FAIL'; Detail = $_.Exception.Message }
         Write-Host "$Name FAIL: $($_.Exception.Message)"
     }
 }
