@@ -99,6 +99,11 @@ node .\ALDC-native29\scripts\native-profile.js C:\temp\ALDC-native29-review
 El destino debe ser nuevo y externo al checkout. Esta exportación contiene
 agentes/prompts y su contrato; la instalación completa se realiza con el instalador.
 
+Para crear y comprobar un VSIX local desde esta rama, consulta
+[la guía de empaquetado de la extensión](vsix-packaging.md). La extensión local
+debe incorporar el proyector BC29 antes de que su comando de instalación pueda
+ofrecer este perfil.
+
 ## Inventario por agente y flujo
 
 La especificación corresponde a **`al-spec.create`**, no a un agente adicional.
