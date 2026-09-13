@@ -28,6 +28,7 @@
 .github/skills/skill-aproda-aldc/
 .github/skills/skill-aproda-ado/
 .github/skills/skill-aproda-deploy-run-verify/
+.github/skills/skill-aproda-fkh/
 .github/skills/skill-contribution-assistant/
 .github/skills/skill-copilot/
 .github/skills/skill-debug/

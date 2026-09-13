@@ -378,8 +378,6 @@ else {
             'skills\skill-aproda-test-loop'                = 'renamed to skill-aproda-deploy-run-verify'
             # v1.2.0_aproda.5
             'skills\skill-ado'                             = 'renamed to skill-aproda-ado'
-            # v1.2.0_aproda.18
-            'tools\aproda-ps-xliffsync\test'               = 'layer-internal test suite is not distributed to projects'
         }
         $cleanupBase = Join-Path $dstRepo $projectBase
         foreach ($kv in $staleCleanup.GetEnumerator()) {

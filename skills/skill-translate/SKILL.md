@@ -263,6 +263,12 @@ verify XLF integration.
 | `pl-PL` | Polish | `cs-CZ` | Czech |
 | `ja-JP` | Japanese | `zh-CN` | Chinese (Simplified) |
 
+### de-CH Orthography
+
+For `de-CH` targets, write German umlauts directly: `ä`, `ö`, and `ü`.
+Do not transliterate them as `ae`, `oe`, or `ue`. Swiss orthography still uses
+`ss` instead of `ß`.
+
 ## References
 
 - [Working with Translation Files](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-work-with-translation-files)

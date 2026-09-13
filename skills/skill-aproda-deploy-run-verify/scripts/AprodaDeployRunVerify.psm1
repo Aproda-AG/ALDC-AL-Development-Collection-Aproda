@@ -1,13 +1,55 @@
 ﻿<#
 .SYNOPSIS
-  Aproda Deploy-Run-Verify engine — Build -> Deploy -> Run for AL BC OnPrem.
-  IMMUTABLE TEMPLATE. Do NOT edit per project; drive it via deploy-run-verify.config.jsonc.
+  Aproda Deploy-Run-Verify engine — Build -> Deploy -> Run for AL BC (OnPrem NST via ASINST,
+  or an AKS container via Fkh). IMMUTABLE TEMPLATE. Do NOT edit per project; drive it via
+  deploy-run-verify.config.jsonc.
   Derived from the proven Test/PowerShell/_Cycle.ps1 + _RunTests.ps1 (Audit Trail 26/26).
 .NOTES
-  Status: template — needs one live validation run on a second project.
+    Status: the ASINST adapter is live-verified across multiple projects. The Fkh adapter
+    (Invoke-DeployRunVerifyDeployFkh) is live-verified through this entry point against a
+    companion app (26/26 passed; see D-36).
 #>
 
 Set-StrictMode -Version Latest
+
+# Initialized up front: Set-StrictMode throws on a never-assigned Script-scope variable,
+# and Get-DeployRunVerifyCredential's cache check reads this before any UserPassword run.
+$Script:DeployRunVerifyCredential = $null
+$Script:DeployRunVerifyCredentialFromStore = $false
+
+# Eagerly load skill-aproda-fkh's credential-store functions (Get-/Save-/Remove-FkhStored
+# Credential) at module TOP LEVEL, content-safe (SRP-exempt). Doing this from inside a
+# function would only bind them into that function's own scope, gone the instant it
+# returns — dot-sourcing must happen at the scope where callers need to see the result.
+# Optional dependency: a pure-ASINST setup without skill-aproda-fkh just warns and
+# UserPassword runs (Fkh-only) fall back to prompting via Get-Credential every time.
+try {
+    $engineDirForFkhStore = $null
+    if ($env:APRODA_DEPLOY_RUN_VERIFY_MODULE) { $engineDirForFkhStore = Split-Path -Parent $env:APRODA_DEPLOY_RUN_VERIFY_MODULE }
+    elseif ($PSScriptRoot) { $engineDirForFkhStore = $PSScriptRoot }
+    if ($engineDirForFkhStore) {
+        $fkhStoreScript = Join-Path (Split-Path -Parent (Split-Path -Parent $engineDirForFkhStore)) 'skill-aproda-fkh\scripts\FkhCredentialStore.ps1'
+        if (Test-Path -LiteralPath $fkhStoreScript) {
+            . ([ScriptBlock]::Create((Get-Content -LiteralPath $fkhStoreScript -Raw)))
+        }
+    }
+}
+catch {
+    Write-Warning "Fkh credential store unavailable ($($_.Exception.Message)) — UserPassword runs will prompt every time."
+}
+
+# ---------------------------------------------------------------------------
+# Adapter classification (D-26): the only hostname-based routing decision. Https +
+# *.cloudapp.azure.com => Fkh (AKS container transport); everything else => the
+# established ASINST path (Remote PowerShell + NAV Management DLL against an NST server).
+# Deliberately conservative — an unmatched Fkh candidate must stop for HITL, never fall
+# through to ASINST (skill-aproda-fkh owns that verification against `fkh listcontainers`).
+# ---------------------------------------------------------------------------
+function Get-DeployRunVerifyAdapter {
+    param([Parameter(Mandatory)]$Cfg)
+    if ($Cfg.scheme -eq 'https' -and $Cfg.server -match '(?i)\.cloudapp\.azure\.com$') { return 'Fkh' }
+    return 'Asinst'
+}
 
 # ---------------------------------------------------------------------------
 # Config resolution: merge deploy-run-verify.config.jsonc + launch.json + each app.json
@@ -38,11 +80,21 @@ function Resolve-DeployRunVerifyConfig {
                 $cfg.server = ($pick.server -replace '^https?://', '').TrimEnd('/')
                 if (-not $cfg.serverInstance) { $cfg | Add-Member serverInstance $pick.serverInstance -Force }
                 if (-not $cfg.tenant -and $pick.tenant) { $cfg.tenant = $pick.tenant }
+                if (-not ($cfg.PSObject.Properties.Name -contains 'scheme')) { $cfg | Add-Member scheme '' -Force }
+                if ([string]::IsNullOrWhiteSpace($cfg.scheme)) { $cfg.scheme = if ($pick.server -match '^https:') { 'https' } else { 'http' } }
+                if (-not ($cfg.PSObject.Properties.Name -contains 'authentication')) { $cfg | Add-Member authentication '' -Force }
+                if ([string]::IsNullOrWhiteSpace($cfg.authentication) -and $pick.authentication) { $cfg.authentication = [string]$pick.authentication }
             }
         }
     }
     if ([string]::IsNullOrWhiteSpace($cfg.server)) { throw "server/serverInstance unresolved — set them in config or provide a launch.json 'server' configuration." }
     if ([string]::IsNullOrWhiteSpace($cfg.tenant)) { $cfg.tenant = 'default' }
+    # Adapter classification is mechanical and hostname-based (D-26): scheme and authentication
+    # default here when neither the config nor a launch.json pick supplied them (e.g. an
+    # explicit server override without a launchConfig).
+    if (-not ($cfg.PSObject.Properties.Name -contains 'scheme') -or [string]::IsNullOrWhiteSpace($cfg.scheme)) { $cfg | Add-Member scheme 'http' -Force }
+    if (-not ($cfg.PSObject.Properties.Name -contains 'authentication') -or [string]::IsNullOrWhiteSpace($cfg.authentication)) { $cfg | Add-Member authentication 'Windows' -Force }
+    $cfg | Add-Member adapter (Get-DeployRunVerifyAdapter -Cfg $cfg) -Force
 
     # --- Glue dir (central, ships with the skill): <engine module dir>\runner-glue ---
     # When the engine is dot-loaded via iex, $PSScriptRoot is empty inside functions,
@@ -56,15 +108,16 @@ function Resolve-DeployRunVerifyConfig {
     }
     $cfg | Add-Member glueDir "$glueDir" -Force
 
-    # --- ServiceUrl (web client, port 80) ---
+    # --- ServiceUrl (web client; scheme follows the adapter — http for ASINST/NST, https
+    # for Fkh/AKS) ---
     # Company is required for a deterministic headless run; if set, pin it into the URL
     # (proven shape: /cs?tenant=<t>&company=<c>). Empty company falls back to /cs/.
     if (-not ($cfg.PSObject.Properties.Name -contains 'companyName')) { $cfg | Add-Member companyName '' -Force }
     if (-not [string]::IsNullOrWhiteSpace($cfg.companyName)) {
-        $cfg | Add-Member serviceUrl ("http://{0}/{1}/cs?tenant={2}&company={3}" -f $cfg.server, $cfg.serverInstance, $cfg.tenant, $cfg.companyName) -Force
+        $cfg | Add-Member serviceUrl ("{0}://{1}/{2}/cs?tenant={3}&company={4}" -f $cfg.scheme, $cfg.server, $cfg.serverInstance, $cfg.tenant, [uri]::EscapeDataString($cfg.companyName)) -Force
     }
     else {
-        $cfg | Add-Member serviceUrl ("http://{0}/{1}/cs/" -f $cfg.server, $cfg.serverInstance) -Force
+        $cfg | Add-Member serviceUrl ("{0}://{1}/{2}/cs/" -f $cfg.scheme, $cfg.server, $cfg.serverInstance) -Force
     }
 
     # --- alc.exe auto-detect ---
@@ -151,7 +204,9 @@ function Get-DeployRunVerifyRunnerVersion {
 
 function Get-DeployRunVerifyServerVersion {
     # Live BC platform version via a short remote session (or $null if unreachable).
+    # Fkh/AKS targets have no Remote-PS/Management-DLL surface — rely on config bcVersion.
     param([Parameter(Mandatory)]$Cfg)
+    if ($Cfg.adapter -eq 'Fkh') { return $null }
     if ([string]::IsNullOrWhiteSpace($Cfg.mgmtDllPath)) { return $null }
     try {
         $session = New-PSSession -ComputerName $Cfg.server -ErrorAction Stop
@@ -358,11 +413,21 @@ function Initialize-DeployRunVerifyRunner {
 
 # ---------------------------------------------------------------------------
 # Preflight (HITL-aware): reachability; caller owns the environment ack.
+# HTTP(S) probe against the resolved ServiceUrl, not ICMP: an Azure load balancer (Fkh)
+# commonly drops ICMP while the web client answers fine, which would otherwise silently
+# downgrade a healthy Fkh target to build-only. Any HTTP response (even 4xx/5xx) proves
+# the endpoint is reachable; only a transport-level failure means truly unreachable.
 # ---------------------------------------------------------------------------
 function Test-DeployRunVerifyPreflight {
     param([Parameter(Mandatory)]$Cfg)
     $reachable = $false
-    try { $reachable = Test-Connection -ComputerName $Cfg.server -Count 1 -Quiet -ErrorAction SilentlyContinue } catch {}
+    try {
+        Invoke-WebRequest -Uri $Cfg.serviceUrl -Method Head -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop | Out-Null
+        $reachable = $true
+    }
+    catch {
+        if ($_.Exception.Response) { $reachable = $true }
+    }
     [pscustomobject]@{ Reachable = [bool]$reachable; ServiceUrl = $Cfg.serviceUrl }
 }
 
@@ -391,11 +456,157 @@ function Invoke-DeployRunVerifyBuild {
 }
 
 # ---------------------------------------------------------------------------
-# Deploy: uninstall reverse order, unpublish, publish/sync/install forward
+# Deploy dispatcher (D-26): routes to the adapter resolved by Get-DeployRunVerifyAdapter.
+# Both branches converge back into the shared Build -> Run -> Parse stages.
 # ---------------------------------------------------------------------------
 function Invoke-DeployRunVerifyDeploy {
     param([Parameter(Mandatory)]$Cfg)
-    if ([string]::IsNullOrWhiteSpace($Cfg.mgmtDllPath)) { throw "mgmtDllPath is required for deploy." }
+    switch ($Cfg.adapter) {
+        'Fkh' { return Invoke-DeployRunVerifyDeployFkh -Cfg $Cfg }
+        default { return Invoke-DeployRunVerifyDeployAsinst -Cfg $Cfg }
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Fkh backend URL: workstation-local VS Code user setting (D-33) — never committed,
+# never printed.
+# ---------------------------------------------------------------------------
+function Get-DeployRunVerifyFkhBackendUrl {
+    $settingsPath = Join-Path $env:APPDATA 'Code\User\settings.json'
+    if (-not (Test-Path -LiteralPath $settingsPath -PathType Leaf)) { throw 'VS Code user settings were not found (the Fkh adapter requires fkh.backendUrl).' }
+    $settingsContent = Get-Content -LiteralPath $settingsPath -Raw
+    $m = [regex]::Match($settingsContent, '"fkh\.backendUrl"\s*:\s*"(?<value>[^"]+)"')
+    if (-not $m.Success) { throw 'VS Code user setting fkh.backendUrl is not configured.' }
+    return $m.Groups['value'].Value
+}
+
+# ---------------------------------------------------------------------------
+# Match the launch.json host against a live Fkh container (skill-aproda-fkh's rule): an
+# unmatched or ambiguous candidate stops for HITL, it never falls through to ASINST.
+# ---------------------------------------------------------------------------
+function Resolve-DeployRunVerifyFkhContainer {
+    param([Parameter(Mandatory)]$Cfg, [Parameter(Mandatory)][string]$BackendUrl)
+    if (-not (Get-Command fkh -ErrorAction SilentlyContinue)) { throw "The 'fkh' CLI is required for the Fkh adapter and was not found in PATH." }
+    $raw = & fkh listcontainers --all --asJson --backendUrl $BackendUrl
+    if ($LASTEXITCODE -ne 0) { throw "fkh listcontainers failed with exit code $LASTEXITCODE." }
+    $data = $raw | ConvertFrom-Json
+    $items = @($data.containers)
+    $targetHost = $Cfg.server
+    $match = @($items | Where-Object {
+            try { ([uri][string]$_.webClient).Host -eq $targetHost } catch { $false }
+        })
+    if ($match.Count -eq 0) { throw "No Fkh container matches launch host '$targetHost' — stop and confirm the target with the user." }
+    if ($match.Count -gt 1) { throw "Multiple Fkh containers match launch host '$targetHost' — stop and confirm the target with the user." }
+    return $match[0]
+}
+
+# ---------------------------------------------------------------------------
+# Fkh rejects publishing an app whose ID+version is already published on the target
+# (a routine occurrence in a dev loop that reuses an unbumped app.json version — the
+# ASINST adapter has the same problem and solves it with ForceSync+Install). Remove the
+# conflicting apps (and their dependents, reverse order) via `fkh invokescript`, mirroring
+# the validated ad-hoc pattern (Test/PowerShell/_temp/Remove-BaseAndDCBlobProxy-Fkh.ps1):
+# Uninstall-NAVApp then Unpublish-NAVApp for every installed/published version found.
+# ---------------------------------------------------------------------------
+function Invoke-DeployRunVerifyFkhRemoveApps {
+    param([Parameter(Mandatory)]$Cfg, [Parameter(Mandatory)][string]$AppLabel, [Parameter(Mandatory)][string]$BackendUrl)
+    $reverseNames = @($Cfg.apps | ForEach-Object { $_.Name }); [array]::Reverse($reverseNames)
+    $namesLiteral = ($reverseNames | ForEach-Object { "'{0}'" -f ($_ -replace "'", "''") }) -join ",`n  "
+    $remoteCommand = @"
+`$ErrorActionPreference = 'Stop'
+`$serverInstance = '$($Cfg.serverInstance)'
+`$tenant = '$($Cfg.tenant)'
+`$appNames = @(
+  $namesLiteral
+)
+foreach (`$appName in `$appNames) {
+  `$appInfos = @(Get-NAVAppInfo -ServerInstance `$serverInstance -Name `$appName)
+  foreach (`$appInfo in `$appInfos) {
+    try {
+      Uninstall-NAVApp -ServerInstance `$serverInstance -Name `$appInfo.Name -Version `$appInfo.Version -Tenant `$tenant -Force
+    }
+    catch {
+      if (`$_.Exception.Message -notmatch 'not installed|nicht installiert') { throw }
+    }
+  }
+  foreach (`$appInfo in `$appInfos) {
+    Unpublish-NAVApp -ServerInstance `$serverInstance -Name `$appInfo.Name -Version `$appInfo.Version
+  }
+}
+"@
+    Write-Host "[fkh] Removing prior published versions (same-version redeploy) for: $($reverseNames -join ', ')"
+    & fkh invokescript --name $AppLabel --command $remoteCommand --backendUrl $BackendUrl
+    if ($LASTEXITCODE -ne 0) { throw 'Fkh removal of prior app versions failed.' }
+}
+
+# ---------------------------------------------------------------------------
+# Deploy via Fkh: publish each app in dependency order through the fkh CLI, using the
+# resolved container's appLabel (not its Kubernetes deployment name — skill-aproda-fkh).
+# On a same-App-ID-and-Version conflict, remove the prior versions once and retry the
+# whole publish sequence; any other failure still fails loud immediately.
+# ---------------------------------------------------------------------------
+function Invoke-DeployRunVerifyDeployFkh {
+    param([Parameter(Mandatory)]$Cfg)
+    $backendUrl = Get-DeployRunVerifyFkhBackendUrl
+    $container = Resolve-DeployRunVerifyFkhContainer -Cfg $Cfg -BackendUrl $backendUrl
+    $appLabel = [string]$container.appLabel
+    if ([string]::IsNullOrWhiteSpace($appLabel)) { throw 'Resolved Fkh container has no appLabel.' }
+    Write-Host "Fkh target: appLabel=$appLabel"
+
+    $removalAttempted = $false
+    while ($true) {
+        $conflict = $false
+        foreach ($app in $Cfg.apps) {
+            Write-Host "[fkh] Publish $($app.Name) $($app.Version)"
+            $out = & fkh publishapp --name $appLabel --appFile $app.AppFile --syncMode ForceSync --sync --install --backendUrl $backendUrl 2>&1
+            $out | ForEach-Object { Write-Host "  $_" }
+            if ($LASTEXITCODE -ne 0) {
+                if (-not $removalAttempted -and (($out | Out-String) -match '(?i)same App ID and Version')) {
+                    $conflict = $true
+                    break
+                }
+                throw "Fkh publish failed: $($app.Name) $($app.Version)"
+            }
+        }
+        if (-not $conflict) { break }
+        $removalAttempted = $true
+        Invoke-DeployRunVerifyFkhRemoveApps -Cfg $Cfg -AppLabel $appLabel -BackendUrl $backendUrl
+    }
+
+    $notInstalled = foreach ($app in $Cfg.apps) {
+        $infoRaw = & fkh getappinfo --name $appLabel --appName $app.Name --asJson --backendUrl $backendUrl
+        if ($LASTEXITCODE -ne 0) { throw "Fkh getappinfo failed: $($app.Name)" }
+        $info = $infoRaw | ConvertFrom-Json
+        # Verified shape (2026-09-13, live capture): { container, tenant, apps: [ { AppId,
+        # Name, Publisher, Version, Dependencies, ExtensionType, Scope, IsInstalled,
+        # IsPublished, SyncState, NeedsUpgrade } ] }. Match the entry by version; fall back
+        # to the first entry if the exact version isn't present.
+        $entry = $null
+        if ($info.PSObject.Properties.Name -contains 'apps') {
+            $entry = @($info.apps) | Where-Object { $_.Version -eq $app.Version } | Select-Object -First 1
+            if (-not $entry) { $entry = @($info.apps) | Select-Object -First 1 }
+        }
+        if (-not $entry) {
+            Write-Warning "Fkh getappinfo returned no app entry for $($app.Name) $($app.Version) — cannot verify installed state; relying on the publish exit code only."
+        }
+        elseif (-not [bool]$entry.IsInstalled) {
+            "$($app.Name) $($app.Version) (IsInstalled=$($entry.IsInstalled))"
+        }
+        elseif ($entry.PSObject.Properties.Name -contains 'SyncState' -and $entry.SyncState -and $entry.SyncState -ne 'Synced') {
+            "$($app.Name) $($app.Version) (SyncState=$($entry.SyncState))"
+        }
+    }
+    if ($notInstalled) { throw ("DEPLOY INCOMPLETE (Fkh) — not installed/synced: " + ($notInstalled -join '; ')) }
+    Write-Host "Fkh deploy done."
+    return $true
+}
+
+# ---------------------------------------------------------------------------
+# Deploy via ASINST: uninstall reverse order, unpublish, publish/sync/install forward
+# ---------------------------------------------------------------------------
+function Invoke-DeployRunVerifyDeployAsinst {
+    param([Parameter(Mandatory)]$Cfg)
+    if ([string]::IsNullOrWhiteSpace($Cfg.mgmtDllPath)) { throw "mgmtDllPath is required for the ASINST adapter." }
     $session = New-PSSession -ComputerName $Cfg.server
     try {
         $tempDir = "C:\Temp\AprodaDeployRunVerify_$(Get-Random)"
@@ -408,12 +619,13 @@ function Invoke-DeployRunVerifyDeploy {
             $ErrorActionPreference = 'Continue'
             function Log($m) { Write-Host "[deploy] $m" }
             function Step($label, $sb) { try { & $sb; Log "OK   - $label" } catch { Log "FAIL - $label :: $($_.Exception.Message)" } }
-            # Robust install for a TEST-LOOP that redeploys the SAME version with a changed
-            # schema. No localized-message parsing: escalate sync strength, then data-upgrade.
+            # Robust install for a Deploy-Run-Verify cycle that redeploys the SAME version
+            # with a changed schema. No localized-message parsing: escalate sync strength,
+            # then data-upgrade.
             #   1) plain Install
             #   2) ForceSync -> Install  (same-version redeploy whose table set changed; the
             #      platform refuses Install against the stale synced schema. ForceSync can drop
-            #      data for changed tables — acceptable/expected inside a dev test-loop.)
+            #      data for changed tables — acceptable/expected inside a dev loop.)
             #   3) Start-NAVAppDataUpgrade (retained data from a prior version bump)
             function InstallOrUpgrade($si, $name, $ver, $tenant) {
                 try { Install-NAVApp -ServerInstance $si -Name $name -Version $ver -Tenant $tenant -ErrorAction Stop; Log "INSTALLED $name $ver"; return }
@@ -476,15 +688,62 @@ function Invoke-DeployRunVerifyDeploy {
 # ---------------------------------------------------------------------------
 # Run: headless AL test runner via the web client (proven _RunTests pattern)
 # ---------------------------------------------------------------------------
-function Invoke-DeployRunVerifyRun {
-    param([Parameter(Mandatory)]$Cfg)
+# ---------------------------------------------------------------------------
+# Loads skill-aproda-fkh's credential-store functions content-safe (SRP-exempt), from the
+# sibling skill (D-26: Fkh owns auth/transport mechanics, this engine only consumes it).
+# Idempotent — a second call is a no-op once the functions are already defined.
+# ---------------------------------------------------------------------------
+function Get-DeployRunVerifyCredential {
+    # UserPassword targets (Fkh) only. Checks the skill-aproda-fkh credential store first
+    # (unless -SkipStore, used on a retry so a stale stored credential can't repeat forever);
+    # only prompts via Get-Credential (never from config, chat, or environment) on a miss.
+    # Cached in module scope so a multi-phase run does not re-prompt.
+    param([Parameter(Mandatory)]$Cfg, [switch]$SkipStore)
+    if ($Cfg.authentication -ne 'UserPassword') { return $null }
+    if ($Script:DeployRunVerifyCredential) { return $Script:DeployRunVerifyCredential }
+    $stored = $null
+    if (-not $SkipStore -and (Get-Command Get-FkhStoredCredential -ErrorAction SilentlyContinue)) {
+        $stored = Get-FkhStoredCredential -Key $Cfg.server
+    }
+    if ($stored) {
+        Write-Host "Using stored Fkh credential for $($Cfg.server)."
+        $Script:DeployRunVerifyCredential = $stored
+        $Script:DeployRunVerifyCredentialFromStore = $true
+        return $stored
+    }
+    # Fail-fast: a non-interactive session (redirected stdin — an unattended/automated
+    # invocation) can never answer a console Get-Credential prompt; it would otherwise hang
+    # indefinitely. Surface a clear, actionable error instead.
+    if ([Console]::IsInputRedirected) {
+        throw ("UserPassword credential required for $($Cfg.server), no stored credential found, and " +
+            "this session is non-interactive (redirected input) — cannot prompt. Populate the Fkh " +
+            "credential store with one interactive run first, or seed it via Save-FkhCredential.")
+    }
+    $Script:DeployRunVerifyCredential = Get-Credential -Message "Credentials for $($Cfg.server)/$($Cfg.serverInstance)"
+    if (-not $Script:DeployRunVerifyCredential) { throw 'Credential entry was cancelled; UserPassword authentication requires one.' }
+    $Script:DeployRunVerifyCredentialFromStore = $false
+    return $Script:DeployRunVerifyCredential
+}
+
+function Reset-DeployRunVerifyCredential {
+    # Forces the next Get-DeployRunVerifyCredential call to re-prompt (used after a
+    # connection attempt never reaches stage='ran' — see Invoke-DeployRunVerifyRun).
+    $Script:DeployRunVerifyCredential = $null
+    $Script:DeployRunVerifyCredentialFromStore = $false
+}
+
+function Invoke-DeployRunVerifyRunOnce {
+    # Single connection+test attempt against the given credential. Split out of
+    # Invoke-DeployRunVerifyRun so the retry loop there never re-materializes the runner.
+    param([Parameter(Mandatory)]$Cfg, $Credential)
     $pwsh = (Get-Process -Id $PID).Path
     $runnerDir = Initialize-DeployRunVerifyRunner -Cfg $Cfg
     $log = Join-Path $runnerDir 'progress.log'
     $resultJson = Join-Path $runnerDir '_result.json'
     foreach ($f in @($log, $resultJson)) { if (Test-Path $f) { Remove-Item $f -Force } }
+    $credential = $Credential
 
-    $vars = @{ dir = $runnerDir; glue = $Cfg.glueDir; url = $Cfg.serviceUrl; ext = $Cfg.testExtensionId; range = $Cfg.testCodeunitRange; suite = $Cfg.testSuite } | ConvertTo-Json -Compress
+    $vars = @{ dir = $runnerDir; glue = $Cfg.glueDir; url = $Cfg.serviceUrl; ext = $Cfg.testExtensionId; range = $Cfg.testCodeunitRange; suite = $Cfg.testSuite; auth = $Cfg.authentication } | ConvertTo-Json -Compress
     $b64vars = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($vars))
 
     $bootstrap = @'
@@ -521,11 +780,22 @@ try {
     . ([ScriptBlock]::Create($arSrc))
     $resultPath = Join-Path $dir 'TestResults.xml'
     if (Test-Path $resultPath) { Remove-Item $resultPath -Force }
-    Note ("running Run-AlTests ({0})..." -f $cfg.range)
+    Note ("running Run-AlTests ({0}, auth={1})..." -f $cfg.range, $cfg.auth)
+    $childCredential = $null
+    if ($cfg.auth -eq 'UserPassword' -and $env:APRODA_TL_USER -and $env:APRODA_TL_PWD) {
+        $childCredential = [System.Management.Automation.PSCredential]::new($env:APRODA_TL_USER, ($env:APRODA_TL_PWD | ConvertTo-SecureString))
+    }
     $console = & {
-        Run-AlTests -ServiceUrl $cfg.url -AutorizationType 'Windows' -ExtensionId $cfg.ext `
-            -TestCodeunitsRange $cfg.range -TestSuite $cfg.suite -SaveResultFile $true `
-            -ResultsFilePath $resultPath -Detailed $true
+        if ($childCredential) {
+            Run-AlTests -ServiceUrl $cfg.url -AutorizationType 'UserPassword' -Credential $childCredential -ExtensionId $cfg.ext `
+                -TestCodeunitsRange $cfg.range -TestSuite $cfg.suite -SaveResultFile $true `
+                -ResultsFilePath $resultPath -Detailed $true
+        }
+        else {
+            Run-AlTests -ServiceUrl $cfg.url -AutorizationType $cfg.auth -ExtensionId $cfg.ext `
+                -TestCodeunitsRange $cfg.range -TestSuite $cfg.suite -SaveResultFile $true `
+                -ResultsFilePath $resultPath -Detailed $true
+        }
     } *>&1 | Out-String
     $res.stage='ran'; $res.console=$console; Note 'ran'
     if (Test-Path $resultPath) { $res.xml = Get-Content $resultPath -Raw } else { $res.xml = 'NO-RESULT-FILE' }
@@ -535,13 +805,61 @@ $res | ConvertTo-Json -Depth 6 -Compress | Out-File -FilePath $resultJson -Encod
 '@
     $enc = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bootstrap))
     $env:APRODA_TL_VARS = $b64vars
+    if ($credential) {
+        # DPAPI-protected (current user + machine only), never plaintext; cleared below.
+        $env:APRODA_TL_USER = $credential.UserName
+        $env:APRODA_TL_PWD = $credential.Password | ConvertFrom-SecureString
+    }
+    else {
+        Remove-Item Env:\APRODA_TL_USER -ErrorAction SilentlyContinue
+        Remove-Item Env:\APRODA_TL_PWD -ErrorAction SilentlyContinue
+    }
     Write-Host "Running AL tests via $($Cfg.serviceUrl) (range $($Cfg.testCodeunitRange))..."
     $p = Start-Process -FilePath $pwsh -ArgumentList @('-NoProfile', '-NonInteractive', '-EncodedCommand', $enc) -PassThru -NoNewWindow
     if (-not $p.WaitForExit([int]$Cfg.runTimeoutMs)) { Write-Host "TIMEOUT - killing $($p.Id)"; try { $p.Kill($true) } catch { $p.Kill() } }
+    Remove-Item Env:\APRODA_TL_USER -ErrorAction SilentlyContinue
+    Remove-Item Env:\APRODA_TL_PWD -ErrorAction SilentlyContinue
 
     if (-not (Test-Path $resultJson)) { Write-Host "NO-RESULT-JSON"; return $null }
     $obj = Get-Content $resultJson -Raw | ConvertFrom-Json
     return Get-DeployRunVerifySummary -ResultObject $obj
+}
+
+# ---------------------------------------------------------------------------
+# Run: at most 2 attempts. "ClientSession State is Uninitialized" (stage never reaches
+# 'ran') is an AMBIGUOUS signal — live-confirmed (2026-09-13) to mean the connection never
+# came up at all, which can be wrong credentials but just as easily network/service/company
+# — there is no reliable text to distinguish them. So: one retry with a freshly re-prompted
+# credential is cheap and often fixes a typo; a second consecutive failure is a real
+# blocker, not brute-forced further. A run that DOES reach 'ran' (regardless of pass/fail
+# counts) proves the credential worked — it is then saved/updated in the store
+# unconditionally, no confirmation prompt (explicit decision, D-37 addendum).
+# ---------------------------------------------------------------------------
+function Invoke-DeployRunVerifyRun {
+    param([Parameter(Mandatory)]$Cfg)
+    $maxAttempts = 2
+    for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+        $credential = Get-DeployRunVerifyCredential -Cfg $Cfg -SkipStore:($attempt -gt 1)
+        $summary = Invoke-DeployRunVerifyRunOnce -Cfg $Cfg -Credential $credential
+        if (-not $summary) { return $summary }
+
+        if ($summary.Stage -eq 'ran') {
+            if ($Cfg.authentication -eq 'UserPassword' -and -not $Script:DeployRunVerifyCredentialFromStore -and
+                (Get-Command Save-FkhCredential -ErrorAction SilentlyContinue)) {
+                Save-FkhCredential -Key $Cfg.server -Credential $credential
+                Write-Host "Fkh-Credential-Store aktualisiert: $($Cfg.server)"
+            }
+            return $summary
+        }
+
+        if ($attempt -lt $maxAttempts -and $Cfg.authentication -eq 'UserPassword') {
+            Write-Warning ("Verbindung zu $($Cfg.server) kam nicht zustande (evtl. falsches Passwort - kann aber auch " +
+                "Netzwerk/Service/Company sein). Erneuter Versuch mit neu abgefragten Zugangsdaten...")
+            Reset-DeployRunVerifyCredential
+            continue
+        }
+        return $summary
+    }
 }
 
 # ---------------------------------------------------------------------------
@@ -576,7 +894,7 @@ function Invoke-AprodaDeployRunVerify {
         [switch]$SkipBuild
     )
     $cfg = Resolve-DeployRunVerifyConfig -ConfigPath $ConfigPath
-    Write-Host "Server $($cfg.server)/$($cfg.serverInstance)  tenant=$($cfg.tenant)"
+    Write-Host "Server $($cfg.server)/$($cfg.serverInstance)  tenant=$($cfg.tenant)  adapter=$($cfg.adapter)  auth=$($cfg.authentication)"
     Write-Host ("Apps: " + (($cfg.apps | ForEach-Object { "$($_.Name) $($_.Version)" }) -join ' -> '))
 
     $pf = Test-DeployRunVerifyPreflight -Cfg $cfg
@@ -599,6 +917,9 @@ function Invoke-AprodaDeployRunVerify {
 }
 
 Export-ModuleMember -Function Resolve-DeployRunVerifyConfig, Test-DeployRunVerifyPreflight, Invoke-DeployRunVerifyBuild,
-Invoke-DeployRunVerifyDeploy, Invoke-DeployRunVerifyRun, Get-DeployRunVerifySummary, Invoke-AprodaDeployRunVerify,
+Invoke-DeployRunVerifyDeploy, Invoke-DeployRunVerifyDeployAsinst, Invoke-DeployRunVerifyDeployFkh, Invoke-DeployRunVerifyRun,
+Invoke-DeployRunVerifyRunOnce, Get-DeployRunVerifySummary, Invoke-AprodaDeployRunVerify, Get-DeployRunVerifyAdapter,
+Get-DeployRunVerifyFkhBackendUrl, Resolve-DeployRunVerifyFkhContainer, Get-DeployRunVerifyCredential,
+Reset-DeployRunVerifyCredential,
 Resolve-DeployRunVerifyRunner, New-DeployRunVerifyRunner, Initialize-DeployRunVerifyRunner, Copy-DeployRunVerifyRunnerFromServer,
 Resolve-DeployRunVerifyClientSource, Get-DeployRunVerifyServerVersion, Get-DeployRunVerifyRunnerVersion

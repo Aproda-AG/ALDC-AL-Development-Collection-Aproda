@@ -6,11 +6,11 @@ description: "Aproda Deploy-Run-Verify Cycle for Business Central (formerly: Apr
 # Skill: Deploy-Run-Verify Cycle (Build → Deploy → Run → Review)
 
 > **Aproda custom skill** — part of the Aproda ALDC layer. See [`../../readme.aproda.md`](../../readme.aproda.md) and [`../../decisions.aproda.md`](../../decisions.aproda.md).
-> **Status: VALIDATED.** The engine runs the full build → deploy → materialize-runner → run → parse cycle end-to-end against the live BC 28 OnPrem service (27/27 green on the Audit Trail extension). The falsifiable lessons below are proven by failing-then-passing tests.
+> **Status: ASINST + FKH VALIDATED end-to-end through this entry point.** The ASINST engine runs the full build → deploy → materialize-runner → run → parse cycle against a live BC OnPrem service (e.g. 27/27 on the Audit Trail extension). The Fkh adapter (`Invoke-DeployRunVerifyDeployFkh`, D-36) was live-validated 2026-09-12 against `flobi-wan-kenobi-straub-dev-deployment`: adapter classification, HTTP(S) preflight, Fkh backend/container resolution, same-version-conflict removal-and-republish, and a `UserPassword`-credentialed test run all passed for real, ending **26/26 passed, 0 failed** on the DC Blob Proxy Tests suite.
 
 ## Purpose
 
-Validate an AL extension end-to-end against a **live BC OnPrem service**: build the app(s), deploy (publish/sync/install), run the AL test runner, review results, and **loop** (fix → deploy → run → review) until all tests pass or a genuine blocker is hit.
+Own the Build → Deploy → Run → Review lifecycle for a **live BC OnPrem service**. Select the target adapter from the acknowledged `launch.json` configuration: ASINST and FKH both perform the validated full loop through their respective transport adapters.
 
 ## When to Load
 
@@ -49,6 +49,17 @@ flowchart TD
 
   > Suggested wording: *"No BC service reachable. Quality is higher with a Cronus BC environment incl. Test Toolkit. Without a service only static validation (build + audit) is possible, no runtime verification. Proceed build-only?"*
 
+## Target Adapter Selection
+
+After the user acknowledges a `launch.json` selection, classify the target before deployment:
+
+| Selected configuration | Adapter | Deployment | Test result |
+|---|---|---|---|
+| `environmentType: OnPrem`, HTTPS server, hostname ending `.cloudapp.azure.com` | Fkh | Load [`skill-aproda-fkh`](../skill-aproda-fkh/SKILL.md); verify the launch hostname against `fkh listcontainers`; use its `appLabel` for operations; sort and publish sequentially | Run the SRP-safe shared web-client runner and parse its XUnit XML |
+| Any other acknowledged OnPrem configuration | ASINST | Existing immutable engine: Remote PowerShell + NAV Management DLL | Validated where the configured runner preflight succeeds |
+
+This initial classifier is intentionally conservative and mechanical. A target that satisfies the Fkh candidate rule but cannot be verified by Fkh is unknown, not ASINST: stop and ask the user.
+
 ## Workflow
 
 ### LOW complexity (direct `@AL Implementation Specialist`)
@@ -59,6 +70,7 @@ Run the loop at **each phase boundary** as the quality gate. The conductor alrea
 
 ## References (load on demand)
 
+- [`skill-aproda-fkh`](../skill-aproda-fkh/SKILL.md) — Fkh target resolution, dependency sorting, publish, and state inspection.
 - [`references/build-deploy.md`](references/build-deploy.md) — version-dynamic build, Base→Test symbol copy, deploy order, install-or-upgrade fallback.
 - [`references/runner.md`](references/runner.md) — web-client ServiceUrl, runner DLLs materialized from the K: BC DVD, central version-agnostic glue, **SRP content-based script loading**, result parsing.
 - [`references/triage-patterns.md`](references/triage-patterns.md) — the falsifiable failure→cause→fix patterns (the gold).
@@ -86,3 +98,4 @@ Mini-effort per project: copy the config, fill a few values, run the entry point
 - This skill owns the **process** (how/when to loop). Generic, citable BC truths (e.g. xRec semantics) belong in **BCQuality** (`custom/knowledge/...`) and are **linked, not duplicated**, from `references/triage-patterns.md`.
 - Does **not** cover writing tests (→ `skill-testing`) or root-cause debugging strategy (→ al-developer / skill-debug). It orchestrates them.
 - Deploy writes to a **shared OnPrem server** → the preflight HITL gate is mandatory (operational safety).
+- Do not route an HTTPS `.cloudapp.azure.com` target through the ASINST engine unless the Fkh verification is explicitly resolved with the user.

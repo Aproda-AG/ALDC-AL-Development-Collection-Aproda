@@ -11,6 +11,10 @@
     "server": "",
     "serverInstance": "",
     "tenant": "default",
+    // scheme (http/https) and authentication (Windows/UserPassword/...) are ALSO derived
+    // from the launch.json configuration's "server" URL and "authentication" field — do not
+    // set them here. The adapter (ASINST vs Fkh) follows from scheme + hostname, see
+    // skill-aproda-fkh and decisions.aproda.md D-26.
     // --- Apps in DEPENDENCY ORDER (REQUIRED) ---
     // Project directories (relative to this config file), upstream first, TEST app LAST.
     // name/version/publisher/id are read from each app.json.
@@ -54,7 +58,9 @@
     // --- Tool paths (machine/server specific) ---
     // alc.exe: leave empty to auto-detect the latest ms-dynamics-smb.al extension.
     "alcPath": "",
-    // Server-side Management DLL, used INSIDE the remote session. REQUIRED for deploy.
+    // Server-side Management DLL, used INSIDE the remote session. REQUIRED only for the
+    // ASINST adapter (OnPrem NST server); irrelevant and safely left empty for the Fkh
+    // adapter (AKS container, deployed via the fkh CLI instead of Remote PowerShell).
     // e.g. "D:\\28\\STRAUB_MEDICAL_AG_28_CH_FKO\\Management\\Microsoft.Dynamics.Nav.Management.dll"
     "mgmtDllPath": "",
     // --- Behaviour ---
