@@ -1,8 +1,8 @@
 # Construcción y prueba local del VSIX de ALDC
 
-Esta guía documenta la extensión local de VS Code que se mantiene fuera del árbol
-versionado de ALDC. Se revisó el 12 de septiembre de 2026 con sus archivos
-`toolbox/al-coding-agent-collection/package.json` y `prepare-package.js`.
+Esta guía documenta la extensión de VS Code y su relación con el repositorio
+canónico de ALDC. Se revisó el 13 de septiembre de 2026 después de validar un
+VSIX con los perfiles `bc28` y `bc29-native`.
 
 ## Ubicación y relación con el repositorio
 
@@ -19,11 +19,15 @@ La extensión debe vivir dentro del checkout que se quiere empaquetar:
     templates/              # generado, no fuente
 ```
 
-`toolbox/` está ignorado por Git en ALDC. Por ello, cambiar de rama o crear un
-checkout de prueba no lleva la extensión automáticamente. Copia o clona el árbol
-local de la extensión bajo `toolbox/al-coding-agent-collection/` del checkout que
-vayas a construir. El empaquetador calcula la raíz como dos niveles por encima de
-su propio directorio; no funcionará igual si se ejecuta desde una carpeta externa.
+`toolbox/` está ignorado por Git en ALDC, pero la extensión es un repositorio Git
+independiente con remoto
+`https://github.com/javiarmesto/aldc-vscode-extension.git`. Por ello, una prueba
+completa requiere dos checkouts coordinados: ALDC como contenedor y la extensión
+dentro de `toolbox/al-coding-agent-collection/`.
+
+El empaquetador busca ALDC dos niveles por encima. También admite
+`ALDC_REPO_ROOT` como ruta explícita y, si se clona la extensión de forma
+independiente, puede empaquetar las plantillas preparadas que están versionadas.
 
 Comprueba la relación antes de construir:
 
@@ -35,10 +39,12 @@ git -C $aldcRoot rev-parse --show-toplevel
 git -C $aldcRoot branch --show-current
 git -C $aldcRoot rev-parse HEAD
 git -C $extensionRoot rev-parse --show-toplevel
+git -C $extensionRoot branch --show-current
+git -C $extensionRoot rev-parse HEAD
 ```
 
-Para esta adaptación, la rama es `feat/canonical-bc29-al18`. Anota el SHA que
-devuelve `rev-parse HEAD` junto al VSIX generado.
+Para esta adaptación, ambos repositorios usan la rama
+`feat/canonical-bc29-al18`. Anota los dos SHA junto al VSIX generado.
 
 ## Paso previo: crear el checkout de prueba
 
@@ -59,25 +65,24 @@ git -C $testRepo branch --show-current
 git -C $testRepo rev-parse HEAD
 ```
 
-El último comando debe mostrar el commit que vayas a probar. En el checkout nuevo
-no aparecerá `toolbox/`, porque se excluye de Git. Copia la fuente de la extensión
-desde tu checkout habitual. No copies `node_modules`, `templates` ni artefactos
-VSIX: se regeneran en los pasos siguientes.
+El último comando debe mostrar el commit de ALDC que vayas a probar. Después clona
+la rama coordinada de la extensión dentro del directorio ignorado `toolbox/`:
 
 ```powershell
-$sourceExtension = Join-Path $sourceRepo 'toolbox\al-coding-agent-collection'
 $testExtension = Join-Path $testRepo 'toolbox\al-coding-agent-collection'
 
-robocopy $sourceExtension $testExtension /E /XD node_modules templates .git /XF *.vsix
-if ($LASTEXITCODE -ge 8) { throw "No se pudo copiar la extensión (robocopy: $LASTEXITCODE)" }
+New-Item -ItemType Directory -Path (Split-Path $testExtension) -Force | Out-Null
+git clone --branch $branch --single-branch `
+  https://github.com/javiarmesto/aldc-vscode-extension.git $testExtension
 
-Get-ChildItem $testExtension -File -Name
+git -C $testExtension status --short
+git -C $testExtension branch --show-current
+git -C $testExtension rev-parse HEAD
 ```
 
-`robocopy` devuelve códigos de `0` a `7` incluso cuando ha copiado archivos; solo
-`8` o más indica un error. Si el directorio `C:\ALDC-Forge-Tests\ALDC-native29`
-ya existe, elige otro nombre o elimínalo únicamente si sabes que es una copia de
-prueba prescindible.
+Si necesitas probar cambios locales de la extensión que todavía no están en su
+rama, puedes usar `robocopy` como alternativa, excluyendo `.git`, `node_modules`,
+`templates` y `*.vsix`. No mezcles ese método con el clon anterior.
 
 ## Contrato actual de `prepare-package.js`
 
@@ -92,14 +97,16 @@ como fuente de verdad el contenido de esa carpeta.
 | `packages/foundation/skills` | `templates/skills` |
 | `docs/templates` | `templates/docs/templates` |
 | `docs/schema` | `templates/docs/schema` |
+| `docs/framework` | `templates/docs/framework` |
 | `tools/bcquality` | `templates/tools/bcquality` |
 | `tools/aldc-validate/index.js` y `package.json` | `templates/tools/aldc-validate` |
 | `scripts/install.js` | raíz de la extensión, `install.js` |
+| `scripts/native-profile.js` | raíz de la extensión, `native-profile.js` |
+| `.github/copilot-instructions.md` | `templates/.github/copilot-instructions.md` y entrada de la extensión |
 | `aldc.yaml` con `toolkitRoot: ".github"` | `templates/aldc-consumer.yaml` |
 
-También intenta copiar varios archivos heredados (`al-development.md`,
-`getting-started.md`, etc.). Si no existen, escribe un aviso y continúa. No deben
-interpretarse como un fallo de la preparación actual.
+Los documentos auxiliares se toman de sus rutas actuales bajo `docs/`; una
+preparación correcta no debe producir avisos de archivos ausentes.
 
 El `package.json` de la extensión declara `vscode:prepublish` como
 `node prepare-package.js`. Por tanto, `vsce package` ejecuta la preparación antes
@@ -123,6 +130,8 @@ node scripts/sync-foundation.js
 node scripts/sync-foundation.js --check
 
 Set-Location $extension
+git switch feat/canonical-bc29-al18
+git pull --ff-only origin feat/canonical-bc29-al18
 npm ci
 npm run prepare-package
 npx @vscode/vsce package --out (Join-Path $artifact 'aldc-bc29-native-test.vsix')
@@ -145,6 +154,8 @@ Copy-Item -LiteralPath (Join-Path $artifact 'aldc-bc29-native-test.vsix') -Desti
 Expand-Archive -LiteralPath $vsixZip -DestinationPath (Join-Path $artifact 'vsix-inspect') -Force
 Get-ChildItem $artifact\vsix-inspect\extension\templates\agents
 Get-ChildItem $artifact\vsix-inspect\extension\templates\skills\skill-migrate\references
+Get-Item $artifact\vsix-inspect\extension\native-profile.js
+Get-Item $artifact\vsix-inspect\extension\templates\docs\framework\native-al-tools.md
 ```
 
 ## Prueba aislada en VS Code
@@ -162,38 +173,30 @@ code-insiders --user-data-dir $vscodeUser --extensions-dir $vscodeExtensions --i
 code-insiders --user-data-dir $vscodeUser --extensions-dir $vscodeExtensions C:\ALDC-Forge-Tests\Proyecto-Prueba
 ```
 
-En esa ventana, ejecuta `AL Collection: Install Toolkit to Workspace`. Comprueba
-que crea la estructura `.github` en el proyecto de prueba y que las skills de
-`templates/skills` están presentes. Conserva el SHA, el nombre del VSIX, la salida
-de la preparación y la versión de VS Code/Copilot/AL Language como evidencia.
+En esa ventana, ejecuta `AL Collection: Install Toolkit to Workspace`, elige
+`BC 29 native (AL 18)` y comprueba:
 
-## Perfil `bc29-native`: integración pendiente en la extensión
+1. `.github/aldc-profile.json` declara `bc29-native`.
+2. `.github/docs/framework/native-al-tools.md` existe.
+3. Los agentes y prompts usan las herramientas `ms-dynamics-smb.al/*` previstas.
+4. Al cambiar a `bc28`, la extensión pide confirmación antes de reemplazar los
+   archivos administrados.
 
-La rama implementa el perfil BC29 en `scripts/install.js` y
-`scripts/native-profile.js`. El perfil proyecta agentes y prompts en tiempo de
-instalación y requiere el contrato `docs/framework/native-al-tools.md`.
+Repite la instalación en otro proyecto seleccionando `BC 28 compatible`. Conserva
+los dos SHA, el nombre del VSIX, la salida de preparación y las versiones de VS
+Code, Copilot y AL Language como evidencia.
 
-El empaquetador local conocido incorpora las primitivas compartidas mediante
-`packages/foundation` y copia `install.js`, pero **no incorpora todavía**
-`native-profile.js` ni el contrato nativo. Además, el comportamiento de los
-comandos de VS Code depende de `extension.js`, que debe confirmar cómo instala
-desde `templates/`.
+## Perfil `bc29-native`: integración implementada
 
-Por ello, con el script documentado el VSIX permite probar las skills e
-instrucciones actualizadas, pero no acredita que la orden de instalación de la
-extensión pueda seleccionar `bc29-native`. Antes de presentar el perfil BC29 en
-la extensión, revisa `extension.js` y aplica estas condiciones:
+La rama coordinada de la extensión incorpora `native-profile.js`, el contrato
+nativo y la selección BC28/BC29 en el comando de instalación. La selección queda
+registrada en `aldc-profile.json`; un cambio de perfil sobre una instalación
+existente requiere confirmación explícita.
 
-1. Empaquetar los agentes y prompts fuente que utiliza la proyección.
-2. Empaquetar `native-profile.js` junto al código que lo carga, o integrar su
-   función de proyección en la extensión de forma equivalente y comprobada.
-3. Empaquetar `docs/framework/native-al-tools.md` en la ubicación que espera el
-   instalador.
-4. Añadir una selección explícita BC28 / BC29-native al comando de instalación,
-   conservarla en el marcador `aldc-profile.json` y requerir reemplazo explícito
-   al cambiar de perfil.
-5. Construir un VSIX nuevo e instalarlo en la instancia aislada; probar una
-   instalación BC28, BC29, cambio con `--force` o su equivalente, y retorno a BC28.
+Se validaron el empaquetado anidado y el independiente, la instalación extraída
+por CLI de ambos perfiles, la proyección de herramientas nativas y el bloqueo de
+un cambio de perfil sin reemplazo explícito. Sigue pendiente la prueba manual del
+flujo visual en una instancia aislada de VS Code antes de publicar.
 
 No copies agentes BC29 manualmente a `packages/foundation`: esa carpeta es un
 espejo de las fuentes canónicas y no representa un perfil. Ejecuta siempre
