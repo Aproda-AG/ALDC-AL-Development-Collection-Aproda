@@ -84,7 +84,7 @@ function plan({ root, surface, files, force = false }) {
   return { root, surface, state, actions };
 }
 function report(plan) { return plan.actions.map(({ rel, status }) => ({ path: rel, action: status })); }
-function restore(root, journal, interrupted = false) {
+function restore(root, journal, interrupted = false, beforeWrites = () => {}) {
   if (journal?.schema !== 1 || !Array.isArray(journal.actions)) throw Error('Invalid rollback journal');
   const changes = [], preserved = [];
   for (const a of journal.actions) {
@@ -96,6 +96,7 @@ function restore(root, journal, interrupted = false) {
     if (hash(before) !== a.beforeHash) throw Error(`Backup integrity mismatch: ${a.rel}`);
     changes.push({ ...a, before });
   }
+  beforeWrites();
   for (const a of changes.reverse()) {
     if (hash(read(root, a.rel)) !== a.afterHash) throw Error(`Concurrent change during rollback: ${a.rel}`);
     if (a.before === null) fs.unlinkSync(checked(root, a.rel));
@@ -156,9 +157,11 @@ function rollback(root, surface) {
     if (!id) throw Error('No installation to roll back');
     const journal = json(root, journalPath(id));
     if (journal?.id !== id || journal.surface !== surface) throw Error('Pending transaction belongs to another surface or has invalid ID');
-    const preserved = restore(root, journal, Boolean(pending));
+    const preserved = restore(root, journal, Boolean(pending), () => {
+      atomic(root, `${META}/pending.json`, encode({ id }), 0o600);
+    });
     journal.status = 'rolled-back'; atomic(root, journalPath(id), encode(journal), 0o600);
-    if (pending) fs.unlinkSync(checked(root, `${META}/pending.json`));
+    fs.unlinkSync(checked(root, `${META}/pending.json`));
     return { rolledBack: id, preserved };
   } finally { release(); }
 }

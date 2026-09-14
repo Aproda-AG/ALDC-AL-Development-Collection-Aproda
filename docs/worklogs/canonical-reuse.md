@@ -134,7 +134,7 @@ Run Health Graph ni runtime completo. Doctor y Spec Agent siguen fuera de #97.
 ## Handoff 02 — entrega 1 implementada
 
 Base: main `2f7f31a42ba8fe93eaeb8309ba582745a5ccb527`, sin PR abiertas al comenzar.
-Rama única: `feat/canonical-plugin-packaging`. Se preserva el main integrado y no
+Rama única: `feat/canonical-plugin-packaging`, [PR #100](https://github.com/javiarmesto/ALDC-AL-Development-Collection/pull/100). Se preserva el main integrado y no
 se reabre #97. Lab y PR externa del VSIX se mantienen sin cambios.
 
 - Motor común de planificación, recibos/hash, colisiones visibles y backup/rollback
@@ -153,9 +153,10 @@ se reabre #97. Lab y PR externa del VSIX se mantienen sin cambios.
   runtime ni identidad Graph. Las referencias de dominio no se registran como
   skills duplicados. No se registra Marketplace ni se instala en esta sesión.
 
-Comprobaciones locales: 214 checks de perfil, 226 de empaquetado CLI, 13 pruebas
+Comprobaciones locales: 214 checks de perfil, 226 de empaquetado CLI, 14 pruebas
 conductuales de instalación/recuperación, 57 de conformance y 71 archivos Foundation.
-Se probó fallo parcial con restauración de archivos y recibo; rollback encadenado,
+Se probó fallo parcial con restauración de archivos y recibo, incluida interrupción
+durante el propio rollback y recuperación posterior; rollback encadenado,
 memoria editada, colisiones persistentes, backup corrupto, lock activo, symlink,
 contenido manipulado y fuentes CRLF. TOML analizado con Python stdlib: diez perfiles
 con cuerpo completo y un único SKILL.md descubrible. Validadores plugin/skill pasan.

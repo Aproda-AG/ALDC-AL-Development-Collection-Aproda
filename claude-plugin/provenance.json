@@ -77,7 +77,7 @@
     "docs/templates/technical-spec-template.md": "5b9dbd9ea80e9a060965638d8be9e2594869d0fec4f2ab280307166f9e271916",
     "docs/templates/test-plan-template.md": "724882202ad91657012eb2568fe69d059634429213f92805d3a9bdfd9ce42447",
     "scripts/init-plugin.js": "48df52147f60b585723586520b123199deccdeec5f202f23f0fccf1582aa0c01",
-    "scripts/install-transaction.js": "8b1639c4e68acd3f1c740d439fe9424e01d8edc4a34e17a892d1ec6d1f2431f2",
+    "scripts/install-transaction.js": "55d01d423a1604c622ddf496f1b3aca88d99728da7007cb60bc2d98f16eb2611",
     "scripts/package-provenance.js": "53b3b5423fdea83e668561eefbc6f46f1742a3c9b386079aff50bc21323dc5f5",
     "scripts/sync-plugin-support.js": "b282745bedecb7df516abf0c638b37b1507d0ad9299608bc5795262a8b35ca8c"
   },
@@ -133,7 +133,7 @@
     "rules-templates/al-performance.md": "f3ede9e7651adc34ec3a9b4f5d51f57b56a5fd4cf510fe2730c7929a26dd365c",
     "rules-templates/al-testing.md": "7d25c67f3e95306bc95c492cac1681e1dbc488ef9c9fc06a2b76fdbb8b736e5f",
     "scripts/init.js": "48df52147f60b585723586520b123199deccdeec5f202f23f0fccf1582aa0c01",
-    "scripts/install-transaction.js": "8b1639c4e68acd3f1c740d439fe9424e01d8edc4a34e17a892d1ec6d1f2431f2",
+    "scripts/install-transaction.js": "55d01d423a1604c622ddf496f1b3aca88d99728da7007cb60bc2d98f16eb2611",
     "scripts/package-provenance.js": "53b3b5423fdea83e668561eefbc6f46f1742a3c9b386079aff50bc21323dc5f5",
     "skills/skill-agent-instructions/SKILL.md": "914bacb107329904898ec687bc80551dd8cdaa1a6d010a1235fd0ef5ed90bfa4",
     "skills/skill-agent-instructions/references/agent-keywords-reference.md": "9b15534aca3c701b57cb6859a4152d291edcba0fd7bdf499e9b062849b4b1c33",

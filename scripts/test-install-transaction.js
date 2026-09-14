@@ -95,3 +95,14 @@ test('new override preserves existing project AGENTS.md and customized managed b
  const edited=read(r,'AGENTS.override.md').replace('Use the ALDC skill','Custom ALDC skill');write(r,'AGENTS.override.md',edited);
  const result=initialize({project:r,pluginRoot,apply:true});assert.equal(result.files.find(f=>f.path==='AGENTS.override.md').action,'collision');assert.equal(read(r,'AGENTS.override.md'),edited);
 });
+
+test('interrupted rollback remains recoverable even after the receipt was restored',t=>{
+ const r=temp(t),opts={root:r,surface:'fixture',files:files('v1')};tx.apply(opts);tx.apply({...opts,files:files('v2')});
+ const rename=fs.renameSync;let injected=false;
+ fs.renameSync=(src,dst)=>{if(dst===path.join(r,'a.md')&&!injected){injected=true;throw Error('Simulated restore failure');}return rename(src,dst);};
+ try{assert.throws(()=>tx.rollback(r,'fixture'),/Simulated restore failure/);}finally{fs.renameSync=rename;}
+ assert.equal(fs.existsSync(path.join(r,'.aldc-install/pending.json')),true);
+ assert.throws(()=>tx.apply(opts),/Interrupted operation/);
+ tx.rollback(r,'fixture');assert.equal(read(r,'a.md'),'v1');assert.equal(read(r,'b.md'),'v1');assert.deepEqual(tx.drift(r,'fixture'),[]);
+ assert.equal(fs.existsSync(path.join(r,'.aldc-install/pending.json')),false);
+});
