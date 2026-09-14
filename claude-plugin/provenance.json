@@ -79,9 +79,11 @@
     "scripts/init-plugin.js": "9e50747624844a612f584650f887aa27286623bb0df93a24ef7c5d5efce86c0b",
     "scripts/install-transaction.js": "55d01d423a1604c622ddf496f1b3aca88d99728da7007cb60bc2d98f16eb2611",
     "scripts/package-provenance.js": "53b3b5423fdea83e668561eefbc6f46f1742a3c9b386079aff50bc21323dc5f5",
-    "scripts/sync-plugin-support.js": "8f6d1d05e41ca0d8d8d9dc0a84cf1e5328f7a7325cbd0a6bba0b8ff2f5cd51d2",
+    "scripts/sync-plugin-support.js": "b7ce5b025f10c42c62be0102ddf58acb12a4c8f07959bbfe6ab8532ddc4a3cc4",
     "skills/skill-agent-instructions/examples/agent-advanced-instructions.txt": "f9938f734399e9ec2ad01186dbc761030dd815a1595b813e028c9914a10d9eba",
-    "skills/skill-agent-instructions/examples/agent-simple-instructions.txt": "4ad7eb9e8e961f179664118c37ab58c1734be60295bb69e78929cc765b6c98c1"
+    "skills/skill-agent-instructions/examples/agent-simple-instructions.txt": "4ad7eb9e8e961f179664118c37ab58c1734be60295bb69e78929cc765b6c98c1",
+    "tools/context-doctor/README.md": "189628fb226910502c67f7f144c37eb984094c0cb57d35f3bd4811a7739b70b0",
+    "tools/context-doctor/aldc_context_doctor.py": "01b050100fceb251c810015e58fa12f1c68bcc9d28a4f812a112d234d0290d86"
   },
   "outputs": {
     ".claude-plugin/marketplace.json": "51bc579dc146de218dce7a1e7d81c50db38c7168187a664dbe402b34955c8369",
@@ -125,7 +127,7 @@
     "docs/templates/test-plan-template.md": "724882202ad91657012eb2568fe69d059634429213f92805d3a9bdfd9ce42447",
     "hooks/hooks.json": "75262d29677e687948954f34c66dc1d4df1f30f1282aec127e0ea4fe6e3213c8",
     "hooks/session-context.js": "5067af0d821b89d2a21418c27b9f28429e65d60e6cc3c59e6fb27021916d88c8",
-    "project-guidance.md": "e0637c5adb18ac09cc7c99b6375c07e26dfa6542aa5187ae097cd2a397016337",
+    "project-guidance.md": "9b54274bdf9048d082c6b4353cca2bd491ed93b8161c9946f62a77131ef4c5ee",
     "rules-templates/al-agent-toolkit.md": "0e796688490926f073de2117a30e79437509735e7a5f56029a303fdb4af5d6d7",
     "rules-templates/al-code-style.md": "6f918e620381b27130f301608752e86e2cdee0f28dd24f05440a6355ff936963",
     "rules-templates/al-error-handling.md": "8d0628cd82104400db87fe89eb085759b33ac9f805ecea15846e7d793611c65a",
@@ -164,6 +166,8 @@
     "surface.json": "d193660e15b4ee238d1ce999c3aeca62f571eaa45f1b0c90619482301cb4bc8e",
     "templates/memory-template.md": "cc9a55e50c97f83dafba1a05d747d91afaf5fe3eccf7ea6bee41e25ba4c5cb4b",
     "tools/bcquality/precondition_hook.ps1": "aa028d40a3c0ab4d1c327b97262a0c1857687d4122d55426e0ae238e11cf45d1",
-    "tools/bcquality/precondition_hook.sh": "0193f100b2bb262a928de3c9c6acf0d1ef0807dca3e36c98844c992b3bee4323"
+    "tools/bcquality/precondition_hook.sh": "0193f100b2bb262a928de3c9c6acf0d1ef0807dca3e36c98844c992b3bee4323",
+    "tools/context-doctor/README.md": "189628fb226910502c67f7f144c37eb984094c0cb57d35f3bd4811a7739b70b0",
+    "tools/context-doctor/aldc_context_doctor.py": "01b050100fceb251c810015e58fa12f1c68bcc9d28a4f812a112d234d0290d86"
   }
 }

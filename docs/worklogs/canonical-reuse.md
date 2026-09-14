@@ -192,3 +192,50 @@ recuperados de la fuente canónica. Pruebas de rutas Windows son análisis de ru
 sobre Linux, no ejecución Windows. Las correcciones y sus derivados se validan
 antes de resolver hilos; no se presenta la revisión del head inicial como una
 aprobación automática del head corregido.
+
+## Handoff 02 — entrega 2: Doctor canónico
+
+Base integrada comprobada: main `ee4cd420ba0a2aba84fd3b826cd127382a2ea070`
+(#100), sin PR abiertas al empezar. Rama única `feat/canonical-doctor`.
+
+- Doctor local stdlib Python 3.9+, de solo lectura: especificar, compilar App,
+  compilar Test y ejecutar tests tienen estado, rutas, problema y acción propios.
+  Configuración válida con runtime desconocido no bloquea globalmente ni pasa
+  pruebas. Proveedor nativo suficiente no exige servidor comunitario redundante.
+- Descubrimiento App/Test acotado y configuración AL-Go explícita; reconoce BC28
+  y BC29 sin inferir el runtime del perfil instalado. Fuentes anteriores sin
+  Spec Agent siguen válidas. Cada host selecciona su layout canónico/plugin.
+- Observaciones opcionales del host conservan descubierto/cargado/ejecutado/
+  verificado por separado y se etiquetan como reportadas. Validación de alcance
+  workspace/host/manifiestos; no autentica ni certifica frescura. No se crea otro
+  sistema de estado. Compilar no demuestra tests ni cobertura funcional.
+- Instalador Chat incorpora Doctor en su transacción y rollback. Generadores
+  existentes empaquetan las mismas fuentes en Claude, CLI y Codex; bootstrap
+  Codex incluye el script en el skill local. Guía de uso, hashes y archivo npm
+  actualizados conjuntamente. Sin instalación automática de Python ni comandos
+  ejecutados por Doctor.
+
+Procedencia y transformaciones en [README de Doctor](../../tools/context-doctor/README.md):
+Doctor v0.1.6 y solo descubrimiento de workspace_fingerprint del Lab
+`b2ce9d9f137fc92574261317294ca2d585beb74b`; semántica práctica candidata de
+`7c8ec39e37c0eb1fc8f8e9ad0cf0a08b6aa8421d`. Excluidos Graph, hashes de transición,
+Run Health y probes que ejecutan comandos.
+
+Verificación: 16 fixtures conductuales (anterior/nuevo, BC29 sin comunitario,
+App/Test, runner ausente, fallos de ejecución, configuración rota y aislamiento,
+AL-Go, JSONC/BOM, rutas/symlinks, observaciones contradictorias y lectura sin
+efectos). Se ejecutan los paquetes reales de las cuatro superficies, instalación
+Chat/rollback y bootstrap Codex en directorios aislados. CI incorpora la suite.
+Además pasan validate, perfiles, recuperación, generación y archivo npm offline.
+La revisión remota y las comprobaciones del head se consultan antes del merge.
+
+Límites: inspección básica de configuración JSON/manifiestos, sin validar el
+esquema completo AL ni configuraciones arbitrarias de proveedores, YAML o TOML
+del host. Sin carga real de hosts ni compilación/ejecución BC observadas. Las
+pruebas son Linux; Windows/Python fuera de PATH siguen pendientes en host real.
+
+**Siguiente entrega:** Spec Agent y contrato compartido con al-spec.create;
+actualizar Doctor y adaptadores en esa misma PR. **Delta de empaquetado:** carga
+completa y recarga sin duplicados en los cuatro hosts, recuperación Windows real
+y regeneración del VSIX externo desde main cuando proceda. No hay release,
+paquete publicado, Marketplace ni despliegue Business Central en esta entrega.

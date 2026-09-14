@@ -79,13 +79,15 @@
     "docs/templates/spec-template.md": "634da157c9e87ef6a1a22fa419e49dff31ef413a0fd246021878eb33bddb0ae8",
     "docs/templates/technical-spec-template.md": "5b9dbd9ea80e9a060965638d8be9e2594869d0fec4f2ab280307166f9e271916",
     "docs/templates/test-plan-template.md": "724882202ad91657012eb2568fe69d059634429213f92805d3a9bdfd9ce42447",
-    "package.json": "3eeeb5163381945f24176af9e58f7449b28585dc07f54e8a77b3a912864bb172",
+    "package.json": "086d2811ca4fa91d161ab39fc0c573a0a9755f00dccf161952b965366666869f",
     "scripts/init-plugin.js": "9e50747624844a612f584650f887aa27286623bb0df93a24ef7c5d5efce86c0b",
     "scripts/install-transaction.js": "55d01d423a1604c622ddf496f1b3aca88d99728da7007cb60bc2d98f16eb2611",
     "scripts/package-provenance.js": "53b3b5423fdea83e668561eefbc6f46f1742a3c9b386079aff50bc21323dc5f5",
-    "scripts/sync-codex.js": "0b538341c98439902504030fc2a36fc101f44e8a1c8f1318ff036f77e9aad96d",
-    "scripts/sync-copilot-cli.js": "4ccd52d1cd3429810c7dd7ff968dff04e03969e9f27a8cf556f2bfa805f73053",
-    "scripts/sync-plugin-support.js": "8f6d1d05e41ca0d8d8d9dc0a84cf1e5328f7a7325cbd0a6bba0b8ff2f5cd51d2"
+    "scripts/sync-codex.js": "4e1811d2bc2370cf0dd719ec84d255ac4ec210495d53dc2cda9764f473cec262",
+    "scripts/sync-copilot-cli.js": "983d6f0c30984d3abd0543d727f9c3d10a3b7360a5bd4c0a4c0976d38dabda85",
+    "scripts/sync-plugin-support.js": "b7ce5b025f10c42c62be0102ddf58acb12a4c8f07959bbfe6ab8532ddc4a3cc4",
+    "tools/context-doctor/README.md": "189628fb226910502c67f7f144c37eb984094c0cb57d35f3bd4811a7739b70b0",
+    "tools/context-doctor/aldc_context_doctor.py": "01b050100fceb251c810015e58fa12f1c68bcc9d28a4f812a112d234d0290d86"
   },
   "outputs": {
     ".codex-plugin/plugin.json": "9ba5dd1534f1a4b887e8d317d2bd799a27008104a790ae4b6f3d2a47a57b8595",
@@ -100,7 +102,7 @@
     "agents/al-review-subagent.toml": "d7926796acf3a22024e2aac1c0de579e9d988ba18bb53e1cbc06c33f85f00128",
     "agents/al-triage.toml": "adbb5a5c313d892137fc64efe5484397a2d10de9c28df0c344aa48628c379f48",
     "agents/dredd.toml": "12dc53dc065f49e332dd3a4f0531d4d66cbcac0cd5463c259dff4cb099aec128",
-    "project-guidance.md": "e5eb18bd91aed3a24b4ca0b81ad66c37342d2c770ed5f8777c77906669836207",
+    "project-guidance.md": "001e02d8df43b28f4ac3fc8a1d91c1bcf53291a98073f2610e2dc0e7937a2828",
     "rules-templates/al-agent-toolkit.md": "3179f41c96e27c359cf9da546b5435a5f9360553115d167b08da6f95a82df1e7",
     "rules-templates/al-code-style.md": "183255838e1aae3423fa4fc6ac8c5311f2530a02baff049db4931a13089c982c",
     "rules-templates/al-error-handling.md": "255e0164c3fea35c59428eff48137227da50dda8cdddb42288aedbd73f644240",
@@ -133,6 +135,7 @@
     "skills/aldc/references/commands/al-memory-create.md": "52f4ff247217913daba082caccf4bc1cd02cc172d82fd8dc4dd9c5fa96d72811",
     "skills/aldc/references/commands/al-pr-prepare.md": "3b0e4e66654932aaab7fc936ec00296c53c916f4475844badfac881ccd00614a",
     "skills/aldc/references/commands/al-spec-create.md": "b1e525e706f6fc711e38d3acace490cf9a2d0fc7858b13d105c798140652692b",
+    "skills/aldc/references/doctor.md": "189628fb226910502c67f7f144c37eb984094c0cb57d35f3bd4811a7739b70b0",
     "skills/aldc/references/rules/al-agent-toolkit.md": "3179f41c96e27c359cf9da546b5435a5f9360553115d167b08da6f95a82df1e7",
     "skills/aldc/references/rules/al-code-style.md": "183255838e1aae3423fa4fc6ac8c5311f2530a02baff049db4931a13089c982c",
     "skills/aldc/references/rules/al-error-handling.md": "255e0164c3fea35c59428eff48137227da50dda8cdddb42288aedbd73f644240",
@@ -179,6 +182,7 @@
     "skills/aldc/references/templates/spec-template.md": "634da157c9e87ef6a1a22fa419e49dff31ef413a0fd246021878eb33bddb0ae8",
     "skills/aldc/references/templates/technical-spec-template.md": "5b9dbd9ea80e9a060965638d8be9e2594869d0fec4f2ab280307166f9e271916",
     "skills/aldc/references/templates/test-plan-template.md": "724882202ad91657012eb2568fe69d059634429213f92805d3a9bdfd9ce42447",
+    "skills/aldc/scripts/aldc_context_doctor.py": "01b050100fceb251c810015e58fa12f1c68bcc9d28a4f812a112d234d0290d86",
     "surface.json": "ce866924b58ae6d3a48a297eb8e262d0651be2fbc183095f4e976eafd46c9b3b",
     "templates/memory-template.md": "cc9a55e50c97f83dafba1a05d747d91afaf5fe3eccf7ea6bee41e25ba4c5cb4b"
   }

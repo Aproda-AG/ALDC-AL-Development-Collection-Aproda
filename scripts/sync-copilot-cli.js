@@ -147,7 +147,7 @@ static validation of this adaptation. Plugin loading and AL execution remain pen
   for (const [p,b] of support('cli', root)) put(p,b);
   const { walk: paths, provenance } = require('./package-provenance');
   const sources = paths(root, 'claude-plugin').filter(p => !p.endsWith('/provenance.json'));
-  sources.push(...paths(root, 'agents'), 'plugin.json', 'scripts/sync-plugin-support.js',
+  sources.push(...paths(root, 'tools/context-doctor'), ...paths(root, 'agents'), 'plugin.json', 'scripts/sync-plugin-support.js',
     'scripts/install-transaction.js', 'scripts/init-plugin.js', ...paths(root, 'docs/templates'));
   put('provenance.json', provenance(root, sources,
     new Map([...files].map(([p,b]) => [p.slice(DEST.length+1),b])), 'scripts/sync-copilot-cli.js'));
