@@ -22,7 +22,7 @@ A proposed skill must pass all gates before PR.
 
 ## Gate 4: Maintainability
 
-- GUIDE.md stays compact
+- SKILL.md stays compact
 - Long technical content moved to references/scripts
 - File structure follows repository conventions
 

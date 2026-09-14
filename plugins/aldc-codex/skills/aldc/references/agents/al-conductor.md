@@ -3,6 +3,9 @@
 Resolve .agents/skills/aldc paths below against the installed ALDC skill root
 if using plugin discovery instead of local bootstrap. Workflow names below are
 reference files in commands/, not automatically registered slash commands.
+Packaged domain entrypoints named SKILL.md in the source are stored as GUIDE.md
+under references/skills/. This alias applies only when reading packaged guidance;
+new discoverable skills must still be created with SKILL.md.
 
 Use only tools actually exposed by this session. Model, reasoning, sandbox and
 approval settings inherit from the parent; this profile grants no extra tools.
@@ -218,7 +221,7 @@ For each phase in the plan, execute this cycle with **visual progress tracking**
    - Event subscribers/publishers needed
    - Test requirements following AL-Go structure
    - AL-specific patterns (SetLoadFields, error handling, etc.)
-   - **The 7 always-on instruction micro-rules inline** + **domain skill hints** for this phase (per §"Passing Context to Subagents" — the subagent loads the `GUIDE.md` on demand, not you)
+   - **The 7 always-on instruction micro-rules inline** + **domain skill hints** for this phase (per §"Passing Context to Subagents" — the subagent loads the `SKILL.md` on demand, not you)
    - Explicit instruction to work autonomously and follow TDD
    - **RETURN** a structured summary including the **symbolic skills line** (`📐 instr ✓ · 🧠 skill-x·tag`), not a verbose table
 
@@ -371,7 +374,7 @@ When invoking subagents:
 - Use event-driven architecture (no base modifications)
 - Follow AL-Go structure (tests in test/ project)
 - Apply AL performance patterns (SetLoadFields, early filtering)
-- Honor the **7 always-on instruction micro-rules** you pass inline (the `applyTo` auto-apply does not fire in subagent runtime), and **load the `GUIDE.md` on demand** (read it) for the phase's domain — your hints are hints, not the whole list
+- Honor the **7 always-on instruction micro-rules** you pass inline (the `applyTo` auto-apply does not fire in subagent runtime), and **load the `SKILL.md` on demand** (read it) for the phase's domain — your hints are hints, not the whole list
 - Work autonomously and only ask user for input on critical implementation decisions
 - **NOT** to proceed to next phase or write completion files (Conductor handles this)
 - **RETURN** a structured summary: objects created, event subscribers (exact base object + event + signature), tests created, build status, issues, and the **symbolic skills line** (`📐 instr ✓ · 🧠 skill-x·tag`)
@@ -695,7 +698,7 @@ During planning or implementation, if you identify specialized needs:
 
 ## Domain Skills
 
-This agent draws on skills from `.agents/skills/aldc/references/skills/`. They are **not** auto-loaded — **load the `GUIDE.md` on demand** (read it) when you need it:
+This agent draws on skills from `.agents/skills/aldc/references/skills/`. They are **not** auto-loaded — **load the `SKILL.md` on demand** (read it) when you need it:
 
 - **skill-testing** — When orchestrating TDD cycles and test strategy is needed
 
@@ -941,7 +944,7 @@ Instead, **pass phase-relevant excerpts inline** in the the available subagent d
 - **Test-plan excerpt** — only the tests scoped to this phase.
 - **Memory** — only the cross-session decisions that bear on this phase.
 - **The 7 always-on instruction micro-rules** (`.agents/skills/aldc/references/rules/al-*.md`) — the available file reading/search tool them **once** at run start and pass them inline to **every** code-touching subagent (implement, review). They are tiny (~1.3K tokens total) hard-rule baselines, and in the Codex harness there is **no editor-attached-files auto-apply** — the `applyTo` glob never fires in subagent runtime — so injecting them is the only way they take effect. **Not optional, not per-domain**: pass all seven on every code phase. They are the floor; the depth lives in the skills they point to.
-- **Domain skill *hints*** — name the skills likely relevant to this phase's domain (e.g. `skill-events` for an event phase). These are **hints, not mandates**: the subagent loads the `GUIDE.md` (reads it) on demand when it enters the domain, and may load a skill you didn't hint if it finds it needs one.
+- **Domain skill *hints*** — name the skills likely relevant to this phase's domain (e.g. `skill-events` for an event phase). These are **hints, not mandates**: the subagent loads the `SKILL.md` (reads it) on demand when it enters the domain, and may load a skill you didn't hint if it finds it needs one.
 
 Tell the subagent: **the excerpts are authoritative for this phase; read the full file under `.github/plans/` only if a referenced detail is missing from the excerpt.** Always include the file path so that escape hatch works.
 

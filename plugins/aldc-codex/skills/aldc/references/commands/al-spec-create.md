@@ -3,6 +3,9 @@
 Resolve .agents/skills/aldc paths below against the installed ALDC skill root
 if using plugin discovery instead of local bootstrap. Workflow names below are
 reference files in commands/, not automatically registered slash commands.
+Packaged domain entrypoints named SKILL.md in the source are stored as GUIDE.md
+under references/skills/. This alias applies only when reading packaged guidance;
+new discoverable skills must still be created with SKILL.md.
 
 Use only tools actually exposed by this session. Model, reasoning, sandbox and
 approval settings inherit from the parent; this profile grants no extra tools.
@@ -73,7 +76,7 @@ Search for:
 This spec is the blueprint `al-conductor` and `al-developer` implement from — it must be a **reliable guide**, not proposed from memory. Ground it without bloating this (cheap) primitive:
 
 - **Instructions (always) — reference, don't recite.** The hard micro-rules under `rules-templates/` / the project's `.agents/skills/aldc/references/rules/al-*` (naming ≤26 PascalCase, `DataClassification` on every field, extension-only, the performance/error-handling safety-net) govern every object you propose. They are tiny — honor them, and cite the governing one where a section depends on it.
-- **Skills (on demand — one per domain the spec actually designs).** the available file reading/search tool the `GUIDE.md` for a domain **only when the spec covers it**: §5 events → `skill-events`; §6 pages → `skill-pages`; §8 permissions → `skill-permissions`; §9 API → `skill-api`; AI/Copilot → `skill-copilot`; performance-critical logic → `skill-performance`; §7 tests → `skill-testing`. Do **not** load skills for domains the spec doesn't touch; for **LOW** complexity keep it minimal.
+- **Skills (on demand — one per domain the spec actually designs).** the available file reading/search tool the `SKILL.md` for a domain **only when the spec covers it**: §5 events → `skill-events`; §6 pages → `skill-pages`; §8 permissions → `skill-permissions`; §9 API → `skill-api`; AI/Copilot → `skill-copilot`; performance-critical logic → `skill-performance`; §7 tests → `skill-testing`. Do **not** load skills for domains the spec doesn't touch; for **LOW** complexity keep it minimal.
 
 This keeps the median cost low (most specs touch 1–2 domains) while making the spec a framework-grounded guide instead of a from-memory proposal.
 

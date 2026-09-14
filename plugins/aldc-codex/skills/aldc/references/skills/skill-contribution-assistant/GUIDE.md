@@ -75,13 +75,13 @@ If answers are incomplete, ask focused follow-up questions until scope is clear.
 
 Create and maintain this structure:
 
-- `skills/<skill-name>/GUIDE.md`
+- `skills/<skill-name>/SKILL.md`
 - `skills/<skill-name>/AUTHORS.md`
 - `skills/<skill-name>/CHANGELOG.md`
 - `skills/<skill-name>/references/` (optional, preferred for long content)
 - `skills/<skill-name>/scripts/` (optional, only when deterministic automation helps)
 
-### Step 3: Author GUIDE.md
+### Step 3: Author SKILL.md
 
 1. Keep frontmatter with only `name` and `description`.
 2. Keep body compact and operational.
@@ -111,7 +111,7 @@ Create and maintain this structure:
 
 ## Anti-Patterns to Avoid
 
-1. Oversized GUIDE.md that contains all details and examples.
+1. Oversized SKILL.md that contains all details and examples.
 2. Hardcoded customer names, environment names, paths, or internal endpoints.
 3. Vague description that does not trigger reliably.
 4. Interactive behavior that repeatedly pushes users to create a skill.

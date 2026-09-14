@@ -151,7 +151,8 @@ se reabre #97. Lab y PR externa del VSIX se mantienen sin cambios.
   workflows, reglas y dominio. Bootstrap con AGENTS.override.md/AGENTS.md y memoria;
   conserva modelo, razonamiento, permisos, sandbox y MCP del padre. Sin overlay,
   runtime ni identidad Graph. Las referencias de dominio no se registran como
-  skills duplicados. No se registra Marketplace ni se instala en esta sesión.
+  skills duplicados. La conversión a GUIDE.md se limita a referencias empaquetadas;
+la creación de nuevas skills sigue usando SKILL.md. No se registra Marketplace ni se instala en esta sesión.
 
 Comprobaciones locales: 214 checks de perfil, 226 de empaquetado CLI, 14 pruebas
 conductuales de instalación/recuperación, 57 de conformance y 71 archivos Foundation.

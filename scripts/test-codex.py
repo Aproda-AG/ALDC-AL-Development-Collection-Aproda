@@ -17,4 +17,7 @@ for path in roles:
     body = (root / f"skills/aldc/references/agents/{path.stem}.md").read_text()
     assert data['developer_instructions'].endswith(body), path
     assert '../skills/skill-migrate/references/cli-al-tools.md' in body, path
+contribution = (root / 'skills/aldc/references/skills/skill-contribution-assistant/GUIDE.md').read_text()
+assert 'skills/<skill-name>/SKILL.md' in contribution
+assert 'Step 3: Author SKILL.md' in contribution
 print('Codex: 10 valid TOML profiles, full role bodies, one discoverable skill; host loading unverified.')

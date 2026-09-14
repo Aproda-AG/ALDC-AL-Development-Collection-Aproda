@@ -3,6 +3,9 @@
 Resolve .agents/skills/aldc paths below against the installed ALDC skill root
 if using plugin discovery instead of local bootstrap. Workflow names below are
 reference files in commands/, not automatically registered slash commands.
+Packaged domain entrypoints named SKILL.md in the source are stored as GUIDE.md
+under references/skills/. This alias applies only when reading packaged guidance;
+new discoverable skills must still be created with SKILL.md.
 
 Use only tools actually exposed by this session. Model, reasoning, sandbox and
 approval settings inherit from the parent; this profile grants no extra tools.
@@ -72,7 +75,7 @@ Review the AL code changes using available tools:
 
 ### 2. Verify Implementation
 
-> **How the framework's rules reach you here — not by passive auto-apply (it does not fire in subagent runtime).** The **always-on instruction micro-rules** arrive **inline from the Conductor** (hard-rule baseline, in effect for the whole review). For domain **depth**, **load the skill yourself** — the available file reading/search tool its `GUIDE.md` — **only for the residual you actually own**: domains an active BCQuality leaf does **not** cover. Where a domain is owned by an enabled BCQuality leaf, do **not** load the ALDC skill — its knowledge is already loaded; defer to its finding (no double-load). Don't re-derive a rule's text — verify and flag, citing `file:line`.
+> **How the framework's rules reach you here — not by passive auto-apply (it does not fire in subagent runtime).** The **always-on instruction micro-rules** arrive **inline from the Conductor** (hard-rule baseline, in effect for the whole review). For domain **depth**, **load the skill yourself** — the available file reading/search tool its `SKILL.md` — **only for the residual you actually own**: domains an active BCQuality leaf does **not** cover. Where a domain is owned by an enabled BCQuality leaf, do **not** load the ALDC skill — its knowledge is already loaded; defer to its finding (no double-load). Don't re-derive a rule's text — verify and flag, citing `file:line`.
 
 Check that the implementation meets **AL-specific criteria**:
 

@@ -22,7 +22,7 @@ function bodyFor(text) {
     .replace(/\/?al-spec\.create/g,'al-spec-create')
     .replace(/instructions\/al-\*\.instructions\.md/g,'.agents/skills/aldc/references/rules/al-*.md')
     .replace(/docs\/templates\//g,'.agents/skills/aldc/references/templates/')
-    .replace(/SKILL\.md/g,'GUIDE.md').replace(/[\t ]+$/gm,'');
+    .replace(/(skill-[a-z0-9-]+\/)SKILL\.md/g,'$1GUIDE.md').replace(/[\t ]+$/gm,'');
 }
 function expected(root = ROOT) {
   const files = support('codex', root), sources = [];
@@ -37,7 +37,7 @@ function expected(root = ROOT) {
     files.set('skills/aldc/references/templates/' + p.slice('docs/templates/'.length), read(p));
     files.delete(p); // Codex has one reference tree; no extra discovery roots.
   }
-  const preface = `## Codex host contract\n\nResolve .agents/skills/aldc paths below against the installed ALDC skill root\nif using plugin discovery instead of local bootstrap. Workflow names below are\nreference files in commands/, not automatically registered slash commands.\n\nUse only tools actually exposed by this session. Model, reasoning, sandbox and\napproval settings inherit from the parent; this profile grants no extra tools.\nRole write scopes below are behavioral, not filesystem sandboxes. Discover MCP\nproviders before using their examples; none are installed by this package.\nIf delegation is unavailable, report that the affected independent review or\nConductor workflow is pending; do not certify self-review as independent review.\n`;
+  const preface = `## Codex host contract\n\nResolve .agents/skills/aldc paths below against the installed ALDC skill root\nif using plugin discovery instead of local bootstrap. Workflow names below are\nreference files in commands/, not automatically registered slash commands.\nPackaged domain entrypoints named SKILL.md in the source are stored as GUIDE.md\nunder references/skills/. This alias applies only when reading packaged guidance;\nnew discoverable skills must still be created with SKILL.md.\n\nUse only tools actually exposed by this session. Model, reasoning, sandbox and\napproval settings inherit from the parent; this profile grants no extra tools.\nRole write scopes below are behavioral, not filesystem sandboxes. Discover MCP\nproviders before using their examples; none are installed by this package.\nIf delegation is unavailable, report that the affected independent review or\nConductor workflow is pending; do not certify self-review as independent review.\n`;
   for (const p of walk(root,'claude-plugin/agents')) {
     const src = split(read(p)), name = path.basename(p,'.md');
     if (!fs.existsSync(path.join(root,`agents/${name}.agent.md`))) throw Error(`Noncanonical role: ${name}`);

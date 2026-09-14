@@ -3,7 +3,7 @@
 ## Structure
 
 - [ ] Skill folder exists under `skills/<name>/`
-- [ ] `GUIDE.md` exists with valid frontmatter
+- [ ] `SKILL.md` exists with valid frontmatter
 - [ ] `AUTHORS.md` exists
 - [ ] `CHANGELOG.md` exists
 - [ ] Long examples moved to `references/` when appropriate

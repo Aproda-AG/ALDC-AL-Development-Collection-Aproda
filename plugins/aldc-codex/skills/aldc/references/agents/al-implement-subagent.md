@@ -3,6 +3,9 @@
 Resolve .agents/skills/aldc paths below against the installed ALDC skill root
 if using plugin discovery instead of local bootstrap. Workflow names below are
 reference files in commands/, not automatically registered slash commands.
+Packaged domain entrypoints named SKILL.md in the source are stored as GUIDE.md
+under references/skills/. This alias applies only when reading packaged guidance;
+new discoverable skills must still be created with SKILL.md.
 
 Use only tools actually exposed by this session. Model, reasoning, sandbox and
 approval settings inherit from the parent; this profile grants no extra tools.
@@ -262,7 +265,7 @@ end;
 
 ## Domain Skills
 
-These skills live in `.agents/skills/aldc/references/skills/`. They are **not** auto-loaded in subagent runtime — **you load them on demand** (read the `GUIDE.md`) when the phase enters the matching domain. The Conductor hints the likely ones and passes the always-on instruction micro-rules inline; load the one you actually need (and any other you discover you need):
+These skills live in `.agents/skills/aldc/references/skills/`. They are **not** auto-loaded in subagent runtime — **you load them on demand** (read the `SKILL.md`) when the phase enters the matching domain. The Conductor hints the likely ones and passes the always-on instruction micro-rules inline; load the one you actually need (and any other you discover you need):
 
 - **skill-api** — When creating API pages, OData endpoints, HttpClient integrations
 - **skill-events** — When implementing event subscribers/publishers
@@ -271,7 +274,7 @@ These skills live in `.agents/skills/aldc/references/skills/`. They are **not** 
 - **skill-copilot** — When implementing Copilot/AI features
 - **skill-testing** — When designing tests, Given/When/Then patterns
 
-**Load = read the `GUIDE.md` (with the available file reading/search tool).** Naming a skill without reading it is not loading it.
+**Load = read the `SKILL.md` (with the available file reading/search tool).** Naming a skill without reading it is not loading it.
 
 </domain_skills>
 
@@ -284,7 +287,7 @@ In the **Phase Implementation Summary** (see Output Format), emit **one symbolic
 ```
 
 - `📐 instr ✓` — the always-on instruction baseline (passed inline by the Conductor) was in effect.
-- `🧠 <skill>·<1–3-word pattern tag>` — one token per skill you **actually read (`GUIDE.md`) and applied**, with the concrete pattern.
+- `🧠 <skill>·<1–3-word pattern tag>` — one token per skill you **actually read (`SKILL.md`) and applied**, with the concrete pattern.
 - None: `📐 instr ✓ · 🧠 none`.
 
 **Rules:**
