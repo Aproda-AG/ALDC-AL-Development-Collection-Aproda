@@ -28,6 +28,7 @@ function toolsFor(value) {
   }))];
 }
 function bodyFor(text) {
+  text = text.replace(/\]\(\.\.\/agents\/([a-z0-9-]+)\.md\)/g, '](../agents/$1.agent.md)');
   return text
     .replace(/Claude Code/g, 'Copilot CLI')
     .replace(/`Task`/g, '`agent`').replace(/\bTask tool\b/g, 'agent tool')

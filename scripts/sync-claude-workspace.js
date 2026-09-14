@@ -47,12 +47,19 @@ for (const [srcRel, dstRel] of MAP) {
   for (const src of walk(srcRoot)) {
     const rel = path.relative(srcRoot, src);
     const dst = path.join(dstRoot, rel);
-    const same = fs.existsSync(dst) && fs.readFileSync(src).equals(fs.readFileSync(dst));
+    // Workspace rules are renamed and templates remain at the repository root.
+    // Keep the new shared Spec contract intact except for these host paths.
+    let content = fs.readFileSync(src);
+    if (srcRel === 'claude-plugin/agents' && rel === 'al-spec-agent.md') {
+      content = Buffer.from(content.toString('utf8').replaceAll('../rules-templates/', '../rules/')
+        .replaceAll('../docs/templates/', '../../docs/templates/'));
+    }
+    const same = fs.existsSync(dst) && content.equals(fs.readFileSync(dst));
     if (same) { identical++; continue; }
     drift.push(`${dstRel}/${rel.split(path.sep).join('/')} (desactualizado)`);
     if (!CHECK) {
       fs.mkdirSync(path.dirname(dst), { recursive: true });
-      fs.copyFileSync(src, dst);
+      fs.writeFileSync(dst, content);
       synced++;
     }
   }

@@ -30,7 +30,7 @@ Verify registration:
 /
 ```
 
-You should see 7 user-facing agents (`al-architect`, `al-conductor`, `al-developer`, `al-presales`, `al-agent-builder`, `al-triage`, `dredd`) plus 3 TDD subagents and 10 slash commands prefixed with `/aldc:`.
+You should see 8 user-facing agents (`al-spec-agent`, `al-architect`, `al-conductor`, `al-developer`, `al-presales`, `al-agent-builder`, `al-triage`, `dredd`) plus 3 TDD subagents and 10 slash commands prefixed with `/aldc:`.
 
 ## BC29 / AL18 review branch
 
@@ -59,6 +59,7 @@ This will:
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
+| AL Spec Agent | `agent "aldc:al-spec-agent"` | Technical contracts from approved design; same contract as /aldc:al-spec-create |
 | AL Architect | `agent "aldc:al-architect"` | Solution design, data modeling, integration strategy |
 | AL Conductor | `agent "aldc:al-conductor"` | TDD orchestration: plan, implement, review, commit |
 | AL Developer | `agent "aldc:al-developer"` | Tactical implementation, debugging, code generation |

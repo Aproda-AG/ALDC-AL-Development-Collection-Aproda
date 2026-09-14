@@ -5,19 +5,20 @@
 ## Overview
 
 AL (Application Language) workspace for Microsoft Dynamics 365 Business Central.
-Architecture: **ALDC Core v1.2** — 10 agents (4 core + 2 on-demand + 3 subagents + 1 extension) + 16 skills + 11 workflows + 9 instructions.
+Architecture: **ALDC Core v1.2** — 11 agents (5 core + 2 on-demand + 3 subagents + 1 extension) + 16 skills + 11 workflows + 9 instructions.
 
 ## Core Principles
 
 - **Extension-only development** — Never modify base application objects. Use tableextensions, pageextensions, event subscribers.
 - **Human-in-the-Loop (HITL)** — All critical decisions require user confirmation before proceeding.
-- **TDD / spec-driven** — Features follow: `spec.create` -> architecture -> test-plan -> implementation -> review.
+- **TDD / spec-driven** — Features follow: `architecture (MEDIUM/HIGH)` -> `al-spec-agent` via `al-spec.create` -> human approval -> test-plan -> implementation -> review.
 - **Least privilege** — Generate only the minimum permissions required. Use XLIFF for all user-facing strings.
 
 ## Agent Routing
 
 | Intent | Agent | What it does |
 |--------|-------|-------------|
+| Specification from approved design | delegate to agent `al-spec-agent` | Technical contracts and human approval before implementation |
 | Design, architecture, strategy | delegate to agent `al-architect` | Solution design, data modeling, integration strategy |
 | Implement, code, debug, fix | delegate to agent `al-developer` | Tactical implementation with full AL MCP tools |
 | TDD orchestration (plan -> implement -> review -> commit) | delegate to agent `al-conductor` | Orchestrates planning, implementation, and review subagents |
@@ -144,7 +145,7 @@ No npm/yarn build steps. AL compilation is handled by the AL Language VS Code ex
 
 ```
 instructions/          # Auto-applied instruction files (9)
-agents/                # Agent definitions (4 core + 2 on-demand + 3 subagents + 1 extension)
+agents/                # Agent definitions (5 core + 2 on-demand + 3 subagents + 1 extension)
 skills/                # Composable knowledge modules (16 skill directories)
 prompts/               # Workflow definitions (11 prompt files)
 docs/framework/        # Normative spec (ALDC-Core-Spec-v1.2.md)
@@ -161,4 +162,4 @@ app.json               # Extension manifest
 - [BC Development Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/)
 
 ---
-**Framework**: ALDC Core v1.2 | **Primitives**: 10 agents + 16 skills + 11 workflows + 9 instructions
+**Framework**: ALDC Core v1.2 | **Primitives**: 11 agents + 16 skills + 11 workflows + 9 instructions

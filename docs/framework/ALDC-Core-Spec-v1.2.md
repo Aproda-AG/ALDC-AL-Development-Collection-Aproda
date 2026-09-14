@@ -57,13 +57,14 @@ An ALDC Core repository **MUST** contain:
   - `skills/` (composable knowledge modules, one directory per skill)
   - `docs/templates/` (immutable templates)
 
-Note: `toolkitRoot` **MAY** be `.` in framework repositories and `.github` in consumer repositories. Paths in primitive prose **MUST** use the consumer layout (`.github/`-prefixed) so they resolve after installation (decision of #60; regression guard in conformance tooling).
+Note: `toolkitRoot` **MAY** be `.` in framework repositories and `.github` in consumer repositories. Project artifact paths in primitive prose **MUST** use the consumer layout (`.github/`-prefixed); relative content links **MAY** resolve from the installed primitive file so they work in canonical and custom toolkit roots (decision of #60; regression guard in conformance tooling).
 
 ## Agent Tiers
 
 ### Tier 1 — Core Public Agents (`user-invocable: true`) — MUST
 
 - **al-architect**: design, architecture, and strategic decisions. Loads skills by domain, such as API, Copilot, and performance.
+- **al-spec-agent**: specification owner behind al-spec.create. Preserves approved architecture, investigates technical contracts and loads applicable instructions/skills; writes only the assigned .spec.md. No AL implementation, pre-code BCQuality or self-approval.
 - **al-conductor**: primary TDD orchestrator. Coordinates subagents via `runSubagent`. Cycle: Plan → Implement → Review → Commit.
 - **al-developer**: tactical implementation and debugging. Loads skills based on the task. Directly invocable by the user.
 - **al-presales**: project estimation and planning. Lives outside the delivery cycle.
@@ -98,7 +99,7 @@ al-conductor (orchestrator)
 
 ## Required Core Workflows — MUST
 
-- **al-spec.create**: normalize requirements → `{req_name}.spec.md`. Verifies subscribed base-app events against symbols (spec-as-truth, #68).
+- **al-spec.create**: invokes the shared al-spec-agent contract → `{req_name}.spec.md`. Preserves approved architecture (MEDIUM/HIGH); distinguishes target definitions from behavioral proof. Human approval of the current spec precedes implementation.
 - **al-build**: verification, compilation, and packaging
 - **al-pr-prepare**: documentation and PR delivery
 - **al-context.create**: generate or update project context
@@ -216,12 +217,12 @@ A repository is **ALDC Core v1.2 compliant** if:
 2. `.github/plans/memory.md` exists.
 3. Every active requirement has the full set: `{req_name}.spec.md`, `.architecture.md`, `.test-plan.md`.
 4. The 7 required immutable templates exist under `docs/templates/` without alteration.
-5. The 4 Core agents + 3 internal subagents + 2 on-demand agents exist under `toolkitRoot`.
+5. The 5 Core public agents + 3 internal subagents + 2 on-demand agents exist under `toolkitRoot`.
 6. The 6 Core workflows exist under `toolkitRoot`.
 7. The 7 required Core skills exist as `skills/skill-{domain}/SKILL.md` inside `toolkitRoot`.
 8. All 9 instructions exist.
 9. The `.github/copilot-instructions.md` entrypoint is coherent with `copilotEntrypointMode`.
-10. For MEDIUM/HIGH, the flow spec → architecture → conductor(subagents) → review → delivery runs with HITL gates.
+10. For MEDIUM/HIGH, the flow approved architecture → Spec Agent → human-approved spec → conductor(subagents) → review → delivery runs with HITL gates.
 11. The conformance tooling (check-conformance + sync-foundation --check) passes in CI.
 12. Every shipped primitive is declared in `aldc.yaml`.
 
@@ -239,7 +240,7 @@ Extension packs **MUST NOT** override Core agents or workflows, modify the Core 
 
 | Type | Count | Tier | Details |
 |------|-------|------|---------|
-| Public agents | 4 | Core | architect, conductor, developer, presales |
+| Public agents | 5 | Core | architect, spec-agent, conductor, developer, presales |
 | Internal subagents | 3 | Core | planning, implement, review |
 | On-demand agents | 2 | On-Demand | triage, dredd |
 | Extension agents | 1 | Extension | agent-builder |
@@ -248,4 +249,4 @@ Extension packs **MUST NOT** override Core agents or workflows, modify the Core 
 | Instructions | 9 | Core (8) + Extension (1) | 7 auto-applied + copilot entrypoint source + agent-toolkit |
 | Templates | 7 + 7 | Core + Auxiliary | 7 immutable required, 7 auxiliary |
 
-Totals as shipped: **10 agents · 16 skills · 11 workflows · 9 instructions**.
+Totals as shipped: **11 agents · 16 skills · 11 workflows · 9 instructions**.
