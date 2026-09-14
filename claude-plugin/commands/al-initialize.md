@@ -28,53 +28,22 @@ This workflow covers environment setup, AL workspace configuration, and **ALDC r
 
 When ALDC is installed as a Claude Code plugin, path-scoped rules must be copied to the project's `.claude/rules/` directory. This phase handles that automatically.
 
-### Rules Installation
-
-Copy the following rule templates from the plugin's `rules-templates/` directory to your project's `.claude/rules/`:
+Run the installed plugin's initializer with Node 20+:
 
 ```bash
-# Create project rules directory
-mkdir -p .claude/rules
-
-# Copy ALDC rule templates to project
-cp "${CLAUDE_PLUGIN_ROOT}/rules-templates/"*.md .claude/rules/
+node "${CLAUDE_PLUGIN_ROOT}/scripts/init.js" --project "/path/to/project"
+node "${CLAUDE_PLUGIN_ROOT}/scripts/init.js" --project "/path/to/project" --apply
 ```
 
-**Rules installed:**
+The first command previews the complete plan without writes. Review collisions
+before applying. Existing customized rules stay intact; `--force` replaces reviewed
+collisions with a recoverable backup. The initializer copies AL rules, seeds
+`.github/plans/memory.md` only when missing, and updates only the ALDC managed block
+in `CLAUDE.md`. It preserves surrounding project instructions. `--verify` reports
+receipt drift; `--rollback` restores the preceding initialization and refuses to
+overwrite later changes. It does not install software or configure MCP servers.
 
-| Rule | Scope | Purpose |
-|------|-------|---------|
-| `al-guidelines.md` | `**/*.al`, `**/*.json` | Core AL development principles |
-| `al-code-style.md` | `**/*.al` | Code formatting and structure |
-| `al-naming-conventions.md` | `**/*.al` | Consistent naming patterns |
-| `al-performance.md` | `**/*.al` | Performance optimization |
-| `al-error-handling.md` | `**/*.al` | Error handling and telemetry |
-| `al-events.md` | `**/*.al` | Event-driven development |
-| `al-testing.md` | `**/test/**/*.al` | Test implementation patterns |
-| `al-agent-toolkit.md` | `**/*.al` | AI Development Toolkit patterns |
-
-### CLAUDE.md Generation
-
-Generate a project-level `CLAUDE.md` that references ALDC:
-
-```markdown
-# ${input:ProjectName} — Claude Code Instructions
-
-## Framework
-This project uses **ALDC** (AL Development Collection) plugin for Claude Code.
-All agents, skills, and workflows are available via the `aldc:` namespace.
-
-## Quick Start
-- `/aldc:al-spec-create` — Create specifications
-- `/aldc:al-build` — Build extension
-- `agent "aldc:al-architect"` — Architecture design
-- `agent "aldc:al-developer"` — Implementation
-
-## Project-Specific Notes
-[Add your project-specific instructions here]
-```
-
-**Human Review:** Confirm rules were copied correctly before proceeding to environment setup.
+**Human Review:** Confirm rules are loaded correctly before environment setup.
 
 ## Phase 1: Environment Setup
 

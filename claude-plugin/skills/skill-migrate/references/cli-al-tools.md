@@ -1,4 +1,4 @@
-# ALDC terminal-host contract (Claude Code and Copilot CLI)
+# ALDC terminal-host contract (Claude Code, Copilot CLI and Codex)
 
 Read this reference before choosing AL tools, changing dependencies, or reporting
 BC29 / AL18 validation. Agent and command responsibilities still apply. This
@@ -8,15 +8,23 @@ it does not replace the Conductor workflow or its human gates.
 Resolve references to canonical `instructions/al-*.instructions.md` against this
 plugin's sibling `rules-templates/` when those files are not in the project. Claude
 templates use `.md` and `paths`; the generated CLI templates use `.instructions.md`
-and `applyTo`. Read the matching rules and pass the relevant content to subagents;
+and `applyTo`. Codex keeps its readable AL rules in the ALDC skill under
+`references/rules/`, without an auto-apply claim. Read the matching rules and pass the relevant content to subagents;
 do not assume editor auto-attachment or a plugin-root CLAUDE.md has loaded them.
+
+Canonical `docs/templates/` references resolve against the installed plugin root
+when absent in the project. Codex keeps equivalent templates under the ALDC
+skill references/templates/. Workflow names are references to the supplied
+commands; only use a slash command if the active host actually exposes it.
 
 ## Host and capability discovery
 
 These plugins use terminal tools and configured MCP servers. Installing AL in
 VS Code does not expose its language-model tools to a terminal host. Never call
 `ms-dynamics-smb.al/*` here or rename a community tool to a Microsoft-native tool.
-The shipped MCP configuration retains al-symbols-mcp, context7 and microsoft-docs.
+Claude and Copilot CLI ship MCP declarations for al-symbols-mcp, context7 and
+microsoft-docs. Codex inherits configured providers from the session and ships no
+MCP configuration.
 Their presence in a manifest is a declaration, not proof of connection or access.
 Use the names and argument schemas actually exposed to the active agent. Claude
 plugin tools have a plugin-scoped MCP name; workspace MCP names can differ.

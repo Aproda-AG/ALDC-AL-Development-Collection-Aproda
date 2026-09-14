@@ -21,6 +21,8 @@ _Engineering systems, visibly reasoned._
 > [!IMPORTANT]
 > **Now available for both GitHub Copilot and Claude Code.** ALDC is under active development against **Core Spec v1.2**, with conformance enforced in CI. See [What's New](#whats-new) for the latest release.
 
+Project initialization now supports preview, drift checks and recoverable updates. A canonical Codex adapter is available for local testing; live host loading remains pending. See [plugin packaging and recovery](docs/plugin-packaging.md).
+
 ---
 
 ## Why ALDC?

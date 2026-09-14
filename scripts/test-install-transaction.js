@@ -1,0 +1,97 @@
+#!/usr/bin/env node
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('fs'), path = require('path'), os = require('os');
+const { spawnSync } = require('child_process');
+const tx = require('./install-transaction');
+const { initialize } = require('./init-plugin');
+const { verify } = require('./package-provenance');
+const root = path.resolve(__dirname,'..');
+const temp = t => { const p=fs.mkdtempSync(path.join(os.tmpdir(),'aldc update á ')); t.after(()=>fs.rmSync(p,{recursive:true,force:true}));return p; };
+const write=(r,p,b)=>{fs.mkdirSync(path.dirname(path.join(r,p)),{recursive:true});fs.writeFileSync(path.join(r,p),b);};
+const read=(r,p)=>fs.readFileSync(path.join(r,p),'utf8');
+const files = value => new Map([['a.md',{content:value}],['b.md',{content:value}],['memory.md',{content:'seed',seed:true}]]);
+test('dry run writes nothing; clean install, tracked update and chained rollback',t=>{
+ const r=temp(t),opts={root:r,surface:'fixture',files:files('v1')};
+ tx.apply({...opts,dryRun:true});assert.deepEqual(fs.readdirSync(r),[]);
+ tx.apply(opts);assert.deepEqual(tx.drift(r,'fixture'),[]);assert.equal(tx.apply(opts).transaction,null);
+ tx.apply({...opts,files:files('v2')});assert.equal(read(r,'a.md'),'v2');
+ tx.rollback(r,'fixture');assert.equal(read(r,'a.md'),'v1');
+ write(r,'memory.md','approved memory');tx.rollback(r,'fixture');
+ assert.equal(read(r,'memory.md'),'approved memory');assert.equal(fs.existsSync(path.join(r,'a.md')),false);
+});
+test('all writes and previous receipt restored after partial failure',t=>{
+ const r=temp(t),opts={root:r,surface:'fixture',files:files('v1')};tx.apply(opts);
+ const receipt=read(r,'.aldc-install/fixture.json');
+ assert.throws(()=>tx.apply({...opts,files:files('v2'),failAfter:2}),/previous files restored/);
+ assert.equal(read(r,'a.md'),'v1');assert.equal(read(r,'b.md'),'v1');assert.equal(read(r,'.aldc-install/fixture.json'),receipt);
+ assert.equal(fs.existsSync(path.join(r,'.aldc-install/pending.json')),false);
+});
+test('custom collisions stay visible, force is recoverable and later edits block rollback',t=>{
+ const r=temp(t),opts={root:r,surface:'fixture',files:files('v1')};write(r,'a.md','custom');
+ assert.equal(tx.apply(opts).files.find(f=>f.path==='a.md').action,'collision');assert.equal(read(r,'a.md'),'custom');
+ tx.apply({...opts,force:true});assert.equal(read(r,'a.md'),'v1');tx.rollback(r,'fixture');assert.equal(read(r,'a.md'),'custom');
+ tx.apply({...opts,force:true});write(r,'a.md','later');const receipt=read(r,'.aldc-install/fixture.json');
+ assert.throws(()=>tx.rollback(r,'fixture'),/Changed since installation/);assert.equal(read(r,'.aldc-install/fixture.json'),receipt);
+});
+test('corrupt backup, live lock and symlink refuse mutation',t=>{
+ const r=temp(t),opts={root:r,surface:'fixture',files:files('v1')};write(r,'a.md','custom');
+ const result=tx.apply({...opts,force:true});const journal=JSON.parse(read(r,`.aldc-install/backups/${result.transaction}/journal.json`));
+ write(r,journal.actions.find(a=>a.backup).backup,'broken');assert.throws(()=>tx.rollback(r,'fixture'),/Backup integrity/);assert.equal(read(r,'a.md'),'v1');
+ write(r,'.aldc-install/operation.lock','live');assert.throws(()=>tx.apply(opts),/holds the lock/);
+ const other=temp(t);fs.symlinkSync(other,path.join(r,'escape'),'dir');assert.throws(()=>tx.plan({...opts,files:new Map([['escape/a',{content:'x'}]])}),/symlinks/);assert.deepEqual(fs.readdirSync(other),[]);
+ for(const p of ['../escape','/absolute','.git/config','AUX.txt'])assert.throws(()=>tx.checked(r,p));
+});
+test('retired paths remove only recognized files and rollback restores them',t=>{
+ const r=temp(t),opts={root:r,surface:'fixture',files:files('v1')};tx.apply(opts);
+ tx.apply({...opts,files:new Map([['a.md',{content:'v1'}],['memory.md',{content:'seed',seed:true}]])});assert.equal(fs.existsSync(path.join(r,'b.md')),false);
+ tx.rollback(r,'fixture');assert.equal(read(r,'b.md'),'v1');write(r,'b.md','custom');
+ assert.throws(()=>tx.plan({...opts,files:new Map([['a.md',{content:'v1'}]])}),/Customized obsolete/);
+});
+test('managed block preserves CRLF surrounding text and rejects malformed markers',()=>{
+ const existing=Buffer.from('before\r\n<!-- BEGIN ALDC CODEX -->\nold\n<!-- END ALDC CODEX -->\r\nafter\r\n');
+ assert.equal(tx.managedBlock(existing,'new','CODEX').toString(),'before\r\n<!-- BEGIN ALDC CODEX -->\nnew\n<!-- END ALDC CODEX -->\r\nafter\r\n');
+ assert.throws(()=>tx.managedBlock(Buffer.from('<!-- END ALDC CODEX --><!-- BEGIN ALDC CODEX -->'),'x','CODEX'),/markers/);
+});
+for(const [surface,dir] of [['claude','claude-plugin'],['cli','copilot-cli-plugin'],['codex','plugins/aldc-codex']])test(`${surface}: locked payload, initialization, customized rules, memory and rollback`,t=>{
+ const r=temp(t),pluginRoot=path.join(root,dir);verify(pluginRoot);
+ write(r,'App/app.json','{"application":"29.0.0.0"}');write(r,'App/Main.al','// project source');write(r,'Test/app.json','{"runtime":"18.0"}');write(r,'.github/plans/memory.md','decisions');
+ const guidance=surface==='claude'?'CLAUDE.md':'AGENTS.override.md';write(r,guidance,'Project instruction\r\n');
+ if(surface==='codex')write(r,'AGENTS.md','Shadowed instructions preserved');
+ initialize({project:r,pluginRoot});assert.equal(fs.existsSync(path.join(r,'.aldc-install')),false);
+ const result=initialize({project:r,pluginRoot,apply:true});assert.equal(result.guidance,guidance);
+ assert.equal(read(r,guidance).startsWith('Project instruction\r\n'),true);assert.equal(read(r,'.github/plans/memory.md'),'decisions');
+ assert.equal(initialize({project:r,pluginRoot,apply:true}).transaction,null);
+ const rule=surface==='claude'?'.claude/rules/al-guidelines.md':surface==='cli'?'.github/instructions/al-guidelines.instructions.md':'.agents/skills/aldc/references/rules/al-guidelines.md';
+ write(r,rule,'custom rule');assert.deepEqual(initialize({project:r,pluginRoot,check:true}).drift,[rule]);
+ const again=initialize({project:r,pluginRoot,apply:true});assert.equal(again.files.find(f=>f.path===rule).action,'collision');assert.equal(read(r,rule),'custom rule');
+ assert.deepEqual(initialize({project:r,pluginRoot,check:true}).drift,[rule]);
+ initialize({project:r,pluginRoot,apply:true,force:true});initialize({project:r,pluginRoot,rollback:true});assert.equal(read(r,rule),'custom rule');
+ assert.equal(read(r,'App/Main.al'),'// project source');assert.equal(read(r,'Test/app.json'),'{"runtime":"18.0"}');
+ if(surface==='codex') {assert.equal(fs.readdirSync(path.join(r,'.codex/agents')).length,10);assert.equal(read(r,'AGENTS.md'),'Shadowed instructions preserved');}
+});
+test('tampered plugin fails before creating project files; CRLF locked checkout is accepted',t=>{
+ const r=temp(t),pluginRoot=path.join(r,'plugin'),project=path.join(r,'project');fs.cpSync(path.join(root,'claude-plugin'),pluginRoot,{recursive:true});
+ const p='rules-templates/al-guidelines.md',text=read(pluginRoot,p);write(pluginRoot,p,text.replace(/\n/g,'\r\n'));verify(pluginRoot);
+ write(pluginRoot,p,'tampered');assert.throws(()=>initialize({project,pluginRoot,apply:true}),/integrity/);assert.equal(fs.existsSync(project),false);
+});
+test('Claude session hook is silent outside AL and read-only in an AL project',t=>{
+ const r=temp(t),{context}=require('../claude-plugin/hooks/session-context');assert.equal(context({cwd:r}),null);assert.equal(context({}),null);
+ write(r,'App/app.json','{}');assert.match(context({cwd:r}).hookSpecificOutput.additionalContext,/terminal tool contract/);assert.deepEqual(fs.readdirSync(r),['App']);
+});
+test('Chat CLI dry-run, verify and rollback operate on actual installed files',t=>{
+ const r=temp(t); const run=args=>spawnSync(process.execPath,[path.join(root,'scripts/install.js'),...args],{cwd:r,encoding:'utf8'});
+ assert.equal(run(['install','--yes','--dry-run']).status,0);assert.deepEqual(fs.readdirSync(r),[]);
+ assert.equal(run(['install','--yes']).status,0);assert.equal(run(['verify-install']).status,0);
+ write(r,'.github/agents/al-developer.agent.md','custom');assert.notEqual(run(['verify-install']).status,0);
+ assert.equal(run(['install','--yes','--force']).status,0);assert.equal(run(['rollback']).status,0);assert.equal(read(r,'.github/agents/al-developer.agent.md'),'custom');
+});
+
+test('new override preserves existing project AGENTS.md and customized managed block collides',t=>{
+ const r=temp(t),pluginRoot=path.join(root,'plugins/aldc-codex');write(r,'AGENTS.md','Project text');
+ initialize({project:r,pluginRoot,apply:true});const before=read(r,'AGENTS.md');
+ write(r,'AGENTS.override.md','New override');initialize({project:r,pluginRoot,apply:true});assert.equal(read(r,'AGENTS.md'),before);
+ const edited=read(r,'AGENTS.override.md').replace('Use the ALDC skill','Custom ALDC skill');write(r,'AGENTS.override.md',edited);
+ const result=initialize({project:r,pluginRoot,apply:true});assert.equal(result.files.find(f=>f.path==='AGENTS.override.md').action,'collision');assert.equal(read(r,'AGENTS.override.md'),edited);
+});

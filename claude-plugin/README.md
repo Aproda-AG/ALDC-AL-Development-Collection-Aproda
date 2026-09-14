@@ -155,3 +155,5 @@ MIT
 ## Author
 
 [javiarmesto](https://github.com/javiarmesto)
+
+Project initialization uses `scripts/init.js`: preview with `--project <dir>`, apply with `--apply`, inspect drift with `--verify`, restore with `--rollback`. Customized files remain collisions unless reviewed replacement uses `--force`. Node 20+ is required. See the canonical docs/plugin-packaging.md for recovery and host-test limits.

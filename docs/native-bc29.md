@@ -67,9 +67,12 @@ La selección no modifica `app.json`, runtime, GUID, dependencias, entorno ni
 fuentes AL. El instalador mantiene sus operaciones habituales sobre el toolkit
 y `aldc.yaml`; `--force` reemplaza también `aldc.yaml`, `aldc.code-workspace`,
 la entrada `.github/copilot-instructions.md` y las instrucciones personalizadas.
-Sin `--force` y con `--yes`, los archivos existentes se omiten: se conservan, pero
-no se actualizan. No hay backup automático ni rollback transaccional; volver a BC28
-no restaura personalizaciones sobrescritas. La memoria de proyecto existente se conserva. No hay publicación.
+Los archivos gestionados intactos se actualizan; las personalizaciones se muestran
+como colisiones y se conservan sin `--force`. Ahora se crean respaldos antes de
+sustituir archivos. `verify-install` detecta drift y `rollback` restaura la operación
+anterior si no pisa ediciones posteriores. Volver a BC28 cambia contratos; usa
+rollback para restaurar las preimágenes. La memoria existente se conserva. Consulta
+[empaquetado y recuperación](plugin-packaging.md). No hay publicación.
 El marcador `<target-dir>/aldc-profile.json` registra solo la selección, nunca
 capacidad verificada. Actualizar sin `--profile` conserva la selección registrada.
 
