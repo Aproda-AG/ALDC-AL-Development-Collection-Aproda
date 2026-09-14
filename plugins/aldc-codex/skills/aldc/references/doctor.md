@@ -5,6 +5,9 @@ Read-only Python 3.9+ stdlib diagnostics. Use an already available interpreter
 modify PATH. Run at session start or after an environment change. Repeat only
 the affected operation using `--operation`, which can be repeated.
 
+Examples below are for the **canonical Chat checkout only**. For an installed
+terminal plugin, select its script path and host from the table instead.
+
 ```sh
 python3 tools/context-doctor/aldc_context_doctor.py --workspace /project --host chat --toolkit /toolkit
 python3 tools/context-doctor/aldc_context_doctor.py --workspace /project --host chat --operation compile-app --json
@@ -23,7 +26,9 @@ Select `--host chat|claude|cli|codex` explicitly for terminals. Workspace means
 the AL solution root, independently of toolkit/plugin location. Each multiroot
 workspace folder is inspected separately; Doctor never traverses another root
 implicitly. For a custom Chat target, point `--toolkit` at the directory holding
-`agents/` and `prompts/`. It does not parse `toolkitRoot` from aldc.yaml.
+`agents/` and `prompts/`; its aldc-profile.json is diagnosed there, including
+invalid profile values. The default installation uses .github/aldc-profile.json.
+It does not parse `toolkitRoot` from aldc.yaml.
 
 App/Test discovery reads `.AL-Go/settings.json` appFolders/testFolders. Non-empty
 lists are authoritative per role; otherwise scan at most three folder levels,
@@ -44,8 +49,9 @@ operations until project scope can be established.
 
 Doctor reports readable host JSON settings/tasks/launch/MCP declarations separately
 from runtime. Invalid tasks affect compilation, launch affects runtime tests,
-MCP affects specification, and invalid shared settings/profile affect all selected
-operations. It does not validate arbitrary provider schemas, YAML, Codex TOML,
+MCP parse errors are advisory because native alternatives may suffice; invalid
+shared settings/profile affect all selected operations. An actual unavailable
+capability is diagnosed through the host observation for that operation. It does not validate arbitrary provider schemas, YAML, Codex TOML,
 credentials, package compatibility, or host permissions. A launch declaration,
 compiler path, agent tool name or `.app` file cannot prove a working runner,
 loaded native tool, compilation or successful tests. Native capabilities require
@@ -83,6 +89,8 @@ credentials or connection strings in details.
 }
 ```
 
+`configured` describes only the local prerequisites inspected for that operation;
+it does not assert compiler, runner or host capability availability.
 Stages are independently reported or null. Contradictory booleans are rejected;
 verification requires execution, and executed compile/test reports must cover
 exactly the current manifests of that role. `verified-reported` never means
@@ -92,7 +100,7 @@ missing runner gives only execute-tests `unavailable`; a failed executed run is
 `failed-reported`. Local configuration problems take precedence over positive
 runtime claims. Use the underlying observation when deciding the next action.
 
-Exit 0: no detected configuration problem or reported unavailable/failed operation
+Exit 0: no blocking configuration problem or reported unavailable/failed operation
 among those selected (unknown runtime and not-applicable are included).
 Exit 1: selected operation reported unavailable or failed.
 Exit 2: malformed input or affected configuration problem.
@@ -114,5 +122,6 @@ Read-only donors from `javiarmesto/ALDC-Research-Lab`:
 
 No Evidence Store, Context Envelope, transition fingerprints, Run Health Graph,
 command-version probes, installs, permission changes, builds or publication.
-Source and all three terminal payloads are regenerated together. Acceptance:
+Source and all three terminal payloads are regenerated together. Acceptance in the **canonical checkout/CI only** (this test script is not
+shipped inside terminal plugins):
 `python3 -B scripts/test-doctor.py`, plus existing installer/package CI gates.

@@ -125,9 +125,9 @@ def inspect_layout(root, host):
     candidates = []
     for paths in layouts[host]:
         present = [str(root / p) for p in paths if (root / p).is_file() and (root / p).stat().st_size > 0]
-        candidates.append((len(present), present, [str(root / p) for p in paths if str(root / p) not in present]))
-    count, present, missing = max(candidates, key=lambda c: c[0])
-    return {"configured": count == 2, "paths": present, "missing": missing,
+        candidates.append((len(present), present, [str(root / p) for p in paths if str(root / p) not in present], str((root / paths[0]).parent.parent)))
+    count, present, missing, directory = max(candidates, key=lambda c: c[0])
+    return {"configured": count == 2, "paths": present, "missing": missing, "directory": directory,
             "loaded": None, "note": "File presence only; existing specification workflow is sufficient. Spec Agent is optional."}
 
 
@@ -178,8 +178,14 @@ def diagnose(workspace, host="chat", toolkit=None, runtime=None, operations=None
     layout = inspect_layout(toolkit, host)
     config, config_errors = {}, []
     # Report host declarations separately; a launch profile is not a test runner.
-    paths = {"chat": [".vscode/settings.json", ".vscode/tasks.json", ".vscode/launch.json", ".vscode/mcp.json", ".github/aldc-profile.json"],
+    paths = {"chat": [".vscode/settings.json", ".vscode/tasks.json", ".vscode/launch.json", ".vscode/mcp.json"],
              "claude": [".claude/settings.json", ".mcp.json"], "cli": [".mcp.json"], "codex": []}[host]
+    if host == "chat":
+        marker = Path(layout["directory"]) / "aldc-profile.json"
+        # Retain diagnosis of a default marker even if its source layout is broken.
+        if not layout["configured"] and toolkit == root and not marker.exists():
+            marker = root / ".github/aldc-profile.json"
+        paths.append(str(marker.relative_to(root)) if marker.is_relative_to(root) else str(marker))
     profile = None
     for rel in paths:
         p = root / rel
@@ -195,17 +201,18 @@ def diagnose(workspace, host="chat", toolkit=None, runtime=None, operations=None
                 config[rel] = "JSON configuration readable; runtime unobserved"
                 if rel.endswith("aldc-profile.json"):
                     profile = value.get("profile")
-                    if profile not in {"bc28", "bc29-native"}:
+                    if not isinstance(profile, str) or profile not in {"bc28", "bc29-native"}:
                         raise ValueError("expected bc28 or bc29-native profile")
             except (OSError, ValueError) as exc:
-                config_errors.append({"path": rel, "problem": str(exc), "operations": affected})
+                config_errors.append({"path": rel, "problem": str(exc), "operations": affected,
+                                      "blocking": not rel.endswith("mcp.json")})
     observed = runtime_observations(Path(runtime) if runtime else None, root, host, projects, selected)
     result = {}
     for name in selected:
         role = "app" if name == "compile-app" else "test"
         targets = projects if name == "specify" else [p for p in projects if p["role"] == role]
         problems = list(discovery_errors) + [p["problem"] for p in targets if not p["configured"]]
-        problems.extend(f"{e['path']}: {e['problem']}" for e in config_errors if name in e["operations"])
+        problems.extend(f"{e['path']}: {e['problem']}" for e in config_errors if e["blocking"] and name in e["operations"])
         if name == "specify" and not layout["configured"]:
             problems.extend(f"missing workflow source: {p}" for p in layout["missing"])
         if name == "compile-app" and not targets:
@@ -224,6 +231,14 @@ def diagnose(workspace, host="chat", toolkit=None, runtime=None, operations=None
             state = "verified-reported" if obs.get("verified") is True else "failed-reported" if obs.get("verified") is False else "executed-reported"
         elif obs.get("loaded") is True or obs.get("discovered") is True:
             state = "available-reported"
+        if state == "available-reported":
+            action = "Use the reported capability for this operation when authorized; loading/execution/result still require their own observations."
+        elif state == "verified-reported":
+            action = "Retain the scoped result and its limits; repeat only if the affected source or environment changed."
+        elif state == "failed-reported":
+            action = "Inspect the reported failure, correct its cause, then repeat only the affected operation when authorized."
+        elif state == "executed-reported":
+            action = "Inspect the result of this execution before reporting verification; do not infer success."
         if problems:
             state, action = "configuration-blocked", "Repair only the listed project/workflow configuration, then repeat this operation."
         elif not applicable:
@@ -263,10 +278,11 @@ def main(argv=None):
                     print(f"  Reported: {op['reported_detail']}")
                 print(f"  Action: {op['action']}")
             for problem in report["configuration_errors"]:
-                print(f"Configuration problem: {problem}; repair this host setting and repeat the affected operation.")
+                impact = "repair the affected host setting" if problem["blocking"] else "optional provider; use a sufficient native capability if available, or repair this provider"
+                print(f"Configuration problem: {problem['path']}: {problem['problem']}; {impact}.")
             print(report["note"])
         states = {op["status"] for op in report["operations"].values()}
-        return 2 if "configuration-blocked" in states or report["configuration_errors"] else 1 if states & {"unavailable", "failed-reported"} else 0
+        return 2 if "configuration-blocked" in states or any(e["blocking"] for e in report["configuration_errors"]) else 1 if states & {"unavailable", "failed-reported"} else 0
     except (OSError, ValueError) as exc:
         print(json.dumps({"error": str(exc)}) if args.json else f"Doctor input error: {exc}")
         return 2

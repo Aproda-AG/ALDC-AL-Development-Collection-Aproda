@@ -196,7 +196,8 @@ aprobación automática del head corregido.
 ## Handoff 02 — entrega 2: Doctor canónico
 
 Base integrada comprobada: main `ee4cd420ba0a2aba84fd3b826cd127382a2ea070`
-(#100), sin PR abiertas al empezar. Rama única `feat/canonical-doctor`.
+(#100), sin PR abiertas al empezar. Rama única `feat/canonical-doctor`,
+[PR #101](https://github.com/javiarmesto/ALDC-AL-Development-Collection/pull/101).
 
 - Doctor local stdlib Python 3.9+, de solo lectura: especificar, compilar App,
   compilar Test y ejecutar tests tienen estado, rutas, problema y acción propios.
@@ -221,8 +222,9 @@ Doctor v0.1.6 y solo descubrimiento de workspace_fingerprint del Lab
 `7c8ec39e37c0eb1fc8f8e9ad0cf0a08b6aa8421d`. Excluidos Graph, hashes de transición,
 Run Health y probes que ejecutan comandos.
 
-Verificación: 16 fixtures conductuales (anterior/nuevo, BC29 sin comunitario,
+Verificación: 19 fixtures conductuales (anterior/nuevo, BC29 sin comunitario,
 App/Test, runner ausente, fallos de ejecución, configuración rota y aislamiento,
+MCP opcional roto con alternativa nativa suficiente,
 AL-Go, JSONC/BOM, rutas/symlinks, observaciones contradictorias y lectura sin
 efectos). Se ejecutan los paquetes reales de las cuatro superficies, instalación
 Chat/rollback y bootstrap Codex en directorios aislados. CI incorpora la suite.
@@ -239,3 +241,14 @@ actualizar Doctor y adaptadores en esa misma PR. **Delta de empaquetado:** carga
 completa y recarga sin duplicados en los cuatro hosts, recuperación Windows real
 y regeneración del VSIX externo desde main cuando proceda. No hay release,
 paquete publicado, Marketplace ni despliegue Business Central en esta entrega.
+
+Revisión remota #101: Copilot revisa 24/24 archivos del head inicial y emite
+COMMENTED con cambios recomendados. Se atienden el hilo de detección del perfil
+Chat en destino personalizado y los dos comentarios suprimidos de documentación:
+ejemplos Chat acotados al checkout y suite de aceptación marcada solo checkout/CI.
+La regresión usa el instalador real con .copilot y perfil bc29-native, después
+corrompe el tipo del perfil y exige diagnóstico de esa ruta sin traceback.
+También se corrige MCP opcional para no bloquear una alternativa nativa suficiente
+y se ajustan acciones para no repetir descubrimiento o ejecución ya observados.
+Fuentes y derivados se validan juntos antes de resolver el hilo. La revisión del
+head inicial no se presenta como aprobación automática del head corregido.

@@ -86,8 +86,8 @@
     "scripts/sync-codex.js": "4e1811d2bc2370cf0dd719ec84d255ac4ec210495d53dc2cda9764f473cec262",
     "scripts/sync-copilot-cli.js": "983d6f0c30984d3abd0543d727f9c3d10a3b7360a5bd4c0a4c0976d38dabda85",
     "scripts/sync-plugin-support.js": "b7ce5b025f10c42c62be0102ddf58acb12a4c8f07959bbfe6ab8532ddc4a3cc4",
-    "tools/context-doctor/README.md": "189628fb226910502c67f7f144c37eb984094c0cb57d35f3bd4811a7739b70b0",
-    "tools/context-doctor/aldc_context_doctor.py": "01b050100fceb251c810015e58fa12f1c68bcc9d28a4f812a112d234d0290d86"
+    "tools/context-doctor/README.md": "3b39084fe61a4c08b411bfbc04473c443ef083451c2350a0c0763bb2ce19a9d8",
+    "tools/context-doctor/aldc_context_doctor.py": "c1b38781388c1079016ee5bf5d30bca7a231b2d30b1de1c7f9600977efd39338"
   },
   "outputs": {
     ".codex-plugin/plugin.json": "9ba5dd1534f1a4b887e8d317d2bd799a27008104a790ae4b6f3d2a47a57b8595",
@@ -135,7 +135,7 @@
     "skills/aldc/references/commands/al-memory-create.md": "52f4ff247217913daba082caccf4bc1cd02cc172d82fd8dc4dd9c5fa96d72811",
     "skills/aldc/references/commands/al-pr-prepare.md": "3b0e4e66654932aaab7fc936ec00296c53c916f4475844badfac881ccd00614a",
     "skills/aldc/references/commands/al-spec-create.md": "b1e525e706f6fc711e38d3acace490cf9a2d0fc7858b13d105c798140652692b",
-    "skills/aldc/references/doctor.md": "189628fb226910502c67f7f144c37eb984094c0cb57d35f3bd4811a7739b70b0",
+    "skills/aldc/references/doctor.md": "3b39084fe61a4c08b411bfbc04473c443ef083451c2350a0c0763bb2ce19a9d8",
     "skills/aldc/references/rules/al-agent-toolkit.md": "3179f41c96e27c359cf9da546b5435a5f9360553115d167b08da6f95a82df1e7",
     "skills/aldc/references/rules/al-code-style.md": "183255838e1aae3423fa4fc6ac8c5311f2530a02baff049db4931a13089c982c",
     "skills/aldc/references/rules/al-error-handling.md": "255e0164c3fea35c59428eff48137227da50dda8cdddb42288aedbd73f644240",
@@ -182,7 +182,7 @@
     "skills/aldc/references/templates/spec-template.md": "634da157c9e87ef6a1a22fa419e49dff31ef413a0fd246021878eb33bddb0ae8",
     "skills/aldc/references/templates/technical-spec-template.md": "5b9dbd9ea80e9a060965638d8be9e2594869d0fec4f2ab280307166f9e271916",
     "skills/aldc/references/templates/test-plan-template.md": "724882202ad91657012eb2568fe69d059634429213f92805d3a9bdfd9ce42447",
-    "skills/aldc/scripts/aldc_context_doctor.py": "01b050100fceb251c810015e58fa12f1c68bcc9d28a4f812a112d234d0290d86",
+    "skills/aldc/scripts/aldc_context_doctor.py": "c1b38781388c1079016ee5bf5d30bca7a231b2d30b1de1c7f9600977efd39338",
     "surface.json": "ce866924b58ae6d3a48a297eb8e262d0651be2fbc183095f4e976eafd46c9b3b",
     "templates/memory-template.md": "cc9a55e50c97f83dafba1a05d747d91afaf5fe3eccf7ea6bee41e25ba4c5cb4b"
   }
