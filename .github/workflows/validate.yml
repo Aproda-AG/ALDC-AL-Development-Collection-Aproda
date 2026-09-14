@@ -32,6 +32,8 @@ jobs:
       
     - name: Run validation
       run: npm run validate
+    - name: Packaged distribution smoke test
+      run: npm run test:package
     - name: Conformance check
       run: node scripts/check-conformance.js
     - name: Foundation drift check

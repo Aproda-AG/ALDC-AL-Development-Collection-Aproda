@@ -9,6 +9,15 @@ model: haiku
 color: purple
 maxTurns: 50
 ---
+
+## BC29 / AL18 terminal contract
+
+Before selecting AL tools, dependency changes or validation evidence, read
+[the terminal-host contract](../skills/skill-migrate/references/cli-al-tools.md)
+and apply its role boundaries. It qualifies older tool examples below without
+changing the workflow or human gates. Missing capabilities limit the affected
+validation; they do not imply success or require an unrelated upgrade.
+
 # AL Conductor Agent - Multi-Agent TDD Orchestration for Business Central
 
 <orchestration_workflow>

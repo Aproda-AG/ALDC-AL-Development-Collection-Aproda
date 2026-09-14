@@ -1,0 +1,170 @@
+#!/usr/bin/env node
+/**
+ * Generate the Copilot CLI distribution from the terminal-oriented Claude source.
+ * Never edit copilot-cli-plugin/ directly. --check detects drift, including orphans.
+ * Workflow bodies are retained in full; only host vocabulary and initialization
+ * are translated. Copilot model selection remains sourced from root agents/.
+ */
+const fs = require('fs');
+const path = require('path');
+const yaml = require('js-yaml');
+const ROOT = path.resolve(__dirname, '..');
+const DEST = 'copilot-cli-plugin';
+const toolMap = {
+  Read: 'read', Glob: 'search', Grep: 'search', Write: 'edit', Edit: 'edit',
+  Bash: 'execute', Task: 'agent', Agent: 'agent', WebSearch: 'web', WebFetch: 'web',
+};
+function split(text) {
+  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---([\s\S]*)$/);
+  if (!match) throw new Error('Missing frontmatter');
+  return { data: yaml.load(match[1]), body: match[2] };
+}
+function toolsFor(value) {
+  return [...new Set(value.split(',').map(t => t.trim()).map(t => {
+    if (toolMap[t]) return toolMap[t];
+    const m = t.match(/^mcp__(?:plugin_aldc_)?(al-symbols-mcp|context7|microsoft-docs)__\*$/);
+    if (m) return `${m[1]}/*`;
+    throw new Error(`Unmapped Claude tool: ${t}`);
+  }))];
+}
+function bodyFor(text) {
+  return text
+    .replace(/Claude Code/g, 'Copilot CLI')
+    .replace(/`Task`/g, '`agent`').replace(/\bTask tool\b/g, 'agent tool')
+    .replace(/the TodoWrite list/g, 'the current task list or plan document')
+    .replace(/`?\bTodoWrite\b`?/g, 'the available task-list tool (or update the plan document)')
+    .replace(/\bBash\b/g, 'execute')
+    .replace(/`Read`/g, '`read`').replace(/`(?:Glob|Grep)`/g, '`search`')
+    .replace(/`(?:Write|Edit)`/g, '`edit`')
+    .replace(/`(?:WebSearch|WebFetch)`/g, '`web`')
+    .replace(/aldc:/g, '')
+    .replace(/\.claude\/rules/g, '.github/instructions')
+    .replace(/CLAUDE_PLUGIN_ROOT/g, 'PLUGIN_ROOT')
+    .replace(/[\t ]+$/gm, '');
+}
+function walk(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap(e => {
+    const p = path.join(dir, e.name);
+    return e.isDirectory() ? walk(p) : [p];
+  });
+}
+function expected(root = ROOT) {
+  const files = new Map();
+  const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+  const put = (p, text) => files.set(`${DEST}/${p}`, text);
+  const manifest = JSON.parse(read('plugin.json'));
+  delete manifest.userConfig;
+  manifest.name = 'aldc-cli';
+  manifest.description = 'ALDC for Copilot CLI: terminal-adapted agents, skills and commands; conditional BC29/AL18 capability checks and canonical human gates.';
+  manifest.commands = 'commands/';
+  put('plugin.json', JSON.stringify(manifest, null, 2) + '\n');
+  for (const file of walk(path.join(root, 'claude-plugin/agents'))) {
+    const name = path.basename(file, '.md');
+    const src = split(fs.readFileSync(file, 'utf8'));
+    const canonical = split(read(`agents/${name}.agent.md`));
+    // Translate the existing Copilot model identifier, never infer it from AL18.
+    const models = { 'Claude Sonnet 4.6 (copilot)': 'claude-sonnet-4.6' };
+    const model = models[canonical.data.model];
+    if (!model) throw new Error(`Unmapped Copilot model: ${canonical.data.model}`);
+    const data = { name, description: bodyFor(src.data.description), tools: toolsFor(src.data.tools), model };
+    put(`agents/${name}.agent.md`, '---\n' + yaml.dump(data, { lineWidth: -1 }) + '---' + bodyFor(src.body));
+  }
+  for (const file of walk(path.join(root, 'claude-plugin/commands'))) {
+    const src = split(fs.readFileSync(file, 'utf8'));
+    let body = bodyFor(src.body);
+    if (path.basename(file) === 'al-initialize.md') {
+      const start = body.indexOf('## Phase 0:');
+      const end = body.indexOf('## Phase 1:');
+      if (start < 0 || end <= start) throw new Error('Initialization structure changed');
+      body = body.slice(0, start) + `## Phase 0: ALDC instructions (Copilot CLI)
+
+Locate this installed plugin through the plugin list; do not assume its root is
+the project directory or that a shell variable is populated. Read the sibling
+rules-templates directory and copy its *.instructions.md files into the project's
+.github/instructions directory. Review existing files and preserve customizations;
+do not silently overwrite them. The templates use applyTo, not Claude paths.
+
+Add a short ALDC routing note to project AGENTS.md, preserving existing content.
+List al-architect for design, al-developer for implementation and al-conductor for
+the full TDD cycle. Discover command labels in the installed CLI; request the
+al-spec-create or al-build workflow by name. Do not assume Claude's slash namespace.
+Confirm instruction loading and the existing human review gate before setup.
+
+` + body.slice(end);
+    }
+    // Commands are instructions, not a permission bypass; CLI agent allowlists
+    // and interactive permissions govern execution. Claude allowed-tools is omitted.
+    const data = { description: bodyFor(src.data.description) };
+    put(`commands/${path.basename(file)}`, '---\n' + yaml.dump(data, { lineWidth: -1 }) + '---' + body);
+  }
+  for (const file of walk(path.join(root, 'claude-plugin/skills'))) {
+    const content = fs.readFileSync(file, 'utf8');
+    // Shared contracts explicitly compare hosts; preserve their names and citations.
+    const neutral = ['cli-al-tools.md', 'al18-capabilities.md'].includes(path.basename(file));
+    put('skills/' + path.relative(path.join(root, 'claude-plugin/skills'), file).split(path.sep).join('/'), neutral ? content : bodyFor(content));
+  }
+  for (const file of walk(path.join(root, 'claude-plugin/rules-templates'))) {
+    const src = split(fs.readFileSync(file, 'utf8'));
+    const data = { applyTo: src.data.paths.join(','), description: src.data.description };
+    const body = bodyFor(src.body).replace(/\]\(\.\/(al-[^)]+)\.md\)/g, '](./$1.instructions.md)');
+    put(`rules-templates/${path.basename(file, '.md')}.instructions.md`, '---\n' + yaml.dump(data, { lineWidth: -1 }) + '---' + body);
+  }
+  put('README.md', `# ALDC for Copilot CLI
+
+Generated by scripts/sync-copilot-cli.js from claude-plugin/ with explicit host
+translation and model IDs from agents/. Do not edit this directory manually.
+
+From a checkout containing the canonical BC29 adaptation (main after PR #97):
+
+\`\`\`shell
+copilot plugin install ./copilot-cli-plugin
+copilot plugin list
+\`\`\`
+
+Restart the CLI, inspect /agent and /skills list, and verify the loaded source.
+Reinstall the local path after updates (the CLI caches plugins). Use a separate
+test project; existing project/personal agents or skills can shadow the plugin.
+Do not install both aldc and aldc-cli into the same CLI test session.
+
+Read skills/skill-migrate/references/cli-al-tools.md for toolchain checks, BC28/BC29
+scope, evidence and graph ownership. No VS Code language-model tools are bundled.
+The existing community/documentation MCP servers retain their configuration.
+No Claude hooks are imported; the agents retain their optional BCQuality backstop.
+
+Role write scopes are behavioral contracts, not filesystem sandboxes. The CLI
+edit capability translates Claude Write/Edit, both of which can overwrite files;
+execute/Bash is also broader than a report directory. Dredd and Triage must write
+only their reports as specified. Host tool/path approvals remain necessary;
+this package does not claim an enforced per-role filesystem boundary.
+
+Full local verification steps and limitations: ../docs/native-bc29.md.
+The complete Conductor and Architect exceed the generic custom-agent 30,000-character
+guidance. They have not been shortened or externalized. Confirm that your installed
+CLI loads them completely; if it rejects/truncates one, do not certify that workflow.
+No Claude/Copilot executable or Business Central runtime was available in CI/local
+static validation of this adaptation. Plugin loading and AL execution remain pending.
+`);
+  return files;
+}
+function sync(check = false, root = ROOT) {
+  const files = expected(root);
+  let drift = 0;
+  for (const [rel, text] of files) {
+    const dest = path.join(root, rel);
+    if (fs.existsSync(dest) && fs.readFileSync(dest, 'utf8') === text) continue;
+    drift++;
+    if (check) console.error(`drift: ${rel}`);
+    else { fs.mkdirSync(path.dirname(dest), { recursive: true }); fs.writeFileSync(dest, text); }
+  }
+  for (const file of walk(path.join(root, DEST))) {
+    if (files.has(path.relative(root, file).split(path.sep).join('/'))) continue;
+    drift++;
+    if (check) console.error(`orphan: ${file}`);
+    else fs.unlinkSync(file);
+  }
+  console.log(`Copilot CLI: ${files.size} generated files; ${drift} ${check ? 'differences' : 'updated/removed'}`);
+  return check && drift ? 1 : 0;
+}
+if (require.main === module) process.exitCode = sync(process.argv.includes('--check'));
+module.exports = { expected, split, bodyFor, toolsFor, sync };

@@ -6,11 +6,20 @@ description: >
   not reach, and returns an advisory verdict. Read-only on code. Default scope:
   objects changed vs main; full codebase on request. The static counterpart to
   al-triage (dynamic diagnosis). Use for an on-demand, independent quality audit.
-tools: Read, Glob, Grep, Bash, Write
+tools: Read, Glob, Grep, Bash, Write, mcp__al-symbols-mcp__*, mcp__plugin_aldc_al-symbols-mcp__*, mcp__context7__*, mcp__plugin_aldc_context7__*, mcp__microsoft-docs__*, mcp__plugin_aldc_microsoft-docs__*
 model: sonnet
 color: pink
 maxTurns: 50
 ---
+
+## BC29 / AL18 terminal contract
+
+Before selecting AL tools, dependency changes or validation evidence, read
+[the terminal-host contract](../skills/skill-migrate/references/cli-al-tools.md)
+and apply its role boundaries. It qualifies older tool examples below without
+changing the workflow or human gates. Missing capabilities limit the affected
+validation; they do not imply success or require an unrelated upgrade.
+
 
 # agent `dredd` — Independent AL Auditor for Business Central
 

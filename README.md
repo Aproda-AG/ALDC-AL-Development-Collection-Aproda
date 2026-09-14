@@ -48,6 +48,12 @@ ALDC (AL Development Collection) transforms how you develop Business Central ext
 
 ## Installation
 
+For the opt-in **BC29 / AL18 native profile in Copilot Chat**, see
+[installation, role changes and local validation](docs/native-bc29.md).
+BC28 remains the installer default. Claude Code and the dedicated `aldc-cli` plugin
+include terminal-specific BC29/AL18 contracts; see the same guide for checkout-local
+installation and pending runtime verification. The VS Code extension is published separately.
+
 ### GitHub Copilot
 
 Install from the VS Code Marketplace or:
@@ -66,12 +72,17 @@ Then, from the Command Palette:
 
 ALDC also ships as an installable Copilot plugin — `plugin.json` declares the agents (`agents/`), skills (`skills/`), and prompts (`prompts/`) that get installed, for editors that support the Copilot plugin marketplace:
 
+The root plugin retains the VS Code-oriented primitives. For **Copilot CLI**, use
+the dedicated terminal distribution from this checkout:
+
 ```bash
-copilot plugin marketplace add javiarmesto/ALDC-AL-Development-Collection
-copilot plugin install aldc@aldc-marketplace
+copilot plugin install ./copilot-cli-plugin
+copilot plugin list
 ```
 
-The agents, skills, and prompts are installed under your Copilot plugins folder and become available immediately, no `.github/` copy step required.
+The catalog entry is `aldc-cli@aldc-marketplace`.
+See [plugin loading checks and limitations](docs/native-bc29.md#plugins-de-claude-code-y-copilot-cli)
+before testing. The directory is generated with `npm run sync:copilot-cli`.
 
 ### Claude Code (Plugin)
 
@@ -484,12 +495,12 @@ AL-Development-Collection-for-GitHub-Copilot/
 - Visual Studio Code 1.85.0+
 - GitHub Copilot (agent and skill features)
 - AL Language Extension
-- Node.js 14+ (for validator)
+- Node.js 20+ (for validator)
 
 **Claude Code**
 - Claude Code CLI v1.0.33+
 - AL Language Extension
-- Node.js 14+ (for MCP servers via npx)
+- Node.js 20+ (for MCP servers via npx)
 
 ---
 

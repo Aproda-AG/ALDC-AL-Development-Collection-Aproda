@@ -5,13 +5,19 @@
     "url": "https://github.com/javiarmesto"
   },
   "metadata": {
-    "description": "ALDC — AI-Native AL Development Collection for Microsoft Dynamics 365 Business Central. Agents, skills, workflows, and coding standards for extension-only development."
+    "description": "ALDC \u2014 AI-Native AL Development Collection for Microsoft Dynamics 365 Business Central. Agents, skills, workflows, and coding standards for extension-only development."
   },
   "plugins": [
     {
       "name": "aldc",
       "source": ".",
       "description": "AL agents (incl. on-demand triage + dredd audit) + TDD subagents, skills, and workflows for BC extension development with TDD, BCQuality-cited review, event-driven architecture, and HITL gates.",
+      "version": "4.2.0"
+    },
+    {
+      "name": "aldc-cli",
+      "source": "./copilot-cli-plugin",
+      "description": "ALDC adapted for Copilot CLI: terminal tools, full canonical workflows, and conditional BC29/AL18 checks.",
       "version": "4.2.0"
     }
   ]

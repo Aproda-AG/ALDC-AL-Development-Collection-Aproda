@@ -42,7 +42,9 @@ jobs:
         git diff --exit-code || echo "changes=true" >> $GITHUB_OUTPUT
         
     - name: Commit fixes
-      if: steps.git-check.outputs.changes == 'true' && github.event_name == 'pull_request'
+      # Draft proposals stay reviewable: lint may fix its disposable checkout,
+      # but must not push unrelated repository-wide formatting onto the branch.
+      if: steps.git-check.outputs.changes == 'true' && github.event_name == 'pull_request' && github.event.pull_request.draft == false
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
@@ -50,7 +52,7 @@ jobs:
         git commit -m "style: auto-fix markdown lint issues"
         
     - name: Push changes
-      if: steps.git-check.outputs.changes == 'true' && github.event_name == 'pull_request'
+      if: steps.git-check.outputs.changes == 'true' && github.event_name == 'pull_request' && github.event.pull_request.draft == false
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -30,7 +30,16 @@ Verify registration:
 /
 ```
 
-You should see 5 user-facing agents (`al-architect`, `al-conductor`, `al-developer`, `al-presales`, `al-agent-builder`) and 10 slash commands prefixed with `/aldc:`.
+You should see 7 user-facing agents (`al-architect`, `al-conductor`, `al-developer`, `al-presales`, `al-agent-builder`, `al-triage`, `dredd`) plus 3 TDD subagents and 10 slash commands prefixed with `/aldc:`.
+
+## BC29 / AL18 review branch
+
+The agents and commands now load a [terminal contract](skills/skill-migrate/references/cli-al-tools.md).
+AL18 features remain conditional on the requested target and installed capabilities.
+To test this checkout without a marketplace release, start from a separate test
+project with `claude --plugin-dir /absolute/path/to/ALDC/claude-plugin`.
+See [local verification and limits](../docs/native-bc29.md#plugins-de-claude-code-y-copilot-cli).
+Plugin loading and Business Central operations still need local verification.
 
 ## First-Time Setup
 

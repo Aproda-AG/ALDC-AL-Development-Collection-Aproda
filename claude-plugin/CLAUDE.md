@@ -44,11 +44,17 @@ Present the complexity assessment and wait for user confirmation before proceedi
 - Generate only the minimum permissions required
 - Use XLIFF for all user-facing strings
 
+## BC29 / AL18
+
+Read [the terminal-host contract](skills/skill-migrate/references/cli-al-tools.md)
+for version checks, role ownership, optional graph use and evidence. Each agent and
+command links it explicitly because plugin-root CLAUDE.md is not auto-loaded.
+
 ## Tooling — what this plugin actually has at runtime
 
 This plugin runs in the **Claude Code harness**, not VS Code. Agents have native tools (`Read, Glob, Grep, Write, Edit, Bash, Task, WebSearch, WebFetch`) plus the MCP servers declared in `.claude-plugin/plugin.json`: **al-symbols-mcp** (read-only AL symbol queries), **context7** (library docs), **microsoft-docs** (Microsoft Learn). The VS Code AL extension commands (`AL: Package`, etc.) and Copilot chat context-variables (`#search`, `#problems`, …) **do not exist here** — agent prose must not invoke them as if they were tools.
 
-The AL toolchain is the **AL command-line tool (ALTool / `al`)**, installable as the [`Microsoft.Dynamics.BusinessCentral.Development.Tools`](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-al-tool) .NET tool. It **compiles and packages** — it does not publish, run tests, download symbols, or debug. Use this canonical mapping when writing agent/skill/command prose:
+The AL toolchain is the **AL command-line tool (ALTool / `al`)**, installable as the [`Microsoft.Dynamics.BusinessCentral.Development.Tools`](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-al-tool) .NET tool. Compilation/package examples are the baseline. Additional AL18 capabilities require installed-version/help checks; no runtime provider is implied by this plugin. Use this canonical mapping when writing agent/skill/command prose:
 
 | Need | In this harness |
 |------|-----------------|
@@ -64,10 +70,10 @@ The AL toolchain is the **AL command-line tool (ALTool / `al`)**, installable as
 | Track multi-step work | the `TodoWrite` tool |
 | Microsoft / BC docs | **microsoft-docs** MCP |
 | Library / framework docs | **context7** MCP |
-| **Publish / deploy** | **no CLI verb** — VS Code (`AL: Publish` / `…without Debugging` / RAD) or the AL-Go/CI pipeline. Agents generate code; a human or pipeline deploys. |
-| **Run tests** | **no ALTool verb** — VS Code `AL: Run Tests` or the AL-Go/CI test runner; agents read the results. |
-| **Download symbols** | **no ALTool verb** — VS Code `AL: Download Symbols`, or restore the symbol package cache in CI. |
-| **Debug / snapshot / CPU profile** | **VS Code only** (AL debugger, snapshot debugging, CPU profiler) — a human step, not an agent tool on this surface. |
+| **Publish / deploy** | **human-gated deployment** — VS Code (`AL: Publish` / `…without Debugging` / RAD) or the AL-Go/CI pipeline. Agents generate code; a human or pipeline deploys. |
+| **Run tests** | **verify local capability; otherwise hand off** — VS Code `AL: Run Tests` or the AL-Go/CI test runner; agents read the results. |
+| **Download symbols** | **verify local capability; otherwise hand off** — VS Code `AL: Download Symbols`, or restore the symbol package cache in CI. |
+| **Debug / snapshot / CPU profile** | **configured VS Code tooling** (AL debugger, snapshot debugging, CPU profiler) — a human step, not an agent tool on this surface. |
 
 > Steer away from waste, don't ban tools: prefer **al-symbols-mcp** for symbol facts (it's grounded and cheaper than re-reading files), but `microsoft-docs`/`context7`/`WebSearch` remain fair game for conceptual gaps. Flag what you genuinely can't resolve rather than burning turns on trial-and-error tool bursts.
 

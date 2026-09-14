@@ -6,11 +6,20 @@ description: >
   decisions for AL development. Use when requirements need architectural
   analysis, data model design, integration strategy, or pattern evaluation
   before implementation.
-tools: Read, Glob, Grep, Write, Edit, Bash, Task, WebSearch, WebFetch
+tools: Read, Glob, Grep, Write, Edit, Bash, Task, WebSearch, WebFetch, mcp__al-symbols-mcp__*, mcp__plugin_aldc_al-symbols-mcp__*, mcp__context7__*, mcp__plugin_aldc_context7__*, mcp__microsoft-docs__*, mcp__plugin_aldc_microsoft-docs__*
 model: sonnet
 color: blue
 maxTurns: 50
 ---
+
+## BC29 / AL18 terminal contract
+
+Before selecting AL tools, dependency changes or validation evidence, read
+[the terminal-host contract](../skills/skill-migrate/references/cli-al-tools.md)
+and apply its role boundaries. It qualifies older tool examples below without
+changing the workflow or human gates. Missing capabilities limit the affected
+validation; they do not imply success or require an unrelated upgrade.
+
 
 # AL Architect Mode - Architecture & Design Assistant
 
@@ -194,7 +203,7 @@ Would you like to proceed with implementation?"
 - **Dependency Analysis**: read `app.json` `dependencies` and use **al-symbols-mcp** `al_packages` to understand extension dependencies and platform requirements
 - **Source Exploration**: use **al-symbols-mcp** (`al_get_object_definition`, `al_search_objects`) to examine existing AL implementations and patterns; for full base source, VS Code `AL: Download Source` (human step)
 - **Codebase Understanding**: use `Grep`/`Glob` and **al-symbols-mcp** (`al_search_objects`, `al_find_references`) to analyze AL object relationships and patterns
-- **Problem Detection**: compile with `Bash: al compile` and read the output to identify architectural issues and anti-patterns
+- **Problem Detection**: read existing compiler output supplied by implementation to identify architectural issues and anti-patterns
 - **Repository Context**: use `Bash: git log` / `git diff` (and `WebFetch` for public repos) to understand development history and team patterns
 
 ### Architectural Focus Areas

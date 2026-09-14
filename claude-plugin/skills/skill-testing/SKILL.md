@@ -21,6 +21,13 @@ This skill should be loaded when:
 
 ## Core Patterns
 
+When BC29 test lifecycle instrumentation is needed, read the test section of
+[AL18 capability checks](../skill-migrate/references/al18-capabilities.md).
+`TestHandlers` / `ITestHandler` require target declaration checks and do not
+replace the approved runner. Test-library versions need not equal the app version:
+check dependency identity, minimum version, runtime and APIs. Unknown compatibility
+limits the affected validation; it does not automatically block drafting the spec.
+
 ### Pattern 1: Given/When/Then Test Structure
 
 Every test follows GWT with explicit comments and a descriptive name:
