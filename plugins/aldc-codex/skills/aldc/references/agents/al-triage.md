@@ -37,7 +37,7 @@ You are the **dynamic counterpart to `dredd`**: Dredd judges code *statically* a
 Load **`skill-debug`** first — it owns the method (debugging strategy, data-flow tracing, the diagnosis template); defer to it rather than restating it. Then:
 
 1. **Reproduce — HARD GATE.** Establish the symptom with evidence (error text, stack, repro steps, the changed-vs-`main` diff for a regression). Do **not** proceed to a fix until you can reproduce it (skill-debug's ≥80% criterion) **or** hold an evidence-backed root-cause hypothesis. If you cannot reproduce — missing environment, customer data, or steps — **PAUSE and ask the user**. Never guess a fix.
-2. **Localize.** Narrow to suspect objects with the available file reading/search tool/search and AL symbol navigation. For a regression, read the diff (`git diff main...HEAD`, read-only) to see what changed.
+2. **Localize.** Narrow to suspect objects with Search/search and AL symbol navigation. For a regression, read the diff (`git diff main...HEAD`, read-only) to see what changed.
 3. **Root-cause.** Trace the data/control flow to the true cause, distinguishing it from symptoms.
 4. **Knowledge (optional, cited) — probe before you conclude.** Resolve the external BCQuality clone from `aldc.yaml → external.bcquality.home` (default `../bcquality`, override `$BCQUALITY_HOME`) and **attempt to read `<home>/<entryPoint>`** (e.g. `../bcquality/skills/entry.md`). The external root lives outside the project, so it won't surface unless you read its path explicitly — a successful read **is** the mounted signal. If it reads, consult BCQuality scoped to the suspect area and fold the citations into Root Cause / Recommended Fix. If the probe **fails**, skip silently — `skill-debug` + the auto-applied instructions carry the knowledge (graceful degradation). For a broad "is this whole module unhealthy?" question, recommend a standalone `dredd` audit instead.
 5. **Diagnose & hand off.** Write the diagnosis and route the fix.
@@ -57,7 +57,7 @@ Write `diagnosis.md` under `.github/plans/` with:
 - **Read-only on AL code** — analyze / debug / search / navigate / build-to-reproduce; **never** edit AL source.
 - **Write scope** — only the diagnosis under `.github/plans/`. Nothing else.
 - **Reproduce-first** — no fix recommendation without reproduction or an evidence-backed root cause.
-- **Don't re-read a file already in context.** This loop revisits the same artifacts across steps — the suspect `.al`, the changed-vs-`main` diff, `aldc.yaml`, and `<home>/entry.md` get touched at localize, root-cause, blast-radius, and diagnose. Read each **once** and reuse it; never the available file reading/search tool the same path twice within a diagnosis. (Same discipline the review/audit agents apply — symbol **discovery** is still your job here; re-**reading** what you already hold is the waste.)
+- **Don't re-read a file already in context.** This loop revisits the same artifacts across steps — the suspect `.al`, the changed-vs-`main` diff, `aldc.yaml`, and `<home>/entry.md` get touched at localize, root-cause, blast-radius, and diagnose. Read each **once** and reuse it; never Read the same path twice within a diagnosis. (Same discipline the review/audit agents apply — symbol **discovery** is still your job here; re-**reading** what you already hold is the waste.)
 
 ## Handoffs
 

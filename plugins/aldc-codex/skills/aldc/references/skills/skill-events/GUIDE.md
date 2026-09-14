@@ -189,7 +189,7 @@ For **creating new integration events** in your codeunit:
 
 ### Step 3: Implement
 
-Write the subscriber/publisher structures with the available file editing tool/the available file editing tool (in VS Code the `teventsub`/`tevent` snippets scaffold these for a human), then fill the body:
+Write the subscriber/publisher structures with Write/Edit (in VS Code the `teventsub`/`tevent` snippets scaffold these for a human), then fill the body:
 
 ```al
 // Subscriber handler codeunit

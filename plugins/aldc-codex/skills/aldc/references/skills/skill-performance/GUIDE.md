@@ -246,7 +246,7 @@ Avoid FlowFields:
 
 Scan the codebase before profiling to identify structural issues:
 
-Patterns to detect manually with the available file reading/search tool/the available file reading/search tool, or from compiler warnings in `al compile` output:
+Patterns to detect manually with Search/Search, or from compiler warnings in `al compile` output:
 - `FindSet()` / `FindFirst()` without preceding `SetRange` / `SetFilter`
 - `SetLoadFields` placed after `SetRange` (wrong order)
 - Database calls (`Get`, `FindSet`, `FindFirst`) inside `repeat...until`

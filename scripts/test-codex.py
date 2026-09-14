@@ -20,4 +20,8 @@ for path in roles:
 contribution = (root / 'skills/aldc/references/skills/skill-contribution-assistant/GUIDE.md').read_text()
 assert 'skills/<skill-name>/SKILL.md' in contribution
 assert 'Step 3: Author SKILL.md' in contribution
+spec = (root / 'skills/aldc/references/commands/al-spec-create.md').read_text()
+assert 'Read the `SKILL.md` for a domain' in spec
+for file in ['agent-simple-instructions.txt', 'agent-advanced-instructions.txt']:
+    assert (root / 'skills/aldc/references/skills/skill-agent-instructions/examples' / file).is_file()
 print('Codex: 10 valid TOML profiles, full role bodies, one discoverable skill; host loading unverified.')

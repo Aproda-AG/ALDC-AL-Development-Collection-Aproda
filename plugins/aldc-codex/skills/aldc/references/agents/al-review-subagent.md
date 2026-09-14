@@ -59,12 +59,12 @@ Review the AL code changes using available tools:
 - `shell: git diff` / `git status` - See what was modified/created
 - **al-symbols-mcp** `al_find_references` - Check how AL objects are referenced
 - Read existing compiler output from implementation - Identify compilation issues
-- the available file reading/search tool/the available file reading/search tool + **al-symbols-mcp** `al_search_objects` - Find related AL code and patterns
+- Search/Search + **al-symbols-mcp** `al_search_objects` - Find related AL code and patterns
 - Read the test-run output passed by the Conductor - Check if any tests failed
 
 > **Consume the event-subscriber list — don't re-discover events.** The Conductor passes the implement-subagent's list of subscribers (each with its **exact base object + event name + signature**). **Validate against that list.** Use **al-symbols-mcp** **only** to spot-confirm a single signature you genuinely cannot resolve from the list — **not** to enumerate or guess base events. (Measured: blind trial-and-error symbol searches, with name-variant duplicates, were a top token sink in review.)
 
-> **Don't re-read a file already in context.** If you read a source `.al`, an excerpt, the BCQuality skill, or `memory.md` earlier in this invocation, reuse it — never the available file reading/search tool the same path twice.
+> **Don't re-read a file already in context.** If you read a source `.al`, an excerpt, the BCQuality skill, or `memory.md` earlier in this invocation, reuse it — never Read the same path twice.
 
 **Focus on:**
 - AL object types created (Table, TableExtension, Codeunit, Page, etc.)
@@ -75,7 +75,7 @@ Review the AL code changes using available tools:
 
 ### 2. Verify Implementation
 
-> **How the framework's rules reach you here — not by passive auto-apply (it does not fire in subagent runtime).** The **always-on instruction micro-rules** arrive **inline from the Conductor** (hard-rule baseline, in effect for the whole review). For domain **depth**, **load the skill yourself** — the available file reading/search tool its `SKILL.md` — **only for the residual you actually own**: domains an active BCQuality leaf does **not** cover. Where a domain is owned by an enabled BCQuality leaf, do **not** load the ALDC skill — its knowledge is already loaded; defer to its finding (no double-load). Don't re-derive a rule's text — verify and flag, citing `file:line`.
+> **How the framework's rules reach you here — not by passive auto-apply (it does not fire in subagent runtime).** The **always-on instruction micro-rules** arrive **inline from the Conductor** (hard-rule baseline, in effect for the whole review). For domain **depth**, **load the skill yourself** — Read its `SKILL.md` — **only for the residual you actually own**: domains an active BCQuality leaf does **not** cover. Where a domain is owned by an enabled BCQuality leaf, do **not** load the ALDC skill — its knowledge is already loaded; defer to its finding (no double-load). Don't re-derive a rule's text — verify and flag, citing `file:line`.
 
 Check that the implementation meets **AL-specific criteria**:
 
@@ -556,7 +556,7 @@ Use this checklist during review:
 - Analyze code changes and diffs (`shell: git diff`)
 - Confirm compilation by reading `al compile` output
 - Verify test results from the run output the Conductor passes
-- Search for patterns and usages (the available file reading/search tool/the available file reading/search tool + **al-symbols-mcp**)
+- Search for patterns and usages (Search/Search + **al-symbols-mcp**)
 - Review against architecture/spec
 
 **CANNOT:**

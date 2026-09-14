@@ -22,7 +22,7 @@ This skill should be loaded when:
 
 ### Pattern 1: AL Permission Set Object (Preferred)
 
-Write the `permissionset` object as AL code with the available file editing tool/the available file editing tool (in VS Code, `AL: Generate permission set` scaffolds one for a human to start from), then refine:
+Write the `permissionset` object as AL code with Write/Edit (in VS Code, `AL: Generate permission set` scaffolds one for a human to start from), then refine:
 
 ```al
 permissionset 50100 "Contoso Sales"
@@ -140,7 +140,7 @@ permissionsetextension 50101 "Contoso D365 Read Ext" extends "D365 READ"
 
 ### Pattern 4: XML Permission Set (Legacy Format)
 
-Write the XML permission set directly with the available file editing tool (in VS Code, `AL: Generate permission set (as XML)` scaffolds one for a human) when:
+Write the XML permission set directly with Write (in VS Code, `AL: Generate permission set (as XML)` scaffolds one for a human) when:
 - Targeting older BC versions (< BC 20)
 - Import via BC admin UI is required
 - Customer tooling only supports XML format

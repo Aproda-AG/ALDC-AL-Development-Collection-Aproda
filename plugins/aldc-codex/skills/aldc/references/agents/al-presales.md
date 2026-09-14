@@ -873,7 +873,7 @@ await createFile('Technical_PreSales/customer-loyalty-system/00-executive-summar
 
 ## Domain Skills
 
-This agent draws on the following skill from `.agents/skills/aldc/references/skills/`. It is **not** auto-loaded — **load the `SKILL.md` on demand** (the available file reading/search tool it) when estimating:
+This agent draws on the following skill from `.agents/skills/aldc/references/skills/`. It is **not** auto-loaded — **load the `SKILL.md` on demand** (Read it) when estimating:
 
 - **skill-estimation** — When performing project estimation, complexity scoring, PERT, SWOT, cost breakdown
 

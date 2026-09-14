@@ -100,7 +100,7 @@ Strictly follow the **Planning → Implementation → Review → Commit** proces
    - Specification from al-spec-create → Reference object structure
    - Requirements document → Use as basis for research
 
-3. **Delegate Research**: Use the the available subagent delegation tool tool to invoke the **agent `al-planning-subagent`** for comprehensive context gathering.
+3. **Delegate Research**: Use the subagent delegation tool to invoke the **agent `al-planning-subagent`** for comprehensive context gathering.
 
 **Present to user:**
 
@@ -215,7 +215,7 @@ For each phase in the plan, execute this cycle with **visual progress tracking**
 └────────────────────────────────────────────────────────┘
 ```
 
-1. Use the the available subagent delegation tool tool to invoke the **al-implement-subagent** with:
+1. Use the subagent delegation tool to invoke the **al-implement-subagent** with:
    - The specific phase number and objective
    - AL objects to create/modify (TableExtension, Codeunit, etc.)
    - Event subscribers/publishers needed
@@ -260,7 +260,7 @@ Build success ≠ review approval. NEVER skip review.
 └────────────────────────────────────────────────────────┘
 ```
 
-1. Use the the available subagent delegation tool tool to invoke the **agent `al-review-subagent`** with:
+1. Use the subagent delegation tool to invoke the **agent `al-review-subagent`** with:
    - The phase objective and acceptance criteria
    - Files that were modified/created
    - **The event-subscriber list the implement-subagent returned** (each subscriber's exact base object + event name + signature). Pass it inline so the reviewer **validates against it** and does not re-discover base events via **al-symbols-mcp** (a measured token sink — trial-and-error symbol searches). Tell it to query symbols only to spot-confirm a single signature it cannot resolve from the list.
@@ -938,17 +938,17 @@ Checking for context:
 
 You have already read memory.md, architecture.md, spec.md, and test-plan.md (§"Context Files to Read Before Orchestration"). Subagents start with a **fresh context** and do **not** share yours — so do not merely point them at the files and let them re-read everything. That spends a full re-read of spec + architecture + test-plan + memory (and the same skill files) on **every** phase invocation.
 
-Instead, **pass phase-relevant excerpts inline** in the the available subagent delegation tool instruction:
+Instead, **pass phase-relevant excerpts inline** in the subagent delegation instruction:
 - **Spec excerpt** — only the section(s) covering this phase's objects (object IDs, field types, procedure signatures) **plus the §5 verified integration points** (publisher + event + consumed fields) the phase touches, so subagents validate against them instead of re-hunting base events. Not the whole spec.
 - **Architecture decisions** — only the decisions/constraints this phase must honor, not the full document.
 - **Test-plan excerpt** — only the tests scoped to this phase.
 - **Memory** — only the cross-session decisions that bear on this phase.
-- **The 7 always-on instruction micro-rules** (`.agents/skills/aldc/references/rules/al-*.md`) — the available file reading/search tool them **once** at run start and pass them inline to **every** code-touching subagent (implement, review). They are tiny (~1.3K tokens total) hard-rule baselines, and in the Codex harness there is **no editor-attached-files auto-apply** — the `applyTo` glob never fires in subagent runtime — so injecting them is the only way they take effect. **Not optional, not per-domain**: pass all seven on every code phase. They are the floor; the depth lives in the skills they point to.
+- **The 7 always-on instruction micro-rules** (`.agents/skills/aldc/references/rules/al-*.md`) — Read them **once** at run start and pass them inline to **every** code-touching subagent (implement, review). They are tiny (~1.3K tokens total) hard-rule baselines, and in the Codex harness there is **no editor-attached-files auto-apply** — the `applyTo` glob never fires in subagent runtime — so injecting them is the only way they take effect. **Not optional, not per-domain**: pass all seven on every code phase. They are the floor; the depth lives in the skills they point to.
 - **Domain skill *hints*** — name the skills likely relevant to this phase's domain (e.g. `skill-events` for an event phase). These are **hints, not mandates**: the subagent loads the `SKILL.md` (reads it) on demand when it enters the domain, and may load a skill you didn't hint if it finds it needs one.
 
 Tell the subagent: **the excerpts are authoritative for this phase; read the full file under `.github/plans/` only if a referenced detail is missing from the excerpt.** Always include the file path so that escape hatch works.
 
-> **Don't re-read what's already in context (yours or theirs).** Within a single invocation, a file read once must be **reused, not re-read** — measured runs show the same source `.al`/`spec`/`memory` read 5–7× in one review, each re-injecting the file into the growing context. Instruct subagents: *"if you already read a path this invocation, reuse it; do not the available file reading/search tool it again."* The same principle covers the **BCQuality task-context** — you build it and pass it inline (you already hold `app.json` and the phase's changed objects); the review subagent still reads the external BCQuality clone itself for the knowledge files, but no longer re-derives the task-context.
+> **Don't re-read what's already in context (yours or theirs).** Within a single invocation, a file read once must be **reused, not re-read** — measured runs show the same source `.al`/`spec`/`memory` read 5–7× in one review, each re-injecting the file into the growing context. Instruct subagents: *"if you already read a path this invocation, reuse it; do not Read it again."* The same principle covers the **BCQuality task-context** — you build it and pass it inline (you already hold `app.json` and the phase's changed objects); the review subagent still reads the external BCQuality clone itself for the knowledge files, but no longer re-derives the task-context.
 
 ### Documentation Creation During Orchestration
 

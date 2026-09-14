@@ -34,7 +34,7 @@ Your goal is to build (compile + package) the AL extension for the `${input:Depl
 > **What runs where.** In the Codex harness you compile and package with the **AL command-line tool (ALTool / `al`)** via `shell`. No deployment or test runner is bundled — the existing handoff is VS Code (`AL: Publish` / `AL: Run Tests`) or AL-Go/CI pipeline steps. So this command builds the `.app` and then hands off the deploy with a clear, approved checklist.
 
 ## Select Deployment Strategy
-Inspect the project (the available file reading/search tool `app.json`, the available file reading/search tool/the available file reading/search tool, **al-symbols-mcp** for dependencies) and select the appropriate deployment strategy.
+Inspect the project (Read `app.json`, Search/Search, **al-symbols-mcp** for dependencies) and select the appropriate deployment strategy.
 Ask and confirm with the user before proceeding.
 
 ## Deployment Types

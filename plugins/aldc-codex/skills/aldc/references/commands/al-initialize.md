@@ -110,10 +110,10 @@ Create or update `.vscode/settings.json` in the workspace root:
 ### Choose Project Type
 
 **For New Projects:**
-Scaffold the project structure directly with the available file editing tool (`app.json`, folders, `.vscode/` configs — see the structure below), or have the human run VS Code `AL: Go!` to generate a starter project.
+Scaffold the project structure directly with Write (`app.json`, folders, `.vscode/` configs — see the structure below), or have the human run VS Code `AL: Go!` to generate a starter project.
 
 **For Existing Folders:**
-Work in place — the available file reading/search tool the existing `app.json` and lay out any missing folders with the available file editing tool.
+Work in place — Read the existing `app.json` and lay out any missing folders with Write.
 
 ### Project Structure
 
@@ -150,7 +150,7 @@ Verify all base application dependencies are available.
 
 ### Create the Manifest
 
-`app.json` **is** the manifest — write it directly with the available file editing tool (id, name, publisher, version, idRanges, dependencies, platform/application).
+`app.json` **is** the manifest — write it directly with Write (id, name, publisher, version, idRanges, dependencies, platform/application).
 
 **Human Review:** Validate manifest contents before proceeding.
 

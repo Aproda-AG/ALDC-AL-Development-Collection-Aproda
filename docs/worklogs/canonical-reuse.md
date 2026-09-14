@@ -154,7 +154,7 @@ se reabre #97. Lab y PR externa del VSIX se mantienen sin cambios.
   skills duplicados. La conversión a GUIDE.md se limita a referencias empaquetadas;
 la creación de nuevas skills sigue usando SKILL.md. No se registra Marketplace ni se instala en esta sesión.
 
-Comprobaciones locales: 214 checks de perfil, 226 de empaquetado CLI, 14 pruebas
+Comprobaciones locales: 214 checks de perfil, 226 de empaquetado CLI, 15 pruebas
 conductuales de instalación/recuperación, 57 de conformance y 71 archivos Foundation.
 Se probó fallo parcial con restauración de archivos y recibo, incluida interrupción
 durante el propio rollback y recuperación posterior; rollback encadenado,
@@ -181,3 +181,14 @@ roles y reglas por host, recarga de caché sin duplicados y actualización/rollb
 real en Windows. Resolver solo fallos observados en cada superficie. Coordinar el
 VSIX externo para regenerar desde main cuando proceda. El siguiente incremento
 implementable es Doctor canónico; después Spec Agent y sus adaptadores.
+
+
+Revisión remota #100: Copilot revisó 120/157 archivos del head inicial y emitió
+COMMENTED con cambios recomendados (tres hilos y dos comentarios suprimidos).
+Se corrigen los cinco: comparación de rutas Windows sin distinción de mayúsculas,
+verbos legibles en Codex, memoria Core v1.2 desde la plantilla raíz, hook silencioso
+en proyectos con solo .github/plans o app.json ajeno a AL, y ejemplos de instrucciones
+recuperados de la fuente canónica. Pruebas de rutas Windows son análisis de rutas
+sobre Linux, no ejecución Windows. Las correcciones y sus derivados se validan
+antes de resolver hilos; no se presenta la revisión del head inicial como una
+aprobación automática del head corregido.

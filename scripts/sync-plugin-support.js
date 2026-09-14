@@ -7,6 +7,7 @@ const { walk, provenance, normalized } = require('./package-provenance');
 const root = path.resolve(__dirname, '..');
 function support(surface, rootDir = root) {
   const files = new Map();
+  if (surface === 'claude') for (const p of walk(rootDir, 'skills/skill-agent-instructions/examples')) files.set(p, fs.readFileSync(path.join(rootDir,p), 'utf8'));
   for (const name of ['install-transaction.js', 'package-provenance.js']) files.set(`scripts/${name}`, fs.readFileSync(path.join(rootDir,'scripts',name), 'utf8'));
   files.set('scripts/init.js', fs.readFileSync(path.join(rootDir, 'scripts/init-plugin.js'), 'utf8'));
   for (const p of walk(rootDir, 'docs/templates')) files.set(p, fs.readFileSync(path.join(rootDir,p), 'utf8'));
@@ -21,7 +22,7 @@ function sync(check = false) {
   const dest = path.join(root,'claude-plugin'), outputs = support('claude');
   for (const rel of walk(dest)) if (rel !== 'provenance.json' && !outputs.has(rel)) outputs.set(rel, normalized(fs.readFileSync(path.join(dest,rel))));
   const sources = [...outputs.keys()].filter(p => !support('claude').has(p)).map(p => 'claude-plugin/' + p);
-  sources.push('scripts/install-transaction.js','scripts/package-provenance.js','scripts/init-plugin.js',...walk(root, 'docs/templates'));
+  sources.push('scripts/install-transaction.js','scripts/package-provenance.js','scripts/init-plugin.js',...walk(root, 'docs/templates'), ...walk(root, 'skills/skill-agent-instructions/examples'));
   outputs.set('provenance.json', provenance(root,sources,outputs,'scripts/sync-plugin-support.js'));
   let drift = 0;
   for (const [rel,b] of outputs) {

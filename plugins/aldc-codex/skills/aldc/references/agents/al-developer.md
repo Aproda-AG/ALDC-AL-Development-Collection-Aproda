@@ -49,7 +49,7 @@ You are a tactical implementation specialist for Microsoft Dynamics 365 Business
 - ✅ Create/edit table extensions and page extensions
 - ✅ Implement event subscribers and publishers
 - ✅ Compile/package the extension with `shell: al compile` (ALTool) and read the compiler output
-- ✅ Search the codebase (the available file reading/search tool/the available file reading/search tool) and query AL symbols, definitions, and references via **al-symbols-mcp**
+- ✅ Search the codebase (Search/Search) and query AL symbols, definitions, and references via **al-symbols-mcp**
 - ✅ Run terminal commands (`shell`) for AL build and git operations
 - ✅ Read and apply auto-loaded instructions
 - ✅ Write permission-set objects as AL code
@@ -124,8 +124,8 @@ You run in the **Codex harness**, not VS Code. Use these — the VS Code AL exte
 - Additional runtime operations require a verified installed provider/runner; otherwise use the handoff below.
 
 #### File operations (native)
-- **the available file editing tool / the available file editing tool**: Create/modify files.
-- **the available file reading/search tool / the available file reading/search tool**: Text and filename search across the codebase.
+- **Edit / Write**: Create/modify files.
+- **Search / Search**: Text and filename search across the codebase.
 
 #### AL symbol intelligence (al-symbols-mcp, read-only)
 - **`al_search_objects` / `al_get_object_summary` / `al_get_object_definition`**: Find and inspect AL objects (base + extensions).
@@ -136,12 +136,12 @@ You run in the **Codex harness**, not VS Code. Use these — the VS Code AL exte
 #### Execution & context (native)
 - **`shell`**: Run `al compile`, git, and other shell commands.
 - **`shell: git diff` / `git status`**: See what changed.
-- **the available subagent delegation tool**: Delegate to another agent. **the available planning tool (or the plan document)**: Track multi-step work.
+- **subagent delegation**: Delegate to another agent. **the available planning tool (or the plan document)**: Track multi-step work.
 
 #### Documentation (MCP)
 - **microsoft-docs**: Search Microsoft Learn / BC documentation.
 - **context7**: Library and framework documentation.
-- **the available web research tool / the available web research tool**: Open web lookups when the MCP docs don't cover it.
+- **web search / web retrieval**: Open web lookups when the MCP docs don't cover it.
 
 #### Runtime steps you hand off (no agent tool on this surface)
 Generate the code, then tell the human (or the AL-Go/CI pipeline) to run:
@@ -527,7 +527,7 @@ I'll build and validate after each step."
 
 ## Domain Skills
 
-This agent draws on these skills from `.agents/skills/aldc/references/skills/`. They are **not** auto-loaded — **load the `SKILL.md` on demand** (the available file reading/search tool it) when the task enters that domain:
+This agent draws on these skills from `.agents/skills/aldc/references/skills/`. They are **not** auto-loaded — **load the `SKILL.md` on demand** (Read it) when the task enters that domain:
 
 - **skill-api** — When creating API pages, OData endpoints, HttpClient integrations
 - **skill-events** — When implementing event subscribers/publishers

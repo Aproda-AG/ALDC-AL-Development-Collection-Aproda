@@ -60,13 +60,13 @@ Research Business Central AL codebases to understand:
 - Review app.json for dependencies
 
 **Use These Tools (Codex harness):**
-- the available file reading/search tool/the available file reading/search tool + **al-symbols-mcp** `al_search_objects` - Search for AL patterns and object names
+- Search/Search + **al-symbols-mcp** `al_search_objects` - Search for AL patterns and object names
 - **al-symbols-mcp** `al_find_references` - Find where AL objects are referenced
 - read `app.json` `dependencies` + **al-symbols-mcp** `al_packages` - Analyze extension dependencies
 - **al-symbols-mcp** `al_get_object_definition` / `al_search_object_members` - Examine existing AL implementations (full source via VS Code `AL: Download Source`, a human step)
 - Read existing compiler output from implementation - Identify current AL compilation issues
 - `shell: git diff` / `git log` - Review recent modifications to AL code
-- `shell: git log` (and the available web research tool for public repos) - Understand development history and team patterns
+- `shell: git log` (and web retrieval for public repos) - Understand development history and team patterns
 
 **AL Object Discovery Pattern:**
 ```
@@ -328,7 +328,7 @@ If you can't find something or aren't sure, document it:
 ## Tool Boundaries
 
 **CAN:**
-- Search the codebase for AL objects and patterns (the available file reading/search tool/the available file reading/search tool + **al-symbols-mcp**)
+- Search the codebase for AL objects and patterns (Search/Search + **al-symbols-mcp**)
 - Analyze dependencies and symbols (`app.json` + **al-symbols-mcp** `al_packages`)
 - Review existing implementations (**al-symbols-mcp** definitions/members)
 - Identify event architecture

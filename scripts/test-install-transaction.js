@@ -78,7 +78,9 @@ test('tampered plugin fails before creating project files; CRLF locked checkout 
 });
 test('Claude session hook is silent outside AL and read-only in an AL project',t=>{
  const r=temp(t),{context}=require('../claude-plugin/hooks/session-context');assert.equal(context({cwd:r}),null);assert.equal(context({}),null);
- write(r,'App/app.json','{}');assert.match(context({cwd:r}).hookSpecificOutput.additionalContext,/terminal tool contract/);assert.deepEqual(fs.readdirSync(r),['App']);
+ write(r,'.github/plans/note.md','unrelated plan');assert.equal(context({cwd:r}),null);
+ write(r,'App/app.json','{"expo":{}}');assert.equal(context({cwd:r}),null);
+ write(r,'App/app.json','{"application":"29.0.0.0"}');assert.match(context({cwd:r}).hookSpecificOutput.additionalContext,/terminal tool contract/);assert.deepEqual(fs.readdirSync(r).sort(),['.github','App']);
 });
 test('Chat CLI dry-run, verify and rollback operate on actual installed files',t=>{
  const r=temp(t); const run=args=>spawnSync(process.execPath,[path.join(root,'scripts/install.js'),...args],{cwd:r,encoding:'utf8'});
@@ -105,4 +107,10 @@ test('interrupted rollback remains recoverable even after the receipt was restor
  assert.throws(()=>tx.apply(opts),/Interrupted operation/);
  tx.rollback(r,'fixture');assert.equal(read(r,'a.md'),'v1');assert.equal(read(r,'b.md'),'v1');assert.deepEqual(tx.drift(r,'fixture'),[]);
  assert.equal(fs.existsSync(path.join(r,'.aldc-install/pending.json')),false);
+});
+
+test('Windows path casing and separators cannot bypass plugin-tree isolation',()=>{
+ const {overlaps}=require('./init-plugin');
+ for(const [a,b] of [['C:/Plugin','c:/plugin'],['C:/PLUGIN/project','c:/plugin'],['c:/','C:/plugin']])assert.equal(overlaps(a,b,'win32'),true);
+ assert.equal(overlaps('C:/plugin-other','c:/plugin','win32'),false);
 });

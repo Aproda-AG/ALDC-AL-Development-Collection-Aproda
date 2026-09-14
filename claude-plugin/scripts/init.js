@@ -6,9 +6,19 @@ const fs = require('fs');
 const path = require('path');
 const tx = require('./install-transaction');
 const { verify, walk, normalized } = require('./package-provenance');
+function overlaps(project, pluginRoot, platform = process.platform) {
+  const paths = platform === 'win32' ? path.win32 : path;
+  const canonical = p => {
+    const resolved = paths.resolve(p);
+    return platform === 'win32' ? resolved.toLowerCase() : resolved;
+  };
+  const target = canonical(project), source = canonical(pluginRoot);
+  const prefix = p => p.endsWith(paths.sep) ? p : p + paths.sep;
+  return target === source || target.startsWith(prefix(source)) || source.startsWith(prefix(target));
+}
 function initialize({ project, pluginRoot, apply = false, force = false, rollback = false, check = false }) {
   project = path.resolve(project); pluginRoot = path.resolve(pluginRoot);
-  if (project === pluginRoot || project.startsWith(pluginRoot + path.sep) || pluginRoot.startsWith(project + path.sep)) throw Error('Choose a project outside the plugin source tree');
+  if (overlaps(project, pluginRoot)) throw Error('Choose a project outside the plugin source tree');
   const surface = JSON.parse(fs.readFileSync(path.join(pluginRoot, 'surface.json'), 'utf8')).surface;
   if (!['claude', 'cli', 'codex'].includes(surface)) throw Error('Unsupported plugin surface');
   if (rollback) return tx.rollback(project, surface);
@@ -54,4 +64,4 @@ if (require.main === module) {
     if (result.drift?.length || result.files?.some(f => f.action === 'collision')) process.exitCode = 2;
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }
-module.exports = { initialize };
+module.exports = { initialize, overlaps };

@@ -11,7 +11,7 @@
 - **Project**: {project_name}
 - **Repository**: {repo_url}
 - **Started**: {date}
-- **ALDC Core**: v1.1
+- **ALDC Core**: v1.2
 
 ## Active Requirements
 

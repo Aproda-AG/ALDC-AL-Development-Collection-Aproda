@@ -205,9 +205,9 @@ Would you like to proceed with implementation?"
 ### AL-Specific Analysis Tools (Codex harness)
 - **Dependency Analysis**: read `app.json` `dependencies` and use **al-symbols-mcp** `al_packages` to understand extension dependencies and platform requirements
 - **Source Exploration**: use **al-symbols-mcp** (`al_get_object_definition`, `al_search_objects`) to examine existing AL implementations and patterns; for full base source, VS Code `AL: Download Source` (human step)
-- **Codebase Understanding**: use the available file reading/search tool/the available file reading/search tool and **al-symbols-mcp** (`al_search_objects`, `al_find_references`) to analyze AL object relationships and patterns
+- **Codebase Understanding**: use Search/Search and **al-symbols-mcp** (`al_search_objects`, `al_find_references`) to analyze AL object relationships and patterns
 - **Problem Detection**: read existing compiler output supplied by implementation to identify architectural issues and anti-patterns
-- **Repository Context**: use `shell: git log` / `git diff` (and the available web research tool for public repos) to understand development history and team patterns
+- **Repository Context**: use `shell: git log` / `git diff` (and web retrieval for public repos) to understand development history and team patterns
 
 ### Architectural Focus Areas
 
@@ -242,7 +242,7 @@ When provided with a requirements document (requisites.md, spec.md, requirements
 ### Step 1: Analyze Requirements
 
 1. **Read the document thoroughly**
-   - Use the available file reading/search tool to access the requirements
+   - Use Read to access the requirements
    - Identify key business objectives
    - List functional and non-functional requirements
    - Note any constraints or dependencies
@@ -256,7 +256,7 @@ When provided with a requirements document (requisites.md, spec.md, requirements
    - **Compliance**: Industry regulations, data protection requirements
 
 3. **Analyze existing codebase**
-   - Use the available file reading/search tool/the available file reading/search tool (and **al-symbols-mcp** `al_search_objects`) to find similar implementations
+   - Use Search/Search (and **al-symbols-mcp** `al_search_objects`) to find similar implementations
    - Use **al-symbols-mcp** `al_find_references` to understand existing patterns
    - Use **al-symbols-mcp** `al_get_object_definition` to examine BC base objects (full source via VS Code `AL: Download Source`, a human step)
    - Identify reusable components and patterns
@@ -264,7 +264,7 @@ When provided with a requirements document (requisites.md, spec.md, requirements
 
 ## Domain Skills
 
-This agent draws on these skills from `.agents/skills/aldc/references/skills/`. They are **not** auto-loaded — **load the `SKILL.md` on demand** (the available file reading/search tool it) when the design enters that domain:
+This agent draws on these skills from `.agents/skills/aldc/references/skills/`. They are **not** auto-loaded — **load the `SKILL.md` on demand** (Read it) when the design enters that domain:
 
 - **skill-api** — When designing API pages, OData endpoints, integration strategy
 - **skill-events** — When designing event-driven architecture, publishers/subscribers
@@ -394,7 +394,7 @@ skill-api, skill-copilot, skill-performance, skill-events, skill-testing
 - **Scope**: Is this for specific industries or general use?
 
 ### 2. Analyze Existing Architecture
-- **Current State**: Use the available file reading/search tool/the available file reading/search tool + **al-symbols-mcp** to understand existing AL structure
+- **Current State**: Use Search/Search + **al-symbols-mcp** to understand existing AL structure
 - **Dependencies**: read `app.json` `dependencies` + **al-symbols-mcp** `al_packages` to map extension dependencies
 - **Patterns**: Identify current architectural patterns in use
 - **Constraints**: Understand platform version and licensing constraints

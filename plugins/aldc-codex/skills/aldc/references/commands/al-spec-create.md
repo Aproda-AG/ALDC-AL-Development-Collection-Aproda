@@ -63,7 +63,7 @@ If it does not exist: proceed — spec will define structure from scratch (typic
 ### 1.3 Analyze codebase
 
 Search for:
-- Existing objects with similar patterns (the available file reading/search tool/the available file reading/search tool; **al-symbols-mcp** `al_search_objects` for symbol-level)
+- Existing objects with similar patterns (Search/Search; **al-symbols-mcp** `al_search_objects` for symbol-level)
 - Naming conventions in `/src`
 - Available object ID ranges in `app.json`
 - Existing event publishers relevant to this feature
@@ -76,7 +76,7 @@ Search for:
 This spec is the blueprint `al-conductor` and `al-developer` implement from — it must be a **reliable guide**, not proposed from memory. Ground it without bloating this (cheap) primitive:
 
 - **Instructions (always) — reference, don't recite.** The hard micro-rules under `rules-templates/` / the project's `.agents/skills/aldc/references/rules/al-*` (naming ≤26 PascalCase, `DataClassification` on every field, extension-only, the performance/error-handling safety-net) govern every object you propose. They are tiny — honor them, and cite the governing one where a section depends on it.
-- **Skills (on demand — one per domain the spec actually designs).** the available file reading/search tool the `SKILL.md` for a domain **only when the spec covers it**: §5 events → `skill-events`; §6 pages → `skill-pages`; §8 permissions → `skill-permissions`; §9 API → `skill-api`; AI/Copilot → `skill-copilot`; performance-critical logic → `skill-performance`; §7 tests → `skill-testing`. Do **not** load skills for domains the spec doesn't touch; for **LOW** complexity keep it minimal.
+- **Skills (on demand — one per domain the spec actually designs).** Read the `SKILL.md` for a domain **only when the spec covers it**: §5 events → `skill-events`; §6 pages → `skill-pages`; §8 permissions → `skill-permissions`; §9 API → `skill-api`; AI/Copilot → `skill-copilot`; performance-critical logic → `skill-performance`; §7 tests → `skill-testing`. Do **not** load skills for domains the spec doesn't touch; for **LOW** complexity keep it minimal.
 
 This keeps the median cost low (most specs touch 1–2 domains) while making the spec a framework-grounded guide instead of a from-memory proposal.
 

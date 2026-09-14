@@ -256,7 +256,7 @@ end;
 - You **MUST NOT** modify base objects — extension-only
 - You **MUST** follow the spec and architecture documents provided by the Conductor
 - You **MUST** report back: objects created, **event subscribers (exact base object + event name + signature)**, tests created, test results, build status, any issues
-- **Don't re-read a file already in context.** If you already read a spec/architecture excerpt, a source file, or a skill this invocation, reuse it — do not issue another the available file reading/search tool for the same path.
+- **Don't re-read a file already in context.** If you already read a spec/architecture excerpt, a source file, or a skill this invocation, reuse it — do not issue another Read for the same path.
 - **Resolve base-app symbols from symbols — and if you can't, ask; don't hunt.** Resolve event signatures and base-object members via **al-symbols-mcp** (`al_search_object_members`, `al_get_object_definition`) against the symbol packages (authoritative for symbol facts). If a symbol or event the spec names **cannot be resolved** (e.g. the event does not exist in this BC version), **stop and surface it as a blocker / end-of-phase open question** in your return to the Conductor — don't burn turns guessing it via web searches, and never invent a signature.
 
 </boundary_rules>
@@ -274,7 +274,7 @@ These skills live in `.agents/skills/aldc/references/skills/`. They are **not** 
 - **skill-copilot** — When implementing Copilot/AI features
 - **skill-testing** — When designing tests, Given/When/Then patterns
 
-**Load = read the `SKILL.md` (with the available file reading/search tool).** Naming a skill without reading it is not loading it.
+**Load = read the `SKILL.md` (with Read).** Naming a skill without reading it is not loading it.
 
 </domain_skills>
 
@@ -430,7 +430,7 @@ search. Omit the section if no subscribers were added this phase.)*
 ## Tool Boundaries
 
 **CAN:**
-- Read files, search codebase (the available file reading/search tool/the available file reading/search tool), analyze code
+- Read files, search codebase (Search/Search), analyze code
 - Query AL symbols, definitions, and references via **al-symbols-mcp**
 - Create AL files (production and test)
 - Edit existing AL files
