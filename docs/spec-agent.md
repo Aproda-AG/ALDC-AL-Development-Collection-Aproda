@@ -25,6 +25,7 @@ preserved; material revisions require approval of the changed contract.
 | Lab `b2ce9d9f137fc92574261317294ca2d585beb74b`, `.github/agents/al-spec-agent.agent.md` | Adapt responsibility, depth, claim boundaries, selective instruction/skill loading and approval into `agents/al-spec-agent.agent.md` |
 | Root Spec Agent + `prompts/al-spec.create.prompt.md` | `sync-plugin-support.js` generates the Claude role/entrypoint; only host metadata, terminal guidance and paths differ |
 | Existing Claude projection | Existing CLI and Codex generators produce terminal roles and commands; Codex inherits host model/permissions |
+| Claude role → `.claude/` workspace | Existing mirror generator adjusts Spec rule/template links to `.claude/rules/` and root `docs/templates/`; no contract rewrite |
 | Root sources + `docs/templates/` | Foundation staging now includes the templates referenced by its roles; external VSIX rebuild remains a separate task |
 | Root `docs/templates/spec-template.md` | Installed Chat and all terminal payloads receive the same contract scaffold |
 
@@ -52,6 +53,18 @@ No usable VS Code, Claude, Copilot CLI or Codex host was available for a real
 invocation in this workspace. AL compilation and BC runtime were not executed.
 Do not interpret readable files or static checks as instructions actually loaded
 by a model, an approved spec or verified functional behavior.
+
+## VS Code prompt compatibility boundary
+
+The [current VS Code prompt-file documentation](https://code.visualstudio.com/docs/agent-customization/prompt-files)
+confirms custom agent names in the `agent` field and relative Markdown file links.
+It also distinguishes the Local agent, which still loads prompt files, from
+Agent Host sessions, which do not load them. The Chat entrypoint in this delivery
+is for the existing Local prompt surface. A real Agent Host check must use direct
+role discovery or an explicitly scoped prompt-to-skill adaptation; no compatibility
+with that session type is inferred from the Local prompt. Record the session type
+and VS Code version in the acceptance run. No model override is set on the new
+entrypoint; actual host model selection is part of the run record.
 
 ## Bounded host acceptance still to execute
 

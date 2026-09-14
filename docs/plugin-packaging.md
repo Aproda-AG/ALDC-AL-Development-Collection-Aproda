@@ -71,7 +71,7 @@ was introduced.
 | Chat | BC28/BC29 fixtures, force switching, custom target, receipts/recovery | VS Code discovery, full role loading and operation-specific AL capability |
 | Claude | 11 canonical roles/10 commands; safe rules initialization; read-only SessionStart context for AL workspaces | Plugin reload, hook output injection, rules and full Conductor loading |
 | Copilot CLI | 11 canonical roles/10 commands; same generator plus hashes and initializer; no Claude hooks | Reinstall cached plugin, inspect `/agent` and skills, verify provenance and no shadowing |
-| Codex | 10 TOML profiles, one ALDC skill with full role/workflow/domain references; managed guidance and bootstrap | Restart host, inspect skills and instruction sources, invoke a bounded role and verify full body loading |
+| Codex | 11 TOML profiles, one ALDC skill with full role/workflow/domain references; managed guidance and bootstrap | Restart host, inspect skills and instruction sources, invoke a bounded role and verify full body loading |
 
 Use either Codex plugin skill discovery or local bootstrap, never both in the same
 project. Plugin discovery alone does not install project TOML profiles. Domain

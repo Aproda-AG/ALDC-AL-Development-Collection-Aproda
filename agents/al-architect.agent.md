@@ -68,7 +68,7 @@ Workflow: al-architect (DESIGN) → al-spec.create (DETAIL) → @al-conductor (I
 2. @workspace use al-spec.create (DETAIL)
    └─> Read architecture.md → create {req_name}.spec.md
 
-3. @al-conductor (IMPLEMENT)
+3. After human approval of the current spec: @al-conductor (IMPLEMENT)
    ├─> al-planning-subagent: Gather AL context
    ├─> al-implement-subagent: TDD cycle per phase
    └─> al-review-subagent: Quality gates
@@ -99,7 +99,7 @@ Workflow: al-architect (DESIGN) → al-spec.create (DETAIL) → @al-conductor (I
 4. **POPULATE** with the approved architectural design
 5. **APPEND** decision summary to `.github/plans/memory.md` (never delete existing content)
 6. **CONFIRM** creation: "✅ Created `.github/plans/{req_name}/{req_name}.architecture.md`"
-7. **SUGGEST** next step (@al-conductor or @workspace use al-spec.create)
+7. **SUGGEST** al-spec.create / AL Spec Agent next. Conductor is next only when the current spec already has human approval.
 
 **If user hasn't approved yet**: present design, ask "Does this architecture meet your requirements?", wait for confirmation, THEN execute above.
 
@@ -173,7 +173,7 @@ Cover all relevant areas based on complexity:
 
    **Decomposed (multiple specs)**: invoke al-spec.create per sub-spec in defined order.
 
-   **Then implement**:
+   **After human approval of the current spec, implement**:
    ```
    @al-conductor
    Implement {req_name}. Contracts in .github/plans/{req_name}/
@@ -248,8 +248,8 @@ The `> **Skills applied**:` line at the top of the architecture document is **ma
 4. ✅ Answering questions — provide architectural guidance
 
 ### Escalate/Handoff When:
-1. ➡️ Architecture approved → handoff to **@al-conductor** for TDD implementation
-2. ➡️ Simple implementation → handoff to **@al-developer** for direct coding
+1. ➡️ Architecture approved → handoff to **AL Spec Agent** via al-spec.create; Conductor follows only after human approval of the current spec
+2. ➡️ Simple implementation → **@al-developer** only with a current human-approved LOW spec; otherwise Spec Agent first
 3. ➡️ API design needed → load `skill-api`
 4. ➡️ AI/Copilot design → load `skill-copilot`
 5. ➡️ Test strategy → load `skill-testing`
@@ -374,7 +374,7 @@ Execute the sequence in **§🚨 Critical: Automatic Architecture Document Creat
 6. al-architect APPENDS → memory.md (append-only)
 7. Handoff to al-spec.create (single spec or per sub-spec if decomposed)
 8. al-spec.create reads architecture.md → creates {req_name}.spec.md
-9. @al-conductor reads spec + architecture → TDD implementation
+9. After human approval of the current spec, @al-conductor reads spec + architecture → TDD implementation
 ```
 
 This documentation system ensures **continuity across sessions** and **alignment across agents**.

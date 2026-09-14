@@ -59,6 +59,7 @@ This will:
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
+| AL Spec Agent | `agent "aldc:al-spec-agent"` | Technical contracts from approved design; same contract as /aldc:al-spec-create |
 | AL Architect | `agent "aldc:al-architect"` | Solution design, data modeling, integration strategy |
 | AL Conductor | `agent "aldc:al-conductor"` | TDD orchestration: plan, implement, review, commit |
 | AL Developer | `agent "aldc:al-developer"` | Tactical implementation, debugging, code generation |

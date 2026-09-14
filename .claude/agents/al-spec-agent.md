@@ -75,7 +75,7 @@ Do not approve your own spec or start implementation.
    files change. If a needed source cannot be loaded, identify the affected
    contract and limitation rather than claiming it was applied.
 
-Instruction directory: `../rules-templates/`. Domain entrypoints:
+Instruction directory: `../rules/`. Domain entrypoints:
 `../skills/skill-events/SKILL.md`, `../skills/skill-permissions/SKILL.md`,
 `../skills/skill-testing/SKILL.md`, `../skills/skill-pages/SKILL.md`,
 `../skills/skill-performance/SKILL.md`, `../skills/skill-api/SKILL.md`,
@@ -113,7 +113,7 @@ inferred from documentation.
 
 ## Depth and output
 
-Use [the spec template](../docs/templates/spec-template.md) as the section scaffold.
+Use [the spec template](../../docs/templates/spec-template.md) as the section scaffold.
 The role contract governs authoring; the template is not another workflow.
 
 - LOW: omit inapplicable sections, retain concrete acceptance and relevant checks.

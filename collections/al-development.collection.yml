@@ -1,8 +1,8 @@
 id: al-development
 name: AL Development Collection for GitHub Copilot
 description: |
-  ALDC Core v1.1 — Skills-based modularization with preserved orchestration for Business Central AL development.
-  4 public agents + 3 internal subagents + 11 composable skills + 6 workflows + 9 auto-applied instructions.
+  ALDC Core v1.2 — Skills-based modularization with preserved orchestration for Business Central AL development.
+  5 core public agents + 2 on-demand agents + 3 internal subagents + 1 extension agent; 16 skills, 11 workflows and 9 instructions.
   Spec-first, architecture-driven, TDD-orchestrated development with human-in-the-loop gates.
 tags: [al, business-central, dynamics365, erp, microsoft, aldc, tdd, skills, orchestration, copilot]
 
@@ -25,7 +25,8 @@ items:
   - path: instructions/copilot-instructions.md
     kind: instruction
     description: |
-      Master integration document for GitHub Copilot. Routes to 4 public agents based on task:
+      Master integration document for GitHub Copilot. Routes to 5 core public agents based on task:
+      - Technical specification of approved designs? → @AL Spec Agent via al-spec.create
       - Designing/architecture? → @AL Architecture & Design Specialist
       - Implementing/coding/debugging? → @AL Implementation Specialist
       - TDD orchestrated feature (MEDIUM/HIGH)? → @AL Development Conductor
@@ -85,7 +86,7 @@ items:
     kind: instruction
     description: Project estimation, PERT, SWOT analysis, effort scoping
 
-  # ─── Public Agents (4 — user-invocable) ───────────────────────────────────
+  # ─── Public Agents (5 — user-invocable) ───────────────────────────────────
   - path: agents/al-architect.agent.md
     kind: agent
     usage: recommended

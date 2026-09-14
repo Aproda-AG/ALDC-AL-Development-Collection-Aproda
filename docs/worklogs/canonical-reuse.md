@@ -257,7 +257,8 @@ head inicial no se presenta como aprobación automática del head corregido.
 ## Handoff 02 — entrega 3: Spec Agent canónico
 
 Base main `29fb7b989df050ed356f5847c53e06fe14d4fb56` (#101), limpio y sin PR
-abiertas al comenzar. Rama única `feat/canonical-spec-agent`.
+abiertas al comenzar. Rama única `feat/canonical-spec-agent`,
+[PR #102](https://github.com/javiarmesto/ALDC-AL-Development-Collection/pull/102).
 
 - `agents/al-spec-agent.agent.md` es el contrato de comportamiento único; el prompt
   al-spec.create selecciona ese rol y remite a él. Spec conserva arquitectura y
@@ -282,7 +283,7 @@ Donante leído: Lab `b2ce9d9f137fc92574261317294ca2d585beb74b`,
 `.github/agents/al-spec-agent.agent.md`. Transformaciones y ensayo pendiente en
 [spec-agent.md](../spec-agent.md). El Lab permanece de consulta.
 
-Comprobaciones: 68 de integración/rutas/permisos, 20 fixtures Doctor, 222 de perfil,
+Comprobaciones: 78 de integración/rutas/permisos, 20 fixtures Doctor, 222 de perfil,
 237 de CLI, 15 de recuperación, 58 de conformance, 86 archivos Foundation y 43
 Claude sincronizados; once perfiles TOML y validador del skill Codex correctos.
 El paquete npm se valida extraído con sus propios contenidos. Son comprobaciones
@@ -297,3 +298,25 @@ los cuatro hosts y un entorno AL/BC de ensayo en este workspace. No se ejecutó 
 Windows real y regenerar el VSIX externo con los roles/plantillas actualizados.
 La entrega 4 solo procede si ese ensayo demuestra fricción; no se abre preventivamente.
 Sin releases, publicaciones de paquetes/Marketplace ni despliegue Business Central.
+
+Comprobación de contrato con documentación VS Code actual: el campo agent admite
+el nombre de un custom agent y los enlaces relativos se resuelven desde el prompt.
+La superficie Local todavía carga prompts; las sesiones Agent Host no los cargan.
+Se documenta ese límite concreto para el ensayo y la futura adaptación por host;
+no se anuncia compatibilidad Agent Host por la existencia del prompt. Codex recibe
+el argumento de la petición actual, sin depender del marcador Claude $ARGUMENTS.
+
+Comprobación de la copia de trabajo Claude: el espejo de Spec adapta las rutas
+relativas a .claude/rules y a docs/templates de la raíz; se comprueban además
+esas referencias, sin mantener otro contrato. Se actualizan el índice y los
+contadores actuales para incluir el nuevo rol; las notas históricas se conservan.
+
+Revisión remota #102: Copilot revisa 71/71 archivos del head inicial y devuelve
+COMMENTED con recomendaciones. Se corrigen las rutas antiguas de Architect que
+permitían saltar de aprobación de arquitectura a implementación: Spec es el
+siguiente paso; Conductor/Developer reciben solo la especificación vigente aprobada.
+Se alinean inventarios y tablas actuales en Core Spec, entrada Copilot instalada y
+fuente, colección, CLAUDE.md, README y plugin/tabla Codex. Las notas históricas de
+4.2.0 quedan explícitamente históricas y remiten al incremento actual.
+Se atienden los cuatro hilos y los cinco comentarios suprimidos en fuentes y
+copias; la revisión inicial no se presenta como aprobación del head corregido.

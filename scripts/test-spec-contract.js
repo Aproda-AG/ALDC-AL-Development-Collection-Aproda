@@ -13,7 +13,7 @@ function check(value, label) { assert.ok(value, label); checks++; }
 const agent = split(read('agents/al-spec-agent.agent.md'));
 const prompt = split(read('prompts/al-spec.create.prompt.md'));
 check(prompt.data.agent === agent.data.name, 'Chat prompt selects registered role name');
-check(!prompt.data.model, 'Prompt inherits the selected role model');
+check(!prompt.data.model, 'Prompt does not override host model selection');
 for (const handoff of agent.data.handoffs) {
   check(handoff.send === false, 'Forward handoff is not automatically submitted');
 }
@@ -36,6 +36,9 @@ for (const [entry, role] of surfaces) {
   const entryBody = entry.includes('aldc-codex') ? read(entry) : split(read(entry)).body;
   const links = [...entryBody.matchAll(/\]\(([^)]+)\)/g)].map(m => path.posix.normalize(path.posix.join(path.posix.dirname(entry), m[1])));
   check(links.includes(role), `${entry} resolves the single role contract`);
+  checkReferences(role);
+}
+function checkReferences(role) {
   const body = role.includes('aldc-codex') ? read(role) : split(read(role)).body;
   const refs = [...body.matchAll(/\]\((\.\.\/[^)]+\.md)\)|`(\.\.\/[^`]+\.md)`/g)].map(m => m[1] || m[2]);
   check(refs.length >= 8, `${role} explicitly routes template and domain guides`);
@@ -43,6 +46,7 @@ for (const [entry, role] of surfaces) {
     check(fs.existsSync(path.resolve(root, path.dirname(role), ref)), `${role}: bundled governing reference ${ref}`);
   }
 }
+if (fs.existsSync(path.join(root, '.claude/agents/al-spec-agent.md'))) checkReferences('.claude/agents/al-spec-agent.md');
 for (const rel of ['claude-plugin/agents/al-spec-agent.md', 'copilot-cli-plugin/agents/al-spec-agent.agent.md']) {
   const tools = split(read(rel)).data.tools;
   check(!/\b(?:Bash|Task|execute|agent)\b/.test(Array.isArray(tools) ? tools.join(',') : tools), `${rel}: no delegated execution grant`);

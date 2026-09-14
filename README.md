@@ -35,7 +35,7 @@ AI accelerates AL development — but raw code generation is unpredictable, hard
 
 | Without ALDC | With ALDC |
 | --- | --- |
-| Ad-hoc, one-shot code generation | **Contract-driven** development (spec → architecture → test-plan → code) |
+| Ad-hoc, one-shot code generation | **Contract-driven** development (architecture → spec → human approval → test-plan → code) |
 | No checkpoints — you find out at the end | **Human-in-the-loop gates** at every phase |
 | Tests written last (or never) | **TDD-orchestrated** — tests FIRST, then code |
 | Base-app edits sneak in | **Extension-only** by construction |
@@ -127,11 +127,12 @@ See [QUICKSTART.md](docs/framework/QUICKSTART.md) for the full onboarding guide.
 
 ## Key Features
 
-### 🤖 4 Public Agents — one specialist per development phase
+### 🤖 5 Public Agents — one specialist per development phase
 
 | Agent | Role |
 | --- | --- |
 | `@AL Architecture & Design Specialist` | Designs solutions, information flows, technical decisions |
+| `@AL Spec Agent` | Specifies approved designs through the shared `al-spec.create` contract |
 | `@AL Implementation Specialist` | Implements, debugs, quick adjustments |
 | `@AL Development Conductor` | Orchestrates TDD implementation with subagents |
 | `@AL Pre-Sales & Project Estimation Specialist` | Estimation and scoping |
@@ -327,7 +328,7 @@ ALDC is available as a native **Claude Code** integration in two forms:
 
 | Primitive | Direct (`.claude/`) | Plugin (`aldc:`) | Count |
 | --------- | ------------------- | ---------------- | ----- |
-| Agents | `.claude/agents/` | `agents/` | 7 public + 3 internal |
+| Agents | `.claude/agents/` | `agents/` | 8 public + 3 internal |
 | Skills | `.claude/skills/` | `skills/` | 16 composable knowledge modules |
 | Rules | `.claude/rules/` | `rules-templates/` (injected via `al-initialize`) | 8 coding standards |
 | MCP Servers | `.mcp.json` | `.mcp.json` | 3 servers |
@@ -351,6 +352,7 @@ prompts/*.prompt.md         →  .claude/skills/ (workflows)  →  skills/ (work
 | Agent | Direct | Plugin |
 | ----- | ------ | ------ |
 | Architecture & Design | `@al-architect` | `@aldc:al-architect` |
+| Technical Specification | `@al-spec-agent` | `@aldc:al-spec-agent` |
 | Implementation | `@al-developer` | `@aldc:al-developer` |
 | TDD Orchestration | `@al-conductor` | `@aldc:al-conductor` |
 | Estimation & Scoping | `@al-presales` | `@aldc:al-presales` |
@@ -439,7 +441,7 @@ AL-Development-Collection-for-GitHub-Copilot/
 │           ├── {req_name}.architecture.md
 │           ├── {req_name}.spec.md
 │           └── {req_name}.test-plan.md
-├── agents/                               # 10 agents (4 core + 2 on-demand + 3 subagents + 1 extension)
+├── agents/                               # 11 agents (5 core + 2 on-demand + 3 subagents + 1 extension)
 ├── skills/                               # 11 composable skills
 ├── prompts/                              # 6 retained workflows
 ├── instructions/                         # 9 auto-applied coding standards
@@ -448,7 +450,7 @@ AL-Development-Collection-for-GitHub-Copilot/
 ├── CLAUDE.md                             # Master instructions
 ├── .mcp.json                             # MCP server configuration
 ├── .claude/
-│   ├── agents/                           # 10 agents (7 public + 3 internal)
+│   ├── agents/                           # 11 agents (8 public + 3 internal)
 │   ├── skills/                           # 16 skills (composable knowledge modules)
 │   ├── rules/                            # 8 path-scoped coding standards
 │   └── settings.json                     # Hooks + permissions
@@ -456,7 +458,7 @@ AL-Development-Collection-for-GitHub-Copilot/
 │── Claude Code Plugin ─────────────────────────────────
 ├── claude-plugin/
 │   ├── .claude-plugin/plugin.json        # Plugin manifest
-│   ├── agents/                           # 10 agents (auto-discovered)
+│   ├── agents/                           # 11 agents (auto-discovered)
 │   ├── skills/                           # 16 skills (auto-discovered)
 │   ├── hooks/hooks.json                  # PostToolUse + Stop hooks
 │   ├── rules-templates/                  # 8 rules (injected via al-initialize)
@@ -516,7 +518,7 @@ AL-Development-Collection-for-GitHub-Copilot/
 
 The framework now enforces its own spec in CI.
 
-- **Core Spec v1.2** — normalizes the real tier model: 4 core agents + 2 on-demand (`al-triage`, `dredd`) + 3 subagents + 1 extension (`al-agent-builder`); 16 skills; 11 workflows. Everything that ships is declared.
+- **Core Spec v1.2 (original 4.2.0 release)** — originally normalized the tier model to 4 core agents + 2 on-demand (`al-triage`, `dredd`) + 3 subagents + 1 extension (`al-agent-builder`); 16 skills; 11 workflows. The subsequent canonical Spec Agent increment adds a fifth core role (11 total); the current inventory above includes it.
 - **Conformance tooling** — `scripts/check-conformance.js` (counters, cross-references, links, frontmatter) and `scripts/sync-foundation.js --check` (zero drift between the canonical trees and `packages/foundation/`) run on every push and PR.
 - **`ARCHITECTURE.md`** — one-page map of what is source, what is generated, and which distribution channel consumes each tree.
 - Fixed: truncated `skill-manifest` in `packages/foundation/`, broken README links, undeclared primitives in `aldc.yaml`, contradictory counters.

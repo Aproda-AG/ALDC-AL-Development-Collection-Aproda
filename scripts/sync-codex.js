@@ -52,6 +52,7 @@ function expected(root = ROOT) {
   for (const p of walk(root,'claude-plugin/commands')) {
     const src = split(read(p)), name = path.basename(p,'.md');
     let body = bodyFor(src.body);
+    if (name === 'al-spec-create') body = body.replace('with the requirement, complexity and scope in `$ARGUMENTS`', 'with the requirement, complexity and scope supplied in the current request');
     if (name === 'al-initialize') {
       const a=body.indexOf('## Phase 0:'), b=body.indexOf('## Phase 1:');
       if (a < 0 || b < a) throw Error('Initialization structure changed');

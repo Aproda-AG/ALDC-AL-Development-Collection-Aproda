@@ -18,6 +18,7 @@ Architecture: **ALDC Core v1.2** — 11 agents (5 core + 2 on-demand + 3 subagen
 
 | Intent | Agent | What it does |
 |--------|-------|-------------|
+| Specification from approved design | delegate to agent `al-spec-agent` | Technical contracts and human approval before implementation |
 | Design, architecture, strategy | delegate to agent `al-architect` | Solution design, data modeling, integration strategy |
 | Implement, code, debug, fix | delegate to agent `al-developer` | Tactical implementation with full AL MCP tools |
 | TDD orchestration (plan -> implement -> review -> commit) | delegate to agent `al-conductor` | Orchestrates planning, implementation, and review subagents |
@@ -144,7 +145,7 @@ No npm/yarn build steps. AL compilation is handled by the AL Language VS Code ex
 
 ```
 instructions/          # Auto-applied instruction files (9)
-agents/                # Agent definitions (4 core + 2 on-demand + 3 subagents + 1 extension)
+agents/                # Agent definitions (5 core + 2 on-demand + 3 subagents + 1 extension)
 skills/                # Composable knowledge modules (16 skill directories)
 prompts/               # Workflow definitions (11 prompt files)
 docs/framework/        # Normative spec (ALDC-Core-Spec-v1.2.md)
