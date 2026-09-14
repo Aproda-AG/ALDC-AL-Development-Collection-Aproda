@@ -14,7 +14,7 @@ import re
 import sys
 from pathlib import Path
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 OPERATIONS = ("specify", "compile-app", "compile-test", "execute-tests")
 STAGES = ("discovered", "loaded", "executed", "verified")
 IGNORED = {"node_modules", "bin", "obj", "build", "dist", "out", "output", "temp", "tmp", "__pycache__"}
@@ -125,10 +125,17 @@ def inspect_layout(root, host):
     candidates = []
     for paths in layouts[host]:
         present = [str(root / p) for p in paths if (root / p).is_file() and (root / p).stat().st_size > 0]
-        candidates.append((len(present), present, [str(root / p) for p in paths if str(root / p) not in present], str((root / paths[0]).parent.parent)))
-    count, present, missing, directory = max(candidates, key=lambda c: c[0])
-    return {"configured": count == 2, "paths": present, "missing": missing, "directory": directory,
-            "loaded": None, "note": "File presence only; existing specification workflow is sufficient. Spec Agent is optional."}
+        candidates.append((len(present), present, [str(root / p) for p in paths if str(root / p) not in present], str((root / paths[0]).parent.parent), paths))
+    count, present, missing, directory, selected = max(candidates, key=lambda c: c[0])
+    spec_path = root / selected[0].replace("al-architect", "al-spec-agent")
+    workflow = root / selected[1]
+    required = workflow.is_file() and bool(re.search(r"\]\(\.\./agents/al-spec-agent(?:\.agent)?\.md\)", workflow.read_text(encoding="utf-8-sig")))
+    available = spec_path.is_file() and spec_path.stat().st_size > 0
+    if required and not available:
+        missing.append(str(spec_path))
+    return {"configured": count == 2 and (not required or available), "paths": present, "missing": missing, "directory": directory,
+            "spec_agent": {"path": str(spec_path), "required_by_workflow": required, "configured": available, "loaded": None},
+            "loaded": None, "note": "File presence only. Legacy workflows do not require Spec Agent; a workflow linking to it requires that role file. Loading remains unobserved."}
 
 
 def runtime_observations(path, root, host, projects, selected):

@@ -102,6 +102,15 @@ items:
       - CAN: Design solutions, create architecture docs, decompose requirements
       - CANNOT: Execute builds, deploy code (delegates to @AL Implementation Specialist or @AL Development Conductor)
 
+  - path: agents/al-spec-agent.agent.md
+    kind: agent
+    usage: recommended
+    description: |
+      Specification owner — canonical contract shared with al-spec.create.
+      Preserves approved architecture; defines objects, data, procedures, events
+      and acceptance without AL implementation. Human approval precedes the
+      Conductor (MEDIUM/HIGH) or Developer (LOW) handoff.
+
   - path: agents/al-developer.agent.md
     kind: agent
     usage: recommended

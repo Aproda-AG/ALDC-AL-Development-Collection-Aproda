@@ -10,7 +10,7 @@ references/skills/ (GUIDE.md) on demand. These domain references are not duplica
 discoverable skills. Recover approved work from .github/plans/ and memory.md.
 
 For MEDIUM/HIGH work, preserve architecture → specification → Conductor order.
-The specification workflow remains al-spec-create; no Spec Agent is added here.
+The al-spec-create workflow loads the same al-spec-agent contract as direct role invocation.
 Human material gates and current session authorization govern actions. Plugin
 installation alone does not authorize compilation, publishing or deployment.
 
@@ -29,6 +29,7 @@ or claim independent review from a sequential role change.
 - [al-planning-subagent](references/agents/al-planning-subagent.md): Internal AL-aware research and context gathering subagent for Business Central development. Only invoked by al-conductor via subagent delegation tool. Returns structured findings to Conductor for plan creation.
 - [al-presales](references/agents/al-presales.md): Technical PreSales Agent for AL/Business Central projects. Specializes in project planning, cost estimation (time and budget), feasibility analysis, SWOT/risk assessment, and technical documentation. Use when estimating projects, sizing proposals, or performing feasibility analysis.
 - [al-review-subagent](references/agents/al-review-subagent.md): Internal quality assurance subagent for Business Central AL code. Only invoked by al-conductor via subagent delegation tool. Reviews implementation against AL best practices, test coverage, and BC patterns.
+- [al-spec-agent](references/agents/al-spec-agent.md): Turn an approved Business Central requirement and architecture into one implementable AL specification. Own technical contracts and acceptance criteria without writing AL implementation or changing architecture.
 - [al-triage](references/agents/al-triage.md): Reactive diagnosis specialist for EXISTING Business Central AL code — reproduce, localize, root-cause, and recommend a minimal fix for bugs, regressions, and incidents. Read-only on code: produces a diagnosis and hands the fix to al-developer. The dynamic counterpart to dredd (static audit). Use when you start from a symptom ("this throws", "this is slow", "broke after the last change").
 - [dredd](references/agents/dredd.md): Independent, on-demand AL codebase auditor for Business Central. Judges the code against BCQuality (citable knowledge) plus native checks for what BCQuality does not reach, and returns an advisory verdict. Read-only on code. Default scope: objects changed vs main; full codebase on request. The static counterpart to al-triage (dynamic diagnosis). Use for an on-demand, independent quality audit.
 
@@ -43,4 +44,4 @@ or claim independent review from a sequential role change.
 - [al-initialize](references/commands/al-initialize.md): Initialize AL development environment and workspace for Business Central. Use when setting up a new project, initializing the workspace, or configuring the development environment.
 - [al-memory-create](references/commands/al-memory-create.md): Generate or update memory.md file tracking decisions, changes, and learnings throughout project development for continuity across sessions. Use when you need to create or update memory, track decisions, or maintain session continuity.
 - [al-pr-prepare](references/commands/al-pr-prepare.md): Prepare a clean, documented pull request draft for AL features or fixes with summary, testing notes, and checklist. Use when preparing a PR, creating a pull request, or documenting changes for review.
-- [al-spec-create](references/commands/al-spec-create.md): Create a detailed technical specification (.spec.md) that serves as an implementable blueprint for Business Central features. Use when you need to create a spec, write a specification, or detail a requirement. Reads architecture.md if exists. Outputs to .github/plans/{req_name}/.
+- [al-spec-create](references/commands/al-spec-create.md): Create or revise the canonical AL technical specification through AL Spec Agent, preserving approved architecture and human approval.

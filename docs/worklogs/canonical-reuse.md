@@ -252,3 +252,48 @@ También se corrige MCP opcional para no bloquear una alternativa nativa suficie
 y se ajustan acciones para no repetir descubrimiento o ejecución ya observados.
 Fuentes y derivados se validan juntos antes de resolver el hilo. La revisión del
 head inicial no se presenta como aprobación automática del head corregido.
+
+
+## Handoff 02 — entrega 3: Spec Agent canónico
+
+Base main `29fb7b989df050ed356f5847c53e06fe14d4fb56` (#101), limpio y sin PR
+abiertas al comenzar. Rama única `feat/canonical-spec-agent`.
+
+- `agents/al-spec-agent.agent.md` es el contrato de comportamiento único; el prompt
+  al-spec.create selecciona ese rol y remite a él. Spec conserva arquitectura y
+  alcance aprobados; investiga contratos ordinarios y devuelve solo contradicciones
+  materiales. MEDIUM completo en contratos, sin cuerpos AL; HIGH profundiza por
+  riesgo concreto. Firma conocida, comportamiento observado y prueba pendiente
+  permanecen separados. Aprobación humana antes de Conductor/Developer.
+- Instrucciones y skills aplicables se leen selectivamente y sus rutas se conservan
+  en el mismo .spec.md para reanudar. No se introducen pares JSON, DAG, fingerprints,
+  revisión BCQuality pre-código ni edición AL. Sin terminal/rename en el rol nuevo;
+  modelos canónicos preservados. Architect incorpora el handoff a Spec sin cambiar
+  sus responsabilidades; Conductor se conserva.
+- Fuente raíz → Foundation y, para este rol/entrada, proyección Claude en el
+  generador de soporte existente → CLI/Codex. Se elimina la implementación AL
+  anticipada del prompt y de la plantilla, y se regeneran todos sus derivados.
+  Foundation incluye ahora las plantillas referenciadas. CLI resuelve .agent.md;
+  Codex registra once perfiles y mantiene un único skill descubrible.
+- Doctor 1.1 distingue instalaciones anteriores válidas de un workflow nuevo al
+  que le falte el Spec Agent enlazado; presencia y carga siguen separadas.
+
+Donante leído: Lab `b2ce9d9f137fc92574261317294ca2d585beb74b`,
+`.github/agents/al-spec-agent.agent.md`. Transformaciones y ensayo pendiente en
+[spec-agent.md](../spec-agent.md). El Lab permanece de consulta.
+
+Comprobaciones: 68 de integración/rutas/permisos, 20 fixtures Doctor, 222 de perfil,
+237 de CLI, 15 de recuperación, 58 de conformance, 86 archivos Foundation y 43
+Claude sincronizados; once perfiles TOML y validador del skill Codex correctos.
+El paquete npm se valida extraído con sus propios contenidos. Son comprobaciones
+estáticas/de instalación; no se presenta una simulación como conducta observada.
+Revisión remota y CI del head se consultan antes de fusionar.
+
+**Pendiente concreto:** ejecutar en hosts reales el caso acotado de dos unidades
+secuenciales, por prompt y por agente, observar carga de reglas/skills y aprobación,
+introducir una corrección material y reanudar. Faltan ejecutables utilizables de
+los cuatro hosts y un entorno AL/BC de ensayo en este workspace. No se ejecutó AL.
+**Delta de empaquetado:** comprobar carga/recarga completa sin duplicados, recuperación
+Windows real y regenerar el VSIX externo con los roles/plantillas actualizados.
+La entrega 4 solo procede si ese ensayo demuestra fricción; no se abre preventivamente.
+Sin releases, publicaciones de paquetes/Marketplace ni despliegue Business Central.

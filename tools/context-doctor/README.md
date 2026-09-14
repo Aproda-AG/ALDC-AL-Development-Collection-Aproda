@@ -41,7 +41,10 @@ manifest/discovery validation, not the AL compiler's full manifest schema.
 
 The four operations are `specify`, `compile-app`, `compile-test`, `execute-tests`.
 Specification uses the existing Architect and specification workflow; it does
-not require a future Spec Agent or an App manifest before project creation.
+not require Spec Agent in legacy installations or an App manifest before project
+creation. New entrypoints link to the Spec Agent contract: Doctor reports its
+presence separately and diagnoses a missing linked role as an incomplete update.
+Presence does not prove host loading.
 Missing Test projects are not applicable, with an action to configure their
 folders if they exist elsewhere. Invalid App/Test manifests affect their own
 compilation and any specification based on them. Invalid AL-Go discovery blocks

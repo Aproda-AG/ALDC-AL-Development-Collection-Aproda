@@ -44,6 +44,17 @@ class DoctorTest(unittest.TestCase):
     def cli(self, *args, script=SCRIPT):
         return subprocess.run([sys.executable, "-B", str(script), "--workspace", str(self.root), "--json", *args], capture_output=True, text=True)
 
+    def test_new_workflow_requires_linked_role_while_legacy_remains_valid(self):
+        self.app()
+        self.assertFalse(self.report()['layout']['spec_agent']['required_by_workflow'])
+        self.put('.github/prompts/al-spec.create.prompt.md', '[the canonical specification contract](../agents/al-spec-agent.agent.md)')
+        self.assertEqual(self.report()['operations']['specify']['status'], 'configuration-blocked')
+        self.put('.github/agents/al-spec-agent.agent.md', 'Spec contract')
+        report = self.report()
+        self.assertTrue(report['layout']['spec_agent']['configured'])
+        self.assertIsNone(report['layout']['spec_agent']['loaded'])
+        self.assertEqual(report['operations']['specify']['status'], 'unobserved')
+
     def test_previous_canonical_without_spec_agent_or_profile(self):
         self.app()
         r = self.report()

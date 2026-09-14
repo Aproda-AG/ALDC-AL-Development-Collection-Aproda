@@ -69,6 +69,7 @@ copilotEntrypointMode: "trimmed"
 required:
   agents:
     - "agents/al-architect.agent.md"
+    - "agents/al-spec-agent.agent.md"
     - "agents/al-conductor.agent.md"
     - "agents/al-developer.agent.md"
     - "agents/al-presales.agent.md"
