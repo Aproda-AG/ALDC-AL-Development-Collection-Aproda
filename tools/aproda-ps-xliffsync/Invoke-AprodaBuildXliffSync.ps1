@@ -523,6 +523,11 @@ function Get-AprodaTranslationStatistics {
                 continue
             }
 
+            $source = $document.GetUnitSourceText($unit)
+            if ([string]::IsNullOrWhiteSpace($source)) {
+                continue
+            }
+
             $total++
             $translation = $document.GetUnitTranslation($unit)
             if ([string]::IsNullOrWhiteSpace($translation)) {
@@ -570,6 +575,11 @@ function Invoke-AprodaXliffValidation {
         [XlfDocument]$document = Get-AprodaXlfDocument -Path $targetFile.FullName
         foreach ($unit in $document.TranslationUnitNodes()) {
             if (-not $document.GetUnitNeedsTranslation($unit)) {
+                continue
+            }
+
+            $source = $document.GetUnitSourceText($unit)
+            if ([string]::IsNullOrWhiteSpace($source)) {
                 continue
             }
 
@@ -640,6 +650,9 @@ function Export-AprodaOpenTranslations {
             }
 
             $source = $document.GetUnitSourceText($unit)
+            if ([string]::IsNullOrWhiteSpace($source)) {
+                continue
+            }
             $unitId = $unit.Attributes['id'].Value
             $items += [pscustomobject]@{
                 FileIndex          = $fileIndex

@@ -158,7 +158,8 @@ class XlfDocument {
                 return $this.idUnitMap[$transUnitId];
             }
             return $null;
-        } else {
+        }
+        else {
             return $this.TranslationUnitNodes() | Where-Object { $_.'id' -eq $transUnitId } | Select-Object -First 1;
         }
     }
@@ -170,7 +171,8 @@ class XlfDocument {
                 return $this.xliffGeneratorNoteSourceUnitMap[$key];
             }
             return $null;
-        } else {
+        }
+        else {
             return $this.TranslationUnitNodes() | Where-Object { ($this.GetUnitXliffGeneratorNote($_) -eq $xliffGenNote) -and ($this.GetUnitSourceText($_) -eq $sourceText) } | Select-Object -First 1;
         }
     }
@@ -182,7 +184,8 @@ class XlfDocument {
                 return $this.xliffGeneratorNoteDeveloperNoteUnitMap[$key];
             }
             return $null;
-        } else {
+        }
+        else {
             return $this.TranslationUnitNodes() | Where-Object { ($this.GetUnitXliffGeneratorNote($_) -eq $xliffGenNote) -and ($this.GetUnitDeveloperNote($_) -eq $devNote) } | Select-Object -First 1;
         }
     }
@@ -194,7 +197,8 @@ class XlfDocument {
                 return $this.xliffGeneratorNoteUnitMap[$key];
             }
             return $null;
-        } else {
+        }
+        else {
             return $this.TranslationUnitNodes() | Where-Object { ($this.GetUnitXliffGeneratorNote($_) -eq $xliffGenNote) } | Select-Object -First 1;
         }
     }
@@ -206,7 +210,8 @@ class XlfDocument {
                 return $this.sourceDeveloperNoteUnitMap[$key];
             }
             return $null;
-        } else {
+        }
+        else {
             return $this.TranslationUnitNodes() | Where-Object { ($this.GetUnitDeveloperNote($_) -eq $devNote) -and ($this.GetUnitSourceText($_) -eq $sourceText) } | Select-Object -First 1;
         }
     }
@@ -218,7 +223,8 @@ class XlfDocument {
                 return $this.sourceUnitMap[$key];
             }
             return $null;
-        } else {
+        }
+        else {
             return $this.TranslationUnitNodes() | Where-Object { ($this.GetUnitSourceText($_) -eq $sourceText) } | Select-Object -First 1;
         }
     }
@@ -282,7 +288,8 @@ class XlfDocument {
                             $sourceUnitAsElement.SetAttribute($attr.Name, $attr.Value);
                         }
                     }
-                } else {
+                }
+                else {
                     foreach ($attr in $targetUnit.Attributes) {
                         if ($attr.Name -ne 'id') {
                             $newAttr = $this.root.OwnerDocument.ImportNode($attr, $true);
@@ -290,7 +297,8 @@ class XlfDocument {
                         }
                     }
                 }
-            } else {
+            }
+            else {
                 # Use the source's attribute values for the attributes in common, and extend these with any extra attributes from the target.
                 foreach ($attr in $targetUnit.Attributes) {
                     if (-not $sourceUnitAsElement.Attributes[$attr.Name]) {
@@ -314,7 +322,8 @@ class XlfDocument {
                 $newTranslationState = [XlfTranslationState]::MissingTranslation;
             }
             $targetNode = $this.CreateTargetNode($sourceUnit, $translation, $newTranslationState);
-        } elseif ((-not $needsTranslation) -and $targetNode) {
+        }
+        elseif ((-not $needsTranslation) -and $targetNode) {
             $this.DeleteTargetNode($sourceUnit);
         }
 
@@ -397,7 +406,8 @@ class XlfDocument {
         if ((-not $stateNode) -and ($this.Version() -eq "1.2")) {
             [System.Xml.XmlNode] $newTargetNode = $this.CreateTargetNode($unit, "", $newTranslationState);
             $this.AppendTargetNode($unit, $newTargetNode);
-        } elseif ($stateNode) {
+        }
+        elseif ($stateNode) {
             $this.UpdateStateAttributes($stateNode, $newTranslationState);
         }
     }
@@ -439,17 +449,20 @@ class XlfDocument {
 
         if ($existingNote) {
             $notesParent.ReplaceChild($noteNode, $existingNote);
-        } elseif ($targetChildNode -and ($this.Version() -eq "1.2")) {
+        }
+        elseif ($targetChildNode -and ($this.Version() -eq "1.2")) {
             if ($unit.Attributes["xml:space"] -and ($unit.Attributes["xml:space"].Value -eq "preserve")) {
                 $unit.InsertAfter($noteNode, $targetChildNode.NextSibling);
 
                 # Add the same whitespace after the note.
                 $newWhiteSpaceNode = $this.root.OwnerDocument.ImportNode($targetChildNode.PreviousSibling, $true);
                 $unit.InsertAfter($newWhiteSpaceNode, $noteNode);
-            } else {
+            }
+            else {
                 $unit.InsertAfter($noteNode, $targetChildNode);
             }
-        } else {
+        }
+        else {
             $notesParent.AppendChild($noteNode);
         }
     }
@@ -516,17 +529,20 @@ class XlfDocument {
 
                 if ($targetChildNode) {
                     $unit.ReplaceChild($targetNode, $targetChildNode);
-                } elseif ($sourceChildNode) {
+                }
+                elseif ($sourceChildNode) {
                     if ($unit.Attributes["xml:space"] -and ($unit.Attributes["xml:space"].Value -eq "preserve")) {
                         $unit.InsertAfter($targetNode, $sourceChildNode.NextSibling);
 
                         # Add the same whitespace after the target node.
                         $newWhiteSpaceNode = $this.root.OwnerDocument.ImportNode($sourceChildNode.PreviousSibling, $true);
                         $unit.InsertAfter($newWhiteSpaceNode, $targetNode);
-                    } else {
+                    }
+                    else {
                         $unit.InsertAfter($targetNode, $sourceChildNode);
                     }
-                } else {
+                }
+                else {
                     $unit.AppendChild($targetNode);
                 }
                 break;
@@ -712,7 +728,8 @@ class XlfDocument {
 
         if ($node.Name -eq $tag) {
             return $node;
-        } else {
+        }
+        else {
             foreach ($member in $node.ChildNodes) {
                 [System.Xml.XmlNode] $child = $member;
                 $reqNode = [XlfDocument]::GetNode($tag, $child);
@@ -827,7 +844,8 @@ class XlfDocument {
             $imported = $xmlDoc.ImportNode($group, $true);
             $groupImported = [XlfDocument]::GetNode('group', $this.root);
             $groupImported.AppendChild($imported);
-        } else {
+        }
+        else {
             $this.root = $xlfDoc.root;
         }
     }

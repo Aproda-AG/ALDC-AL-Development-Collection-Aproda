@@ -469,6 +469,22 @@ XLIFF files to avoid empty targets: those elements are valid workflow output and
 runtime must handle them. This is a D-2 in-place fork delta to the vendored upstream
 file and must be flowed back to the Aproda ALDC fork.
 
+### D-38 — XLIFF workflow ignores obsolete units without source text
+
+The Base target XLIFF retains six historical `translate="yes"` units whose matching
+generated source units no longer exist and whose `<source/>` elements are empty. They
+are obsolete metadata, not translatable text. Counting them as missing blocks strict
+validation, and exporting them fails because the batch source hash requires nonempty
+source text.
+
+The approved minimal in-place correction excludes units without source text from the
+Stage 0 statistics, export, approval/orthography validation, and the vendored
+missing-translation check. It does not remove or rewrite the historical XLIFF units,
+does not suppress a missing translation that has a real source, and preserves the
+strict gate for every translatable unit. Reject manual target-file cleanup: it would
+hide the structural condition from the reusable tooling. This is a D-2 in-place fork
+delta under D-31 and must flow back to the Aproda ALDC fork.
+
 ---
 
 ## Stacking vs. changing — practical guide
@@ -535,6 +551,7 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `skills/skill-translate/SKILL.md`, `agents/al-developer.agent.md`, `agents/al-conductor.agent.md`, `prompts/al-pr-prepare.prompt.md` | Replaced the inline single-batch translation flow with the delegated two-artefact Stage 0 contract, PoEdit review, approval gate, and evidence-only PR reporting. | D-2 / D-7 / D-32 | 2026-09-01 |
 | `skills/skill-translate/SKILL.md`, `agents/al-developer.agent.md`, `agents/al-conductor.agent.md`, `prompts/al-pr-prepare.prompt.md` | Stage 1 deterministic resolution: wired the new `Resolve` action (tier 1 invariant / tier 2 project-derived exact memory) between `Sync -SkipBuild` and `ExportOpen` in both agents, documented it in `skill-translate`'s Pattern 2A and Workflow steps, and extended the PR evidence line with tier 1/tier 2 counts. | D-2 / D-32 | 2026-09-02 |
 | `tools/aproda-ps-xliffsync/vendor/XliffSync/Model/XlfDocument.ps1` | Guard empty self-closing XLIFF source/target elements before reading a first text node, preventing strict-mode failure during Sync. | D-2 / D-31 / D-37 | 2026-09-14 |
+| `tools/aproda-ps-xliffsync/Invoke-AprodaBuildXliffSync.ps1`, `tools/aproda-ps-xliffsync/vendor/XliffSync/Public/Test-XliffTranslations.ps1` | Exclude obsolete `translate="yes"` units without source text from Stage 0 export, statistics, and missing-translation validation. | D-2 / D-31 / D-38 | 2026-09-14 |
 
 ---
 

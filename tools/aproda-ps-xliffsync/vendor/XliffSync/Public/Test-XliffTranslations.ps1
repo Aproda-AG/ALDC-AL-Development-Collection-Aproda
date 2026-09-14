@@ -88,7 +88,8 @@ function Test-XliffTranslations {
     if ($reportProgress) {
         if ($AzureDevOps -ne 'no') {
             Write-Host "##vso[task.setprogress value=0;]$progressMessage";
-        } else {
+        }
+        else {
             Write-Progress -Activity $progressMessage -PercentComplete 0;
         }
     }
@@ -102,7 +103,8 @@ function Test-XliffTranslations {
                 $percentage = ($i / $unitCount) * 100;
                 if ($AzureDevOps -ne 'no') {
                     Write-Host "##vso[task.setprogress value=$percentage;]$progressMessage";
-                } else {
+                }
+                else {
                     Write-Progress -Activity $progressMessage -PercentComplete $percentage;
                 }
             }
@@ -182,6 +184,10 @@ function HasMissingTranslation {
 
     [bool] $needsTranslation = $targetDocument.GetUnitNeedsTranslation($unit);
     if ($needsTranslation) {
+        [string] $sourceText = $targetDocument.GetUnitSourceText($unit);
+        if (-not $sourceText) {
+            return $false;
+        }
         [string] $translation = $targetDocument.GetUnitTranslation($unit);
         if ((-not $translation) -or ($translation -eq $missingTranslationText)) {
             return $true;
@@ -259,7 +265,7 @@ function IsPlaceholdersMismatch {
     )
 
     return (HasMissingPlaceholders -textWithPlaceholders $sourceText -textToCheck $translationText) -or
-           (HasMissingPlaceholders -textWithPlaceholders $translationText -textToCheck $sourceText);
+    (HasMissingPlaceholders -textWithPlaceholders $translationText -textToCheck $sourceText);
 }
 
 function HasMissingPlaceholders {
