@@ -552,6 +552,8 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `skills/skill-translate/SKILL.md`, `agents/al-developer.agent.md`, `agents/al-conductor.agent.md`, `prompts/al-pr-prepare.prompt.md` | Stage 1 deterministic resolution: wired the new `Resolve` action (tier 1 invariant / tier 2 project-derived exact memory) between `Sync -SkipBuild` and `ExportOpen` in both agents, documented it in `skill-translate`'s Pattern 2A and Workflow steps, and extended the PR evidence line with tier 1/tier 2 counts. | D-2 / D-32 | 2026-09-02 |
 | `tools/aproda-ps-xliffsync/vendor/XliffSync/Model/XlfDocument.ps1` | Guard empty self-closing XLIFF source/target elements before reading a first text node, preventing strict-mode failure during Sync. | D-2 / D-31 / D-37 | 2026-09-14 |
 | `tools/aproda-ps-xliffsync/Invoke-AprodaBuildXliffSync.ps1`, `tools/aproda-ps-xliffsync/vendor/XliffSync/Public/Test-XliffTranslations.ps1` | Exclude obsolete `translate="yes"` units without source text from Stage 0 export, statistics, and missing-translation validation. | D-2 / D-31 / D-38 | 2026-09-14 |
+| `skills/skill-aproda-fkh/SKILL.md`, `skills/skill-aproda-deploy-run-verify/**` | Adopt FKH Dev Endpoint deployment as the default; add explicit `fkhSyncMode` with non-destructive `Add` default and documented ForceSync notification. | D-2 / D-39 | 2026-09-14 |
+| `skills/skill-aproda-deploy-run-verify/scripts/AprodaDeployRunVerify.psm1`, `scripts/README.md` | Add compact Stopwatch timing evidence for build, deploy, tests, and total runtime. | D-2 / D-40 | 2026-09-14 |
 
 ---
 
@@ -627,4 +629,18 @@ Rejected: a regex-based auth-failure detector (no reliable string exists, live-c
 **Revised same-day (2026-09-13): the save prompt was removed.** The initial design asked "save/update? (j/N)" every time a freshly typed credential succeeded, whether creating a new store entry or correcting a stale one. On review this was simplified to **always save/overwrite silently, no confirmation** — a deliberate reversal of the "opt-in, never automatic" framing this decision originally opened with. Rationale: by the time a credential reaches this point it has already been typed once by a human and has just been proven to work against the real service; asking again adds friction without a corresponding safety benefit, and an unattended/automated re-run needs this to be silent to have any value at all (see the fail-fast addition below).
 
 **Fail-fast for non-interactive sessions.** `Get-DeployRunVerifyCredential` now checks `[Console]::IsInputRedirected` before falling back to `Get-Credential`; if true (no store hit, and stdin is redirected — an unattended/automated invocation) it throws immediately with an actionable message instead of hanging forever waiting for input nobody can provide. This does not fully solve unattended operation end-to-end (a password rotation mid-automation still needs a human to re-seed the store before the next run), but it turns a silent hang into a clear, fast failure.
+
+### D-39 — FKH defaults to Business Central Dev Endpoint deployment
+
+FKH targets are Aproda development or test containers. FKH deployments therefore use the Business Central Dev Endpoint (`fkh publishapp --devScope`) by default, without scope confirmation. Global-scope publishing is allowed only when the user explicitly requests it.
+
+The default Dev Endpoint schema mode is `synchronize` (`--syncMode Add`). `--syncMode ForceSync` is permitted when a destructive schema change requires it; the agent informs the user briefly but does not request separate confirmation. Existing Global-scoped apps are never migrated automatically: their one-time migration to Dev scope remains an explicitly approved operation.
+
+This supersedes D-36's FKH same-version removal-and-republish path. The Dev Endpoint supports repeated same-version development publishes, including Base redeployment without removing its dependent test app. ASINST deployment behavior is unchanged. The rejected alternative is retaining Global-scope removal as FKH's default: it adds avoidable latency, creates cross-workstream dependency conflicts, and makes destructive synchronization routine rather than exceptional. This is a D-2 in-place fork delta and must flow back to the Aproda ALDC fork.
+
+### D-40 — DRV reports comparable stage timings
+
+The DRV engine reports a compact timing line for every completed run: `build`, `deploy`, `tests`, and `total`. The measurements use `System.Diagnostics.Stopwatch` around the existing orchestration boundaries; the test duration includes runner initialization, connection, and test execution. Build-only and skipped-build runs retain their semantic values rather than inventing a duration for an omitted stage.
+
+This produces comparable evidence for adapter and deployment-policy changes, including the FKH Dev Endpoint default in D-39, without adding a telemetry dependency, persisting environment-specific data, or changing the build/deploy/run behavior. The rejected alternative was timestamp-only runner logging: it cannot attribute elapsed time to a DRV stage or support meaningful before/after comparisons. This is a D-2 in-place fork delta and must flow back to the Aproda ALDC fork.
 

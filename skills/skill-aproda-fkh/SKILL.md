@@ -6,7 +6,7 @@ description: "Fkh transport and target resolution for Business Central developme
 # Skill: Fkh Transport and Target Resolution
 
 > **Aproda custom skill** — reusable Fkh capability used by [`skill-aproda-deploy-run-verify`](../skill-aproda-deploy-run-verify/SKILL.md). It owns Fkh target discovery and app transport; it does not own the Build → Deploy → Run → Review lifecycle.
-> **Status: VALIDATED**, including through `skill-aproda-deploy-run-verify`'s engine entry point (2026-09-12, D-36): Fkh container discovery, local app sorting, publish, sync, install/upgrade, installed-state inspection, same-version-conflict removal, and a `UserPassword`-credentialed test run (26/26 passed) were all exercised live against `flobi-wan-kenobi-straub-dev-deployment`. `fkh getappinfo`'s JSON shape was captured live (2026-09-13): `{ container, tenant, apps: [ { AppId, Name, Publisher, Version, Dependencies, ExtensionType, Scope, IsInstalled, IsPublished, SyncState, NeedsUpgrade } ] }` — the engine matches the entry by version and checks `IsInstalled`/`SyncState`.
+> **Status: VALIDATED**, including through `skill-aproda-deploy-run-verify`'s engine entry point (2026-09-12, D-36): Fkh container discovery, local app sorting, publish, sync, install/upgrade, installed-state inspection, and a `UserPassword`-credentialed test run (26/26 passed) were all exercised live against `flobi-wan-kenobi-straub-dev-deployment`. D-39 makes Dev Endpoint publishing the default and supersedes the former Global-scope same-version removal path. `fkh getappinfo`'s JSON shape was captured live (2026-09-13): `{ container, tenant, apps: [ { AppId, Name, Publisher, Version, Dependencies, ExtensionType, Scope, IsInstalled, IsPublished, SyncState, NeedsUpgrade } ] }` — the engine matches the entry by version and checks `IsInstalled`/`SyncState`.
 
 ## When to Load
 
@@ -97,7 +97,7 @@ try {
   }
 
   foreach ($appFile in $sortResult.SortedApps) {
-    fkh publishapp --name $container --appFile $appFile --syncMode Add --sync --install --backendUrl $backendUrl
+    fkh publishapp --name $container --appFile $appFile --devScope --syncMode Add --sync --install --backendUrl $backendUrl
     if ($LASTEXITCODE -ne 0) { throw "Publish failed: $appFile" }
   }
 }
@@ -106,13 +106,15 @@ finally {
 }
 ```
 
-Use `--syncMode ForceSync` only after explicit acknowledgement that it can discard development data for changed table schemas. Do not hide errors with a bulk parallel publish: dependency order and fail-fast behavior are required.
+### FKH Deployment Scope
 
-### Same-Version Replacement
+**FKH deployments use the Business Central Dev Endpoint (`--devScope`) by default, without scope confirmation. Use `fkh publishapp --devScope`.** Global-scope publishing is allowed only when explicitly requested by the user.
 
-Fkh rejects publishing a package with the same app ID and version as an already published package before synchronization begins. For an acknowledged development replacement, remove dependent apps first, then each target app with `Uninstall-NAVApp` and `Unpublish-NAVApp` through `fkh invokescript`. Publish the refreshed packages in dependency order with `--syncMode ForceSync --sync --install`, then confirm each is Published, Installed, and Synced. Do not use this sequence for unrelated or production apps.
+The default Dev Endpoint schema mode is `synchronize` (`--syncMode Add`). Use `--syncMode ForceSync` only when a destructive schema change requires it. Inform the user briefly when using `ForceSync`; explicit confirmation is not required. Do not hide errors with a bulk parallel publish: dependency order and fail-fast behavior are required.
 
-**Cross-scope dependents (D-36).** The removal above only ever targets apps the current task actually owns. If it fails because a **different app outside that set** depends on the one being removed (e.g. a companion app from a parallel workstream sharing the same disposable dev container), never expand the removal automatically — stop and ask the user to choose exactly one of: (a) remove only the blocking dependents and publish just the current app; (b) remove the app and its dependents and reinstall everything afterward; (c) abort for manual review. Automatically reaching into an app outside the current scope is the kind of destructive, hard-to-reverse action that always needs explicit confirmation, container disposability notwithstanding.
+Existing Global-scoped apps require an explicitly approved one-time migration before they can be republished in Dev scope. Do not remove or migrate them automatically.
+
+For ASINST and explicitly requested FKH Global-scope same-version recovery, including reverse dependency removal and normal dependency publish/ForceSync/install, load [`redeploy-recovery.md`](../skill-aproda-deploy-run-verify/references/redeploy-recovery.md). This recovery is never the automatic fallback for Dev Endpoint publishing.
 
 ## Inspect State
 

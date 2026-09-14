@@ -26,6 +26,10 @@ $env:APRODA_DEPLOY_RUN_VERIFY_MODE   = 'full'   # 'full' (default) | 'buildonly'
 Get-Content '<skillpath>/scripts/Invoke-AprodaDeployRunVerify.ps1' -Raw | Invoke-Expression
 ```
 
+For FKH targets, the engine publishes through the Business Central Dev Endpoint (`--devScope`) by default. This supports same-version development redeploys without removing dependent apps. Global-scope publishing is allowed only when explicitly requested by the user. `fkhSyncMode` defaults to `Add` (`synchronize`); set it to `ForceSync` only for a destructive schema change and inform the user briefly when doing so.
+
+Each completed run reports `TIMING: build=… · deploy=… · tests=… · total=…`. The `tests` duration includes runner initialization, connection, and test execution; skipped stages are shown as `skipped` or `n/a`. Use comparable runs against the same target to evaluate deployment changes such as the FKH Dev Endpoint default.
+
 > **Why `iex` + `APRODA_DEPLOY_RUN_VERIFY_MODULE`?** Some machines block `.psm1` import via Software
 > Restriction Policy / Group Policy, so the entry point does **not** use `Import-Module`; it
 > dot-sources the engine content (SRP-safe). When dot-loaded via `iex`, `$PSCommandPath` is

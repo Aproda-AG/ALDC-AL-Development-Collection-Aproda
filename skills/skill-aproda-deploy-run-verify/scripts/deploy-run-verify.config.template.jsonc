@@ -64,6 +64,9 @@
     // e.g. "D:\\28\\STRAUB_MEDICAL_AG_28_CH_FKO\\Management\\Microsoft.Dynamics.Nav.Management.dll"
     "mgmtDllPath": "",
     // --- Behaviour ---
+    // FKH only: Add maps to the non-destructive Dev Endpoint synchronize mode. Use
+    // ForceSync for a destructive schema change.
+    "fkhSyncMode": "Add",
     "runTimeoutMs": 360000,
     // If the BC service is unreachable: "warn-buildonly" (default) | "abort".
     "onServiceUnavailable": "warn-buildonly"

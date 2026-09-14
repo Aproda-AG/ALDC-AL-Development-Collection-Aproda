@@ -149,6 +149,15 @@ function Resolve-DeployRunVerifyConfig {
     $cfg | Add-Member apps $apps -Force
     $testApp = $apps[-1]
 
+    # FKH Dev Endpoint uses Add as the non-destructive synchronize mode. ForceSync remains
+    # available only for an explicitly selected destructive schema synchronization.
+    if (-not ($cfg.PSObject.Properties.Name -contains 'fkhSyncMode') -or [string]::IsNullOrWhiteSpace($cfg.fkhSyncMode)) {
+        $cfg | Add-Member fkhSyncMode 'Add' -Force
+    }
+    if ($cfg.fkhSyncMode -notin @('Add', 'ForceSync')) {
+        throw "fkhSyncMode must be 'Add' or 'ForceSync'."
+    }
+
     # --- Test extension id + codeunit range ---
     $cfg | Add-Member testExtensionId $testApp.Id -Force
     if ([string]::IsNullOrWhiteSpace($cfg.testCodeunitRange)) {
@@ -501,49 +510,9 @@ function Resolve-DeployRunVerifyFkhContainer {
 }
 
 # ---------------------------------------------------------------------------
-# Fkh rejects publishing an app whose ID+version is already published on the target
-# (a routine occurrence in a dev loop that reuses an unbumped app.json version — the
-# ASINST adapter has the same problem and solves it with ForceSync+Install). Remove the
-# conflicting apps (and their dependents, reverse order) via `fkh invokescript`, mirroring
-# the validated ad-hoc pattern (Test/PowerShell/_temp/Remove-BaseAndDCBlobProxy-Fkh.ps1):
-# Uninstall-NAVApp then Unpublish-NAVApp for every installed/published version found.
-# ---------------------------------------------------------------------------
-function Invoke-DeployRunVerifyFkhRemoveApps {
-    param([Parameter(Mandatory)]$Cfg, [Parameter(Mandatory)][string]$AppLabel, [Parameter(Mandatory)][string]$BackendUrl)
-    $reverseNames = @($Cfg.apps | ForEach-Object { $_.Name }); [array]::Reverse($reverseNames)
-    $namesLiteral = ($reverseNames | ForEach-Object { "'{0}'" -f ($_ -replace "'", "''") }) -join ",`n  "
-    $remoteCommand = @"
-`$ErrorActionPreference = 'Stop'
-`$serverInstance = '$($Cfg.serverInstance)'
-`$tenant = '$($Cfg.tenant)'
-`$appNames = @(
-  $namesLiteral
-)
-foreach (`$appName in `$appNames) {
-  `$appInfos = @(Get-NAVAppInfo -ServerInstance `$serverInstance -Name `$appName)
-  foreach (`$appInfo in `$appInfos) {
-    try {
-      Uninstall-NAVApp -ServerInstance `$serverInstance -Name `$appInfo.Name -Version `$appInfo.Version -Tenant `$tenant -Force
-    }
-    catch {
-      if (`$_.Exception.Message -notmatch 'not installed|nicht installiert') { throw }
-    }
-  }
-  foreach (`$appInfo in `$appInfos) {
-    Unpublish-NAVApp -ServerInstance `$serverInstance -Name `$appInfo.Name -Version `$appInfo.Version
-  }
-}
-"@
-    Write-Host "[fkh] Removing prior published versions (same-version redeploy) for: $($reverseNames -join ', ')"
-    & fkh invokescript --name $AppLabel --command $remoteCommand --backendUrl $BackendUrl
-    if ($LASTEXITCODE -ne 0) { throw 'Fkh removal of prior app versions failed.' }
-}
-
-# ---------------------------------------------------------------------------
-# Deploy via Fkh: publish each app in dependency order through the fkh CLI, using the
-# resolved container's appLabel (not its Kubernetes deployment name — skill-aproda-fkh).
-# On a same-App-ID-and-Version conflict, remove the prior versions once and retry the
-# whole publish sequence; any other failure still fails loud immediately.
+# Deploy via FKH's Business Central Dev Endpoint. This is the standard Aproda FKH path:
+# it supports same-version redeploys without uninstalling dependent apps. Global-scope
+# migration is deliberately outside this engine and requires explicit human approval.
 # ---------------------------------------------------------------------------
 function Invoke-DeployRunVerifyDeployFkh {
     param([Parameter(Mandatory)]$Cfg)
@@ -552,25 +521,17 @@ function Invoke-DeployRunVerifyDeployFkh {
     $appLabel = [string]$container.appLabel
     if ([string]::IsNullOrWhiteSpace($appLabel)) { throw 'Resolved Fkh container has no appLabel.' }
     Write-Host "Fkh target: appLabel=$appLabel"
+    if ($Cfg.fkhSyncMode -eq 'ForceSync') {
+        Write-Warning 'FKH deployment uses ForceSync for a destructive schema synchronization.'
+    }
 
-    $removalAttempted = $false
-    while ($true) {
-        $conflict = $false
-        foreach ($app in $Cfg.apps) {
-            Write-Host "[fkh] Publish $($app.Name) $($app.Version)"
-            $out = & fkh publishapp --name $appLabel --appFile $app.AppFile --syncMode ForceSync --sync --install --backendUrl $backendUrl 2>&1
-            $out | ForEach-Object { Write-Host "  $_" }
-            if ($LASTEXITCODE -ne 0) {
-                if (-not $removalAttempted -and (($out | Out-String) -match '(?i)same App ID and Version')) {
-                    $conflict = $true
-                    break
-                }
-                throw "Fkh publish failed: $($app.Name) $($app.Version)"
-            }
+    foreach ($app in $Cfg.apps) {
+        Write-Host "[fkh] Dev Endpoint publish $($app.Name) $($app.Version) (syncMode=$($Cfg.fkhSyncMode))"
+        $out = & fkh publishapp --name $appLabel --appFile $app.AppFile --devScope --syncMode $Cfg.fkhSyncMode --sync --install --backendUrl $backendUrl 2>&1
+        $out | ForEach-Object { Write-Host "  $_" }
+        if ($LASTEXITCODE -ne 0) {
+            throw "Fkh Dev Endpoint publish failed: $($app.Name) $($app.Version). Existing Global-scoped apps require an explicitly approved migration before Dev-scope publishing."
         }
-        if (-not $conflict) { break }
-        $removalAttempted = $true
-        Invoke-DeployRunVerifyFkhRemoveApps -Cfg $Cfg -AppLabel $appLabel -BackendUrl $backendUrl
     }
 
     $notInstalled = foreach ($app in $Cfg.apps) {
@@ -894,6 +855,8 @@ function Invoke-AprodaDeployRunVerify {
         [switch]$SkipBuild
     )
     $cfg = Resolve-DeployRunVerifyConfig -ConfigPath $ConfigPath
+    $totalTimer = [System.Diagnostics.Stopwatch]::StartNew()
+    $timings = [ordered]@{ Build = $null; Deploy = $null; Tests = $null }
     Write-Host "Server $($cfg.server)/$($cfg.serverInstance)  tenant=$($cfg.tenant)  adapter=$($cfg.adapter)  auth=$($cfg.authentication)"
     Write-Host ("Apps: " + (($cfg.apps | ForEach-Object { "$($_.Name) $($_.Version)" }) -join ' -> '))
 
@@ -904,15 +867,36 @@ function Invoke-AprodaDeployRunVerify {
         $BuildOnly = $true
     }
 
-    if (-not $SkipBuild) { Invoke-DeployRunVerifyBuild -Cfg $cfg | Out-Null }
-    if ($BuildOnly) { Write-Host "BUILD-ONLY: skipping deploy + run."; return [pscustomobject]@{ BuildOnly = $true } }
+    if (-not $SkipBuild) {
+        $stageTimer = [System.Diagnostics.Stopwatch]::StartNew()
+        Invoke-DeployRunVerifyBuild -Cfg $cfg | Out-Null
+        $stageTimer.Stop()
+        $timings.Build = $stageTimer.Elapsed
+    }
+    if ($BuildOnly) {
+        $totalTimer.Stop()
+        Write-Host "BUILD-ONLY: skipping deploy + run."
+        Write-Host ("TIMING: build={0} · deploy=n/a · tests=n/a · total={1}" -f $(if ($timings.Build) { '{0:N1}s' -f $timings.Build.TotalSeconds } else { 'skipped' }), ('{0:N1}s' -f $totalTimer.Elapsed.TotalSeconds))
+        return [pscustomobject]@{ BuildOnly = $true; Timings = [pscustomobject]$timings; TotalDuration = $totalTimer.Elapsed }
+    }
 
+    $stageTimer = [System.Diagnostics.Stopwatch]::StartNew()
     Invoke-DeployRunVerifyDeploy -Cfg $cfg | Out-Null
+    $stageTimer.Stop()
+    $timings.Deploy = $stageTimer.Elapsed
+
+    $stageTimer = [System.Diagnostics.Stopwatch]::StartNew()
     $summary = Invoke-DeployRunVerifyRun -Cfg $cfg
+    $stageTimer.Stop()
+    $timings.Tests = $stageTimer.Elapsed
+    $totalTimer.Stop()
     if ($summary) {
         Write-Host ("RESULT: {0}/{1} passed, {2} failed." -f $summary.Passed, $summary.Total, $summary.Failed)
         if ($summary.Failed -gt 0) { Write-Host ("FAILURES: " + ($summary.Failures -join ', ')) }
+        $summary | Add-Member Timings ([pscustomobject]$timings) -Force
+        $summary | Add-Member TotalDuration $totalTimer.Elapsed -Force
     }
+    Write-Host ("TIMING: build={0} · deploy={1} · tests={2} · total={3}" -f $(if ($timings.Build) { '{0:N1}s' -f $timings.Build.TotalSeconds } else { 'skipped' }), ('{0:N1}s' -f $timings.Deploy.TotalSeconds), ('{0:N1}s' -f $timings.Tests.TotalSeconds), ('{0:N1}s' -f $totalTimer.Elapsed.TotalSeconds))
     return $summary
 }
 

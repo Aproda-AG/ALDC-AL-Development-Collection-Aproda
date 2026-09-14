@@ -26,6 +26,8 @@
 
 ## Deploy (dependency order: Base before Test)
 
+For FKH development containers, publish through the Business Central Dev Endpoint with `fkh publishapp --devScope`. This is the default path and permits same-version redeployment without removing dependent apps. The default schema mode is `Add` (`synchronize`); use `ForceSync`  when a destructive schema synchronization is required and inform the user briefly. Global-scope publishing is only allowed when explicitly requested by the user.
+
 ✅ **Proven sequence** (`_Cycle.ps1` / `_Deploy.ps1`):
 uninstall Test → uninstall Base → unpublish both → publish/sync/install **Base** → publish/sync/install **Test**.
 
@@ -55,7 +57,7 @@ try   { Install-NAVApp -ServerInstance $si -Name $name -Version $ver -Tenant $te
 catch { Start-NAVAppDataUpgrade -ServerInstance $si -Name $name -Version $ver -Tenant $tenant }
 ```
 
-### Same-version redeploy → ForceSync ✅ (live-verified 2026-06-24)
+### Same-version redeploy → ForceSync ✅ (ASINST only, live-verified 2026-06-24)
 
 A test-loop redeploys the **same version** (e.g. `28.0.0.7`) repeatedly while the schema changes. After uninstall + republish, `Sync -Mode Add` leaves the **stale** synced schema, so `Install-NAVApp` refuses:
 
@@ -75,6 +77,8 @@ catch {                                                        # 2) ForceSync th
 - `-Mode ForceSync` **drops data for changed tables** — acceptable/expected inside a dev test-loop, *not* for production (there, bump the version instead).
 - `Sync -Mode Add` can emit a **benign non-terminating error** on redeploy; silence it (`-ErrorAction SilentlyContinue`) and `$Error.Clear()` before returning, or it leaks to an `ErrorAction=Stop` caller and aborts the run.
 - **Fail-loud**: after deploy, verify `IsInstalled` for every target app and `throw` (`DEPLOY INCOMPLETE`) otherwise — never run tests against a half-deployed server.
+
+For the complete same-version recovery order, including reverse dependency removal and normal dependency publish/ForceSync/install, see [`redeploy-recovery.md`](redeploy-recovery.md). The same reference distinguishes this ASINST recovery from the default FKH Dev Endpoint path.
 
 ## PowerShell execution rules ✅
 

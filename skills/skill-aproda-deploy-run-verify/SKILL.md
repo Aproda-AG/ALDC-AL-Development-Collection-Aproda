@@ -6,7 +6,7 @@ description: "Aproda Deploy-Run-Verify Cycle for Business Central (formerly: Apr
 # Skill: Deploy-Run-Verify Cycle (Build → Deploy → Run → Review)
 
 > **Aproda custom skill** — part of the Aproda ALDC layer. See [`../../readme.aproda.md`](../../readme.aproda.md) and [`../../decisions.aproda.md`](../../decisions.aproda.md).
-> **Status: ASINST + FKH VALIDATED end-to-end through this entry point.** The ASINST engine runs the full build → deploy → materialize-runner → run → parse cycle against a live BC OnPrem service (e.g. 27/27 on the Audit Trail extension). The Fkh adapter (`Invoke-DeployRunVerifyDeployFkh`, D-36) was live-validated 2026-09-12 against `flobi-wan-kenobi-straub-dev-deployment`: adapter classification, HTTP(S) preflight, Fkh backend/container resolution, same-version-conflict removal-and-republish, and a `UserPassword`-credentialed test run all passed for real, ending **26/26 passed, 0 failed** on the DC Blob Proxy Tests suite.
+> **Status: ASINST + FKH VALIDATED end-to-end through this entry point.** The ASINST engine runs the full build → deploy → materialize-runner → run → parse cycle against a live BC OnPrem service (e.g. 27/27 on the Audit Trail extension). The Fkh adapter (`Invoke-DeployRunVerifyDeployFkh`, D-36) was live-validated 2026-09-12 against `flobi-wan-kenobi-straub-dev-deployment`: adapter classification, HTTP(S) preflight, Fkh backend/container resolution, publish, and a `UserPassword`-credentialed test run all passed for real, ending **26/26 passed, 0 failed** on the DC Blob Proxy Tests suite. D-39 supersedes its former Global-scope same-version removal path with Dev Endpoint publishing by default.
 
 ## Purpose
 
@@ -55,7 +55,7 @@ After the user acknowledges a `launch.json` selection, classify the target befor
 
 | Selected configuration | Adapter | Deployment | Test result |
 |---|---|---|---|
-| `environmentType: OnPrem`, HTTPS server, hostname ending `.cloudapp.azure.com` | Fkh | Load [`skill-aproda-fkh`](../skill-aproda-fkh/SKILL.md); verify the launch hostname against `fkh listcontainers`; use its `appLabel` for operations; sort and publish sequentially | Run the SRP-safe shared web-client runner and parse its XUnit XML |
+| `environmentType: OnPrem`, HTTPS server, hostname ending `.cloudapp.azure.com` | Fkh | Load [`skill-aproda-fkh`](../skill-aproda-fkh/SKILL.md); verify the launch hostname against `fkh listcontainers`; use its `appLabel` and publish via the Dev Endpoint (`--devScope`) | Run the SRP-safe shared web-client runner and parse its XUnit XML |
 | Any other acknowledged OnPrem configuration | ASINST | Existing immutable engine: Remote PowerShell + NAV Management DLL | Validated where the configured runner preflight succeeds |
 
 This initial classifier is intentionally conservative and mechanical. A target that satisfies the Fkh candidate rule but cannot be verified by Fkh is unknown, not ASINST: stop and ask the user.
@@ -72,6 +72,7 @@ Run the loop at **each phase boundary** as the quality gate. The conductor alrea
 
 - [`skill-aproda-fkh`](../skill-aproda-fkh/SKILL.md) — Fkh target resolution, dependency sorting, publish, and state inspection.
 - [`references/build-deploy.md`](references/build-deploy.md) — version-dynamic build, Base→Test symbol copy, deploy order, install-or-upgrade fallback.
+- [`references/redeploy-recovery.md`](references/redeploy-recovery.md) — same-version and schema-change recovery for ASINST and explicitly requested FKH Global-scope deployments.
 - [`references/runner.md`](references/runner.md) — web-client ServiceUrl, runner DLLs materialized from the K: BC DVD, central version-agnostic glue, **SRP content-based script loading**, result parsing.
 - [`references/triage-patterns.md`](references/triage-patterns.md) — the falsifiable failure→cause→fix patterns (the gold).
 
@@ -99,3 +100,4 @@ Mini-effort per project: copy the config, fill a few values, run the entry point
 - Does **not** cover writing tests (→ `skill-testing`) or root-cause debugging strategy (→ al-developer / skill-debug). It orchestrates them.
 - Deploy writes to a **shared OnPrem server** → the preflight HITL gate is mandatory (operational safety).
 - Do not route an HTTPS `.cloudapp.azure.com` target through the ASINST engine unless the Fkh verification is explicitly resolved with the user.
+- FKH deployments use the Business Central Dev Endpoint (`--devScope`) by default. Global-scope publishing is allowed only when explicitly requested by the user. Default Dev Endpoint schema mode is `synchronize`; inform the user briefly when a destructive `--syncMode ForceSync` is required, without requesting separate confirmation.
