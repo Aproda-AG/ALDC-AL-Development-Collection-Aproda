@@ -69,7 +69,7 @@ try {
       assert.deepEqual(metadata.handoffs, original.handoffs); checks++;
       check(!metadata.tools.some(t => /al-symbols-mcp|sshadowsdk|atlas/i.test(t)), `No legacy provider grant: ${name}`);
       check(metadata.tools.filter(t => t.startsWith('ms-dynamics-smb.al/')).every(t => allowed.has(t.split('/')[1])), `Catalog names: ${name}`);
-      check(!/bclsp_|al_symbolrelations|al_get_diagnostics|al_search_objects/.test(text), `No stale tool instructions: ${name}`);
+      check(!/bclsp_|al_symbolrelations|al_get_diagnostics|al_search_objects|al_download_symbols|al_generate_manifest|al_download_source|al_clear_credentials_cache|al_generate_cpu_profile|al_get_package_dependencies|al_generatepermissionset|al_new_project|\bal_go\b/.test(text), `No stale tool instructions: ${name}`);
       const link = text.match(/\[the native tool contract\]\(([^)]+)\)/);
       check(link && fs.existsSync(path.resolve(path.dirname(installed), link[1])), `Contract readable after install: ${name}`);
     }
@@ -84,6 +84,9 @@ try {
   }
   for (const name of ['al-developer', 'al-implement-subagent']) check(grants(name).includes('ms-dynamics-smb.al/al_build'), `Implementation build grant: ${name}`);
   check(!grants('al-triage').includes('ms-dynamics-smb.al/al_build'), 'Triage cannot build through native grant');
+  const build = read(path.join(fixture, '.github/prompts/al-build.prompt.md'));
+  check(!/al_(?:incremental_publish|publish|publish_existing_extension|package|full_package)/.test(build), 'Native build has no deployment or invented packaging operations');
+  check(build.includes('Stop after build/package') && build.includes('human gate'), 'Native build stops at the deployment handoff');
   const nativeBefore = agent('al-conductor');
   const customPaths = ['aldc.yaml', 'aldc.code-workspace', '.github/copilot-instructions.md', '.github/instructions/al-guidelines.instructions.md'];
   for (const rel of customPaths) fs.appendFileSync(path.join(fixture, rel), '\n# USER CUSTOMIZATION\n');

@@ -181,11 +181,12 @@ migración, rendimiento, testing, traducción o depuración. No añadas las seis
 | Declarado, pendiente de confirmar | Esquemas instalados, opciones exactas del grafo y algunas declaraciones AL18. `publicResourceFolders`/recursos públicos NavApp no se localizaron en las páginas oficiales consultadas. |
 | Pendiente local | Lectura real de referencias por Copilot, búsqueda en entorno, compilación App/Test BC29, runner y consultas/exportaciones reales de `al graph`; Windows y versión mínima de Node. |
 
-Comandos reproducibles desde este checkout (Node 20+ para validación de desarrollo):
+Comandos reproducibles desde este checkout (Node 20+ como mínimo del paquete y la validación):
 
 ```bash
 npm ci
 npm run validate
+npm run test:package
 node scripts/check-conformance.js
 node scripts/sync-foundation.js --check
 node scripts/sync-claude-workspace.js --check
@@ -311,3 +312,13 @@ las pruebas actuales y el delta de empaquetado posterior. Se corrigió el rechaz
 de fuentes CRLF y se probó su instalación en fixture Linux; esto no certifica
 la ejecución completa en Windows. El perfil conserva el cuerpo del Conductor
 también con CRLF. El registro distingue preservación, omisión y sobrescritura.
+
+El build nativo termina en compilación/empaquetado y un handoff de publicación
+con aprobación explícita. No conserva llamadas a operaciones de publicación
+no concedidas. Los nombres antiguos de setup, contexto y perfilado se sustituyen
+por operaciones verificables o handoffs al propietario correspondiente.
+
+`npm run test:package` es el gate de desarrollo tras `npm ci`: necesita `tar`,
+extrae un archivo local y reutiliza dependencias del lockfile. No publica.
+Los permisos de Dredd/Triage expresan responsabilidades y filtros de herramientas;
+no garantizan aislamiento de rutas. Ver la explicación de la revisión en el registro.

@@ -62,6 +62,10 @@ for (const [file, text] of generated) {
   if (!file.includes('/rules-templates/')) continue;
   const rule = split(text);
   check(file.endsWith('.instructions.md') && typeof rule.data.applyTo === 'string' && !rule.data.paths, `${file}: Copilot scoped instructions`);
+  for (const link of text.matchAll(/\]\((\.\/[^)]+)\)/g)) {
+    const target = path.posix.normalize(path.posix.join(path.posix.dirname(file), link[1]));
+    check(generated.has(target), `${file}: generated sibling rule link resolves: ${target}`);
+  }
 }
 assert.throws(() => toolsFor('Read, UnknownTool'), /Unmapped Claude tool/); checks++;
 const oversized = [...generated].filter(([p, c]) => p.includes('/agents/') && split(c).body.length > 30000).map(([p]) => path.basename(p));

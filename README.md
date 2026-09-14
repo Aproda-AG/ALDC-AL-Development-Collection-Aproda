@@ -495,12 +495,12 @@ AL-Development-Collection-for-GitHub-Copilot/
 - Visual Studio Code 1.85.0+
 - GitHub Copilot (agent and skill features)
 - AL Language Extension
-- Node.js 14+ (for validator)
+- Node.js 20+ (for validator)
 
 **Claude Code**
 - Claude Code CLI v1.0.33+
 - AL Language Extension
-- Node.js 14+ (for MCP servers via npx)
+- Node.js 20+ (for MCP servers via npx)
 
 ---
 

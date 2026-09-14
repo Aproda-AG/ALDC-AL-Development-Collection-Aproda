@@ -107,7 +107,8 @@ Confirm instruction loading and the existing human review gate before setup.
   for (const file of walk(path.join(root, 'claude-plugin/rules-templates'))) {
     const src = split(fs.readFileSync(file, 'utf8'));
     const data = { applyTo: src.data.paths.join(','), description: src.data.description };
-    put(`rules-templates/${path.basename(file, '.md')}.instructions.md`, '---\n' + yaml.dump(data, { lineWidth: -1 }) + '---' + bodyFor(src.body));
+    const body = bodyFor(src.body).replace(/\]\(\.\/(al-[^)]+)\.md\)/g, '](./$1.instructions.md)');
+    put(`rules-templates/${path.basename(file, '.md')}.instructions.md`, '---\n' + yaml.dump(data, { lineWidth: -1 }) + '---' + body);
   }
   put('README.md', `# ALDC for Copilot CLI
 
@@ -130,6 +131,12 @@ Read skills/skill-migrate/references/cli-al-tools.md for toolchain checks, BC28/
 scope, evidence and graph ownership. No VS Code language-model tools are bundled.
 The existing community/documentation MCP servers retain their configuration.
 No Claude hooks are imported; the agents retain their optional BCQuality backstop.
+
+Role write scopes are behavioral contracts, not filesystem sandboxes. The CLI
+edit capability translates Claude Write/Edit, both of which can overwrite files;
+execute/Bash is also broader than a report directory. Dredd and Triage must write
+only their reports as specified. Host tool/path approvals remain necessary;
+this package does not claim an enforced per-role filesystem boundary.
 
 Full local verification steps and limitations: ../docs/native-bc29.md.
 The complete Conductor and Architect exceed the generic custom-agent 30,000-character

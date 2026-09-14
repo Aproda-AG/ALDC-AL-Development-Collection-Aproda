@@ -28,23 +28,30 @@ El handoff 02 sigue pendiente de un encargo posterior.
 3. Las instrucciones instaladas y la ayuda mezclaban recuentos antiguos; se
    ajustaron al inventario, al orden arquitectura → spec para MEDIUM/HIGH y al
    carácter opcional de BCQuality. Foundation se regeneró desde la fuente.
-4. Las guías separan main canónico de la rama de la extensión y explican las
+4. La revisión automática Copilot revisó 126/126 archivos. Se corrigieron sus
+   hallazgos de payload npm, mínimo Node, ramas de despliegue del build nativo,
+   operaciones ficticias de setup/contexto/perfilado y enlaces de reglas CLI.
+   `test:package` valida el archivo npm local extraído con dependencias del
+   lockfile, sin publicación; se añadió este gate al workflow de validación.
+5. Las guías separan main canónico de la rama de la extensión y explican las
    sobrescrituras reales. No se presenta vuelta de perfil como restauración.
 
 ## Comprobaciones ejecutadas y límites
 
 Linux, Node `v24.19.0`. `npm ci --no-audit --no-fund` terminó correctamente con el
 lockfile existente; el intento offline previo falló por falta de caché js-yaml.
-No se modificaron dependencias ni lockfile.
+No se cambiaron versiones de dependencias. Se alineó `engines.node` a `>=20.0.0`
+en package.json y lockfile, junto al README; Node 14 deja de ser un mínimo anunciado.
 
 | Comprobación | Resultado local |
 | --- | --- |
-| `npm run validate` | 0 errores de colección, 77 avisos preexistentes; 212 comprobaciones de perfil y 204 de empaquetado CLI |
+| `npm run validate` | 0 errores de colección, 77 avisos preexistentes; 214 comprobaciones de perfil y 210 de empaquetado CLI |
 | `node scripts/check-conformance.js` | 57 comprobaciones superadas |
 | `node scripts/sync-foundation.js --check` | 71 archivos consistentes |
 | `node scripts/sync-claude-workspace.js --check` | 40 archivos consistentes |
 | `node scripts/sync-copilot-cli.js --check` | 52 archivos consistentes, sin drift |
 | `git diff --check` | Correcto |
+| `npm run test:package` | Archivo npm local extraído y validado offline: 214 checks de perfil y 210 CLI; dependencias instaladas desde lockfile |
 
 Las instalaciones se ejecutaron únicamente en fixtures temporales: BC28 por
 omisión, BC29 nuevo, rechazo de mezcla sin force, actualización sin perfil,
@@ -63,6 +70,14 @@ no está instalado. No se verificaron descubrimiento/carga real de roles, lectur
 por el modelo, compilación App/Test ni runner BC. Architect y Conductor largos
 siguen pendientes de carga completa por host; no se han recortado. Se comprobaron
 permisos/referencias estáticamente, sin afirmar operación nativa observada.
+
+La observación sobre `Write` → `edit` se evaluó contra la
+[tabla oficial de alias](https://docs.github.com/en/copilot/reference/custom-agents-configuration#tool-aliases):
+Write es alias de edit. Claude Write y Bash ya permiten sobrescribir archivos;
+no existía una barrera de rutas que la conversión pudiera conservar. Se mantiene
+la responsabilidad de Dredd/Triage de escribir solo sus informes y se documenta
+que los permisos del host son necesarios: no se promete sandbox por rol. No se
+rediseñan sus responsabilidades ni se introducen herramientas ficticias.
 
 No se ejecutó `test-local-install.js`: depende del checkout de la extensión y
 prepara su paquete. La PR externa

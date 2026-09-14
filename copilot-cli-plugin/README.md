@@ -20,6 +20,12 @@ scope, evidence and graph ownership. No VS Code language-model tools are bundled
 The existing community/documentation MCP servers retain their configuration.
 No Claude hooks are imported; the agents retain their optional BCQuality backstop.
 
+Role write scopes are behavioral contracts, not filesystem sandboxes. The CLI
+edit capability translates Claude Write/Edit, both of which can overwrite files;
+execute/Bash is also broader than a report directory. Dredd and Triage must write
+only their reports as specified. Host tool/path approvals remain necessary;
+this package does not claim an enforced per-role filesystem boundary.
+
 Full local verification steps and limitations: ../docs/native-bc29.md.
 The complete Conductor and Architect exceed the generic custom-agent 30,000-character
 guidance. They have not been shortened or externalized. Confirm that your installed

@@ -68,6 +68,51 @@ function project(relative, input) {
     .split('`bclsp_findReferences` / `bclsp_incomingCalls` / `bclsp_prepareCallHierarchy`').join('target-matched source and available native navigation; request bounded graph evidence if needed')
     .split(' / `bclsp_findReferences`').join(' and available native navigation');
   if (role === 'al-spec.create') body = body.replace('download symbols first if absent', 'ask the implementation/setup owner to download symbols if absent');
+  if (role === 'al-planning-subagent') {
+    body = body.replace('`#ms-dynamics-smb.al/al_get_package_dependencies`', 'app.json and target-matched package metadata')
+      .replace('`#ms-dynamics-smb.al/al_download_source`', 'source supplied through an authorized implementation-owner retrieval step');
+  }
+  if (role === 'al-review-subagent') body = body.replace('use `al_generate_cpu_profile` to locate hotspots', 'request scoped profiling evidence from the implementation owner to locate hotspots');
+  if (role === 'al-context.create') {
+    body = body.replace('@al_get_package_dependencies', 'Read app.json and target-matched package metadata')
+      .replace('al_generatepermissionset', 'Record existing permission sets; do not generate or modify them while documenting context');
+  }
+  if (role === 'al-build') {
+    front = front.replace('Build, package, and deploy AL extensions to Business Central environments.', 'Build and package AL extensions; hand deployment to a separately authorized step.');
+    body = `
+
+# Build and Package AL Extension
+
+Build the authorized App/Test projects and report their resulting packages.
+Confirm the intended project scope and target before changing dependencies.
+
+1. Inspect app.json, available symbols and the installed native build schema.
+2. Use \`al_build\` with \`scope: current\` for the selected project; use
+   \`scope: all\` only when every project in the workspace is authorized.
+3. Preserve compiler output, exit/result status, project identities and .app paths.
+   Build creates the package; do not invent a separate packaging tool.
+4. Report dependency, compilation and permission errors. Refresh symbols only
+   for approved dependencies using the installed \`al_downloadsymbols\` schema.
+5. Distinguish App compilation, Test compilation and runtime tests. Never infer
+   passing tests from a clean build or diagnostics list.
+
+## Deployment handoff — human gate
+
+Stop after build/package and present the artifact and compatibility checks.
+Publishing an existing or newly built package is a separate, explicitly approved
+operation through the user's configured deployment process. This workflow does
+not invoke publishing, incremental deployment or a deployment through generic
+terminal/editor tools. A build request does not authorize publication.
+`;
+  }
+  if (role === 'al-initialize') {
+    body = body.split('al_download_symbols').join('al_downloadsymbols')
+      .replace('```\nal_new_project\n```', 'Use an explicitly approved project scaffold after inspecting the installed VS Code commands.')
+      .replace('```\nal_go\n```', 'Inspect the existing workspace and the installed VS Code setup commands; preserve existing project files.')
+      .replace('Create manifest file:\n```\nal_generate_manifest\n```', 'Propose app.json using the editor and the actual target schema; apply only approved manifest changes. There is no native manifest-generation tool.')
+      .replace('Use `al_clear_credentials_cache` to clear cached credentials', 'Use the configured VS Code authentication UI to review cached credentials; do not clear credentials without authorization')
+      .replace('If persistent, download source: `al_download_source`', 'If persistent, inspect the actual dependency/cache and use an authorized source-retrieval process; no native source-download tool is assumed');
+  }
   const duty = isAgent ? roles[role][1] : role === 'al-spec.create' ?
     'Write the canonical specification in the existing plans folder. Propose missing dependencies; only the implementation/setup owner changes app.json or downloads symbols. An uncertain test dependency does not prevent drafting the spec; retain unresolved facts in Open Questions.' :
     'Keep this workflow’s existing artifacts and approvals. Use only the native operations declared here; graph execution belongs to Developer/Implementer.';

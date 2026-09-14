@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * ALDC Core v1.1 — Local Installer
+ * ALDC Core v1.2 — Local Installer
  *
  * Installs the ALDC toolkit into any AL project.
  *
@@ -54,7 +54,7 @@ function banner() {
   console.log(`${C.cyan}    ║${C.reset}      ${C.bold}╚═╝  ╚═╝╚══════╝╚═════╝  ╚═════╝${C.reset}               ${C.cyan}║${C.reset}`);
   console.log(`${C.cyan}    ║${C.reset}                                                      ${C.cyan}║${C.reset}`);
   console.log(`${C.cyan}    ║${C.reset}      ${C.dim}AL Development Collection${C.reset}                        ${C.cyan}║${C.reset}`);
-  console.log(`${C.cyan}    ║${C.reset}      ${C.green}Core v1.1${C.reset} ${C.dim}— Skills-based AI-native toolkit${C.reset}     ${C.cyan}║${C.reset}`);
+  console.log(`${C.cyan}    ║${C.reset}      ${C.green}Core v1.2${C.reset} ${C.dim}— Skills-based AI-native toolkit${C.reset}     ${C.cyan}║${C.reset}`);
   console.log(`${C.cyan}    ║${C.reset}                                                      ${C.cyan}║${C.reset}`);
   console.log(`${C.cyan}    ╚══════════════════════════════════════════════════════╝${C.reset}`);
   console.log('');
@@ -193,7 +193,7 @@ function ask(question, defaultYes = true) {
   });
 }
 
-// ─── ALDC Core v1.1 component map ──────────────────────────────────────────
+// ─── ALDC Core v1.2 component map ──────────────────────────────────────────
 const COMPONENTS = [
   { name: 'Agents',      src: 'agents',             count: '10 agents (4 public + 2 on-demand + 3 subagents + 1 optional)' },
   { name: 'Skills',      src: 'skills',             count: '16 skills (7 required + 4 recommended + 5 optional)' },
@@ -241,7 +241,7 @@ async function install(opts) {
   }
 
   banner();
-  header('ALDC Core v1.1 — Installer');
+  header('ALDC Core v1.2 — Installer');
   info(`Profile: ${profile} (selection does not certify installed AL capabilities)`);
 
   info('Components to install:');
@@ -413,7 +413,7 @@ async function validate(opts) {
   const targetDir = path.resolve(projectDir, opts.targetDir || '.github');
 
   banner();
-  header('ALDC Core v1.1 — Validation');
+  header('ALDC Core v1.2 — Validation');
   info(`Checking: ${targetDir}`);
   console.log('');
 
@@ -488,7 +488,7 @@ async function validate(opts) {
 function showHelp() {
   banner();
   console.log(`
-${C.bold}ALDC Core v1.1 — CLI${C.reset}
+${C.bold}ALDC Core v1.2 — CLI${C.reset}
 
 ${C.cyan}Usage:${C.reset}
   npx aldc <command> [options]
@@ -547,7 +547,7 @@ async function testLocal() {
   fs.mkdirSync(tmpProject, { recursive: true });
 
   banner();
-  header('ALDC Core v1.1 — Local Test');
+  header('ALDC Core v1.2 — Local Test');
   info(`Test directory: ${tmpProject}`);
   console.log('');
 
