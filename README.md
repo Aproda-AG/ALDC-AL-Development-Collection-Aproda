@@ -23,6 +23,8 @@ _Engineering systems, visibly reasoned._
 
 Project initialization now supports preview, drift checks and recoverable updates. A canonical Codex adapter is available for local testing; live host loading remains pending. See [plugin packaging and recovery](docs/plugin-packaging.md).
 
+The [canonical Doctor](tools/context-doctor/README.md) diagnoses specification, App/Test compilation and test execution separately. It reports local configuration and optional host observations without running builds or installing software.
+
 ---
 
 ## Why ALDC?

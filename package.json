@@ -47,6 +47,7 @@
     "docs/framework/",
     "docs/templates/",
     "collections/",
+    "tools/context-doctor/",
     "tools/aldc-validate/index.js",
     "tools/aldc-validate/package.json",
     "tools/bc-agents/",

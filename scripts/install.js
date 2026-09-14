@@ -141,6 +141,7 @@ const COMPONENTS = [
   { name: 'Instructions',src: 'instructions',       count: '9 instruction files (8 auto-applied + copilot entrypoint)' },
   { name: 'Templates',   src: 'docs/templates',     count: '7 contract templates' },
   { name: 'Framework',   src: 'docs/framework',     count: 'spec + docs' },
+  { name: 'Doctor',      src: 'tools/context-doctor', count: 'read-only Python environment diagnostics' },
   { name: 'Validator',   src: 'tools/aldc-validate', count: 'compliance checker' },
   { name: 'BC Tools',    src: 'tools/bc-agents',    count: 'scaffolder + validator' },
 ];
@@ -259,6 +260,7 @@ async function install(opts) {
   const totalCopied = result.files.filter(f => ['add', 'replace'].includes(f.action)).length;
   const totalSkipped = result.files.filter(f => ['preserve', 'collision'].includes(f.action)).length;
   if (result.transaction) info(`Backup transaction: ${result.transaction}; use aldc rollback to restore.`);
+  info('Environment diagnostics: run an available Python 3.9+ interpreter with ' + path.join(targetDir, 'tools/context-doctor/aldc_context_doctor.py') + ' --workspace . --host chat --toolkit ' + targetDir + '. See its README; exit 0 does not certify runtime execution.');
   info('Validator dependencies are not installed automatically. Run npm install in the installed tools/aldc-validate directory if needed.');
 
   // ─── Summary ──────────────────────────────────────────────────────────────
