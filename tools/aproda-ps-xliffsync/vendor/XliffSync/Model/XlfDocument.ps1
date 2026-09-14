@@ -553,7 +553,7 @@ class XlfDocument {
 
     [string] GetUnitSourceText([System.Xml.XmlNode] $unitNode) {
         [System.Xml.XmlNode] $sourceNode = [XlfDocument]::GetNode('source', $unitNode);
-        if ((-not $sourceNode) -and (-not $sourceNode.HasChildNodes)) {
+        if ((-not $sourceNode) -or (-not $sourceNode.HasChildNodes)) {
             return $null;
         }
         return $sourceNode.ChildNodes[0].Value;
@@ -561,7 +561,7 @@ class XlfDocument {
 
     [string] GetUnitTranslation([System.Xml.XmlNode] $unitNode) {
         [System.Xml.XmlNode] $translationNode = [XlfDocument]::GetNode('target', $unitNode);
-        if ((-not $translationNode) -and (-not $translationNode.HasChildNodes)) {
+        if ((-not $translationNode) -or (-not $translationNode.HasChildNodes)) {
             return $null;
         }
         return $translationNode.ChildNodes[0].Value;

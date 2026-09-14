@@ -453,6 +453,22 @@ units. `al-pr-prepare` is evidence-only: it reports the recorded approval-gate r
 review count, and never runs the XLIFF tool. This changes existing framework behaviour in place
 under D-2; the four affected files are registered below for upstream conflict review.
 
+### D-37 — XLIFF runtime tolerates empty source and target elements
+
+The vendored `XlfDocument.ps1` implementation treated a self-closing `<source/>` or
+`<target/>` as if it always had a first child text node. In strict-mode execution,
+`GetUnitTranslation` therefore threw `PropertyNotFoundStrict` while synchronizing a
+valid `<target state="needs-translation"/>` unit, leaving the target XLIFF partially
+updated and blocking the required Stage 0 translation gate.
+
+The approved minimal in-place correction changes the guard in both
+`GetUnitSourceText` and `GetUnitTranslation` from `and` to `or`: a missing node or a
+node without child content returns `$null`. This retains all existing translation
+state, placeholder, validation, and human-approval rules. Reject changing project
+XLIFF files to avoid empty targets: those elements are valid workflow output and the
+runtime must handle them. This is a D-2 in-place fork delta to the vendored upstream
+file and must be flowed back to the Aproda ALDC fork.
+
 ---
 
 ## Stacking vs. changing — practical guide
@@ -518,6 +534,7 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `agents/al-conductor.agent.md` | Added the run-start Branch Gate, mandatory hotfix routing decision when no matching branch exists, and protected-branch blocks at both phase-commit checks. | D-2 / D-30 | 2026-09-01 |
 | `skills/skill-translate/SKILL.md`, `agents/al-developer.agent.md`, `agents/al-conductor.agent.md`, `prompts/al-pr-prepare.prompt.md` | Replaced the inline single-batch translation flow with the delegated two-artefact Stage 0 contract, PoEdit review, approval gate, and evidence-only PR reporting. | D-2 / D-7 / D-32 | 2026-09-01 |
 | `skills/skill-translate/SKILL.md`, `agents/al-developer.agent.md`, `agents/al-conductor.agent.md`, `prompts/al-pr-prepare.prompt.md` | Stage 1 deterministic resolution: wired the new `Resolve` action (tier 1 invariant / tier 2 project-derived exact memory) between `Sync -SkipBuild` and `ExportOpen` in both agents, documented it in `skill-translate`'s Pattern 2A and Workflow steps, and extended the PR evidence line with tier 1/tier 2 counts. | D-2 / D-32 | 2026-09-02 |
+| `tools/aproda-ps-xliffsync/vendor/XliffSync/Model/XlfDocument.ps1` | Guard empty self-closing XLIFF source/target elements before reading a first text node, preventing strict-mode failure during Sync. | D-2 / D-31 / D-37 | 2026-09-14 |
 
 ---
 
