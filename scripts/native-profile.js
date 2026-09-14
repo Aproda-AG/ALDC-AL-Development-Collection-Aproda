@@ -25,6 +25,10 @@ function project(relative, input) {
   const rel = relative.replace(/\\/g, '/');
   if (!/^(agents\/[^/]+\.agent|prompts\/[^/]+\.prompt)\.md$/.test(rel)) return input;
   let text = input.toString('utf8');
+  // Windows checkouts can use CRLF. Parse normalized lines, then restore the
+  // input convention so the unchanged workflow body remains byte-identical.
+  const eol = text.includes('\r\n') ? '\r\n' : '\n';
+  text = text.replace(/\r\n/g, '\n');
   const end = text.indexOf('\n---', 3);
   if (!text.startsWith('---\n') || end < 0) throw new Error(`Invalid frontmatter: ${rel}`);
   let front = text.slice(0, end);
@@ -69,7 +73,7 @@ function project(relative, input) {
     'Keep this workflow’s existing artifacts and approvals. Use only the native operations declared here; graph execution belongs to Developer/Implementer.';
   const notice = '\n\n## BC29 native capability contract\n\n' +
     'Profile: **bc29-native**, GitHub Copilot Chat in VS Code only. Before your first tool, dependency or evidence decision under this profile, read [the native tool contract](../docs/framework/native-al-tools.md). Apply its role scope, optional-provider rules, compatibility checks and evidence limits; reuse it within this invocation. A declared tool is not proof it is installed. Preserve the original human gates.\n\n' + duty + '\n';
-  return Buffer.from(front + '\n---' + notice + body);
+  return Buffer.from((front + '\n---' + notice + body).replace(/\n/g, eol));
 }
 
 module.exports = { project, roles };

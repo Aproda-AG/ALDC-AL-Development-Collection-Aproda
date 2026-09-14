@@ -45,10 +45,10 @@ de administración ni se garantiza el comportamiento de servicios no versionados
 
 Trabaja sobre una copia de prueba del proyecto. No ejecutes el instalador desde
 la raíz del repositorio canónico: su destino es el directorio de trabajo actual.
-Obtén esta rama en un checkout independiente y anota su commit:
+Obtén un checkout independiente de `main` tras integrar la PR #97 y anota su commit:
 
 ```powershell
-git clone --branch feat/canonical-bc29-al18 https://github.com/javiarmesto/ALDC-AL-Development-Collection.git ALDC-native29
+git clone --branch main https://github.com/javiarmesto/ALDC-AL-Development-Collection.git ALDC-native29
 git -C ALDC-native29 rev-parse HEAD
 $aldcInstaller = (Resolve-Path .\ALDC-native29\scripts\install.js).Path
 # Cambia a TU copia de prueba antes de instalar:
@@ -65,8 +65,11 @@ node $aldcInstaller install --profile bc29-native --force --yes
 
 La selección no modifica `app.json`, runtime, GUID, dependencias, entorno ni
 fuentes AL. El instalador mantiene sus operaciones habituales sobre el toolkit
-y `aldc.yaml`; `--force` reemplaza archivos administrados, incluidas instrucciones
-personalizadas. La memoria de proyecto existente se conserva. No hay publicación.
+y `aldc.yaml`; `--force` reemplaza también `aldc.yaml`, `aldc.code-workspace`,
+la entrada `.github/copilot-instructions.md` y las instrucciones personalizadas.
+Sin `--force` y con `--yes`, los archivos existentes se omiten: se conservan, pero
+no se actualizan. No hay backup automático ni rollback transaccional; volver a BC28
+no restaura personalizaciones sobrescritas. La memoria de proyecto existente se conserva. No hay publicación.
 El marcador `<target-dir>/aldc-profile.json` registra solo la selección, nunca
 capacidad verificada. Actualizar sin `--profile` conserva la selección registrada.
 
@@ -300,3 +303,11 @@ Fuentes: [plugins CLI](https://docs.github.com/en/copilot/reference/copilot-cli-
 [límite genérico](https://docs.github.com/en/copilot/reference/custom-agents-configuration),
 [prueba de plugins Claude](https://code.claude.com/docs/en/plugins),
 [permisos Claude](https://code.claude.com/docs/en/sub-agents).
+
+## Revisión de cierre de la PR #97
+
+El [registro de continuación](worklogs/canonical-reuse.md) recoge las correcciones,
+las pruebas actuales y el delta de empaquetado posterior. Se corrigió el rechazo
+de fuentes CRLF y se probó su instalación en fixture Linux; esto no certifica
+la ejecución completa en Windows. El perfil conserva el cuerpo del Conductor
+también con CRLF. El registro distingue preservación, omisión y sobrescritura.

@@ -4,7 +4,7 @@
 
 ## Overview
 
-This workspace contains AL (Application Language) code for Microsoft Dynamics 365 Business Central. It uses the **ALDC Core v1.1** skills-based architecture: **4 agents + 11 skills + 6 workflows + 7 instructions**.
+This workspace contains AL (Application Language) code for Microsoft Dynamics 365 Business Central. It uses the **ALDC Core v1.2** skills-based architecture. The installed distribution contains **10 agents (including 3 subagents), 16 skills, 11 prompts and 8 scoped instructions**; required and optional components are defined in `aldc.yaml`.
 
 ## Core Principles
 
@@ -12,7 +12,7 @@ These principles apply to ALL work in this repository:
 
 - **Extension-only development** — Never modify base application objects. Use tableextensions, pageextensions, event subscribers.
 - **Human-in-the-Loop (HITL)** — All critical decisions require user confirmation before proceeding.
-- **TDD / spec-driven** — Features follow the flow: `spec.create → architecture → test-plan → implementation → review`.
+- **TDD / spec-driven** — Features follow the flow: `architecture (MEDIUM/HIGH) → spec.create → test-plan → implementation → review`.
 - **Least privilege** — Generate only the minimum permissions required. Use XLIFF for all user-facing strings.
 - **Output language: English** — All persisted artifacts under `.github/plans/**` (architecture.md, spec.md, plan.md, phase-N-complete.md, plan-complete.md, test-plan.md, delivery.md, review reports, Dredd audit reports, BCQuality findings JSON) MUST be written in English regardless of the chat conversation language. Inline chat responses MAY follow the user's language; persisted artifacts stay in English.
 
@@ -63,7 +63,7 @@ Project estimation?        → @AL Pre-Sales & Project Estimation Specialist
 
 ## Skills
 
-11 composable knowledge modules loaded on-demand by agents. You don't invoke skills directly — agents load them automatically when the task requires domain-specific knowledge.
+The 11 core knowledge modules below are part of the 16 shipped skills, including optional modules. Agents load relevant skills on demand. You don't invoke skills directly — agents load them automatically when the task requires domain-specific knowledge.
 
 | Skill | Domain | Loaded by |
 |-------|--------|-----------|
@@ -81,11 +81,13 @@ Project estimation?        → @AL Pre-Sales & Project Estimation Specialist
 
 ## External Knowledge: BCQuality
 
+This layer is optional. Resolve `external.bcquality.enabled` from `aldc.yaml` once; when disabled or unavailable, use the complete native A–G review and state its coverage. Under `bc29-native`, the installed native contract also permits an already configured knowledge provider. A missing clone does not block the workflow.
+
 [BCQuality](https://github.com/microsoft/BCQuality) — a curated, citable knowledge base of Business Central guidance (atomic knowledge files + review skills) — is consumed from **outside the AL project**: a clone added as a second VS Code workspace root (multi-root via `aldc.code-workspace`), so its example `.al` files never enter your extension's compilation. Source/version is configurable in `aldc.yaml → external.bcquality` (defaults to upstream; point it at your own fork). See [`docs/bcquality.md`](../docs/bcquality.md) for install + usage.
 
-BCQuality is a **citation/audit layer, not a replacement** for the 7 auto-applied instructions or the 11 skills. The **AL Code Review Subagent** consults it (its "Step 0") before the A-G checklist: it routes via the BCQuality entry point (`<home>/skills/entry.md`, per `aldc.yaml`), runs the dispatched review skills, and folds the resulting findings — each backed by a knowledge-file citation — into the review report. A BCQuality `blocker`/`major` raises the review verdict like a native CRITICAL/MAJOR.
+BCQuality is a **citation/audit layer, not a replacement** for the scoped instructions or skills. The **AL Code Review Subagent** consults it (its "Step 0") before the A-G checklist: it routes via the BCQuality entry point (`<home>/skills/entry.md`, per `aldc.yaml`), runs the dispatched review skills, and folds the resulting findings — each backed by a knowledge-file citation — into the review report. A BCQuality `blocker`/`major` raises the review verdict like a native CRITICAL/MAJOR.
 
-> **Pilot scope**: only `al-performance-review`, `al-security-review`, and `al-style-review` are enabled. Run `bash tools/bcquality/install.sh` to clone BCQuality (to `../bcquality`), then open `aldc.code-workspace`.
+> **Pilot scope**: only `al-performance-review`, `al-security-review`, and `al-style-review` are enabled. If you choose the optional clone provider, run `bash tools/bcquality/install.sh` to clone BCQuality (to `../bcquality`), then open `aldc.code-workspace`.
 
 ## Skills Evidencing
 
@@ -108,7 +110,7 @@ The chain above is **declarative** — an agent could in principle claim a BCQua
 
 ## Auto-Applied Instructions
 
-Each instruction loads automatically when the file you're editing matches its `applyTo` glob. There is no semantic activation — only glob matching. The framework ships **7 instructions** (1 transversal + 6 domain). Narrow globs are deliberate: editing a Table or Page no longer drags codeunit-only rules into the prompt.
+Each instruction loads automatically when the file you're editing matches its `applyTo` glob. There is no semantic activation — only glob matching. The framework ships **8 scoped instructions**: the 7 core rules below plus the optional `al-agent-toolkit.instructions.md`. Narrow globs are deliberate: editing a Table or Page no longer drags codeunit-only rules into the prompt.
 
 | File | `applyTo` | What it enforces |
 |------|-----------|------------------|
@@ -183,8 +185,8 @@ Human-facing reference material — examples, workspace layout, links, troublesh
 
 ---
 
-**Framework**: ALDC Core v1.1 (Skills-Based Architecture)
-**Version**: 1.1.0
-**Last Updated**: 2026-05-31
+**Framework**: ALDC Core v1.2 (Skills-Based Architecture)
+**Version**: 1.2.0
+**Last Updated**: 2026-09-14
 **Workspace**: AL Development for Business Central
-**Primitives**: 4 agents + 3 subagents + 11 skills + 6 workflows + 7 instructions (1 transversal + 6 domain)
+**Primitives**: 10 agents (including 3 subagents) + 16 skills + 11 prompts + 8 scoped instructions; 6 core workflows

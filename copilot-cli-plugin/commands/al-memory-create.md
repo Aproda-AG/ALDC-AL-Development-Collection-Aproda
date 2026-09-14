@@ -289,7 +289,7 @@ execute: git diff / git status
 execute: al compile   (read the compiler output)
 
 # Check open work
-the TodoWrite list
+the current task list or plan document
 ```
 
 **Update with:**

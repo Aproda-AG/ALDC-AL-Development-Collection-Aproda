@@ -51,7 +51,7 @@ ALDC (AL Development Collection) transforms how you develop Business Central ext
 For the opt-in **BC29 / AL18 native profile in Copilot Chat**, see
 [installation, role changes and local validation](docs/native-bc29.md).
 BC28 remains the installer default. Claude Code and the dedicated `aldc-cli` plugin
-include terminal-specific BC29/AL18 contracts; see the same guide for branch-local
+include terminal-specific BC29/AL18 contracts; see the same guide for checkout-local
 installation and pending runtime verification. The VS Code extension is published separately.
 
 ### GitHub Copilot
@@ -73,14 +73,14 @@ Then, from the Command Palette:
 ALDC also ships as an installable Copilot plugin — `plugin.json` declares the agents (`agents/`), skills (`skills/`), and prompts (`prompts/`) that get installed, for editors that support the Copilot plugin marketplace:
 
 The root plugin retains the VS Code-oriented primitives. For **Copilot CLI**, use
-the dedicated terminal distribution from this review branch:
+the dedicated terminal distribution from this checkout:
 
 ```bash
 copilot plugin install ./copilot-cli-plugin
 copilot plugin list
 ```
 
-After this branch is integrated, the catalog entry is `aldc-cli@aldc-marketplace`.
+The catalog entry is `aldc-cli@aldc-marketplace`.
 See [plugin loading checks and limitations](docs/native-bc29.md#plugins-de-claude-code-y-copilot-cli)
 before testing. The directory is generated with `npm run sync:copilot-cli`.
 

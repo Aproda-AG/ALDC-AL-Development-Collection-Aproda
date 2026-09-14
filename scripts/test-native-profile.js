@@ -15,9 +15,9 @@ let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 const read = p => fs.readFileSync(p, 'utf8');
 const fm = text => yaml.load(text.split('\n---')[0].slice(4));
-const installer = (cwd, args = []) => spawnSync(process.execPath,
+const installer = (cwd, args = [], env = {}) => spawnSync(process.execPath,
   [path.join(root, 'scripts/install.js'), 'install', '--yes', ...args],
-  { cwd, encoding: 'utf8', timeout: 30000, env: { ...process.env, npm_config_offline: 'true' } });
+  { cwd, encoding: 'utf8', timeout: 30000, env: { ...process.env, npm_config_offline: 'true', ...env } });
 const digestFiles = directory => {
   const result = {};
   const walk = (dir, prefix = '') => {
@@ -34,6 +34,12 @@ try {
   const fixture = path.join(tmp, 'project'); fs.mkdirSync(fixture);
   const sentinel = '{"id":"fixture","version":"1.2.3.4"}\n';
   fs.writeFileSync(path.join(fixture, 'app.json'), sentinel);
+  fs.mkdirSync(path.join(fixture, 'App'));
+  fs.mkdirSync(path.join(fixture, 'Test'));
+  fs.writeFileSync(path.join(fixture, 'App/Sentinel.Table.al'), '// existing AL source\n');
+  fs.writeFileSync(path.join(fixture, 'Test/app.json'), sentinel);
+  fs.mkdirSync(path.join(fixture, '.vscode'));
+  fs.writeFileSync(path.join(fixture, '.vscode/settings.json'), '{"custom":true}\n');
   let run = installer(fixture);
   check(run.status === 0, `Default install: ${run.stderr}`);
   for (const tree of ['agents', 'prompts']) {
@@ -79,8 +85,15 @@ try {
   for (const name of ['al-developer', 'al-implement-subagent']) check(grants(name).includes('ms-dynamics-smb.al/al_build'), `Implementation build grant: ${name}`);
   check(!grants('al-triage').includes('ms-dynamics-smb.al/al_build'), 'Triage cannot build through native grant');
   const nativeBefore = agent('al-conductor');
+  const customPaths = ['aldc.yaml', 'aldc.code-workspace', '.github/copilot-instructions.md', '.github/instructions/al-guidelines.instructions.md'];
+  for (const rel of customPaths) fs.appendFileSync(path.join(fixture, rel), '\n# USER CUSTOMIZATION\n');
+  const customized = Object.fromEntries(customPaths.map(rel => [rel, read(path.join(fixture, rel))]));
+  run = installer(fixture);
+  check(run.status === 0, 'Non-force native update succeeds');
+  for (const rel of customPaths) check(read(path.join(fixture, rel)) === customized[rel], `Non-force preserves ${rel}`);
   run = installer(fixture, ['--force']);
   check(run.status === 0 && agent('al-conductor') === nativeBefore, 'Unspecified profile retains installed native selection');
+  for (const rel of customPaths) check(!read(path.join(fixture, rel)).includes('USER CUSTOMIZATION'), `Force replaces ${rel} as documented`);
   const memoryPath = path.join(fixture, '.github/plans/memory.md');
   fs.writeFileSync(memoryPath, 'USER MEMORY\n');
   run = installer(fixture, ['--profile', 'bc28', '--force']);
@@ -88,11 +101,31 @@ try {
   check(agent('al-conductor') === conductor, 'Rollback restores canonical Conductor bytes');
   check(read(memoryPath) === 'USER MEMORY\n', 'Rollback preserves project memory');
   check(read(path.join(fixture, 'app.json')) === sentinel, 'Rollback preserves user app.json');
+  check(read(path.join(fixture, 'App/Sentinel.Table.al')) === '// existing AL source\n', 'Profile changes preserve AL sources');
+  check(read(path.join(fixture, 'Test/app.json')) === sentinel, 'Profile changes preserve Test manifest');
+  check(read(path.join(fixture, '.vscode/settings.json')) === '{"custom":true}\n', 'Profile changes preserve VS Code settings');
   assert.throws(() => project('agents/new-role.agent.md', Buffer.from('---\ntools: [read]\n---\n')), /assignment missing/); checks++;
   const custom = path.join(tmp, 'custom'); fs.mkdirSync(custom);
   run = installer(custom, ['--profile', 'bc29-native', '--target-dir', '.copilot']);
   check(run.status === 0, `Custom target native install: ${run.stderr}`);
   check(fs.existsSync(path.join(custom, '.copilot/docs/framework/native-al-tools.md')), 'Contract installed with custom target');
+  // Reproduce a Windows-style source checkout without requiring a Windows host.
+  const crlfPackage = path.join(tmp, 'crlf-package');
+  fs.cpSync(root, crlfPackage, { recursive: true, filter: p => !['.git', 'node_modules'].includes(path.basename(p)) });
+  for (const tree of ['agents', 'prompts']) {
+    for (const name of fs.readdirSync(path.join(root, tree)).filter(n => /\.(agent|prompt)\.md$/.test(n))) {
+      const rel = `${tree}/${name}`;
+      const lf = read(path.join(root, rel)).replace(/\r\n/g, '\n');
+      const crlf = lf.replace(/\n/g, '\r\n');
+      fs.writeFileSync(path.join(crlfPackage, rel), crlf);
+      check(project(rel, Buffer.from(crlf)).toString().replace(/\r\n/g, '\n') === project(rel, Buffer.from(lf)).toString(), `CRLF projection: ${rel}`);
+    }
+  }
+  const crlfFixture = path.join(tmp, 'crlf-project'); fs.mkdirSync(crlfFixture);
+  run = installer(crlfFixture, ['--profile', 'bc29-native'], { ALDC_PACKAGE_DIR: crlfPackage });
+  check(run.status === 0, `CRLF source installation succeeds: ${run.stdout} ${run.stderr}`);
+  const crlfConductor = read(path.join(crlfPackage, 'agents/al-conductor.agent.md'));
+  check(read(path.join(crlfFixture, '.github/agents/al-conductor.agent.md')).endsWith(crlfConductor.slice(crlfConductor.indexOf('\r\n---', 3) + 5)), 'CRLF Conductor body retained byte for byte');
   console.log(`PASS: ${checks} checks; real default/native/switch/rollback/custom-target installs. No AL/BC runtime operations executed.`);
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });

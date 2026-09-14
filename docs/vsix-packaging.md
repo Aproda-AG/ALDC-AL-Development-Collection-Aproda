@@ -43,8 +43,10 @@ git -C $extensionRoot branch --show-current
 git -C $extensionRoot rev-parse HEAD
 ```
 
-Para esta adaptación, ambos repositorios usan la rama
-`feat/canonical-bc29-al18`. Anota los dos SHA junto al VSIX generado.
+Tras integrar la PR #97, ALDC se obtiene de `main`. La extensión tiene su propia
+PR #1 y rama `feat/canonical-bc29-al18`; su integración se revisa por separado.
+Anota ambos SHA junto al VSIX generado y comprueba el estado de esa PR antes
+de seleccionar su rama. Cerrar #97 no integra ni publica la extensión.
 
 ## Paso previo: crear el checkout de prueba
 
@@ -54,7 +56,8 @@ copia independiente de la rama y conserva el checkout habitual tal como está.
 ```powershell
 $sourceRepo = 'C:\Users\JavierArmestoGonzále\Documents\AL\ALDC'
 $testRepo = 'C:\ALDC-Forge-Tests\ALDC-native29'
-$branch = 'feat/canonical-bc29-al18'
+$branch = 'main'
+$extensionBranch = 'feat/canonical-bc29-al18' # comprobar antes la PR #1 de la extensión
 
 git -C $sourceRepo fetch origin $branch
 git clone --branch $branch --single-branch `
@@ -72,7 +75,7 @@ la rama coordinada de la extensión dentro del directorio ignorado `toolbox/`:
 $testExtension = Join-Path $testRepo 'toolbox\al-coding-agent-collection'
 
 New-Item -ItemType Directory -Path (Split-Path $testExtension) -Force | Out-Null
-git clone --branch $branch --single-branch `
+git clone --branch $extensionBranch --single-branch `
   https://github.com/javiarmesto/aldc-vscode-extension.git $testExtension
 
 git -C $testExtension status --short

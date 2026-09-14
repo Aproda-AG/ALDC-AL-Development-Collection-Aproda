@@ -20,6 +20,7 @@ check(JSON.stringify(manifest.mcpServers) === JSON.stringify(JSON.parse(read('pl
 check(!manifest.hooks, 'No incompatible Claude hooks imported');
 for (const [file, content] of generated) {
   if (!file.endsWith('.md')) continue;
+  check(!/\bTodoWrite\b/.test(content), `${file}: no Claude task-list tool remains`);
   // Verify actual packaged links for new contracts rather than repo-only links.
   for (const match of content.matchAll(/\]\(([^)]+(?:cli-al-tools|al18-capabilities)\.md)\)/g)) {
     const target = path.posix.normalize(path.posix.join(path.posix.dirname(file), match[1]));

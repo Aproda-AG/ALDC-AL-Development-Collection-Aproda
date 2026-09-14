@@ -524,10 +524,10 @@ ${C.cyan}Examples:${C.reset}
 ${C.cyan}What gets installed:${C.reset}
   ${C.bold}Core:${C.reset}
   <target-dir>/
-    agents/           5 agents (4 public + 1 optional) + 3 subagents
-    skills/           14 skills (7 required + 4 recommended + 3 optional)
-    prompts/          10 workflows (6 core + 4 agent-builder)
-    instructions/     10 auto-applied guidelines
+    agents/           10 agents (including 3 subagents)
+    skills/           16 skills (7 required + 4 recommended + 5 optional)
+    prompts/          11 workflows (6 core + 5 agent-builder)
+    instructions/     8 scoped instructions + copilot entrypoint
     docs/framework/   Core specification & docs
     docs/templates/   7 contract templates
     collections/      Collection manifest
