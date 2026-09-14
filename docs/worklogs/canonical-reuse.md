@@ -1,7 +1,10 @@
 # Continuación de ALDC canónico
 
-Entrega activa: handoff 01, revisión y cierre de la PR #97. Fecha: 2026-09-14.
-El handoff 02 sigue pendiente de un encargo posterior.
+Entrega activa: handoff 02, entrega 1 de empaquetado. Fecha: 2026-09-14.
+Handoff 01 integrado: PR #97, merge `2f7f31a42ba8fe93eaeb8309ba582745a5ccb527`.
+Su rama se retiró tras comprobar integración; main y sus checks quedaron correctos.
+El usuario autorizó continuar handoff 02. Doctor y Spec corresponden a las siguientes
+entregas y no se implementan en este incremento.
 
 ## Base y revisión
 
@@ -126,3 +129,66 @@ No hace falta copiar otros generadores ni las primitivas de Graph para repetirlo
 
 No copiar DAG, Evidence Store, Context Envelope, fingerprints por transición,
 Run Health Graph ni runtime completo. Doctor y Spec Agent siguen fuera de #97.
+
+
+## Handoff 02 — entrega 1 implementada
+
+Base: main `2f7f31a42ba8fe93eaeb8309ba582745a5ccb527`, sin PR abiertas al comenzar.
+Rama única: `feat/canonical-plugin-packaging`, [PR #100](https://github.com/javiarmesto/ALDC-AL-Development-Collection/pull/100). Se preserva el main integrado y no
+se reabre #97. Lab y PR externa del VSIX se mantienen sin cambios.
+
+- Motor común de planificación, recibos/hash, colisiones visibles y backup/rollback
+  usado por el instalador Chat existente y la inicialización de los tres terminales.
+  Los archivos gestionados intactos se actualizan. La memoria y las personalizaciones
+  se conservan; force reemplaza con respaldo. No se instalan dependencias como
+  efecto del inicializador. Verificación de drift y recuperación tienen comandos.
+- Procedencia de fuentes y payload en los paquetes Claude, CLI y Codex, con SHA-256
+  y normalización LF/CRLF limitada. Se amplía el generador CLI existente. Plantillas
+  usadas por workflows incluidas; no se copia otro generador Python.
+- Claude inicializa reglas y bloque propio en CLAUDE.md; SessionStart aporta contexto
+  de ruta solo en proyectos AL y no escribe. No se copian hooks a otros hosts.
+- Codex regenera diez perfiles TOML y un skill ALDC con referencias de roles,
+  workflows, reglas y dominio. Bootstrap con AGENTS.override.md/AGENTS.md y memoria;
+  conserva modelo, razonamiento, permisos, sandbox y MCP del padre. Sin overlay,
+  runtime ni identidad Graph. Las referencias de dominio no se registran como
+  skills duplicados. La conversión a GUIDE.md se limita a referencias empaquetadas;
+la creación de nuevas skills sigue usando SKILL.md. No se registra Marketplace ni se instala en esta sesión.
+
+Comprobaciones locales: 214 checks de perfil, 226 de empaquetado CLI, 15 pruebas
+conductuales de instalación/recuperación, 57 de conformance y 71 archivos Foundation.
+Se probó fallo parcial con restauración de archivos y recibo, incluida interrupción
+durante el propio rollback y recuperación posterior; rollback encadenado,
+memoria editada, colisiones persistentes, backup corrupto, lock activo, symlink,
+contenido manipulado y fuentes CRLF. TOML analizado con Python stdlib: diez perfiles
+con cuerpo completo y un único SKILL.md descubrible. Validadores plugin/skill pasan.
+El archivo npm se extrajo y pasó validate offline con sus propios contenidos.
+Claude mirror y los generadores quedan sincronizados. CI y revisión remota se
+consultan en la PR de esta rama antes de integrar.
+
+Límites: sin ejecutables utilizables VS Code, Claude, Copilot CLI o Codex. Sin
+carga real certificada ni compilación App/Test, ejecución funcional o despliegue BC.
+Conductor/Architect completos permanecen por encima de 29k caracteres; no se
+recortan para pasar una comprobación estática. Recuperación comprobada en Linux;
+Windows y los hosts reales quedan pendientes. No se promete durabilidad ante
+apagón ni protección contra edición concurrente adversaria.
+
+Procedencia exacta y transformaciones: [plugin-packaging.md](../plugin-packaging.md).
+Se leyeron el motor y ambas suites del donante Chat antes de adaptarlo. Las suites
+Graph del donante se analizaron como evidencia, no se ejecutaron ni trasladaron.
+
+**Delta de empaquetado restante:** comprobar descubrimiento/carga completa de
+roles y reglas por host, recarga de caché sin duplicados y actualización/rollback
+real en Windows. Resolver solo fallos observados en cada superficie. Coordinar el
+VSIX externo para regenerar desde main cuando proceda. El siguiente incremento
+implementable es Doctor canónico; después Spec Agent y sus adaptadores.
+
+
+Revisión remota #100: Copilot revisó 120/157 archivos del head inicial y emitió
+COMMENTED con cambios recomendados (tres hilos y dos comentarios suprimidos).
+Se corrigen los cinco: comparación de rutas Windows sin distinción de mayúsculas,
+verbos legibles en Codex, memoria Core v1.2 desde la plantilla raíz, hook silencioso
+en proyectos con solo .github/plans o app.json ajeno a AL, y ejemplos de instrucciones
+recuperados de la fuente canónica. Pruebas de rutas Windows son análisis de rutas
+sobre Linux, no ejecución Windows. Las correcciones y sus derivados se validan
+antes de resolver hilos; no se presenta la revisión del head inicial como una
+aprobación automática del head corregido.

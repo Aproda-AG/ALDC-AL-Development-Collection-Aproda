@@ -23,17 +23,15 @@ This workflow covers environment setup, AL workspace configuration, and **ALDC r
 
 ## Phase 0: ALDC instructions (Copilot CLI)
 
-Locate this installed plugin through the plugin list; do not assume its root is
-the project directory or that a shell variable is populated. Read the sibling
-rules-templates directory and copy its *.instructions.md files into the project's
-.github/instructions directory. Review existing files and preserve customizations;
-do not silently overwrite them. The templates use applyTo, not Claude paths.
-
-Add a short ALDC routing note to project AGENTS.md, preserving existing content.
-List al-architect for design, al-developer for implementation and al-conductor for
-the full TDD cycle. Discover command labels in the installed CLI; request the
-al-spec-create or al-build workflow by name. Do not assume Claude's slash namespace.
-Confirm instruction loading and the existing human review gate before setup.
+Locate the installed plugin root through the plugin list. Run its scripts/init.js
+with Node 20+ and --project <directory> to preview project changes. After reviewing
+the plan, repeat with --apply. Existing customized rules remain visible collisions;
+use --force only for reviewed replacement, with a recoverable backup. This adds a
+managed AGENTS.md block (or updates AGENTS.override.md when present), preserving
+surrounding project instructions and .github/plans/memory.md. Use --verify for
+receipt drift and --rollback to restore the preceding initialization. Neither
+operation installs software or configures MCP servers. Discover command labels in
+the installed CLI. Confirm instruction loading and the human review gate.
 
 ## Phase 1: Environment Setup
 

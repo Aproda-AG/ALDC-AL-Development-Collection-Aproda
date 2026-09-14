@@ -51,7 +51,7 @@ function walk(dir) {
 }
 function expected(root = ROOT) {
   const files = new Map();
-  const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+  const read = p => fs.readFileSync(path.join(root, p), 'utf8').replace(/\r\n/g, '\n');
   const put = (p, text) => files.set(`${DEST}/${p}`, text);
   const manifest = JSON.parse(read('plugin.json'));
   delete manifest.userConfig;
@@ -61,7 +61,7 @@ function expected(root = ROOT) {
   put('plugin.json', JSON.stringify(manifest, null, 2) + '\n');
   for (const file of walk(path.join(root, 'claude-plugin/agents'))) {
     const name = path.basename(file, '.md');
-    const src = split(fs.readFileSync(file, 'utf8'));
+    const src = split(fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n'));
     const canonical = split(read(`agents/${name}.agent.md`));
     // Translate the existing Copilot model identifier, never infer it from AL18.
     const models = { 'Claude Sonnet 4.6 (copilot)': 'claude-sonnet-4.6' };
@@ -71,7 +71,7 @@ function expected(root = ROOT) {
     put(`agents/${name}.agent.md`, '---\n' + yaml.dump(data, { lineWidth: -1 }) + '---' + bodyFor(src.body));
   }
   for (const file of walk(path.join(root, 'claude-plugin/commands'))) {
-    const src = split(fs.readFileSync(file, 'utf8'));
+    const src = split(fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n'));
     let body = bodyFor(src.body);
     if (path.basename(file) === 'al-initialize.md') {
       const start = body.indexOf('## Phase 0:');
@@ -79,17 +79,15 @@ function expected(root = ROOT) {
       if (start < 0 || end <= start) throw new Error('Initialization structure changed');
       body = body.slice(0, start) + `## Phase 0: ALDC instructions (Copilot CLI)
 
-Locate this installed plugin through the plugin list; do not assume its root is
-the project directory or that a shell variable is populated. Read the sibling
-rules-templates directory and copy its *.instructions.md files into the project's
-.github/instructions directory. Review existing files and preserve customizations;
-do not silently overwrite them. The templates use applyTo, not Claude paths.
-
-Add a short ALDC routing note to project AGENTS.md, preserving existing content.
-List al-architect for design, al-developer for implementation and al-conductor for
-the full TDD cycle. Discover command labels in the installed CLI; request the
-al-spec-create or al-build workflow by name. Do not assume Claude's slash namespace.
-Confirm instruction loading and the existing human review gate before setup.
+Locate the installed plugin root through the plugin list. Run its scripts/init.js
+with Node 20+ and --project <directory> to preview project changes. After reviewing
+the plan, repeat with --apply. Existing customized rules remain visible collisions;
+use --force only for reviewed replacement, with a recoverable backup. This adds a
+managed AGENTS.md block (or updates AGENTS.override.md when present), preserving
+surrounding project instructions and .github/plans/memory.md. Use --verify for
+receipt drift and --rollback to restore the preceding initialization. Neither
+operation installs software or configures MCP servers. Discover command labels in
+the installed CLI. Confirm instruction loading and the human review gate.
 
 ` + body.slice(end);
     }
@@ -99,13 +97,13 @@ Confirm instruction loading and the existing human review gate before setup.
     put(`commands/${path.basename(file)}`, '---\n' + yaml.dump(data, { lineWidth: -1 }) + '---' + body);
   }
   for (const file of walk(path.join(root, 'claude-plugin/skills'))) {
-    const content = fs.readFileSync(file, 'utf8');
+    const content = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
     // Shared contracts explicitly compare hosts; preserve their names and citations.
     const neutral = ['cli-al-tools.md', 'al18-capabilities.md'].includes(path.basename(file));
     put('skills/' + path.relative(path.join(root, 'claude-plugin/skills'), file).split(path.sep).join('/'), neutral ? content : bodyFor(content));
   }
   for (const file of walk(path.join(root, 'claude-plugin/rules-templates'))) {
-    const src = split(fs.readFileSync(file, 'utf8'));
+    const src = split(fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n'));
     const data = { applyTo: src.data.paths.join(','), description: src.data.description };
     const body = bodyFor(src.body).replace(/\]\(\.\/(al-[^)]+)\.md\)/g, '](./$1.instructions.md)');
     put(`rules-templates/${path.basename(file, '.md')}.instructions.md`, '---\n' + yaml.dump(data, { lineWidth: -1 }) + '---' + body);
@@ -145,6 +143,14 @@ CLI loads them completely; if it rejects/truncates one, do not certify that work
 No Claude/Copilot executable or Business Central runtime was available in CI/local
 static validation of this adaptation. Plugin loading and AL execution remain pending.
 `);
+  const { support } = require('./sync-plugin-support');
+  for (const [p,b] of support('cli', root)) put(p,b);
+  const { walk: paths, provenance } = require('./package-provenance');
+  const sources = paths(root, 'claude-plugin').filter(p => !p.endsWith('/provenance.json'));
+  sources.push(...paths(root, 'agents'), 'plugin.json', 'scripts/sync-plugin-support.js',
+    'scripts/install-transaction.js', 'scripts/init-plugin.js', ...paths(root, 'docs/templates'));
+  put('provenance.json', provenance(root, sources,
+    new Map([...files].map(([p,b]) => [p.slice(DEST.length+1),b])), 'scripts/sync-copilot-cli.js'));
   return files;
 }
 function sync(check = false, root = ROOT) {
@@ -152,7 +158,7 @@ function sync(check = false, root = ROOT) {
   let drift = 0;
   for (const [rel, text] of files) {
     const dest = path.join(root, rel);
-    if (fs.existsSync(dest) && fs.readFileSync(dest, 'utf8') === text) continue;
+    if (fs.existsSync(dest) && fs.readFileSync(dest, 'utf8').replace(/\r\n/g, '\n') === text.toString().replace(/\r\n/g, '\n')) continue;
     drift++;
     if (check) console.error(`drift: ${rel}`);
     else { fs.mkdirSync(path.dirname(dest), { recursive: true }); fs.writeFileSync(dest, text); }

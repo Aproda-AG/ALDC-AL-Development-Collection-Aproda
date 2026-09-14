@@ -1,0 +1,1 @@
+Use the ALDC skill at .agents/skills/aldc/SKILL.md for Business Central development. Read the relevant role, workflow and AL rules there before acting. Preserve approved plans and .github/plans/memory.md. Human gates and the current session authorization apply.

@@ -29,7 +29,6 @@ const C = {
 
 const log = (msg, c = '') => console.log(`${c}${msg}${C.reset}`);
 const ok = (msg) => log(`  + ${msg}`, C.green);
-const skip = (msg) => log(`  - ${msg} (exists, skipped)`, C.yellow);
 const err = (msg) => log(`  x ${msg}`, C.red);
 const info = (msg) => log(msg, C.cyan);
 const header = (title) => {
@@ -83,6 +82,8 @@ function parseArgs(argv) {
       parsed.profile = args[++i];
     } else if (a === '--yes' || a === '-y') {
       parsed.yes = true;
+    } else if (a === '--dry-run') {
+      parsed.dryRun = true;
     } else if (a === '--force' || a === '-f') {
       parsed.force = true;
     } else if (a === '--help' || a === '-h') {
@@ -100,67 +101,6 @@ function ensureDir(dir) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-}
-
-/**
- * Copy a directory recursively.
- * @param {string} src  Source directory
- * @param {string} dst  Destination directory
- * @param {boolean} force  Overwrite existing files
- * @returns {{ copied: number, skipped: number }}
- */
-function copyDir(src, dst, force = false, depth = 0, transform = null) {
-  if (!fs.existsSync(src)) return { copied: 0, skipped: 0 };
-  ensureDir(dst);
-
-  let copied = 0;
-  let skipped = 0;
-
-  const ALWAYS_EXCLUDE = new Set(['node_modules', 'package-lock.json', '.git', '.gitignore', '.npmignore']);
-  const ROOT_EXCLUDE = new Set(['install.js', 'validate-al-collection.js']);
-
-  for (const item of fs.readdirSync(src)) {
-    if (ALWAYS_EXCLUDE.has(item)) continue;
-    if (depth === 0 && ROOT_EXCLUDE.has(item)) continue;
-
-    const srcPath = path.join(src, item);
-    const dstPath = path.join(dst, item);
-    const stat = fs.statSync(srcPath);
-
-    if (stat.isDirectory()) {
-      const r = copyDir(srcPath, dstPath, force, depth + 1, transform);
-      copied += r.copied;
-      skipped += r.skipped;
-    } else if (force || !fs.existsSync(dstPath)) {
-      if (transform) fs.writeFileSync(dstPath, transform(srcPath, fs.readFileSync(srcPath)));
-      else fs.copyFileSync(srcPath, dstPath);
-      ok(path.relative(dst, dstPath) || item);
-      copied++;
-    } else {
-      skip(path.relative(dst, dstPath) || item);
-      skipped++;
-    }
-  }
-
-  return { copied, skipped };
-}
-
-/**
- * Copy a single file. Returns true if copied.
- */
-function copyFile(src, dst, force = false) {
-  if (!fs.existsSync(src)) {
-    err(`Source not found: ${src}`);
-    return false;
-  }
-  if (!force && fs.existsSync(dst)) {
-    skip(path.basename(dst));
-    return false;
-  }
-  ensureDir(path.dirname(dst));
-  fs.copyFileSync(src, dst);
-  ok(path.basename(dst));
-  return true;
 }
 
 /**
@@ -270,7 +210,7 @@ async function install(opts) {
         log('Merge mode: existing files will be preserved.', C.dim);
       }
     } else {
-      log('Merge mode: existing files will be preserved (use --force to overwrite).', C.dim);
+      log('Tracked unchanged files can update; customized files remain visible collisions.', C.dim);
     }
   }
 
@@ -283,110 +223,45 @@ async function install(opts) {
     }
   }
 
-  let totalCopied = 0;
-  let totalSkipped = 0;
-
-  // 1. Copy each component into target dir
-  for (const comp of COMPONENTS) {
-    header(`Installing ${comp.name} (${comp.count})`);
-    const src = path.join(packageDir, comp.src);
-    const dst = path.join(targetDir, comp.src);
-    const r = copyDir(src, dst, opts.force, 0, transform);
-    totalCopied += r.copied;
-    totalSkipped += r.skipped;
-  }
-
-  // 2. Copy collections/ into target dir
-  header('Installing Collections');
-  const colSrc = path.join(packageDir, 'collections');
-  if (fs.existsSync(colSrc)) {
-    const r = copyDir(colSrc, path.join(targetDir, 'collections'), opts.force);
-    totalCopied += r.copied;
-    totalSkipped += r.skipped;
-  } else {
-    log('  collections/ not found (optional)', C.dim);
-  }
-
-  // 3. Copy aldc.yaml to project root and update toolkitRoot
-  header('Installing Configuration');
-  const aldcYamlDst = path.join(projectDir, 'aldc.yaml');
-  if (copyFile(
-    path.join(packageDir, 'aldc.yaml'),
-    aldcYamlDst,
-    opts.force
-  )) {
-    totalCopied++;
-    // Update toolkitRoot to match the target directory relative to project root
-    const relTarget = path.relative(projectDir, targetDir).replace(/\\/g, '/') || '.';
-    if (relTarget !== '.') {
-      let yamlContent = fs.readFileSync(aldcYamlDst, 'utf8');
-      yamlContent = yamlContent.replace(/^toolkitRoot:\s*"\."/m, `toolkitRoot: "${relTarget}"`);
-      fs.writeFileSync(aldcYamlDst, yamlContent, 'utf8');
-      ok(`toolkitRoot updated to "${relTarget}"`);
+  // Build every destination in memory before the first project write.
+  const { apply } = require('./install-transaction');
+  const files = new Map();
+  const relative = dst => path.relative(projectDir, dst).split(path.sep).join('/');
+  const add = (src, dst, seed = false) => {
+    let content = fs.readFileSync(src);
+    if (transform) content = transform(src, content);
+    const rel = relative(dst);
+    if (files.has(rel)) throw new Error(`Duplicate installation destination: ${rel}`);
+    files.set(rel, { content, seed });
+  };
+  const tree = (src, dst) => {
+    if (!fs.existsSync(src)) return;
+    for (const e of fs.readdirSync(src, { withFileTypes: true })) {
+      if (['node_modules', 'package-lock.json', '.git', '.gitignore', '.npmignore'].includes(e.name)) continue;
+      if (e.isSymbolicLink()) throw new Error(`Symlink source: ${src}/${e.name}`);
+      if (e.isDirectory()) tree(path.join(src, e.name), path.join(dst, e.name));
+      else add(path.join(src, e.name), path.join(dst, e.name));
     }
-  } else { totalSkipped++; }
-
-  // 4. Copy the always-on entrypoint to .github/.
-  //    Ship the TRIMMED entrypoint (.github/copilot-instructions.md, ~31% leaner)
-  //    as the user's always-on context; the full reference stays available at
-  //    instructions/copilot-instructions.md.
-  const copilotSrc = path.join(packageDir, '.github', 'copilot-instructions.md');
-  const copilotDst = path.join(projectDir, '.github', 'copilot-instructions.md');
-  if (copyFile(copilotSrc, copilotDst, opts.force)) {
-    totalCopied++;
-  } else {
-    totalSkipped++;
-  }
-
-  // 4b. Copy the BCQuality tooling to the PROJECT ROOT (optional layer).
-  //     tools/bcquality/ + aldc.code-workspace are referenced by aldc.yaml and the
-  //     docs relative to the project root (the validator reads aldc.yaml from there).
-  //     The scripts only sit here until the user opts in by running install.sh; the
-  //     external knowledge base is NOT cloned by this installer. See docs/bcquality.md.
-  header('Installing BCQuality tooling (optional)');
-  const bcqSrc = path.join(packageDir, 'tools', 'bcquality');
-  if (fs.existsSync(bcqSrc)) {
-    const r = copyDir(bcqSrc, path.join(projectDir, 'tools', 'bcquality'), opts.force);
-    totalCopied += r.copied;
-    totalSkipped += r.skipped;
-    if (copyFile(
-      path.join(packageDir, 'aldc.code-workspace'),
-      path.join(projectDir, 'aldc.code-workspace'),
-      opts.force
-    )) { totalCopied++; } else { totalSkipped++; }
-    ok('BCQuality install scripts + aldc.code-workspace (run tools/bcquality/install.sh to opt in)');
-  } else {
-    log('  tools/bcquality/ not found (optional)', C.dim);
-  }
-
-  // 5. Create .github/plans/ and memory.md from template
-  header('Initializing Plans & Memory');
-  const plansDir = path.join(projectDir, '.github', 'plans');
-  ensureDir(plansDir);
-  ok('plans/ directory');
-
-  const memoryTemplate = path.join(packageDir, 'docs', 'templates', 'memory-template.md');
-  const memoryDst = path.join(plansDir, 'memory.md');
-  if (copyFile(memoryTemplate, memoryDst, false)) {
-    totalCopied++;
-  } else {
-    totalSkipped++;
-  }
-
-  // 6. Install validator dependencies (js-yaml)
-  const validatorDir = path.join(targetDir, 'tools', 'aldc-validate');
-  if (fs.existsSync(path.join(validatorDir, 'package.json'))) {
-    try {
-      const { execSync } = require('child_process');
-      execSync('npm install --production --silent', { cwd: validatorDir, stdio: 'ignore' });
-      ok('Validator dependencies installed');
-    } catch {
-      log('  ! Could not install validator dependencies (run npm install in tools/aldc-validate/)', C.yellow);
-    }
-  }
+  };
+  for (const comp of COMPONENTS) tree(path.join(packageDir, comp.src), path.join(targetDir, comp.src));
+  tree(path.join(packageDir, 'collections'), path.join(targetDir, 'collections'));
+  tree(path.join(packageDir, 'tools/bcquality'), path.join(projectDir, 'tools/bcquality'));
+  add(path.join(packageDir, 'aldc.code-workspace'), path.join(projectDir, 'aldc.code-workspace'));
+  add(path.join(packageDir, '.github/copilot-instructions.md'), path.join(projectDir, '.github/copilot-instructions.md'));
+  add(path.join(packageDir, 'docs/templates/memory-template.md'), path.join(projectDir, '.github/plans/memory.md'), true);
+  const relTarget = relative(targetDir) || '.';
+  files.set('aldc.yaml', { content: fs.readFileSync(path.join(packageDir, 'aldc.yaml'), 'utf8')
+    .replace(/^toolkitRoot:\s*"\."/m, `toolkitRoot: ${JSON.stringify(relTarget)}`) });
+  files.set(relative(markerPath), { content: JSON.stringify({ profile, surface: 'copilot-chat-vscode' }, null, 2) + '\n' });
+  const result = apply({ root: projectDir, surface: 'chat', files, force: opts.force, dryRun: opts.dryRun });
+  for (const file of result.files) if (file.action !== 'unchanged') log(`  ${file.action}: ${file.path}`);
+  if (opts.dryRun) { info('Dry run: no files written.'); return; }
+  const totalCopied = result.files.filter(f => ['add', 'replace'].includes(f.action)).length;
+  const totalSkipped = result.files.filter(f => ['preserve', 'collision'].includes(f.action)).length;
+  if (result.transaction) info(`Backup transaction: ${result.transaction}; use aldc rollback to restore.`);
+  info('Validator dependencies are not installed automatically. Run npm install in the installed tools/aldc-validate directory if needed.');
 
   // ─── Summary ──────────────────────────────────────────────────────────────
-  fs.writeFileSync(markerPath, JSON.stringify({ profile, surface: 'copilot-chat-vscode' }, null, 2) + '\n');
   header('Installation Complete');
   log(`Files copied:  ${totalCopied}`, C.green);
   if (totalSkipped > 0) {
@@ -502,7 +377,8 @@ ${C.cyan}Options:${C.reset}
   --profile <name>    bc28 (default for new installs) or bc29-native (Copilot Chat)
   --target-dir <dir>  Installation directory (default: .github)
   --yes, -y           Skip confirmation prompts
-  --force, -f         Overwrite existing files
+  --force, -f         Replace reviewed collisions with backup
+  --dry-run          Preview all file actions without writes
 
 ${C.cyan}Examples:${C.reset}
   ${C.green}# Install to default .github/ directory${C.reset}
@@ -513,6 +389,8 @@ ${C.cyan}Examples:${C.reset}
 
   ${C.green}# Force-update all files${C.reset}
   npx aldc install --force --yes
+  npx aldc verify-install
+  npx aldc rollback
 
   ${C.green}# Install from local .tgz${C.reset}
   npm install ./al-development-collection-3.2.0.tgz
@@ -648,6 +526,17 @@ const opts = parseArgs(process.argv);
 switch (opts.command) {
   case 'help':
     showHelp();
+    break;
+  case 'rollback':
+    try { console.log(require('./install-transaction').rollback(process.cwd(), 'chat')); }
+    catch (e) { err(e.message); process.exitCode = 1; }
+    break;
+  case 'verify-install':
+    try {
+      const changed = require('./install-transaction').drift(process.cwd(), 'chat');
+      console.log(changed.length ? 'Drift: ' + changed.join(', ') : 'Managed files match installation receipt; host loading remains unverified.');
+      if (changed.length) process.exitCode = 1;
+    } catch (e) { err(e.message); process.exitCode = 1; }
     break;
   case 'validate':
     validate(opts).catch((e) => { err(e.message); process.exit(1); });
