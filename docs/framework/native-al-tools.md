@@ -3,7 +3,7 @@
 Applies only to the opt-in `bc29-native` profile in **GitHub Copilot Chat in VS Code**.
 Read before the first tool, dependency or evidence decision under this profile, then
 reuse within that invocation. The existing role, human gates, TDD flow and plans
-remain authoritative. This is not ALDC Graph orchestration. Copilot CLI requires
+remain authoritative. Copilot CLI requires
 an independent check; these names and schemas do not apply to Claude Code or Codex.
 
 ## Discover before calling
@@ -106,16 +106,13 @@ not a runner. No environment upgrade or publication is authorized by this profil
 
 ## Optional static AL graph
 
-`al graph` analyzes AL source relationships; **ALDC Graph** organizes agents.
-The canonical Conductor remains intact. No Doctor, graph execution ledger,
-parallel scheduler or mandatory graph step is introduced.
+`al graph` provides optional static analysis of AL source relationships. Use it only
+when it helps answer a concrete engineering question.
 
 Developer/Implementer checks `al version`, `al graph --help`, then the installed
 help for `extract-whole`, `query` and `export` before executing a material question.
 If a command is unavailable, note that once and proceed with unaffected work.
-The following forms come from the
-[prepared NATIVE29-001 contract](https://github.com/javiarmesto/ALDC-Research-Lab/blob/7d06c607677188477994b4b1c0db50bc0b75ed7b/experiments/native29-001/TOOL-CONTRACTS.md),
-not execution in this environment. Reconcile flags with installed help first.
+The following examples require confirmation against the installed help before use.
 
 ```powershell
 al version
