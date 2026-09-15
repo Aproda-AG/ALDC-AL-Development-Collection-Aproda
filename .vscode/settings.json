@@ -3,5 +3,12 @@
     "gitlens.gitkraken.mcp.autoEnabled": false,
     "mcp": {},
     "codeQL.githubDatabase.download": "never",
-    "sarif-viewer.connectToGithubCodeScanning": "off"
+    "sarif-viewer.connectToGithubCodeScanning": "off",
+    "python-envs.pythonProjects": [
+        {
+            "path": ".",
+            "envManager": "ms-python.python:system",
+            "packageManager": "ms-python.python:pip"
+        }
+    ]
 }
