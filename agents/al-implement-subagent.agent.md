@@ -3,7 +3,7 @@ name: AL Implementation Subagent
 description: 'TDD Implementation Subagent — Creates AL objects following strict RED→GREEN→REFACTOR cycle. Only invokable by al-conductor via runSubagent.'
 user-invocable: false
 disable-model-invocation: true
-tools: [vscode/memory, execute/runInTerminal, read/problems, read/readFile, edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, 'al-symbols-mcp/*', 'microsoft-learn/*', ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, SShadowSdk.al-lsp-for-agents/bclsp_goToDefinition, SShadowSdk.al-lsp-for-agents/bclsp_hover, SShadowSdk.al-lsp-for-agents/bclsp_findReferences, SShadowSdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, SShadowSdk.al-lsp-for-agents/bclsp_incomingCalls, SShadowSdk.al-lsp-for-agents/bclsp_outgoingCalls, SShadowSdk.al-lsp-for-agents/bclsp_codeLens, SShadowSdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, SShadowSdk.al-lsp-for-agents/bclsp_documentSymbols, SShadowSdk.al-lsp-for-agents/bclsp_renameSymbol, todo]
+tools: [vscode/memory, execute/runInTerminal, read/problems, read/readFile, edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, 'al-symbols-mcp/*', 'microsoft-learn/*', ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, ms-dynamics-smb.al/al_getdiagnostics, SShadowSdk.al-lsp-for-agents/bclsp_symbolRelations, SShadowSdk.al-lsp-for-agents/bclsp_goToDefinition, SShadowSdk.al-lsp-for-agents/bclsp_hover, SShadowSdk.al-lsp-for-agents/bclsp_findReferences, SShadowSdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, SShadowSdk.al-lsp-for-agents/bclsp_incomingCalls, SShadowSdk.al-lsp-for-agents/bclsp_outgoingCalls, SShadowSdk.al-lsp-for-agents/bclsp_codeLens, SShadowSdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, SShadowSdk.al-lsp-for-agents/bclsp_documentSymbols, SShadowSdk.al-lsp-for-agents/bclsp_renameSymbol, todo]
 model: GPT-5.6 Terra (copilot)
 ---
 
@@ -83,6 +83,12 @@ Before writing any test code:
 ### Object & Pattern Reference
 
 For object-creation patterns, naming, performance and error-handling rules, **rely on the framework — but know how it reaches you here.** The Conductor passes the **always-on instruction micro-rules inline** in your invocation (the `applyTo` auto-apply does **not** fire in subagent runtime — don't wait for it); treat them as in effect for the whole phase. For the **detail**, each instruction points to its skill: when you enter that domain (`skill-events`, `skill-pages`, `skill-permissions`, `skill-performance`, `skill-api`, `skill-copilot`), **load the skill — read its `SKILL.md` — and follow it**, including a skill the Conductor didn't hint if you find you need it. Do not invent or duplicate the rules; load the skill.
+
+### Building
+
+Follow the **build route order** in `skill-aproda-deploy-run-verify` → *Build route — order of preference*: DRV `buildonly` → `alc.exe /project:` → `altool workspace compile` → `al_build`. Take the first route that is available, fall through only when the one above doesn't apply, and name the route you used in your Phase Summary. Only the DRV route refreshes the Base package before building Test.
+
+**Build proof = exit code 0 + the path of the produced `.app`.** `al_getdiagnostics`, `read/problems` and `bclsp_codeQualityDiagnostics` are editor/language-server state — use them to locate errors, never to claim a clean build.
 
 ### Test Patterns (Given/When/Then)
 

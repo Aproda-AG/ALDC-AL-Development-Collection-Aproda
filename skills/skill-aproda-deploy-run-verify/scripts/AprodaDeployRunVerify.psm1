@@ -528,9 +528,14 @@ function Invoke-DeployRunVerifyDeployFkh {
     foreach ($app in $Cfg.apps) {
         Write-Host "[fkh] Dev Endpoint publish $($app.Name) $($app.Version) (syncMode=$($Cfg.fkhSyncMode))"
         $out = & fkh publishapp --name $appLabel --appFile $app.AppFile --devScope --syncMode $Cfg.fkhSyncMode --sync --install --backendUrl $backendUrl 2>&1
+        $fkhExitCode = $LASTEXITCODE
         $out | ForEach-Object { Write-Host "  $_" }
-        if ($LASTEXITCODE -ne 0) {
-            throw "Fkh Dev Endpoint publish failed: $($app.Name) $($app.Version). Existing Global-scoped apps require an explicitly approved migration before Dev-scope publishing."
+        if ($fkhExitCode -ne 0) {
+            $fkhDiagnostic = (@($out | ForEach-Object { $_.ToString().Trim() } | Where-Object { $_ }) -join [Environment]::NewLine).Trim()
+            if ([string]::IsNullOrWhiteSpace($fkhDiagnostic)) { $fkhDiagnostic = 'No diagnostic output was returned by fkh.' }
+            $fkhDiagnostic = [regex]::Replace($fkhDiagnostic, '(?i)(https?://[^\s?]+)\?[^\s]+', '$1?<redacted>')
+            $fkhDiagnostic = [regex]::Replace($fkhDiagnostic, '(?i)\b(token|key|secret|password)(\s*[:=]\s*)[^\s,;]+', '$1$2<redacted>')
+            throw "Fkh Dev Endpoint publish failed: $($app.Name) $($app.Version) (exit code $fkhExitCode). Fkh diagnostic: $fkhDiagnostic"
         }
     }
 

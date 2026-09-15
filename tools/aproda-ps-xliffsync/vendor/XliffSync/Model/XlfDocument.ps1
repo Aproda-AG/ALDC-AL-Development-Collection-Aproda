@@ -560,7 +560,8 @@ class XlfDocument {
     }
 
     [boolean] GetUnitNeedsTranslation([System.Xml.XmlNode] $unitNode) {
-        [string] $translateAttribute = $unitNode.'translate';
+        [System.Xml.XmlAttribute] $translateAttributeNode = $unitNode.Attributes['translate'];
+        [string] $translateAttribute = if ($translateAttributeNode) { $translateAttributeNode.Value } else { $null };
         if ($translateAttribute) {
             return $translateAttribute -eq 'yes';
         }
@@ -648,13 +649,13 @@ class XlfDocument {
             "1.2" {
                 [System.Xml.XmlNode] $bodyNode = [XlfDocument]::GetNode('body', $this.root);
                 if ($bodyNode) {
-                    $unitsInBody = $this.GetTranslationUnitsFromRoot($bodyNode);
-                    if ($unitsInBody -and ($unitsInBody.Count -gt 0)) {
+                    $unitsInBody = @($this.GetTranslationUnitsFromRoot($bodyNode) | Where-Object { $null -ne $_ });
+                    if ($unitsInBody.Count -gt 0) {
                         $transUnits += $unitsInBody;
                     }
 
-                    $unitsInGroups = $this.GetGroupTranslationUnitNodes($bodyNode);
-                    if ($unitsInGroups -and ($unitsInGroups.Count -gt 0)) {
+                    $unitsInGroups = @($this.GetGroupTranslationUnitNodes($bodyNode) | Where-Object { $null -ne $_ });
+                    if ($unitsInGroups.Count -gt 0) {
                         $transUnits += $unitsInGroups;
                     }
                 }
@@ -701,18 +702,21 @@ class XlfDocument {
         }
 
         $groupNodes | ForEach-Object {
-            $unitsInGroup = $this.GetTranslationUnitsFromRoot($_);
-            if ($unitsInGroup -and ($unitsInGroup.Count -gt 0)) {
+            $unitsInGroup = @($this.GetTranslationUnitsFromRoot($_) | Where-Object { $null -ne $_ });
+            if ($unitsInGroup.Count -gt 0) {
                 $transUnits += $unitsInGroup;
             }
         }
         $groupNodes | ForEach-Object {
-            $unitsInSubGroups = $this.GetGroupTranslationUnitNodes($_);
-            if ($unitsInSubGroups -and ($unitsInSubGroups.Count -gt 0)) {
+            $unitsInSubGroups = @($this.GetGroupTranslationUnitNodes($_) | Where-Object { $null -ne $_ });
+            if ($unitsInSubGroups.Count -gt 0) {
                 $transUnits += $unitsInSubGroups;
             }
         }
         return $transUnits;
+        if ((-not $unitNode) -or (-not $unitNode.Attributes)) {
+            return $false;
+        }
     }
 
     hidden [System.Xml.XmlNode[]] GetTranslationUnitsFromRoot([System.Xml.XmlNode] $rootNode) {

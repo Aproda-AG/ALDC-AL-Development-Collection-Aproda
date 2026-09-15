@@ -552,8 +552,10 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `skills/skill-translate/SKILL.md`, `agents/al-developer.agent.md`, `agents/al-conductor.agent.md`, `prompts/al-pr-prepare.prompt.md` | Stage 1 deterministic resolution: wired the new `Resolve` action (tier 1 invariant / tier 2 project-derived exact memory) between `Sync -SkipBuild` and `ExportOpen` in both agents, documented it in `skill-translate`'s Pattern 2A and Workflow steps, and extended the PR evidence line with tier 1/tier 2 counts. | D-2 / D-32 | 2026-09-02 |
 | `tools/aproda-ps-xliffsync/vendor/XliffSync/Model/XlfDocument.ps1` | Guard empty self-closing XLIFF source/target elements before reading a first text node, preventing strict-mode failure during Sync. | D-2 / D-31 / D-37 | 2026-09-14 |
 | `tools/aproda-ps-xliffsync/Invoke-AprodaBuildXliffSync.ps1`, `tools/aproda-ps-xliffsync/vendor/XliffSync/Public/Test-XliffTranslations.ps1` | Exclude obsolete `translate="yes"` units without source text from Stage 0 export, statistics, and missing-translation validation. | D-2 / D-31 / D-38 | 2026-09-14 |
+| `tools/aproda-ps-xliffsync/vendor/XliffSync/Model/XlfDocument.ps1` | Normalize translation-unit method results to arrays before accessing `.Count` under Strict Mode. | D-2 / D-31 / D-41 | 2026-09-14 |
 | `skills/skill-aproda-fkh/SKILL.md`, `skills/skill-aproda-deploy-run-verify/**` | Adopt FKH Dev Endpoint deployment as the default; add explicit `fkhSyncMode` with non-destructive `Add` default and documented ForceSync notification. | D-2 / D-39 | 2026-09-14 |
 | `skills/skill-aproda-deploy-run-verify/scripts/AprodaDeployRunVerify.psm1`, `scripts/README.md` | Add compact Stopwatch timing evidence for build, deploy, tests, and total runtime. | D-2 / D-40 | 2026-09-14 |
+| `skills/skill-aproda-deploy-run-verify/scripts/AprodaDeployRunVerify.psm1` | Preserve sanitized FKH publish diagnostics and exit code; do not label every publish failure as a Global-scope migration. | D-2 / D-39 / D-42 | 2026-09-15 |
 
 ---
 
@@ -643,4 +645,10 @@ This supersedes D-36's FKH same-version removal-and-republish path. The Dev Endp
 The DRV engine reports a compact timing line for every completed run: `build`, `deploy`, `tests`, and `total`. The measurements use `System.Diagnostics.Stopwatch` around the existing orchestration boundaries; the test duration includes runner initialization, connection, and test execution. Build-only and skipped-build runs retain their semantic values rather than inventing a duration for an omitted stage.
 
 This produces comparable evidence for adapter and deployment-policy changes, including the FKH Dev Endpoint default in D-39, without adding a telemetry dependency, persisting environment-specific data, or changing the build/deploy/run behavior. The rejected alternative was timestamp-only runner logging: it cannot attribute elapsed time to a DRV stage or support meaningful before/after comparisons. This is a D-2 in-place fork delta and must flow back to the Aproda ALDC fork.
+
+### D-41 — XLIFF translation-unit collections are normalized under Strict Mode
+
+`XlfDocument.TranslationUnitNodes()` and its helper methods declare an array return type, but PowerShell can still bind a single pipeline result to an untyped local scalar. The vendored code then accessed `.Count` on that scalar while constructing the translation-unit cache, causing `Resolve` to fail under `Set-StrictMode -Version Latest` whenever a body or group contained exactly one matching unit. It also read the optional XLIFF `translate` attribute as a dynamic node property, which Strict Mode rejects for units that omit the attribute even though the method's intended default is translatable.
+
+The approved minimal correction filters null method results while wrapping every collection consumed for a count in `@(...)`, and accesses the optional attribute through `Attributes['translate']`, preserving the method contracts and handling zero, one, and many units uniformly. It does not alter XLIFF selection, translation state, validation, or document structure. The rejected alternative was disabling Strict Mode or special-casing a single XLIFF file: both conceal a reusable runtime defect. This is a D-2 in-place fork delta adjacent to D-37/D-38 and must flow back to the Aproda ALDC fork.
 

@@ -49,6 +49,23 @@ flowchart TD
 
   > Suggested wording: *"No BC service reachable. Quality is higher with a Cronus BC environment incl. Test Toolkit. Without a service only static validation (build + audit) is possible, no runtime verification. Proceed build-only?"*
 
+## Build route — order of preference
+
+The build step of this loop, and **every** build an agent triggers in this repository, follows this order. Take the first route that is available; fall through only when the one above is genuinely not applicable, and record which route actually ran.
+
+| # | Route | Use when | Command / call |
+|---|---|---|---|
+| 1 | **DRV `buildonly`** | a `deploy-run-verify.config.jsonc` exists | `APRODA_DEPLOY_RUN_VERIFY_MODE='buildonly'` → [`Invoke-AprodaDeployRunVerify.ps1`](scripts/Invoke-AprodaDeployRunVerify.ps1) |
+| 2 | **`alc.exe /project:`** | exactly one known app folder, no DRV config | `alc.exe /project:"<App>" /packagecachepath:"<App>\.alpackages" /out:"<App>\<name>.app" /loglevel:Error` |
+| 3 | **`altool workspace compile`** | generic multi-app graph | check `altool workspace compile --help` first; unvalidated on this estate — record the result |
+| 4 | **`al_build`** | none of the above is reachable | `{"scope":"current"}` — verify the intended project is the active one; if the tool is not granted, request it as a manual step |
+
+Only route 1 refreshes the Base package in `Test/.alpackages` before building Test. Routes 2–4 build a single project against whatever is already in the cache — with `appsInOrder` apps, run Base first and refresh the cache yourself, or the Test build compiles against a stale Base.
+
+`al_build` is active-project-bound (`scope: current|all`, no project path). In a multi-root workspace (`.github` + `Base` + `Test`) the active project depends on the open editor — confirm it before relying on the result.
+
+> **Build proof = exit code 0 + the path of the produced `.app`.** `al_getdiagnostics`, `read/problems` and `bclsp_codeQualityDiagnostics` report editor/language-server state, not a build. They do not surface a Test project compiled against a stale Base package.
+
 ## Target Adapter Selection
 
 After the user acknowledges a `launch.json` selection, classify the target before deployment:

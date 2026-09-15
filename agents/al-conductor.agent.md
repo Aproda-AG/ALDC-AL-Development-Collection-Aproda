@@ -1,7 +1,7 @@
 ﻿---
 name: AL Development Conductor
 description: 'AL Conductor Agent - Orchestrates Planning → Implementation → Review → Commit cycle for AL Development. Enforces TDD and quality gates for Business Central extensions.'
-tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, agent, edit, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, todo, terminal, read, agent/runSubagent, vscode/runCommand, execute, aprodaag.aproda-aldc/aprodaAldc_readConfiguration]
+tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, agent, edit, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, todo, terminal, read, agent/runSubagent, vscode/runCommand, execute, ms-dynamics-smb.al/al_getdiagnostics, aprodaag.aproda-aldc]
 agents: ['AL Planning Subagent', 'AL Code Review Subagent', 'AL Implementation Subagent', 'AL Translation Subagent']
 model: GPT-5.6 Terra (copilot)
 argument-hint: 'Feature description or requirements for TDD orchestration (e.g., "Add customer loyalty points system")'
@@ -250,6 +250,8 @@ After the review verdict allows proceeding (APPROVED / APPROVED_WITH_RECOMMENDAT
 3. **Service unavailable** → the skill warns (differentiating "no service" vs "no Test Toolkit") and offers **build-only**; record the acknowledgement in the phase-complete file and proceed without runtime verification. Never hard-block.
 4. **Loop discipline**: fix → deploy → run → review until all tests pass **or** a genuine blocker (service down, spec contradiction). Do **not** brute-force the same fix; on a real blocker, stop and consult the user. Failures route back to **2A** (author the fix task for the implement-subagent).
 5. **Surface one line** in the checkpoint evidence row: `🧪 {X/X ✅ | build-only — no service}`.
+
+> **You don't build yourself.** You hold `execute`, but every build belongs to the implement-subagent or to this 2B-bis gate — running `alc.exe`/DRV directly bypasses the gate. When you need build evidence, require it from the implementer: exit code 0 plus the path of the produced `.app`. `al_getdiagnostics` and `read/problems` are editor state, not a build proof — never accept them as one. The binding route order lives in `skill-aproda-deploy-run-verify` → *Build route — order of preference*.
 
 #### 2C. Phase Completion & Commit
 
