@@ -5,7 +5,7 @@ description: "Explain, extend, change, or maintain the Aproda ALDC layer (the .a
 
 # Skill: Aproda ALDC — Explain & Extend the Customization Layer
 
-> **Aproda custom skill** — the meta-skill for the Aproda ALDC layer itself. See [`../../readme.aproda.md`](../../readme.aproda.md) (how the layer works) and [`../../decisions.aproda.md`](../../decisions.aproda.md) (why — decisions D-1..D-25).
+> **Aproda custom skill** — the meta-skill for the Aproda ALDC layer itself. See `.github/readme.aproda.md` (how the layer works) and `.github/decisions.aproda.md` (why — the full decision record).
 > **Two audiences:** the **many** who just ask what the layer is / why a rule exists (Explain mode), and the **few** who change it (Extend mode). Extend mode is **guarded** — see [`../../instructions/aproda-aldc-steward.aproda.instructions.md`](../../instructions/aproda-aldc-steward.aproda.instructions.md).
 
 ## When to Load
@@ -14,7 +14,7 @@ Load this skill when the task is **about the Aproda layer**, not about the BC ex
 
 - **Explain**: "what is the Aproda ALDC layer?", "why is X done this way?", "what does decision D-N mean?", onboarding questions about the framework, where a convention comes from.
 - **Extend / change**: add a new Aproda skill/agent/instruction/workflow; change an existing Upstream behaviour; reroute an agent; decide stacking vs in-place edit; record a decision; maintain the Upstream-touch register; plan an overlay sync.
-- **Infra lookup**: as the entry point to [`../../site-profile.aproda.md`](../../site-profile.aproda.md) (K: DVD, NST servers, SRP, remote-PS, paste mangling).
+- **Infra lookup**: as the entry point to `.github/site-profile.aproda.md` (K: DVD, NST servers, SRP, remote-PS, paste mangling).
 
 > This skill is **not** loaded for normal AL development. Building the BC extension uses the domain skills (`skill-api`, `skill-events`, …) and `skill-aproda-deploy-run-verify`. This one is meta — it changes/explains the **framework**, not the product.
 
@@ -22,15 +22,32 @@ Load this skill when the task is **about the Aproda layer**, not about the BC ex
 
 | Question | Source of truth |
 |----------|-----------------|
-| *How* does the layer extend ALDC? (conventions, naming, no override folder) | [`readme.aproda.md`](../../readme.aproda.md) |
-| *Why* is it built this way? (every design decision, D-1..D-22) | [`decisions.aproda.md`](../../decisions.aproda.md) |
-| What infra do we run on? (K:, NST servers, SRP, remote-PS) | [`site-profile.aproda.md`](../../site-profile.aproda.md) |
+| *How* does the layer extend ALDC? (conventions, naming, no override folder) | `.github/readme.aproda.md` |
+| *Why* is it built this way? (the full decision record) | `.github/decisions.aproda.md` |
+| What infra do we run on? (K:, NST servers, SRP, remote-PS) | `.github/site-profile.aproda.md` |
 | How is the runtime Deploy-Run-Verify Cycle standardized? | [`skill-aproda-deploy-run-verify`](../skill-aproda-deploy-run-verify/SKILL.md) |
 | How are layer or VSIX releases prepared and approved? | [`skill-aproda-aldc-release`](../skill-aproda-aldc-release/SKILL.md) (fork-maintainer only) |
 | Which model does each agent run on, and when do we escalate to Opus? | `decisions.aproda.md` → **D-22** (pins + Model Escalation Gate) |
 | Which Upstream files did we touch in place? | `decisions.aproda.md` → *Upstream edits register* |
+| Repo orientation: the two layouts, what Copilot **actually** loads, currently known defects + how to re-verify them | [`00-ALDC-Aproda-Ground-Truth.md`](../../_A-ALDC-Plans/00-ALDC-Aproda-Ground-Truth.md) — 🔒 **fork-only** |
 
 This skill **orchestrates and links** those; it never copies their content.
+
+> **🔒 Scope note on the last row.** `_A-ALDC-Plans/` is in `aproda-sync.json → neverTouch`, so the
+> Ground-Truth document **never ships to a consumer project**. In a project that link is dead — that is
+> expected, not a defect; rely on the rows above. Load it when working **in the aproda-aldc fork**, where
+> it is the fastest way to learn what is true right now (it carries a `## 4. Current state` section with
+> a verification command per claim, so you never have to take it on faith).
+>
+> **Why the `.github/` companions are plain paths, not links.** `readme.aproda.md`,
+> `decisions.aproda.md` and `site-profile.aproda.md` live under `.github/` in **both** layouts — but no
+> single *relative* link can express that: from the fork's `skills/skill-aproda-aldc/` it would be
+> `../../.github/…`, from a project's `.github/skills/skill-aproda-aldc/` it would be `../…`. Any one
+> relative link is therefore broken in exactly one layout (verified 2026-09-23: three of them were
+> broken in the fork and correct in a project, which is why nobody noticed). **Repo-root-relative plain
+> paths are correct in both — use them for the companions.** Links to *toolkit* siblings
+> (`../skill-…`, `../../instructions/…`) stay safe, because this skill always sits at
+> `<toolkitRoot>/skills/<name>/`. See Ground-Truth §2.1.
 
 ## Explain mode
 
@@ -72,6 +89,20 @@ Use the `readme.aproda.md` "Stacking vs. changing" table:
 - Net-new file → `.aproda.` infix / `skill-aproda-*` folder, type suffix intact.
 - In-place edit → keep it **additive and minimal** (smaller conflicts on the next pull).
 - Persisted artifacts under `.github/**` are **English** (copilot-instructions rule).
+
+### Step 2.5 — Update the catalogs (do not skip)
+
+A net-new artifact is invisible to the framework until every catalog that enumerates it is updated. This is not hypothetical — `skills/index.md`, `agents/index.md`, `instructions/index.md`, and `.github/copilot-instructions.md` have each been found missing entries for skills/agents/instructions that existed on disk for months, and `prompts/index.md` was found describing an entirely different, obsolete workflow set from a prior major version. Treat catalog updates as part of the change, not a follow-up:
+
+| Artifact type | Catalog(s) to update |
+|---|---|
+| New skill | `skills/index.md`; `.github/copilot-instructions.md` → Skills table (mark 🟦 if Aproda); `docs/copilot-reference.md` if it belongs to a documented sub-area (e.g. BC Agents Pack) |
+| New agent | `agents/index.md`; `.github/copilot-instructions.md` → Agent Routing table + Quick routing guide |
+| New workflow | `prompts/index.md`; `.github/copilot-instructions.md` → Workflows table |
+| New instruction | `instructions/index.md`; `.github/copilot-instructions.md` → Auto-Applied Instructions table |
+| Any of the above | `.github/copilot-instructions.md` → header count + footer "Primitives" line; `docs/copilot-reference.md` → "Workspace Structure" tree |
+
+Before closing out a change that adds/removes a skill, agent, instruction, or workflow, **re-open each catalog above and confirm the count and the row exist** — don't rely on memory of having already done it earlier in the session. `skill-aproda-aldc-release` re-checks this at release time, but that is a safety net, not a substitute for doing it here.
 
 ### Step 3 — Record the decision
 - Add/extend a **D-N entry** in `decisions.aproda.md` for any non-trivial design choice (rationale + rejected alternative).

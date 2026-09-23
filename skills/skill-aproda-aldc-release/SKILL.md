@@ -30,6 +30,17 @@ Do not compare or reuse versions across streams. A layer release does not requir
 4. Run the applicable local validation and commit the complete release candidate.
 5. Merge the reviewed candidate to the `aproda` branch.
 
+## Catalog consistency check (mandatory before a layer release)
+
+A layer release ships whatever is on disk in `agents/`, `skills/`, `prompts/`, `instructions/` to every consumer project — including any catalog drift. Before bumping the layer version:
+
+1. Diff the on-disk folder contents against each catalog: `skills/index.md`, `agents/index.md`, `prompts/index.md`, `instructions/index.md`.
+2. Diff the same set against `.github/copilot-instructions.md` (routing tables, Skills/Instructions/Workflows tables, header + footer primitive counts) and `docs/copilot-reference.md` (Workspace Structure tree, BC Agents Pack section).
+3. Any artifact present on disk but absent from a catalog, or vice versa, is a **release blocker** — fix it in the same change, not a follow-up PR. This has happened repeatedly: `agents/index.md` and `prompts/index.md` have both been found stale across multiple releases, and `prompts/index.md` at one point still described an entirely different, obsolete workflow set from a prior major version (`ALDC Core v1.1`/`2.11.0`-era) while the shipped `prompts/` folder had long since moved on.
+4. Record the check in the release candidate notes (`.github/CHANGELOG.aproda.md` or the stream's changelog) — e.g. "catalogs verified in sync" — so a reviewer doesn't have to re-derive it.
+
+See `skill-aproda-aldc` → Step 2.5 for the per-change checklist this gate is backstopping.
+
 ## Automated release flow
 
 1. A push to `aproda` with a new stream version starts the matching validation workflow.

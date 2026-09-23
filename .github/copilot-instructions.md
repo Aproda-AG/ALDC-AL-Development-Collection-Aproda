@@ -4,7 +4,7 @@
 
 ## Overview
 
-This workspace contains AL (Application Language) code for Microsoft Dynamics 365 Business Central. It uses the **ALDC Core v1.2** skills-based architecture: **4 agents + 11 skills + 6 workflows + 7 instructions**.
+This workspace contains AL (Application Language) code for Microsoft Dynamics 365 Business Central. It uses the **ALDC Core v1.2** skills-based architecture, extended by the Aproda `.aproda.` layer (rows marked 🟦 below): **11 agents (7 user-facing + 4 internal subagents) + 21 skills + 12 workflows + 10 instructions**.
 
 ## Core Principles
 
@@ -27,17 +27,22 @@ Choose the right agent for your task:
 | Implementing, coding, debugging, fixing? | `@AL Implementation Specialist` | Tactical implementation with full AL MCP tools |
 | Building a feature with TDD orchestration (plan → implement → review → commit)? | `@AL Development Conductor` | Orchestrates planning, implementation, and review subagents |
 | Estimating a project, sizing, proposals? | `@AL Pre-Sales & Project Estimation Specialist` | PERT estimation, SWOT analysis, cost breakdown |
+| Diagnosing an existing bug/regression from a symptom? | `@AL Triage` | Reproduce, localize, root-cause; hands the fix to `@AL Implementation Specialist` |
 | Auditing code independently against BCQuality (changes vs main, or all)? | `@Dredd` | Independent read-only auditor; advisory verdict with citations |
+| Building/configuring a BC agent (Designer or Agent SDK)? | `@AL Agent Builder` | Agent Toolkit Builder — Designer + SDK paths |
 
 ### Quick routing guide
 
 ```
-New feature (MEDIUM/HIGH)? → @AL Architecture & Design Specialist → al-spec.create → @AL Development Conductor
-New feature (LOW)?         → al-spec.create → @AL Implementation Specialist
-Bug fix / debugging?       → @AL Implementation Specialist
-Architecture review?       → @AL Architecture & Design Specialist
-Full TDD cycle?            → @AL Development Conductor
-Project estimation?        → @AL Pre-Sales & Project Estimation Specialist
+New feature (MEDIUM/HIGH)?      → @AL Architecture & Design Specialist → al-spec.create → @AL Development Conductor
+New feature (LOW)?              → al-spec.create → @AL Implementation Specialist
+Bug fix / debugging?            → @AL Implementation Specialist
+Bug from a symptom (reactive)?  → @AL Triage → @AL Implementation Specialist
+Architecture review?            → @AL Architecture & Design Specialist
+Independent quality audit?      → @Dredd
+Full TDD cycle?                 → @AL Development Conductor
+Project estimation?             → @AL Pre-Sales & Project Estimation Specialist
+Build a BC agent (SDK/Designer)? → @AL Agent Builder
 ```
 
 ## Workflows
@@ -52,6 +57,9 @@ Project estimation?        → @AL Pre-Sales & Project Estimation Specialist
 | `al-memory.create` | Generate/update memory.md for session continuity |
 | `al-context.create` | Generate project context.md for AI assistants |
 | `al-initialize` | Complete environment and workspace setup |
+| `al-doc-update` 🟦 | Refresh per-module technical reference (EN) + de-CH handbook after delivery (Aproda D-14) |
+
+> 5 additional BC Agents Pack workflows (`al-agent.create`, `al-agent.task`, `al-agent.instructions`, `al-agent.test`, `al-agent.build-instructions`) are documented in [`docs/copilot-reference.md`](../docs/copilot-reference.md) → BC Agents Pack.
 
 ### Usage
 
@@ -79,10 +87,14 @@ Project estimation?        → @AL Pre-Sales & Project Estimation Specialist
 | `skill-performance` | CPU profiling, FlowField optimization, set-based ops | al-developer, al-architect |
 | `skill-testing` | TDD, test strategy, AL Test Toolkit | al-architect, al-conductor |
 | `skill-estimation` | PERT estimation, complexity scoring, SWOT | al-presales |
+| `skill-manifest` | Extension handoff manifest for CIRCE/DELFOS at pipeline end | al-conductor (final phase) |
 | `skill-aproda-deploy-run-verify` 🟦 | OnPrem Deploy-Run-Verify Cycle (build→deploy→run→review) | al-developer, al-conductor |
 | `skill-aproda-aldc` 🟦 | Explain & extend the Aproda ALDC layer itself; entry to `site-profile.aproda.md` (infra) | any (meta) |
+| `skill-aproda-ado` 🟦 | ADO work-item conventions, `req_name` derivation, controlled `az` CLI ops (PR/work-item create) | al-conductor, al-architect, al-triage |
+| `skill-aproda-fkh` 🟦 | Fkh transport/target resolution for OnPrem BC containers | skill-aproda-deploy-run-verify |
+| `skill-aproda-aldc-release` 🟦 | Prepare/release the Aproda ALDC layer or VS Code extension | fork maintainer only — never syncs to consumer projects |
 
-> 🟦 = Aproda custom layer (`.aproda.` convention). See [`readme.aproda.md`](readme.aproda.md) + [`decisions.aproda.md`](decisions.aproda.md). These rows are deliberate in-place edits registered in `decisions.aproda.md` (D-7 / D-16).
+> 🟦 = Aproda custom layer (`.aproda.` convention, 5 skills total). See [`readme.aproda.md`](readme.aproda.md) + [`decisions.aproda.md`](decisions.aproda.md). Remaining 4 skills (`skill-agent-instructions`, `skill-agent-task-patterns`, `skill-agent-toolkit`, `skill-contribution-assistant`) are BC Agents Pack / meta skills — see [`docs/copilot-reference.md`](../docs/copilot-reference.md) → BC Agents Pack.
 
 ## External Knowledge: BCQuality
 
@@ -115,7 +127,7 @@ The chain above is **declarative** — an agent could in principle claim a BCQua
 
 ## Auto-Applied Instructions
 
-Each instruction loads automatically when the file you're editing matches its `applyTo` glob. There is no semantic activation — only glob matching. The framework ships **7 instructions** (1 transversal + 6 domain). Narrow globs are deliberate: editing a Table or Page no longer drags codeunit-only rules into the prompt.
+Each instruction loads automatically when the file you're editing matches its `applyTo` glob. There is no semantic activation — only glob matching. The framework ships **10 instructions** (8 core + 2 Aproda 🟦). Narrow globs are deliberate: editing a Table or Page no longer drags codeunit-only rules into the prompt.
 
 | File | `applyTo` | What it enforces |
 |------|-----------|------------------|
@@ -126,6 +138,9 @@ Each instruction loads automatically when the file you're editing matches its `a
 | `al-error-handling.instructions.md`     | `**/*.Codeunit.al`                     | TryFunctions, mandatory `Label`, telemetry only when explicitly requested |
 | `al-events.instructions.md`             | `**/*.Codeunit.al`                     | Never modify base objects, subscribers `local` with exact signature, no `Commit` in subscribers |
 | `al-testing.instructions.md`            | `**/test/**/*.al`                      | Tests only when asked, Given/When/Then, standard libraries |
+| `al-agent-toolkit.instructions.md`      | `**/*Factory.Codeunit.al`, `**/*Metadata.Codeunit.al`, `**/*TaskExecution.Codeunit.al`, `**/*Setup.Codeunit.al` | Non-negotiable rules for AI Development Toolkit / Agent SDK code |
+| `hitl-validation.aproda.instructions.md` 🟦 | `**/*.al`                           | Aproda D-11: HITL Validation lifecycle, `memory.md` Status contract |
+| `aproda-aldc-steward.aproda.instructions.md` 🟦 | `**/*.aproda.*`, `**/skill-aproda-*/**` | Aproda D-16: HITL guardrail before editing the Aproda layer itself |
 
 > `copilot-instructions.md` and `instructions/index.md` are **not** instructions in this sense — they have no `applyTo`. `copilot-instructions.md` is the always-on entrypoint; `index.md` is documentation.
 
@@ -184,14 +199,15 @@ Human-facing reference material — examples, workspace layout, links, troublesh
 - **Code Generation Examples** — table + event-subscriber snippets with the auto-applied instructions each triggers
 - **Best Practices for Copilot Interaction** — how to prompt, when to use agents vs workflows
 - **Workspace Structure** — full directory tree of the ALDC framework
+- **AL/BC Tools & MCP Servers** — Tier 1/2 tool reference, official vs. community MCP servers, known environment caveats (e.g. `al-symbols-mcp` availability, AppLocker/SRP)
 - **BC Agents Pack (Extension)** — AI Development Toolkit agents/skills/workflows
 - **Reference Documentation** — Microsoft + project doc links
 - **Troubleshooting Copilot**
 
 ---
 
-**Framework**: ALDC Core v1.2 (Skills-Based Architecture)
+**Framework**: ALDC Core v1.2 (Skills-Based Architecture, Aproda-extended)
 **Version**: 1.1.0
-**Last Updated**: 2026-05-31
+**Last Updated**: 2026-09-22
 **Workspace**: AL Development for Business Central
-**Primitives**: 4 agents + 3 subagents + 11 skills + 6 workflows + 7 instructions (1 transversal + 6 domain)
+**Primitives**: 11 agents (7 user-facing + 4 internal subagents) + 21 skills (5 🟦 Aproda) + 12 workflows (1 🟦 Aproda) + 10 instructions (2 🟦 Aproda)

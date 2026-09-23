@@ -12,7 +12,7 @@ Instructions are auto-applied coding guidelines that load when the file you're e
 
 **Naming is infrastructure.** Files must follow the pattern `<ObjectName>.<ObjectType>.al`. A misnamed file silently misses its type-specific instructions. `aldc-validate` enforces the convention.
 
-## Instructions in this framework (7 files)
+## Instructions in this framework (10 files)
 
 | File | `applyTo` | Purpose |
 |------|-----------|---------|
@@ -23,6 +23,11 @@ Instructions are auto-applied coding guidelines that load when the file you're e
 | [al-error-handling.instructions.md](al-error-handling.instructions.md)       | `**/*.Codeunit.al`                     | TryFunctions, mandatory `Label`, telemetry only when asked |
 | [al-events.instructions.md](al-events.instructions.md)                       | `**/*.Codeunit.al`                     | Subscribers `local` with exact signature, no `Commit` in subscribers |
 | [al-testing.instructions.md](al-testing.instructions.md)                     | `**/test/**/*.al`                      | Tests only when explicitly requested, Given/When/Then, libraries |
+| [al-agent-toolkit.instructions.md](al-agent-toolkit.instructions.md)         | `**/*Factory.Codeunit.al`, `**/*Metadata.Codeunit.al`, `**/*TaskExecution.Codeunit.al`, `**/*Setup.Codeunit.al` | AI Development Toolkit / Agent SDK non-negotiable rules |
+| [hitl-validation.aproda.instructions.md](hitl-validation.aproda.instructions.md) 🟦 | `**/*.al`                    | Aproda D-11: HITL Validation lifecycle, `memory.md` Status contract |
+| [aproda-aldc-steward.aproda.instructions.md](aproda-aldc-steward.aproda.instructions.md) 🟦 | `**/*.aproda.*`, `**/skill-aproda-*/**` | Aproda D-16: guardrail before editing the Aproda layer itself |
+
+> 🟦 = Aproda custom layer (`.aproda.` convention). See [`../readme.aproda.md`](../readme.aproda.md) + [`../decisions.aproda.md`](../decisions.aproda.md).
 
 > [copilot-instructions.md](copilot-instructions.md) is the **always-on entrypoint** — it loads in every chat turn regardless of file context. It is not an instruction with `applyTo`. This `index.md` is documentation.
 
@@ -41,4 +46,4 @@ Instructions are auto-applied coding guidelines that load when the file you're e
 ---
 
 **Version**: 1.1.0
-**Last Updated**: 2026-05-18
+**Last Updated**: 2026-09-22

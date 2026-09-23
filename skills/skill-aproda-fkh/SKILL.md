@@ -126,7 +126,7 @@ fkh getappinfo --name $container --appName '<app name or wildcard>' --asJson --b
 
 Confirm the required version is `Published`, `Installed`, and `Synced` before considering deployment complete.
 
-## Credential Store (D-37)
+## Credential Store (D-43)
 
 For a `UserPassword` BC target, `scripts/FkhCredentialStore.ps1` caches the credential DPAPI-protected (current user + machine only) under `%LOCALAPPDATA%\AprodaFkh\credentials\<hostname>.cred.xml` — one file per Fkh container hostname, so different containers with the same or different passwords never collide. Load it content-safe like any other script here (`[ScriptBlock]::Create((Get-Content -Raw))`); it exposes `Get-FkhStoredCredential`, `Save-FkhCredential`, `Remove-FkhStoredCredential`. `skill-aproda-deploy-run-verify`'s engine consumes it (check store → fall back to `Get-Credential` → opt-in save only after a proven-working connection); any ad-hoc Fkh script should reuse the same functions instead of hardcoding credentials.
 
