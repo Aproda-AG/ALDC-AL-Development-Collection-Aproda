@@ -1,6 +1,8 @@
 # Stage 1 — Deterministic Resolution: Implementation Specification
 
-**Status:** Ready to implement
+**Status:** Implemented — `Resolve` action (tier 1 invariant / tier 2 project-derived exact memory)
+wired into `al-developer`, `al-conductor`, `skill-translate` and `al-pr-prepare` evidence; registered
+2026-09-02 (`.github/decisions.aproda.md`, D-2/D-32 row)
 **Normative reference:** `translation-architecture-options.md` §4 (target architecture), row "1 —
 Deterministic resolution" in §5. This spec does **not** restate architecture decisions — it references
 them and specifies only what they leave open: files, functions, parameters, messages and tests. If an
