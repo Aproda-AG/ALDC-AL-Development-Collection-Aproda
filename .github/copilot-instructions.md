@@ -60,7 +60,7 @@ Build a BC agent (SDK/Designer)? → @AL Agent Builder
 | `al-initialize` | Complete environment and workspace setup |
 | `al-doc-update` 🟦 | Refresh per-module technical reference (EN) + de-CH handbook after delivery (Aproda D-14) |
 
-> 5 additional BC Agents Pack workflows (`al-agent.create`, `al-agent.task`, `al-agent.instructions`, `al-agent.test`, `al-agent.build-instructions`) are documented in [`docs/copilot-reference.md`](../docs/copilot-reference.md) → BC Agents Pack.
+> 5 additional BC Agents Pack workflows (`al-agent.create`, `al-agent.task`, `al-agent.instructions`, `al-agent.test`, `al-agent.build-instructions`) are documented in `docs/copilot-reference.md` → BC Agents Pack.
 
 ### Usage
 
@@ -95,7 +95,7 @@ Build a BC agent (SDK/Designer)? → @AL Agent Builder
 | `skill-aproda-fkh` 🟦 | Fkh transport/target resolution for OnPrem BC containers | skill-aproda-deploy-run-verify |
 | `skill-aproda-aldc-release` 🟦 | Prepare/release the Aproda ALDC layer or VS Code extension | fork maintainer only — never syncs to consumer projects |
 
-> 🟦 = Aproda custom layer (`.aproda.` convention, 5 skills total). See [`readme.aproda.md`](readme.aproda.md) + [`decisions.aproda.md`](decisions.aproda.md). Remaining 4 skills (`skill-agent-instructions`, `skill-agent-task-patterns`, `skill-agent-toolkit`, `skill-contribution-assistant`) are BC Agents Pack / meta skills — see [`docs/copilot-reference.md`](../docs/copilot-reference.md) → BC Agents Pack.
+> 🟦 = Aproda custom layer (`.aproda.` convention, 5 skills total). See [`readme.aproda.md`](readme.aproda.md) + [`decisions.aproda.md`](decisions.aproda.md). Remaining 4 skills (`skill-agent-instructions`, `skill-agent-task-patterns`, `skill-agent-toolkit`, `skill-contribution-assistant`) are BC Agents Pack / meta skills — see `docs/copilot-reference.md` → BC Agents Pack.
 
 ## External Knowledge: BCQuality
 
@@ -195,7 +195,11 @@ Present the assessment and wait for user confirmation before proceeding.
 
 ## Further Reference
 
-Human-facing reference material — examples, workspace layout, links, troubleshooting — lives in [`docs/copilot-reference.md`](../docs/copilot-reference.md) to keep this entrypoint lean (it is injected on every request). It covers:
+Human-facing reference material — examples, workspace layout, links, troubleshooting — lives in
+`docs/copilot-reference.md` to keep this entrypoint lean (it is injected on every request). Path note
+(T-14, E-006 F-11): that file sits next to this one — `../docs/copilot-reference.md` from here in this
+fork (`docs/` at repo root), `./docs/copilot-reference.md` in a consuming project (`docs/` under
+`.github/` there too) — a single relative link cannot resolve in both, so it is written in prose. It covers:
 
 - **Code Generation Examples** — table + event-subscriber snippets with the auto-applied instructions each triggers
 - **Best Practices for Copilot Interaction** — how to prompt, when to use agents vs workflows

@@ -271,20 +271,34 @@ There is **no separate `aproda/` override folder, no agent clones, and no `.vsco
 
 This table **is** the Aproda index (D-17) — the one place to answer "what has Aproda added?". Keep it current. Net-new items never conflict on an Upstream merge; in-place edits are the deliberate merge-points in the [Upstream edits register](decisions.aproda.md).
 
+> **Path convention (T-10, corrected 2026-09-24).** Every row below is written **fork-layout** (repo
+> root), because this file is read in the fork where it is authored. In a consuming project the same
+> item lives under `.github/…` instead, **except** the five files in the [dotGithub exception list]
+> (`readme.aproda.md`, `decisions.aproda.md`, `CHANGELOG.aproda.md`, `site-profile.aproda.md`,
+> `onboarding.aproda.md`), which stay under `.github/` on **both** sides — those five keep the
+> `.github/` prefix here on purpose; nothing else does. Six rows previously carried a stray `.github/`
+> prefix that does not exist in the fork (found by `aldc-validate`'s `aprodaInventoryCoherence` rule,
+> D-47); corrected below.
+
 ### Net-new artifacts (`.aproda.` / `skill-aproda-*` — conflict-free)
 
 | Item | Path | Decision | Status |
 |------|------|----------|--------|
 | This README (= the inventory/index) | `.github/readme.aproda.md` | D-1 | live |
-| Design decisions | `.github/decisions.aproda.md` | D-1 | live (D-1…D-27) |
+| Design decisions | `.github/decisions.aproda.md` | D-1 | live (D-1…D-47) |
 | Layer changelog (curated release notes) | `.github/CHANGELOG.aproda.md` | D-27 | live |
 | Site profile (infra facts) | `.github/site-profile.aproda.md` | D-16 | live |
-| Deploy-Run-Verify Cycle skill | `.github/skills/skill-aproda-deploy-run-verify/` | D-8, D-15 | **VALIDATED** (27/27 green) |
-| Meta-skill (explain + extend the layer) | `.github/skills/skill-aproda-aldc/` | D-16 | live |
-| Steward guardrail (HITL on layer edits) | `.github/instructions/aproda-aldc-steward.aproda.instructions.md` | D-16 | live |
-| HITL Validation instruction | `.github/instructions/hitl-validation.aproda.instructions.md` | D-11 | live |
-| Doc-update workflow | `.github/prompts/al-doc-update.aproda.prompt.md` | D-14 | live |
-| Layer sync (allowlist manifest + overlay script) | `.github/tools/aproda-sync/` | D-18 | live |
+| Onboarding guide | `.github/onboarding.aproda.md` | D-1 | live (F-14 `dotGithub` gap closed 2026-09-24) |
+| Deploy-Run-Verify Cycle skill | `skills/skill-aproda-deploy-run-verify/` | D-8, D-15 | **VALIDATED** (27/27 green) |
+| Meta-skill (explain + extend the layer) | `skills/skill-aproda-aldc/` | D-16 | live |
+| ADO work-item integration skill | `skills/skill-aproda-ado/` | D-4 | live |
+| Fkh transport skill | `skills/skill-aproda-fkh/` | D-26, D-36 | **VALIDATED** (26/26 live) |
+| AL Translation Subagent | `agents/al-translate-subagent.aproda.agent.md` | D-32 | live |
+| Steward guardrail (HITL on layer edits) | `instructions/aproda-aldc-steward.aproda.instructions.md` | D-16 | live |
+| HITL Validation instruction | `instructions/hitl-validation.aproda.instructions.md` | D-11 | live |
+| Doc-update workflow | `prompts/al-doc-update.aproda.prompt.md` | D-14 | live |
+| Layer sync (allowlist manifest + overlay script) | `tools/aproda-sync/` | D-18 | live |
+| Layer sync — README | `tools/aproda-sync/README.aproda.md` | D-18 | live |
 | Fleet management tools (fork-only: status / update / gather) | `tools/aproda-sync/fleet/` | D-21 | live |
 | VS Code extension (fork-only: guided project setup and updates) | `tools/aproda-vscode-extension/` | D-21 | live |
 | Release skill (fork-only: tag and GitHub Release governance) | `skills/skill-aproda-aldc-release/` | D-25 | live |
@@ -292,7 +306,10 @@ This table **is** the Aproda index (D-17) — the one place to answer "what has 
 
 ### In-place Upstream edits (deliberate merge-points)
 
-Exact diffs in the [Upstream edits register](decisions.aproda.md).
+> **Curated highlights, not the full list** (T-10, corrected 2026-09-24) — this table shows the
+> earliest / highest-impact edits only. The [Upstream edits register in `decisions.aproda.md`](decisions.aproda.md)
+> is the single, complete, authoritative list (47 rows and counting); if the two ever disagree, that
+> register wins.
 
 | File | Why | Decision |
 |------|-----|----------|
@@ -348,7 +365,7 @@ flowchart TD
 
 ### Pinning
 
-The ALDC base is **pinned** in `aldc.yaml → aproda.basePin` (analogous to the BCQuality SHA pin in `aldc.yaml → external.bcquality`) so upgrades are intentional and reproducible. Current pin: `a900263f51e416762cc7f85575deb9b30cd5b1e3` (upstream == fork, in sync 2026-06-25). On each adopted upgrade, bump `aproda.layerVersion`, add a row to the [Version / pin changelog](decisions.aproda.md), and add a curated entry to [`CHANGELOG.aproda.md`](CHANGELOG.aproda.md) (D-27). Scheme: `<ALDC core.version>_aproda.<n>` (D-17).
+The ALDC base is **pinned** in `aldc.yaml → aproda.basePin` (analogous to the BCQuality SHA pin in `aldc.yaml → external.bcquality`) so upgrades are intentional and reproducible. Current pin: `4f3371f69c3013edb508540673f60e5e8a0b64b6` (the real upstream merge-base, corrected 2026-09-24 — `origin/main` was 27 commits ahead, see E-006 T-12/T-16; the pin no longer claims "in sync"). On each adopted upgrade, bump `aproda.layerVersion`, add a row to the [Version / pin changelog](decisions.aproda.md), and add a curated entry to [`CHANGELOG.aproda.md`](CHANGELOG.aproda.md) (D-27). Scheme: `<ALDC core.version>_aproda.<n>` (D-17).
 
 On every version bump (Upstream upgrade **or** Aproda-layer change), merge the validated candidate to `aproda`. The layer release workflow validates it, waits for the `aproda-layer-release` Environment approval, then creates the matching Git tag and GitHub Release. Do not create or push the tag manually. The tag name matches the composite version string exactly; this makes the exact fork state reproducible and lets projects record which layer version they pulled.
 
@@ -380,9 +397,24 @@ We touch Upstream files in-place only where additive discovery requires it — c
 
 ---
 
+## Upstream-owned content the fork does not maintain (do not delete)
+
+T-13/T-14, E-006, added 2026-09-24. These paths are **clean Upstream content**, not Aproda additions — the
+fork keeps them unmodified so they merge cleanly on the next pull. They are excluded from the sweeps
+above on purpose (Phase 4 / D-2: converting inherited files into merge-points to fix a defect Aproda did
+not cause is the wrong trade).
+
+| Path | What it is | Why it stays |
+|------|-----------|---------------|
+| `.claude/` | Upstream's Claude Code chat-mode/agent/skill distribution | 6 of the last 27 upstream commits touch it; `origin/main:.claude/agents/dredd.md` is already ahead of the fork's copy. Deleting guarantees a pull conflict. Aproda's own runtime is GitHub Copilot (`.github/copilot-instructions.md`), not Claude Code — this directory is simply not read day-to-day here |
+| `claude-plugin/` | Upstream's packaged Claude Code plugin (agents, commands, hooks, skills, tools) | Same reasoning as `.claude/` — actively maintained upstream, not Aproda's runtime |
+| `.github/agents/test.agent.md` | Upstream scaffold placeholder (never filled in), shipped by an upstream commit (`179e782`, reachable from `origin/main`) | Confirmed Upstream-owned, not an Aproda leftover — do not delete; deleting an unmodified Upstream file creates the same needless merge-point as `.claude/` would |
+
+---
+
 ## See also
 
-- [`decisions.aproda.md`](decisions.aproda.md) — the **why** behind this structure (full decision record D-1…D-22).
+- [`decisions.aproda.md`](decisions.aproda.md) — the **why** behind this structure (full decision record D-1…D-47).
 - [`site-profile.aproda.md`](site-profile.aproda.md) — concrete infrastructure facts (K:, NST servers, SRP, remote-PS).
 - [`skills/skill-aproda-aldc/SKILL.md`](skills/skill-aproda-aldc/SKILL.md) — meta-skill: explain & extend this layer.
 - [`skills/skill-aproda-deploy-run-verify/SKILL.md`](skills/skill-aproda-deploy-run-verify/SKILL.md) — Deploy-Run-Verify Cycle (VALIDATED, 27/27).

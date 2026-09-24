@@ -28,7 +28,7 @@ Skills follow the GitHub Copilot Agent Skills structure (`skills/{skill-name}/SK
 | [skill-estimation](skill-estimation/SKILL.md) | Project estimation, SWOT | presales |
 | [skill-manifest](skill-manifest/SKILL.md) | Extension handoff manifest for CIRCE/DELFOS at pipeline end | conductor (final phase) |
 
-## BC Agents Pack Skills (3)
+## BC Agents Pack Skills (4)
 
 For building Business Central agents (Agent SDK / Designer), not the extension itself:
 
@@ -37,6 +37,7 @@ For building Business Central agents (Agent SDK / Designer), not the extension i
 | [skill-agent-toolkit](skill-agent-toolkit/SKILL.md) | Agent SDK/Designer architecture, interfaces (`IAgentFactory`, `IAgentMetadata`, `IAgentTaskExecution`), naming conventions | al-agent-builder, architect |
 | [skill-agent-task-patterns](skill-agent-task-patterns/SKILL.md) | Agent Task Builder, task lifecycle, 8 SDK integration patterns | al-agent-builder, architect |
 | [skill-agent-instructions](skill-agent-instructions/SKILL.md) | Authoring/reviewing agent instructions (Responsibilities-Guidelines-Instructions framework) | al-agent-builder |
+| [skill-contribution-assistant](skill-contribution-assistant/SKILL.md) | Guides contributors designing/polishing/submitting new community skills for the AL Copilot Skill Collection | any (meta) |
 
 ## Aproda Layer Skills 🟦 (5)
 

@@ -38,7 +38,12 @@
 | **T-19** | **F-14** — `onboarding.aproda.md` never ships | ✅ Root cause was a **manifest bug**, not a policy question: `Get-LogicalPath` maps layout *before* applying globs, so a `.github/` fork file absent from `dotGithub` returns `$null` and is invisible — despite matching `**/*.aproda.*`. Added to `dotGithub`; D-18 extended with the trap. `CHANGELOG.aproda.md` is correctly listed — its absence in the reference project is sync lag, not a defect |
 | **T-7** | Register verification in `skill-aproda-aldc-release` | ✅ New "Register verification" section + `tools/aproda-sync/Test-InPlaceEditsRegister.ps1`: diffs every `inPlaceEdits` path against `aldc.yaml → aproda.basePin`; byte-identical ⇒ registered edit missing. Smoke-tested against the current register: 21/21 ok, pin reachable. Registered in `decisions.aproda.md` (D-4/D-7) |
 | **T-5** | **D-46** + canonical catalog list + decision-backed Step 2.5 in `skill-aproda-aldc` | ✅ `decisions.aproda.md` D-46 (canonical catalog table) + D-47 (validator rules) added at end of file. `skill-aproda-aldc/SKILL.md` Step 2.5 replaced with the D-46-referencing version; knowledge-map row added |
-| **T-6** | **D-47** + three validator rules (`catalogCoherence`, `versionCoherence`, `aprodaInventoryCoherence`) + `aproda.primitives` in `aldc.yaml` | ✅ Implemented in `tools/aldc-validate/index.js`, registered at `"warn"` in `aldc.yaml → validation.rules`. Live-run found real drift (genuine findings, not fixed here — T-10/T-11 scope): 4 unlisted agents + 1 unlisted skill in catalogs, 1 file still "v1.1" (`skill-aproda-aldc-release/SKILL.md`), 4 missing + 6 unresolved-reference gaps in `readme.aproda.md`'s inventory (confirms F-10's `.github/`-prefix inconsistency). `aproda.primitives` block added (5 skills, 1 agent, 1 workflow, 2 instructions — matches `copilot-instructions.md`'s stated counts). Registered in `decisions.aproda.md` (D-2/D-47) |
+| **T-6** | **D-47** + three validator rules (`catalogCoherence`, `versionCoherence`, `aprodaInventoryCoherence`) + `aproda.primitives` in `aldc.yaml` | ✅ Implemented in `tools/aldc-validate/index.js`, registered at `"warn"` in `aldc.yaml → validation.rules`. Live-run found real drift (genuine findings, fixed in T-10/T-11 below): 4 unlisted agents + 1 unlisted skill in catalogs, 4 missing + 6 unresolved-reference gaps in `readme.aproda.md`'s inventory (confirms F-10's `.github/`-prefix inconsistency). The 4th flag ("`skill-aproda-aldc-release/SKILL.md` still v1.1") was **verified false on 2026-09-24 (T-10)** — the hits are historical quotes about the T-9 incident, not a live claim; see D-47's corrected `versionCoherence` row. `aproda.primitives` block added (5 skills, 1 agent, 1 workflow, 2 instructions — matches `copilot-instructions.md`'s stated counts). Registered in `decisions.aproda.md` (D-2/D-47) |
+| **T-10** | Complete `readme.aproda.md` inventory; unify path layout; fix D-range/pin claims | ✅ Added the 5 missing artifacts (`onboarding.aproda.md`, `al-translate-subagent.aproda.agent.md`, `tools/aproda-sync/README.aproda.md`, `skill-aproda-ado/`, `skill-aproda-fkh/`); removed the stray `.github/` prefix from 6 rows (F-10); `D-1…D-27`/`D-1…D-22` → `D-1…D-47`; corrected the "Pinning" section's inline value to match T-12; marked the partial in-place-edits table as a curated subset pointing at the D-7 register as sole authority |
+| **T-11** | Rewrite `agents/index.md` (11 agents) and register it in `aldc.yaml → required.catalog` | ✅ 7 public + 4 subagents (was 4+3, missing `al-triage`/`dredd`/`al-agent-builder`/`al-translate-subagent.aproda`); v1.1 → v1.2; registered in `required.catalog` alongside `docs/copilot-reference.md` (F-11) |
+| **T-13** | Document `.claude/` + `claude-plugin/` as upstream-owned | ✅ New "Upstream-owned content the fork does not maintain" section in `readme.aproda.md`; also covers `.github/agents/test.agent.md`, confirmed via `git log`/`git branch --contains` to originate from upstream commit `179e782` (not an Aproda leftover as first assumed — do not delete) |
+| **T-14** | `.github/agents/test.agent.md`; `docs/copilot-reference.md`; `CLAUDE.md` ownership | ✅ Documented (not deleted, see T-13); registered `docs/copilot-reference.md` in `required.catalog` and replaced its 3 fork-only-correct relative links in `copilot-instructions.md` with layout-aware prose (F-11); `CLAUDE.md` given a one-line ownership disclaimer instead of a full count rewrite; `al-conductor.agent.md`'s stray "Core v1.1 violation" (2×, Block-1 follow-up) corrected to v1.2 |
+| **T-4** | Q-3 release strategy — bump `layerVersion`? | ✅ **Decided: not now.** Bump happens at the actual release step via `skill-aproda-aldc-release`, which now has the T-7 register-verification gate available to run first. Block 3 is cleanup on `feature/e006-catalog-consistency`, not a release |
 
 ---
 
@@ -98,14 +103,29 @@
 
 ## Next — Block 3: remaining cleanup
 
+*✅ **Done 2026-09-24.** All five items closed — see the Done table above.*
+
 | # | Todo | Ships? |
 |---|---|---|
-| **T-10** | Complete `readme.aproda.md` inventory (5 missing artifacts incl. F-14 files); unify path layout; fix D-range claims | ✅ |
-| **T-11** | Rewrite `agents/index.md` (11 agents) **and** register it in `aldc.yaml → required.catalog` — otherwise it keeps not shipping (proven) | ✅ after registration |
-| **T-12** | ✅ **done 2026-09-24** — `aproda.basePin` `a900263…` → `4f3371f…` (real merge-base, shared by `aproda`/`origin/aproda`/feature branch against the upstream mirror `origin/main`). Old value asserted "upstream == fork, in sync" while upstream was 27 commits ahead. Pulled forward out of Block 3 because **T-7 depends on it** | ✅ |
-| **T-13** | Document `.claude/` + `claude-plugin/` as upstream-owned (**do not delete** — 6 of 27 upstream commits touch them) | ❌ |
-| **T-14** | Small items: `.github/agents/test.agent.md`; register or inline `docs/copilot-reference.md` (**F-11 proven**); clarify `CLAUDE.md` ownership | mixed |
-| **T-4** | **Q-3 release strategy** — bump `layerVersion`? Recommendation: *after* T-7, so the release gate exists before the release | — |
+| ✅ **T-10** | Complete `readme.aproda.md` inventory (5 missing artifacts incl. F-14 files); unify path layout; fix D-range claims | ✅ |
+| ✅ **T-11** | Rewrite `agents/index.md` (11 agents) **and** register it in `aldc.yaml → required.catalog` | ✅ |
+| ✅ **T-12** | `aproda.basePin` `a900263…` → `4f3371f…` (done 2026-09-24, pulled forward — T-7 depended on it) | ✅ |
+| ✅ **T-13** | Document `.claude/` + `claude-plugin/` as upstream-owned | ❌ (fork-only) |
+| ✅ **T-14** | `.github/agents/test.agent.md`; `docs/copilot-reference.md`; `CLAUDE.md` ownership | mixed |
+| ✅ **T-4** | Q-3 release strategy — decided: bump at release time, not here | — |
+
+> **T-14 correction en route.** The `.github/agents/test.agent.md` finding (F-12) was scoped as
+> "delete or document" — `git log`/`git branch --all --contains` showed it originates from upstream
+> commit `179e782`, reachable from `origin/main`. It is Upstream content, not an Aproda leftover;
+> deleting it would have created the exact needless merge-point this whole block argues against for
+> `.claude/`. Documented instead, alongside `.claude/`/`claude-plugin/` (T-13).
+>
+> **A second self-correction.** T-6's `versionCoherence` live-run flag on
+> `skill-aproda-aldc-release/SKILL.md` ("still v1.1") was re-verified while working T-10 and found to
+> be a **false positive** — all three hits are historical quotes documenting the T-9 incident itself,
+> not a live claim about the file's own version. Left unedited; D-47's `versionCoherence` row and the
+> T-6 register entry in `decisions.aproda.md` were corrected to say so, rather than "fixing" prose that
+> was already correct.
 
 > `T-17` (BCQuality clone path) **moved to Block 4** — it is not a path-layout nit, it silently
 > disables citation checking.
@@ -151,6 +171,7 @@ report as a claim, not as proof.
 |---|---|
 | Sweeping the ~22 inherited v1.1 files in the fork | Converts conflict-free files into permanent D-2 merge-points for a defect Aproda did not cause → Block 4 |
 | Deleting `.claude/` or `claude-plugin/` | Upstream-owned and actively maintained; deletion guarantees a pull conflict |
+| Deleting `.github/agents/test.agent.md` | Confirmed 2026-09-24 (T-10/T-13) to originate from upstream commit `179e782` — same reasoning as `.claude/` |
 | Deleting `instructions/copilot-instructions.md` | Q-2 — upstream-maintained, would break the validator and create a delete/modify conflict |
 | Releasing before T-7 exists | Would release exactly the state whose verification is still missing |
 
@@ -159,16 +180,21 @@ report as a claim, not as proof.
 ## Recommended order
 
 ```
-Block 1  T-8, T-9, T-19          -> commit + push      ✅ done 2026-09-24
-Block 2  T-7, T-5, T-6           -> commit + push      ✅ done 2026-09-24
-Block 3  T-10, T-11, T-13, T-14, T-4                   cleanup, now validator-protected
+Block 1  T-8, T-9, T-19                                -> commit + push      ✅ done 2026-09-24
+Block 2  T-7, T-5, T-6                                 -> commit + push      ✅ done 2026-09-24
+Block 3  T-10, T-11, T-13, T-14, T-4                   -> commit + push      ✅ done 2026-09-24
 Block 4  T-22, T-17, T-23 …                            BCQuality -> bcquality.md (as-is until then)
 Block 5  T-15, T-16                                    upstream, parallel at any time
 ```
 
-**Block 2 is closed.** Block 1 produced two independent cases (T-9, T-19) of a change believed to be
-in effect that was not. T-7 — the register-verification gate — is implemented and verified clean
-against the live register. T-5/T-6 — the catalog-coherence, version-coherence, and Aproda-inventory
-rules, plus their governing decisions (D-46/D-47) — are implemented, wired into `skill-aproda-aldc`,
-and live-run against this repo; the drift they found is real and is Block 3's job to clean up, not
-Block 2's. Not committed/pushed yet.
+**Block 3 is closed.** All five items landed clean: `readme.aproda.md`'s inventory, path-prefix
+consistency and stale-claim corrections (T-10); `agents/index.md` rewritten to the real 7+4 and
+registered in `required.catalog` alongside `docs/copilot-reference.md` (T-11/T-14, F-11); `.claude/`,
+`claude-plugin/`, and — after verifying its true origin — `.github/agents/test.agent.md` documented as
+upstream-owned, not deleted (T-13); `CLAUDE.md` given an ownership disclaimer instead of a stale
+rewrite, and `al-conductor.agent.md`'s leftover "Core v1.1 violation" corrected (T-14); Q-3 decided —
+bump `layerVersion` at release time via `skill-aproda-aldc-release`, not as part of this cleanup (T-4).
+One planned fix turned out to be unnecessary on verification: T-6's `versionCoherence` flag on
+`skill-aproda-aldc-release/SKILL.md` was historical prose quoting the T-9 incident, not live drift —
+left as-is, and the register text corrected instead of the file. Only Block 4 (BCQuality) and Block 5
+(upstream) remain, both independent tracks. Not committed/pushed yet.

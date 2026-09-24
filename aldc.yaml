@@ -147,6 +147,8 @@ required:
     - "skills/index.md"
     - "prompts/index.md"
     - "prompts/README.md"
+    - "agents/index.md"          # registered T-11 (E-006): was previously unsynced to consumer projects
+    - "docs/copilot-reference.md" # registered T-14 (E-006, F-11): human-facing reference linked from the entrypoint
 
   instructions:
     - "instructions/al-guidelines.instructions.md"
