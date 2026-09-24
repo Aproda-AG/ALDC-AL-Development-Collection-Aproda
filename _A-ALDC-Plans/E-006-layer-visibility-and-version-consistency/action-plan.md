@@ -36,6 +36,9 @@
 | **T-9** | `aldc-validate` v1.1 → v1.2 | ✅ 5 sites (`index.js` ×4 + `action.yml`). Validator now self-reports `ALDC Core v1.2 COMPLIANT`. Register line corrected: the 2026-06-25 entry documented a fix **never applied** |
 | **T-8** | Rewrite `prompts/index.md` | ✅ 12 linked / 12 real — 0 phantom, 0 missing. Added a "not workflows — these are skills" redirect table for the 12 removed names. No `inPlaceEdits` entry needed: ships via `required.catalog` + `includeAldcFramework` |
 | **T-19** | **F-14** — `onboarding.aproda.md` never ships | ✅ Root cause was a **manifest bug**, not a policy question: `Get-LogicalPath` maps layout *before* applying globs, so a `.github/` fork file absent from `dotGithub` returns `$null` and is invisible — despite matching `**/*.aproda.*`. Added to `dotGithub`; D-18 extended with the trap. `CHANGELOG.aproda.md` is correctly listed — its absence in the reference project is sync lag, not a defect |
+| **T-7** | Register verification in `skill-aproda-aldc-release` | ✅ New "Register verification" section + `tools/aproda-sync/Test-InPlaceEditsRegister.ps1`: diffs every `inPlaceEdits` path against `aldc.yaml → aproda.basePin`; byte-identical ⇒ registered edit missing. Smoke-tested against the current register: 21/21 ok, pin reachable. Registered in `decisions.aproda.md` (D-4/D-7) |
+| **T-5** | **D-46** + canonical catalog list + decision-backed Step 2.5 in `skill-aproda-aldc` | ✅ `decisions.aproda.md` D-46 (canonical catalog table) + D-47 (validator rules) added at end of file. `skill-aproda-aldc/SKILL.md` Step 2.5 replaced with the D-46-referencing version; knowledge-map row added |
+| **T-6** | **D-47** + three validator rules (`catalogCoherence`, `versionCoherence`, `aprodaInventoryCoherence`) + `aproda.primitives` in `aldc.yaml` | ✅ Implemented in `tools/aldc-validate/index.js`, registered at `"warn"` in `aldc.yaml → validation.rules`. Live-run found real drift (genuine findings, not fixed here — T-10/T-11 scope): 4 unlisted agents + 1 unlisted skill in catalogs, 1 file still "v1.1" (`skill-aproda-aldc-release/SKILL.md`), 4 missing + 6 unresolved-reference gaps in `readme.aproda.md`'s inventory (confirms F-10's `.github/`-prefix inconsistency). `aproda.primitives` block added (5 skills, 1 agent, 1 workflow, 2 instructions — matches `copilot-instructions.md`'s stated counts). Registered in `decisions.aproda.md` (D-2/D-47) |
 
 ---
 
@@ -76,21 +79,20 @@
 
 *Without Block 2, Block 1 is a one-off cleanup that the next audit repeats.*
 
-| # | Todo | Depends on |
-|---|---|---|
-| **T-5** | **D-46** "catalog synchronisation is part of a primitive change" + canonical catalog list; replace the provisional Step 2.5 in `skill-aproda-aldc` with the decision-backed version (text in `E-006-plan.md` § A) | — |
-| **T-7** | Register verification in `skill-aproda-aldc-release`: diff each `inPlaceEdits` path against the pinned upstream base — *byte-identical ⇒ registered edit missing*. Exactly the check that would have caught T-9 in June | ~~T-5~~ → **T-12 ✅** |
-| **T-6** | **D-47** + three validator rules: `catalogCoherence`, `versionCoherence` (⚠️ scope to Aproda paths — measured: 21 files carry "v1.1", only **2** are Aproda paths, so an unscoped rule fails 19 inherited files), `aprodaInventoryCoherence`; optional `aproda.primitives` in `aldc.yaml` | T-5 |
+*✅ T-7, T-5, T-6 all done 2026-09-24 — see Done table above. Block 2 is closed.*
 
-> **Dependency corrected (2026-09-24).** T-7 does **not** need the catalog rule — it needs `inPlaceEdits`
-> and a *correct* pin. Its real precondition was **T-12**, which sat in Block 3. T-12 is now done, so
-> **T-7 can go first** — and it is the highest-value item, being the only measure that would have caught
-> both T-9 and T-19.
+> **T-7 closed 2026-09-24.** It did **not** need the catalog rule — it needed `inPlaceEdits` and a
+> *correct* pin, i.e. **T-12**, done earlier the same day. Result: `Test-InPlaceEditsRegister.ps1`
+> verified the current register clean (21/21), so no Block-1-style latent defect remains undiscovered.
 >
-> Also ready: T-5/T-6 texts exist (`E-006-plan.md` Z50 / Z73 / Z92 / Z188); the provisional Step 2.5 is
-> in place at `skill-aproda-aldc/SKILL.md` Z93–105. Four real catalogs exist (`agents`, `instructions`,
-> `prompts`, `skills`), but only **two** are registered in `aldc.yaml → required.catalog` — so T-5's
-> canonical list must cover registration too, else `agents/index.md` keeps not shipping (T-11, proven).
+> **T-5/T-6 closed 2026-09-24.** D-46/D-47 written, Step 2.5 replaced, three validator rules
+> implemented and live-run against this repo. All three genuinely found drift on the first run
+> (proof the rules work, not a bug) — none of that drift was fixed as part of T-5/T-6; it is now
+> Block 3's job (T-10 for the `readme.aproda.md` inventory + path-prefix unification, T-11 for
+> `agents/index.md` + its missing `required.catalog` registration, and one leftover "v1.1" string
+> in `skill-aproda-aldc-release/SKILL.md`). Only **two** of the four real catalogs (`prompts`,
+> `skills`) are registered in `aldc.yaml → required.catalog` — T-11 still needs to add `agents`
+> and `instructions`, else `agents/index.md` keeps not shipping to consumer projects.
 
 ---
 
@@ -157,14 +159,16 @@ report as a claim, not as proof.
 ## Recommended order
 
 ```
-Block 1  T-8, T-9, T-19   -> commit + push      ✅ done 2026-09-24
-Block 2  T-7, T-5, T-6                          T-12 ✅ unblocked T-7 -> start there
-Block 3  T-10, T-11, T-13, T-14, T-4            cleanup, now validator-protected
-Block 4  T-22, T-17, T-23 …                     BCQuality -> bcquality.md (as-is until then)
-Block 5  T-15, T-16                             upstream, parallel at any time
+Block 1  T-8, T-9, T-19          -> commit + push      ✅ done 2026-09-24
+Block 2  T-7, T-5, T-6           -> commit + push      ✅ done 2026-09-24
+Block 3  T-10, T-11, T-13, T-14, T-4                   cleanup, now validator-protected
+Block 4  T-22, T-17, T-23 …                            BCQuality -> bcquality.md (as-is until then)
+Block 5  T-15, T-16                                    upstream, parallel at any time
 ```
 
-**Block 2 is now the priority, and T-7 is its real target.** Block 1 produced two independent cases
-(T-9, T-19) of a change believed to be in effect that was not. T-7 is the only proposed measure that
-would have caught either. Its stated dependency on T-5 is worth re-checking when Block 2 starts —
-register-vs-upstream diffing may not actually need the catalog rule, in which case T-7 can go first.
+**Block 2 is closed.** Block 1 produced two independent cases (T-9, T-19) of a change believed to be
+in effect that was not. T-7 — the register-verification gate — is implemented and verified clean
+against the live register. T-5/T-6 — the catalog-coherence, version-coherence, and Aproda-inventory
+rules, plus their governing decisions (D-46/D-47) — are implemented, wired into `skill-aproda-aldc`,
+and live-run against this repo; the drift they found is real and is Block 3's job to clean up, not
+Block 2's. Not committed/pushed yet.

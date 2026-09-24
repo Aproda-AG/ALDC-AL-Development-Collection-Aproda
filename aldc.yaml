@@ -25,6 +25,24 @@ aproda:
   basePin: "4f3371f69c3013edb508540673f60e5e8a0b64b6"   # ALDC merge-base the fork sits on (2026-08-18); NOT in sync — upstream was 27 commits ahead on 2026-09-24, see E-006 T-16
   inventory: ".github/readme.aproda.md"
   decisions: ".github/decisions.aproda.md"
+  # Explicit primitive list (D-47, optional): makes the Aproda layer machine-checkable
+  # without polluting the Core required/optional sets below. Not yet consumed by the
+  # aldc-validate rules (which walk the filesystem directly) — kept as the future
+  # anchor for a stricter, list-driven check once the T-10/T-11 catalog sweep lands.
+  primitives:
+    agents:
+      - "agents/al-translate-subagent.aproda.agent.md"
+    skills:
+      - "skills/skill-aproda-aldc/SKILL.md"
+      - "skills/skill-aproda-aldc-release/SKILL.md"
+      - "skills/skill-aproda-ado/SKILL.md"
+      - "skills/skill-aproda-deploy-run-verify/SKILL.md"
+      - "skills/skill-aproda-fkh/SKILL.md"
+    workflows:
+      - "prompts/al-doc-update.aproda.prompt.md"
+    instructions:
+      - "instructions/hitl-validation.aproda.instructions.md"
+      - "instructions/aproda-aldc-steward.aproda.instructions.md"
 
 # External citable knowledge base, consumed by al-review-subagent (Step 0) as an
 # audit/citation layer. Does NOT replace instructions or skills.
@@ -184,3 +202,8 @@ validation:
     incompleteRequirementSets: "warn"
     missingRecommendedSkills: "warn"
     malformedAlFileName: "warn"
+    # D-47 (E-006 T-6): start at warn — the fork ships known-stale catalogs until
+    # the T-10/T-11 sweep; promote to error once that sweep closes the drift.
+    catalogCoherence: "warn"
+    versionCoherence: "warn"
+    aprodaInventoryCoherence: "warn"

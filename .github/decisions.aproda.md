@@ -571,6 +571,8 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `.github/actions/aldc-validate/action.yml` | Drift-fix: `description` "v1.1" → "v1.2" — same drift as the validator it wraps, missed in 2026-06-25 because only `index.js` was registered. **Fork-only, does not ship**: neither the action nor `workflows/aldc-validate.yml` survives the layout mapping, and a consuming repo runs AL-Go workflows instead (verified absent in the reference project). `index.js` itself does ship via `inPlaceEdits` and can be run manually. | D-17 / D-2 | 2026-09-24 |
 | `prompts/index.md` | Rewritten to the workflows that actually exist (E-006 F-4, proven in a consumer project): removed 12 non-existent entries (`al-diagnose`, `al-events`, `al-pages`, `al-permissions`, `al-translate`, `al-migrate`, `al-performance`, `al-performance.triage`, `al-copilot-`×4), added the 6 missing ones (5× `al-agent.*`, `al-doc-update.aproda`), added a "not workflows — these are skills" redirect table, footer `2.11.0`/2026-02-06 → Core v1.2. Ships via `aldc.yaml → required.catalog` + `includeAldcFramework: true`, so **no `inPlaceEdits` entry is required** — noted here because the manifest is otherwise a mirror of this register. | D-2 | 2026-09-24 |
 | `aldc.yaml` | **T-12**: `aproda.basePin` corrected `a900263…` → `4f3371f…`, the real merge-base shared by `aproda`, `origin/aproda` and the feature branch against the upstream mirror `origin/main`. The old value asserted "upstream == fork, in sync 2026-06-25" while upstream was 27 commits ahead — a false parity claim, and the precondition for T-7 (which diffs `inPlaceEdits` against this pin). Also corrected the header comment claiming aldc.yaml is *not* auto-synced; D-18 made it a `dualVariant` file. | D-17 / D-18 | 2026-09-24 |
+| `skills/skill-aproda-aldc-release/SKILL.md` + `tools/aproda-sync/Test-InPlaceEditsRegister.ps1` | **T-7**: added a "Register verification" release gate + the script it runs — diffs every `inPlaceEdits` path against `aldc.yaml → aproda.basePin`; byte-identical ⇒ registered edit missing. Exactly the check that would have caught T-9 in June. Net-new Aproda script (D-4), not an Upstream in-place edit, so not added to `aproda-sync.json → inPlaceEdits`; the skill folder is already hard-denied there. Smoke-tested clean against the current register (21/21 ok). | D-4 / D-7 | 2026-09-24 |
+| `tools/aldc-validate/index.js` | **T-6**: added three rules — `catalogCoherence` (agents/skills/prompts/instructions vs. their index catalogs, both directions), `versionCoherence` (scoped "ALDC Core vX.Y" drift check), `aprodaInventoryCoherence` (`*.aproda.*` files + `skill-aproda-*/` folders vs. `readme.aproda.md`'s inventory, both directions). All registered at `"warn"` in `aldc.yaml → validation.rules` (D-47). Live-run against this repo: `catalogCoherence` caught 4 unlisted agents + 1 unlisted skill; `versionCoherence` caught a real drifted file (`skill-aproda-aldc-release/SKILL.md`, still "v1.1"); `aprodaInventoryCoherence` caught 4 missing inventory entries and confirmed the readme table's `.github/`-prefix inconsistency (F-10) as 6 unresolved reverse-references — all genuine, none fixed here (T-10/T-11 scope). | D-2 / D-47 | 2026-09-24 |
 
 ---
 
@@ -707,4 +709,39 @@ That assumption broke on 2026-09-22. The E-006 catalog work added the Aproda rou
 - *Set `copilotEntrypointCoherence` to a lower severity* — rejected: a permanently ignored warning is the mechanism that produces drift, which is the very failure class E-006 documented.
 
 **Upstream relevance.** The gap is not Aproda-specific: any fork or organization that *extends* the entrypoint hits it. This belongs in the upstream PR alongside the v1.1→v1.2 migration (E-006 Phase 4).
+
+### D-46 — Adding or removing a primitive includes updating every catalog that enumerates it
+
+**Context.** The layer's two extension rules (D-2 net-new / in-place, D-4 `.aproda.` convention) are complete for *conflict avoidance* and silent on *discoverability*. An artifact can satisfy both perfectly and still be invisible to routing and to every reader, because ~4 catalog files enumerate primitives by hand and nothing obliges their update. The E-006 audit (2026-09-22) found this had happened to 5 of 19 layer artifacts in `readme.aproda.md`, to 10 of 21 skills in `skills/index.md`, to 4 of 11 agents in `agents/index.md`, and — shipped to consumers — to 12 of 12 workflows in `prompts/index.md`.
+
+**Decision.** A change that adds, removes, or renames a primitive is **not complete** until every catalog in the canonical list below reflects it. Enforced by `aldc-validate`'s `catalogCoherence` / `aprodaInventoryCoherence` rules (D-47) and re-checked at release time by `skill-aproda-aldc-release`.
+
+**Canonical catalog list** (the artefact this rule points at):
+
+| Primitive added/removed | Catalogs that MUST be updated |
+|---|---|
+| **Skill** | `skills/index.md` · `.github/copilot-instructions.md` → Skills table · `.github/readme.aproda.md` → inventory (if `skill-aproda-*`) · `aldc.yaml` → `required`/`optional` (Core only) or `aproda.primitives` (D-47) |
+| **Agent** | `agents/index.md` · `.github/copilot-instructions.md` → Agent Routing + Quick routing guide · `.github/readme.aproda.md` → inventory (if `.aproda.`) · `aldc.yaml` |
+| **Workflow** | `prompts/index.md` · `prompts/README.md` · `.github/copilot-instructions.md` → Workflows table · `.github/readme.aproda.md` → inventory (if `.aproda.`) · `aldc.yaml` |
+| **Instruction** | `instructions/index.md` · `.github/copilot-instructions.md` → Auto-Applied Instructions table · `.github/readme.aproda.md` → inventory (if `.aproda.`) · `aldc.yaml` |
+| **Any of the above** | `.github/copilot-instructions.md` header count + footer "Primitives" line · `docs/copilot-reference.md` → Workspace Structure tree |
+| **In-place Upstream edit** | `.github/decisions.aproda.md` → D-7 register · `tools/aproda-sync/aproda-sync.json` → `inPlaceEdits` |
+
+**Wired into** `skill-aproda-aldc` → Step 2.5 ("Update the catalogs") and `skill-aproda-aldc-release` → "Catalog consistency check".
+
+**Rejected alternative.** "Generate all catalogs from `aldc.yaml`." Attractive, but `aldc.yaml` deliberately does **not** enumerate Aproda primitives outside the optional `aproda.primitives` block (F-9) and the catalogs carry prose value (routing hints, "loaded by", rationale) that no generator produces. A validated hand-maintained catalog is the pragmatic middle ground.
+
+### D-47 — `aldc-validate` covers catalogs, versions, and the Aproda inventory
+
+**Decision.** Three new rules in `tools/aldc-validate/index.js`, all starting at severity `"warn"` (promoted to `"error"` once the Phase-3 sweep, T-10/T-11, closes the drift they find today — the fork ships known-stale catalogs, so `"error"` at introduction would immediately fail every build):
+
+| Rule | Check | Catches |
+|---|---|---|
+| `catalogCoherence` | Every `agents/*.agent.md`, `skills/skill-*/SKILL.md`, `prompts/*.prompt.md`, `instructions/*.instructions.md` appears by name/link in its catalog (`agents/index.md`, `skills/index.md`, `prompts/index.md`, `instructions/index.md`), and every catalog link resolves to an existing file | F-3, F-4, F-5, F-13 |
+| `versionCoherence` | Every `ALDC Core vX.Y` literal equals `core.version` major.minor — **scoped to Aproda-owned paths only**: `*.aproda.*`, `skill-aproda-*/**`, `aproda-sync.json → inPlaceEdits`, `copilotEntrypoint`, `aldc.yaml` itself. First live run (2026-09-24) found exactly one drifted file in scope, `skills/skill-aproda-aldc-release/SKILL.md` (2 occurrences) — the ~19 other repo-wide "v1.1" hits are inherited Upstream files, correctly outside this scope (Findings 02 §3, Phase 4 is the upstream-PR route for those) | Findings 02 §5, R-2 |
+| `aprodaInventoryCoherence` | Every `**/*.aproda.*` file and `skills/skill-aproda-*/` folder is named inside `readme.aproda.md`'s "What lives here" section, and every `aproda`-mentioning path referenced there resolves to a real file | F-3, F-9 |
+
+**`aldc.yaml → aproda.primitives`** (optional, added alongside): an explicit primitive list makes the Aproda layer machine-checkable without polluting the Core `required`/`optional` sets. Not currently consumed by the three rules above (which walk the filesystem directly) — it exists as the future anchor for a stricter, list-driven check once the sweep is done.
+
+**Rejected alternative.** Starting all three rules at `"error"`. Rejected because the fork's own catalogs are the very files these rules were written to catch drifting (D-46's context) — shipping at `"error"` would break every validation run before the sweep (T-10/T-11) has a chance to run, punishing the messenger.
 

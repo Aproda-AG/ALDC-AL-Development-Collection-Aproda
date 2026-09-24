@@ -29,6 +29,7 @@ Load this skill when the task is **about the Aproda layer**, not about the BC ex
 | How are layer or VSIX releases prepared and approved? | [`skill-aproda-aldc-release`](../skill-aproda-aldc-release/SKILL.md) (fork-maintainer only) |
 | Which model does each agent run on, and when do we escalate to Opus? | `decisions.aproda.md` → **D-22** (pins + Model Escalation Gate) |
 | Which Upstream files did we touch in place? | `decisions.aproda.md` → *Upstream edits register* |
+| Which catalogs must I update when adding a primitive? | `decisions.aproda.md` → **D-46** + Step 2.5 below |
 | Repo orientation: the two layouts, what Copilot **actually** loads, currently known defects + how to re-verify them | [`00-ALDC-Aproda-Ground-Truth.md`](../../_A-ALDC-Plans/00-ALDC-Aproda-Ground-Truth.md) — 🔒 **fork-only** |
 
 This skill **orchestrates and links** those; it never copies their content.
@@ -90,19 +91,21 @@ Use the `readme.aproda.md` "Stacking vs. changing" table:
 - In-place edit → keep it **additive and minimal** (smaller conflicts on the next pull).
 - Persisted artifacts under `.github/**` are **English** (copilot-instructions rule).
 
-### Step 2.5 — Update the catalogs (do not skip)
+### Step 2.5 — Update the catalogs (D-46, mandatory)
 
-A net-new artifact is invisible to the framework until every catalog that enumerates it is updated. This is not hypothetical — `skills/index.md`, `agents/index.md`, `instructions/index.md`, and `.github/copilot-instructions.md` have each been found missing entries for skills/agents/instructions that existed on disk for months, and `prompts/index.md` was found describing an entirely different, obsolete workflow set from a prior major version. Treat catalog updates as part of the change, not a follow-up:
+A primitive that follows D-2 and D-4 perfectly is still **invisible** until every catalog that enumerates it is updated. D-46 makes catalog synchronisation part of the change, not a follow-up — this is not hypothetical: `skills/index.md`, `agents/index.md`, `instructions/index.md`, and `.github/copilot-instructions.md` have each been found missing entries for skills/agents/instructions that existed on disk for months, and `prompts/index.md` was found describing an entirely different, obsolete workflow set from a prior major version.
 
-| Artifact type | Catalog(s) to update |
+| You added/removed/renamed | Update these |
 |---|---|
-| New skill | `skills/index.md`; `.github/copilot-instructions.md` → Skills table (mark 🟦 if Aproda); `docs/copilot-reference.md` if it belongs to a documented sub-area (e.g. BC Agents Pack) |
-| New agent | `agents/index.md`; `.github/copilot-instructions.md` → Agent Routing table + Quick routing guide |
-| New workflow | `prompts/index.md`; `.github/copilot-instructions.md` → Workflows table |
-| New instruction | `instructions/index.md`; `.github/copilot-instructions.md` → Auto-Applied Instructions table |
-| Any of the above | `.github/copilot-instructions.md` → header count + footer "Primitives" line; `docs/copilot-reference.md` → "Workspace Structure" tree |
+| Skill | `skills/index.md` · entrypoint Skills table (mark 🟦 if Aproda) · `readme.aproda.md` inventory (if `skill-aproda-*`) · `docs/copilot-reference.md` if it belongs to a documented sub-area (e.g. BC Agents Pack) |
+| Agent | `agents/index.md` · entrypoint Agent Routing **and** Quick routing guide · `readme.aproda.md` inventory (if `.aproda.`) |
+| Workflow | `prompts/index.md` · `prompts/README.md` · entrypoint Workflows table · `readme.aproda.md` inventory (if `.aproda.`) |
+| Instruction | `instructions/index.md` · entrypoint Auto-Applied Instructions table · `readme.aproda.md` inventory (if `.aproda.`) |
+| Any | entrypoint header count + footer "Primitives" line · `docs/copilot-reference.md` Workspace Structure tree · `aldc.yaml` (`required`/`optional` for Core, `aproda.primitives` for layer) |
 
-Before closing out a change that adds/removes a skill, agent, instruction, or workflow, **re-open each catalog above and confirm the count and the row exist** — don't rely on memory of having already done it earlier in the session. `skill-aproda-aldc-release` re-checks this at release time, but that is a safety net, not a substitute for doing it here.
+**Verify, don't recall.** Re-open each catalog and confirm the row and the count — don't rely on memory of having already done it earlier in the session. `aldc-validate`'s `catalogCoherence` / `aprodaInventoryCoherence` rules (D-47) are the automated backstop; `skill-aproda-aldc-release` re-checks at release time. Neither substitutes for doing it here.
+
+**Two layouts, one table.** Catalog paths differ between fork (`skills/…`) and project (`.github/skills/…`). `readme.aproda.md`'s inventory uses the **project** layout; keep it consistent and never mix the two in one table.
 
 ### Step 3 — Record the decision
 - Add/extend a **D-N entry** in `decisions.aproda.md` for any non-trivial design choice (rationale + rejected alternative).

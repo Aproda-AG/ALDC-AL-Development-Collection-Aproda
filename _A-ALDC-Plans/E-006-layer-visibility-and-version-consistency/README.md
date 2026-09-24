@@ -1,8 +1,9 @@
 # E-006 — Layer Visibility & Version Consistency
 
 > **Status (2026-09-24):** findings complete · **Block 1 done and pushed** (T-8, T-9, T-19 — the three
-> defects that reached consumer projects) · Blocks 2–5 open. Live tracker:
-> [`action-plan.md`](action-plan.md).
+> defects that reached consumer projects) · **Block 2 done** (T-7 register-verification gate, T-5 D-46 +
+> Step 2.5, T-6 D-47 + three validator rules), not yet pushed ·
+> Rest of Blocks 3–5 open. Live tracker: [`action-plan.md`](action-plan.md).
 > **Scope:** the Aproda ALDC fork repo itself. **Out of scope** (per maintainer): `packages/foundation/**`
 > (APM package distribution — the upstream ALDC VS Code extension, not used at Aproda; Aproda ships
 > `tools/aproda-vscode-extension/`) and Claude Code / Codex as *runtimes* (Aproda uses GitHub Copilot only).
