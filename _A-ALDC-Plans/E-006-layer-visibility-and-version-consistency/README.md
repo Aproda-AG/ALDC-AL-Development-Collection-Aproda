@@ -1,7 +1,8 @@
 # E-006 — Layer Visibility & Version Consistency
 
-> **Status:** findings complete, plan drafted — **nothing changed in the repo yet** (except the
-> pre-existing edits made during the 2026-09-21/22 session, listed in `E-006-plan.md` § Appendix A).
+> **Status (2026-09-24):** findings complete · **Block 1 done and pushed** (T-8, T-9, T-19 — the three
+> defects that reached consumer projects) · Blocks 2–5 open. Live tracker:
+> [`action-plan.md`](action-plan.md).
 > **Scope:** the Aproda ALDC fork repo itself. **Out of scope** (per maintainer): `packages/foundation/**`
 > (APM package distribution — the upstream ALDC VS Code extension, not used at Aproda; Aproda ships
 > `tools/aproda-vscode-extension/`) and Claude Code / Codex as *runtimes* (Aproda uses GitHub Copilot only).
@@ -48,8 +49,10 @@ Full evidence with `file:line` references in the two findings documents.
 
 | Document | Contents |
 |----------|----------|
+| [action-plan.md](action-plan.md) | **Start here** — what is done, what is next, in which block |
 | [findings-01-layer-visibility.md](findings-01-layer-visibility.md) | Task 1 — discovery mechanics, the four parallel distributions, inventory/catalog completeness, sync + validator coverage gaps (F-1…F-4, F-7 and 8 further findings) |
 | [findings-02-version-drift.md](findings-02-version-drift.md) | Task 2 — full v1.1 vs v1.2 inventory, assessment, and recommendation (F-5, F-6) |
+| [bcquality.md](bcquality.md) | **Own chapter** (Block 4) — BCQuality evidence, audit checking and the per-user clone path. Split out because F-16 opened a whole subsystem. **As-is until Block 4** |
 | [E-006-plan.md](E-006-plan.md) | Phased remediation plan + the concrete text proposed for `skill-aproda-aldc` and `skill-aproda-aldc-release` + Appendix A (already-made session edits) |
 
 ## The single most important sentence

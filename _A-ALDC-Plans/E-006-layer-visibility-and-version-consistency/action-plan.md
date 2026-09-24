@@ -61,15 +61,14 @@
 
 | # | Finding | Status |
 |---|---|---|
-| **F-16** | `neverTouchExceptions → workflows/bcquality-evidence.yaml` is **inert** — declared as the one Aproda-owned file under a denied folder, but `.github/workflows/…` reverse-maps to `$null` before the exception is consulted. Verified absent in the reference project. Same mechanism as F-14 | ⏳ **T-21**, needs a decision |
+| **F-16** | `neverTouchExceptions → workflows/bcquality-evidence.yaml` is **inert** — declared as the one Aproda-owned file under a denied folder, but `.github/workflows/…` reverse-maps to `$null` before the exception is consulted. Verified absent in the reference project. Same mechanism as F-14 | → **Block 4**, see [`bcquality.md`](bcquality.md) B-1 |
 | — | `.github/actions/aldc-validate/action.yml` + `workflows/aldc-validate.yml` do **not** ship either. Not a defect: a consuming repo runs AL-Go workflows. The register entry now says so explicitly | ✅ register corrected |
 | — | `readme.aproda.md` carries a **second, partial in-place register** (8 rows vs. 47 in `decisions.aproda.md`) and claimed the never-applied v1.1→v1.2 fix too. A third source of truth next to the register and `aproda-sync.json` | ⏳ folded into **T-10** |
 | — | `agents/al-conductor.agent.md` says "Core **v1.1** violation" twice. The file is already an `inPlaceEdits` merge-point, so fixing it adds no new conflict surface — the "don't sweep inherited v1.1" argument does not apply here | ⏳ folded into **T-9** leftovers |
 
-**T-21 — decide and fix F-16.** Two options: (a) add `workflows/**` to `dotGithub` so the declared
-exception actually works and the BCQuality evidence CI reaches projects; (b) declare the workflow
-fork-only and remove it from `neverTouchExceptions`, since a consuming repo's CI is AL-Go's. Option (a)
-is what the manifest currently *claims*; (b) is what it currently *does*. Either way the two must agree.
+> Chasing F-16 opened a whole subsystem (ownership, the per-user clone path, a validator that passes
+> vacuously, three shipped claims that are not in effect). It is **not** a layer-visibility problem and
+> now has its own chapter: **[`bcquality.md`](bcquality.md)** — scheduled as Block 4, untouched until then.
 
 ---
 
@@ -92,14 +91,40 @@ is what the manifest currently *claims*; (b) is what it currently *does*. Either
 | **T-10** | Complete `readme.aproda.md` inventory (5 missing artifacts incl. F-14 files); unify path layout; fix D-range claims | ✅ |
 | **T-11** | Rewrite `agents/index.md` (11 agents) **and** register it in `aldc.yaml → required.catalog` — otherwise it keeps not shipping (proven) | ✅ after registration |
 | **T-12** | Correct `aldc.yaml → aproda.basePin` to the real merge-base `4f3371f`; drop the stale "in sync" comment | ✅ |
-| **T-17** | `external.bcquality.home` (`../../BCQuality-Aproda`) is project-correct / fork-wrong. Needs a layout decision: dual-variant rewrite or a consistently toolkit-relative value | ✅ |
 | **T-13** | Document `.claude/` + `claude-plugin/` as upstream-owned (**do not delete** — 6 of 27 upstream commits touch them) | ❌ |
 | **T-14** | Small items: `.github/agents/test.agent.md`; register or inline `docs/copilot-reference.md` (**F-11 proven**); clarify `CLAUDE.md` ownership | mixed |
 | **T-4** | **Q-3 release strategy** — bump `layerVersion`? Recommendation: *after* T-7, so the release gate exists before the release | — |
 
+> `T-17` (BCQuality clone path) **moved to Block 4** — it is not a path-layout nit, it silently
+> disables citation checking.
+
 ---
 
-## Next — Block 4: upstream (independent track)
+## Next — Block 4: BCQuality (own chapter)
+
+*Full content in **[`bcquality.md`](bcquality.md)**. Listed here only so the plan stays complete.*
+
+**Until this block starts, BCQuality stays exactly as-is.** The knowledge layer works where a clone is
+mounted; only the **verification** layer is broken. Treat any "BCQuality Evidence" block in a phase
+report as a claim, not as proof.
+
+| # | Item |
+|---|---|
+| **T-22** | **Per-user clone path** — the actual requirement: the clone location is a property of the workstation, not the repo. Today repo-scoped in `aldc.yaml` + `*.code-workspace`. Needs design |
+| **T-17** | `external.bcquality.home` resolves to a non-existent directory in the fork — the validator skips citation checking *although a clone is present* |
+| **T-23** | Validator **passes vacuously**: three paths to false green, all exit `0`. Prerequisite for any gate |
+| **T-24** | Restore honesty in shipped docs: `aldc.yaml` points at absent files, `copilot-instructions.md` promises CI that is not there, the script advertises a pin check it no longer performs |
+| **T-21** | Decide the CI question (ship or declare fork-only). Check first whether `BCQuality-Aproda` is private — an unauthenticated clone would fail on a GitHub runner |
+| **T-25** | One-line fix: the manifest calls an Upstream workflow "ours" |
+| **T-26** | Agent-executed gate in `al-pr-prepare` — feasibility confirmed, but must evaluate `notes` not exit code, and is a self-check, not independent verification |
+| **T-27** | Exercise audit evidence (`.github/audits/`) end-to-end — never done |
+
+> **BCQuality is Upstream, not Aproda** (`fa37cf7`, Javier Armesto Gonzalez, PR #51). Most fixes here are
+> upstream-PR candidates rather than fork edits — the per-user path is the likely exception.
+
+---
+
+## Next — Block 5: upstream (independent track)
 
 | # | Todo |
 |---|---|
@@ -125,7 +150,8 @@ is what the manifest currently *claims*; (b) is what it currently *does*. Either
 Block 1  T-8, T-9, T-19   -> commit + push      ✅ done 2026-09-24
 Block 2  T-5, T-7, T-6                          the rule + enforcement (own session)
 Block 3  T-10 … T-14, T-4                       cleanup, now validator-protected
-Block 4  T-15, T-16                             upstream, parallel at any time
+Block 4  T-22, T-17, T-23 …                     BCQuality -> bcquality.md (as-is until then)
+Block 5  T-15, T-16                             upstream, parallel at any time
 ```
 
 **Block 2 is now the priority, and T-7 is its real target.** Block 1 produced two independent cases
