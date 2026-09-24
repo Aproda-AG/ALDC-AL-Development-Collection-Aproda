@@ -15,13 +15,14 @@ toolkitRoot: "."
 # .github/readme.aproda.md; the rationale is .github/decisions.aproda.md
 # (D-17 for this versioning scheme). Layer version = <ALDC core.version>_aproda.<n>.
 # Single source of truth for the fork's version numbers (mirrors external.bcquality).
-# NOTE: toolkitRoot is ".github" here (consumer layout); the fork's aldc.yaml uses
-# ".". That one diverging line is why aldc.yaml is NOT auto-synced (D-18 follow-up).
+# NOTE: `toolkitRoot` diverges per side (".github" in a consuming project, "." in
+# the fork). The syncer rewrites that single line per destination, so aldc.yaml IS
+# auto-synced as a dualVariant file (D-18) — it is not maintained by hand.
 # ─────────────────────────────────────────────────────────────────────────────
 aproda:
   layerVersion: "1.2.0_aproda.17"       # <ALDC core.version>_aproda.<revision>
   fork: "https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda"
-  basePin: "a900263f51e416762cc7f85575deb9b30cd5b1e3"   # ALDC commit the fork sits on (upstream == fork, in sync 2026-06-25)
+  basePin: "4f3371f69c3013edb508540673f60e5e8a0b64b6"   # ALDC merge-base the fork sits on (2026-08-18); NOT in sync — upstream was 27 commits ahead on 2026-09-24, see E-006 T-16
   inventory: ".github/readme.aproda.md"
   decisions: ".github/decisions.aproda.md"
 

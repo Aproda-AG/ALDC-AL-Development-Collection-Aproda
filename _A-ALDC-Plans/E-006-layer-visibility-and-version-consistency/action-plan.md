@@ -79,8 +79,18 @@
 | # | Todo | Depends on |
 |---|---|---|
 | **T-5** | **D-46** "catalog synchronisation is part of a primitive change" + canonical catalog list; replace the provisional Step 2.5 in `skill-aproda-aldc` with the decision-backed version (text in `E-006-plan.md` § A) | — |
-| **T-7** | Register verification in `skill-aproda-aldc-release`: diff each `inPlaceEdits` path against the pinned upstream base — *byte-identical ⇒ registered edit missing*. Exactly the check that would have caught T-9 in June | T-5 |
-| **T-6** | **D-47** + three validator rules: `catalogCoherence`, `versionCoherence` (⚠️ scope to Aproda paths, else ~22 inherited failures), `aprodaInventoryCoherence`; optional `aproda.primitives` in `aldc.yaml` | T-5 |
+| **T-7** | Register verification in `skill-aproda-aldc-release`: diff each `inPlaceEdits` path against the pinned upstream base — *byte-identical ⇒ registered edit missing*. Exactly the check that would have caught T-9 in June | ~~T-5~~ → **T-12 ✅** |
+| **T-6** | **D-47** + three validator rules: `catalogCoherence`, `versionCoherence` (⚠️ scope to Aproda paths — measured: 21 files carry "v1.1", only **2** are Aproda paths, so an unscoped rule fails 19 inherited files), `aprodaInventoryCoherence`; optional `aproda.primitives` in `aldc.yaml` | T-5 |
+
+> **Dependency corrected (2026-09-24).** T-7 does **not** need the catalog rule — it needs `inPlaceEdits`
+> and a *correct* pin. Its real precondition was **T-12**, which sat in Block 3. T-12 is now done, so
+> **T-7 can go first** — and it is the highest-value item, being the only measure that would have caught
+> both T-9 and T-19.
+>
+> Also ready: T-5/T-6 texts exist (`E-006-plan.md` Z50 / Z73 / Z92 / Z188); the provisional Step 2.5 is
+> in place at `skill-aproda-aldc/SKILL.md` Z93–105. Four real catalogs exist (`agents`, `instructions`,
+> `prompts`, `skills`), but only **two** are registered in `aldc.yaml → required.catalog` — so T-5's
+> canonical list must cover registration too, else `agents/index.md` keeps not shipping (T-11, proven).
 
 ---
 
@@ -90,7 +100,7 @@
 |---|---|---|
 | **T-10** | Complete `readme.aproda.md` inventory (5 missing artifacts incl. F-14 files); unify path layout; fix D-range claims | ✅ |
 | **T-11** | Rewrite `agents/index.md` (11 agents) **and** register it in `aldc.yaml → required.catalog` — otherwise it keeps not shipping (proven) | ✅ after registration |
-| **T-12** | Correct `aldc.yaml → aproda.basePin` to the real merge-base `4f3371f`; drop the stale "in sync" comment | ✅ |
+| **T-12** | ✅ **done 2026-09-24** — `aproda.basePin` `a900263…` → `4f3371f…` (real merge-base, shared by `aproda`/`origin/aproda`/feature branch against the upstream mirror `origin/main`). Old value asserted "upstream == fork, in sync" while upstream was 27 commits ahead. Pulled forward out of Block 3 because **T-7 depends on it** | ✅ |
 | **T-13** | Document `.claude/` + `claude-plugin/` as upstream-owned (**do not delete** — 6 of 27 upstream commits touch them) | ❌ |
 | **T-14** | Small items: `.github/agents/test.agent.md`; register or inline `docs/copilot-reference.md` (**F-11 proven**); clarify `CLAUDE.md` ownership | mixed |
 | **T-4** | **Q-3 release strategy** — bump `layerVersion`? Recommendation: *after* T-7, so the release gate exists before the release | — |
@@ -148,8 +158,8 @@ report as a claim, not as proof.
 
 ```
 Block 1  T-8, T-9, T-19   -> commit + push      ✅ done 2026-09-24
-Block 2  T-5, T-7, T-6                          the rule + enforcement (own session)
-Block 3  T-10 … T-14, T-4                       cleanup, now validator-protected
+Block 2  T-7, T-5, T-6                          T-12 ✅ unblocked T-7 -> start there
+Block 3  T-10, T-11, T-13, T-14, T-4            cleanup, now validator-protected
 Block 4  T-22, T-17, T-23 …                     BCQuality -> bcquality.md (as-is until then)
 Block 5  T-15, T-16                             upstream, parallel at any time
 ```
