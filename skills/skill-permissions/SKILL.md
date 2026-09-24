@@ -205,13 +205,23 @@ codeunit 50200 "Contoso Sales Test"
 }
 ```
 
+**`Permissions` property vs `InherentPermissions` attribute — do not confuse them:**
+
+| | `Permissions` property (object-level, above) | `[InherentPermissions(...)]` (per-procedure attribute) |
+|---|---|---|
+| Scope | Object header (codeunit/table/page/report/xmlport/query) | Individual procedure |
+| Can target base-app / other-extension objects? | Yes (e.g. `TableData "Cust. Ledger Entry"` on a custom codeunit is a documented Microsoft example) | **No** — only objects owned by the *same* extension. Referencing a base table (e.g. `Database::"Sales Shipment Header"`) fails to compile with `An application object 'Table <N>' could not be found in the current extension.` |
+| Still needs a permission set? | Yes — it only upgrades *indirect* → *direct* permission for calls routed through this object; if no assigned permission set grants even indirect access, it still errors at runtime | No — it grants inherent access outright, but only within its narrow same-extension scope |
+
+For a base-app table like `Sales Shipment Header`, **default to the codeunit-level `Permissions` property** (b) — it scopes the grant to the procedure(s) that actually touch the table, keeping it out of the extension's general assignable permission sets. Only add a `tabledata "..."=RM` entry to a `permissionset`/`permissionsetextension` (a) when it's explicitly established that the codeunit-level property isn't enough — e.g. the table must be reachable directly from a page/report/API the permission set also needs to expose. Do not centralize onto a shared permission set purely to avoid repeating the property on several codeunits — that grants users direct table access everywhere the permission set is assigned (any page, any API), not just through the intended codeunit, which violates least privilege. `InherentPermissions` is not an option for base-app tables either way — don't reach for it there.
+
 ## Workflow
 
 ### Step 1: Analyze Required Permissions
 
 1. List all custom objects in the extension (tables, pages, codeunits, reports, xmlports)
 2. For each object, determine the minimum access level needed per role
-3. Identify base-app objects accessed indirectly (need `Permissions` property on codeunit)
+3. Identify base-app objects touched by the extension's codeunits and default to a `Permissions` property on that codeunit; only add a permission-set `tabledata` entry for a base-app object when it's explicitly justified that the codeunit-level property isn't sufficient
 4. Map roles to permission layers: Base (read) → User (operate) → Admin (configure + delete)
 
 ### Step 2: HITL Security Gate (MANDATORY)

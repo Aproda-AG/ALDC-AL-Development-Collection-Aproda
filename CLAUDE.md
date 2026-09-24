@@ -1,5 +1,12 @@
 # ALDC — Claude Code Instructions
 
+> **Ownership note (T-14, E-006, 2026-09-24).** Aproda's day-to-day agent runtime is GitHub Copilot
+> (`.github/copilot-instructions.md` is the maintained entrypoint). This file targets the Claude Code
+> runtime, which Aproda does not use in this fork; it is kept only for parity with Upstream `main` and
+> is **not actively maintained** — the agent/skill/workflow/instruction counts and version below reflect
+> ALDC Core v1.1 and are known-stale (see `decisions.aproda.md` D-46/D-47). Do not treat this file as an
+> authoritative primitive count; use `.github/copilot-instructions.md` for that.
+
 @import ./docs/framework/ALDC-Core-Spec-v1.2.md
 
 ## Overview

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * ALDC Core Validator v1.1
- * Validates repository compliance against ALDC Core Spec v1.1.
+ * ALDC Core Validator v1.2
+ * Validates repository compliance against ALDC Core Spec v1.2.
  *
  * Checks:
  *   1. aldc.yaml exists and parses correctly
@@ -77,11 +77,11 @@ if (!fileExists(memoryPath)) {
 if (fileExists(plansRoot)) {
   const contractTypes = cfg.contracts?.types || ["spec", "architecture", "test-plan"];
   const files = fs.readdirSync(plansRoot).filter(f => f.endsWith(".md") && f !== memoryFile);
-  
+
   // Extract unique req_names
   const reqNames = new Set();
   const filesByReq = {};
-  
+
   for (const f of files) {
     for (const type of contractTypes) {
       const suffix = `.${type}.md`;
@@ -93,18 +93,18 @@ if (fileExists(plansRoot)) {
       }
     }
   }
-  
+
   for (const reqName of reqNames) {
     const found = filesByReq[reqName] || [];
     const missing = contractTypes.filter(t => !found.includes(t));
     if (missing.length > 0) {
-      issue("incompleteRequirementSets", 
+      issue("incompleteRequirementSets",
         `Requirement "${reqName}" incomplete: missing ${missing.map(t => `${reqName}.${t}.md`).join(", ")}`);
     } else {
       info(`Requirement "${reqName}" has complete set (${contractTypes.length}/${contractTypes.length})`);
     }
   }
-  
+
   if (reqNames.size === 0) {
     info("No requirement sets found in plans directory (may be initial setup)");
   }
@@ -253,13 +253,17 @@ if (alFiles.length === 0) {
 }
 
 // ─── 8. Copilot entrypoint coherence ─────────────────────────────
-// Two modes (cfg.copilotEntrypointMode, default "mirror"):
-//   "mirror"  — the entrypoint must be byte-identical to its source (install.js
-//               copies source -> entrypoint; any drift is a stale copy).
-//   "trimmed" — the entrypoint is an intentional lean subset of the source (the
-//               ~31% always-on trim): we no longer require byte-identity, only
-//               that it exists, is non-empty, and is genuinely smaller than the
-//               source (a larger/equal "trim" means it went stale, not lean).
+// Three modes (cfg.copilotEntrypointMode, default "mirror"):
+//   "mirror"   — the entrypoint must be byte-identical to its source (install.js
+//                copies source -> entrypoint; any drift is a stale copy).
+//   "trimmed"  — the entrypoint is an intentional lean subset of the source (the
+//                ~31% always-on trim): we no longer require byte-identity, only
+//                that it exists, is non-empty, and is genuinely smaller than the
+//                source (a larger/equal "trim" means it went stale, not lean).
+//   "extended" — the entrypoint is the maintained artifact and deliberately adds
+//                content the source does not carry (e.g. a fork layer). Size is
+//                not a staleness signal here, so only existence and non-emptiness
+//                are checked. Use this instead of silencing the rule.
 const entrypoint = cfg.copilotEntrypoint;
 const source = cfg.copilotSource;
 const entrypointMode = cfg.copilotEntrypointMode || "mirror";
@@ -280,6 +284,12 @@ if (entrypoint && !fileExists(entrypoint)) {
       } else {
         info(`Copilot entrypoint is an intentional trim (${ep.length} vs ${src.length} source chars)`);
       }
+    } else if (entrypointMode === "extended") {
+      if (ep.length === 0) {
+        issue("copilotEntrypointCoherence", `Copilot entrypoint is empty: ${entrypoint}`);
+      } else {
+        info(`Copilot entrypoint deliberately extends its source (${ep.length} vs ${src.length} source chars)`);
+      }
     } else if (ep !== src) {
       issue("copilotEntrypointCoherence",
         `Copilot entrypoint drift detected: ${entrypoint} differs from ${sourcePath}`);
@@ -289,10 +299,185 @@ if (entrypoint && !fileExists(entrypoint)) {
   }
 }
 
+// ─── 9. Aproda layer coherence (D-46 / D-47, E-006 T-6) ──────────
+// Three checks, all severity "warn" until the T-10/T-11 catalog sweep promotes
+// them to "error" (decisions.aproda.md D-47) — the fork ships known-stale
+// catalogs today, so starting at "error" would fail every build immediately.
+
+// Generic recursive file walker (any extension), skipping noise directories.
+const APRODA_SKIP_DIRS = new Set(["node_modules", "archive", "_A-ALDC-Plans", ".AL-Go"]);
+function walkAllFiles(dir, acc) {
+  if (!fileExists(dir)) return acc;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name.startsWith(".")) continue;
+    if (APRODA_SKIP_DIRS.has(entry.name)) continue;
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkAllFiles(full, acc);
+    } else if (entry.isFile()) {
+      acc.push(full);
+    }
+  }
+  return acc;
+}
+const repoFiles = walkAllFiles(".", []).map(f => f.replace(/\\/g, "/").replace(/^\.\//, ""));
+
+// 9a. catalogCoherence — flat catalogs (agents/prompts/instructions) + the
+// nested skills catalog. A file on disk not linked by name in its catalog, or
+// a catalog link that resolves to nothing, is an issue either direction.
+function extractLinkedFiles(text, suffixRe) {
+  const re = new RegExp("\\(([\\w.\\-]+\\." + suffixRe + ")\\)", "g");
+  const out = new Set();
+  let m;
+  while ((m = re.exec(text))) out.add(m[1]);
+  return out;
+}
+
+function checkFlatCatalog(kind, dirRel, suffix, catalogRel) {
+  const dirPath = root + dirRel;
+  const catalogPath = root + catalogRel;
+  if (!fileExists(dirPath) || !fileExists(catalogPath)) return;
+  const onDisk = new Set(fs.readdirSync(dirPath).filter(f => f.endsWith("." + suffix)));
+  const linked = extractLinkedFiles(readFile(catalogPath), suffix.replace(/\./g, "\\."));
+  for (const f of onDisk) {
+    if (!linked.has(f)) issue("catalogCoherence", `${kind} exists on disk but is not linked from ${catalogRel}: ${f}`);
+  }
+  for (const f of linked) {
+    if (!onDisk.has(f)) issue("catalogCoherence", `${catalogRel} links a ${kind} that does not exist on disk: ${f}`);
+  }
+}
+
+checkFlatCatalog("agent", "agents", "agent.md", "agents/index.md");
+checkFlatCatalog("workflow", "prompts", "prompt.md", "prompts/index.md");
+checkFlatCatalog("instruction", "instructions", "instructions.md", "instructions/index.md");
+
+{
+  const skillsDir = root + "skills";
+  const catalogPath = root + "skills/index.md";
+  if (fileExists(skillsDir) && fileExists(catalogPath)) {
+    const onDisk = new Set(
+      fs.readdirSync(skillsDir, { withFileTypes: true })
+        .filter(e => e.isDirectory() && e.name.startsWith("skill-") && fileExists(path.join(skillsDir, e.name, "SKILL.md")))
+        .map(e => e.name)
+    );
+    const linkRe = /\((skill-[\w-]+)\/SKILL\.md\)/g;
+    const linked = new Set();
+    let m;
+    const catalogText = readFile(catalogPath);
+    while ((m = linkRe.exec(catalogText))) linked.add(m[1]);
+    for (const s of onDisk) {
+      if (!linked.has(s)) issue("catalogCoherence", `Skill exists on disk but is not linked from skills/index.md: ${s}`);
+    }
+    for (const s of linked) {
+      if (!onDisk.has(s)) issue("catalogCoherence", `skills/index.md links a skill that does not exist on disk: ${s}`);
+    }
+  }
+}
+
+// 9b. versionCoherence — "ALDC Core vX.Y" literals, scoped to Aproda-owned
+// paths only (*.aproda.*, skill-aproda-*/**, inPlaceEdits, the entrypoint,
+// aldc.yaml itself). ~19 inherited Upstream files also carry a stale version
+// literal (Findings 02 §3) — those are an upstream-PR concern (E-006 Phase 4),
+// deliberately out of scope here so this rule never asks the fork to sweep a
+// defect it did not cause.
+{
+  const coreVersionMatch = /^(\d+)\.(\d+)/.exec(String((cfg.core && cfg.core.version) || ""));
+  if (coreVersionMatch) {
+    const coreMajor = coreVersionMatch[1], coreMinor = coreVersionMatch[2];
+
+    const scoped = new Set();
+    if (entrypoint && fileExists(entrypoint)) scoped.add(entrypoint);
+    if (fileExists(configPath)) scoped.add(configPath);
+    for (const f of repoFiles) {
+      if (/\.aproda\./.test(path.basename(f))) scoped.add(f);
+      if (/(^|\/)skill-aproda-[^/]+\//.test(f)) scoped.add(f);
+    }
+
+    const syncManifestPath = root + "tools/aproda-sync/aproda-sync.json";
+    if (fileExists(syncManifestPath)) {
+      try {
+        const raw = readFile(syncManifestPath)
+          .replace(/(^|[^:"])\/\/.*$/gm, "$1")
+          .replace(/,(\s*[\]}])/g, "$1"); // JSONC allows trailing commas; strict JSON does not
+        const syncManifest = JSON.parse(raw);
+        for (const logical of syncManifest.inPlaceEdits || []) {
+          if (logical === "copilot-instructions.md") continue; // already covered via copilotEntrypoint
+          const p = root + logical;
+          if (fileExists(p)) scoped.add(p);
+        }
+      } catch (e) {
+        warn(`versionCoherence: could not parse ${syncManifestPath}: ${e.message}`);
+      }
+    }
+
+    const versionRe = /ALDC Core v(\d+)\.(\d+)/g;
+    for (const f of scoped) {
+      if (!fileExists(f) || fs.statSync(f).isDirectory()) continue;
+      const text = readFile(f);
+      let m;
+      while ((m = versionRe.exec(text))) {
+        if (m[1] !== coreMajor || m[2] !== coreMinor) {
+          issue("versionCoherence", `${f} says "ALDC Core v${m[1]}.${m[2]}" but core.version is ${coreMajor}.${coreMinor}`);
+        }
+      }
+    }
+  }
+}
+
+// 9c. aprodaInventoryCoherence — every net-new Aproda file/folder must be
+// named inside readme.aproda.md's "What lives here" section, and vice versa.
+{
+  const readmePath = (cfg.aproda && cfg.aproda.inventory) || (root + "readme.aproda.md");
+  if (fileExists(readmePath)) {
+    const readmeText = readFile(readmePath);
+    const sectionMatch = /## What lives here[\s\S]*?(?=\n---|\n## |$)/.exec(readmeText);
+    const section = sectionMatch ? sectionMatch[0] : readmeText;
+
+    for (const f of repoFiles) {
+      if (!/\.aproda\./.test(path.basename(f))) continue;
+      if (!section.includes(path.basename(f))) {
+        issue("aprodaInventoryCoherence", `${f} is a net-new Aproda file but its name does not appear in readme.aproda.md's inventory`);
+      }
+    }
+
+    const skillsDir = root + "skills";
+    if (fileExists(skillsDir)) {
+      const aprodaSkillDirs = fs.readdirSync(skillsDir, { withFileTypes: true })
+        .filter(e => e.isDirectory() && e.name.startsWith("skill-aproda-"))
+        .map(e => e.name);
+      for (const s of aprodaSkillDirs) {
+        if (!section.includes(s)) {
+          issue("aprodaInventoryCoherence", `skills/${s}/ is an Aproda skill but its name does not appear in readme.aproda.md's inventory`);
+        }
+      }
+    }
+
+    // Reverse: backtick-quoted, slash-containing "aproda" paths mentioned in the
+    // section should resolve to a real file. The table itself mixes two styles
+    // (some rows carry a ".github/" prefix — the dotGithub exceptions that stay
+    // under .github/ on both fork and project layouts — others don't — the
+    // regular fork-root paths), so try the reference both as-is and prefixed
+    // with `root`, and accept either resolving.
+    const codeSpanRe = /`([^`]*aproda[^`]*)`/g;
+    let m;
+    while ((m = codeSpanRe.exec(section))) {
+      let ref = m[1].trim();
+      if (!ref.includes("/") || ref.startsWith("/")) continue; // prose mention or external (e.g. user-memory) path
+      ref = ref.replace(/\/$/, "");
+      if (!ref) continue;
+      const candidates = [ref, root + ref];
+      const resolved = candidates.some(c => fileExists(c) || fileExists(c + "/SKILL.md"));
+      if (!resolved) {
+        issue("aprodaInventoryCoherence", `readme.aproda.md's inventory references "${m[1]}" which does not resolve to an existing path (checked ${candidates.join(", ")})`);
+      }
+    }
+  }
+}
+
 // ─── Report ──────────────────────────────────────────────────────
 function report() {
   console.log("\n╔══════════════════════════════════════════╗");
-  console.log("║     ALDC Core Validator v1.1             ║");
+  console.log("║     ALDC Core Validator v1.2             ║");
   console.log("╚══════════════════════════════════════════╝\n");
 
   if (S.info.length) {
@@ -313,7 +498,7 @@ function report() {
 
   const total = S.errors.length + S.warnings.length;
   if (S.errors.length === 0) {
-    console.log(`✅ ALDC Core v1.1 COMPLIANT (${S.warnings.length} warning(s))`);
+    console.log(`✅ ALDC Core v1.2 COMPLIANT (${S.warnings.length} warning(s))`);
   } else {
     console.log(`❌ NOT COMPLIANT — ${S.errors.length} error(s), ${S.warnings.length} warning(s)`);
   }

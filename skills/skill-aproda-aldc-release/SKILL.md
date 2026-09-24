@@ -30,6 +30,37 @@ Do not compare or reuse versions across streams. A layer release does not requir
 4. Run the applicable local validation and commit the complete release candidate.
 5. Merge the reviewed candidate to the `aproda` branch.
 
+## Catalog consistency check (mandatory before a layer release)
+
+A layer release ships whatever is on disk in `agents/`, `skills/`, `prompts/`, `instructions/` to every consumer project — including any catalog drift. Before bumping the layer version:
+
+1. Diff the on-disk folder contents against each catalog: `skills/index.md`, `agents/index.md`, `prompts/index.md`, `instructions/index.md`.
+2. Diff the same set against `.github/copilot-instructions.md` (routing tables, Skills/Instructions/Workflows tables, header + footer primitive counts) and `docs/copilot-reference.md` (Workspace Structure tree, BC Agents Pack section).
+3. Any artifact present on disk but absent from a catalog, or vice versa, is a **release blocker** — fix it in the same change, not a follow-up PR. This has happened repeatedly: `agents/index.md` and `prompts/index.md` have both been found stale across multiple releases, and `prompts/index.md` at one point still described an entirely different, obsolete workflow set from a prior major version (`ALDC Core v1.1`/`2.11.0`-era) while the shipped `prompts/` folder had long since moved on.
+4. Record the check in the release candidate notes (`.github/CHANGELOG.aproda.md` or the stream's changelog) — e.g. "catalogs verified in sync" — so a reviewer doesn't have to re-derive it.
+
+See `skill-aproda-aldc` → Step 2.5 for the per-change checklist this gate is backstopping.
+
+## Register verification (mandatory before a layer release)
+
+`aproda-sync.json → inPlaceEdits` mirrors the D-7 register in `decisions.aproda.md`: each listed path
+claims a specific Upstream file was edited in the fork. That claim can go stale silently — a register
+row added, but the edit never applied to disk. This happened for three months: `tools/aldc-validate/index.js`
+was registered "v1.1 → v1.2" on 2026-06-25 but the file still said v1.1 until 2026-09-24, so every release
+in between certified `ALDC Core v1.1 COMPLIANT` against a `core.version: 1.2.0` config (E-006 T-9).
+
+Before bumping the layer version:
+
+1. Run `tools/aproda-sync/Test-InPlaceEditsRegister.ps1` from the fork repo root.
+2. It diffs every `inPlaceEdits` path (resolved to its fork-side physical path via `layouts.fork.dotGithub`)
+   against the commit pinned at `aldc.yaml → aproda.basePin`.
+3. A path that is **byte-identical** to that pin means the registered edit is missing — that single
+   comparison is stronger than any fingerprint heuristic and needs no extra metadata. Release blocker:
+   either apply the edit or remove the path from the register.
+4. This check is only meaningful if `basePin` is a real, currently-reachable merge-base and not an
+   aspirational "in sync" placeholder — verify that first if the script reports the pin unreachable.
+5. Record the run's outcome in the release candidate notes, same as the catalog consistency check.
+
 ## Automated release flow
 
 1. A push to `aproda` with a new stream version starts the matching validation workflow.

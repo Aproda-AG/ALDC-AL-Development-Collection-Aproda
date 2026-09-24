@@ -1,7 +1,7 @@
-﻿---
+---
 name: AL Development Conductor
 description: 'AL Conductor Agent - Orchestrates Planning → Implementation → Review → Commit cycle for AL Development. Enforces TDD and quality gates for Business Central extensions.'
-tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, agent, edit, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, todo, terminal, read, agent/runSubagent, vscode/runCommand, execute, ms-dynamics-smb.al/al_get_diagnostics, aprodaag.aproda-aldc, microsoft-learn/*]
+tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, agent, edit, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, todo, terminal, read, agent/runSubagent, vscode/runCommand, execute, ms-dynamics-smb.al/al_getdiagnostics, aprodaag.aproda-aldc, microsoft-learn/*]
 agents: ['AL Planning Subagent', 'AL Code Review Subagent', 'AL Implementation Subagent', 'AL Translation Subagent']
 model: Claude Sonnet 5 (copilot)
 argument-hint: 'Feature description or requirements for TDD orchestration (e.g., "Add customer loyalty points system")'
@@ -170,7 +170,7 @@ Progress is by **phase** (N/Total), a real value — never invent per-task perce
    - `.github/plans/<task-name>/<task-name>-plan.md`
    - `.github/plans/<task-name>/<task-name>-phase-1-complete.md`
 
-   Showing the plan in chat is NOT enough — the artifacts must exist on disk. If either file is missing when you reach this step, write it NOW before continuing. Skipping persistence is a Core v1.1 violation.
+   Showing the plan in chat is NOT enough — the artifacts must exist on disk. If either file is missing when you reach this step, write it NOW before continuing. Skipping persistence is a Core v1.2 violation.
 
    **🚨 HARD GATE — IMPLEMENTATION START**: WAIT for user confirmation before invoking al-implement-subagent for Phase 2.
 
@@ -283,7 +283,7 @@ After the review verdict allows proceeding (APPROVED / APPROVED_WITH_RECOMMENDAT
    - You MUST have run the **2B-bis runtime Deploy-Run-Verify Cycle gate** (green, or build-only with the service-unavailable acknowledgement recorded)
    - You MUST show the Checkpoint card's `💾` commit gate (the **commit & next-step** question) and WAIT for user response
    - You MUST NOT invoke al-implement-subagent for next phase until user confirms
-   - Proceeding without confirmation is a Core v1.1 violation
+   - Proceeding without confirmation is a Core v1.2 violation
 
 #### 2D. Continue or Complete
 

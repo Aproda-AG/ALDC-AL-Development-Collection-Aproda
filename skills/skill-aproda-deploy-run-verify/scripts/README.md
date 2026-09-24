@@ -1,4 +1,4 @@
-﻿# Aproda Test-Loop — Reusable Scripts
+# Aproda Test-Loop — Reusable Scripts
 
 > Part of `skill-aproda-deploy-run-verify`. **Immutable templates** — copy/run, never edit the engine.
 > The engine is parameter-driven; everything project/environment-specific is **auto-derived** from `launch.json` + each `app.json`, with a tiny per-project config for the few non-derivable bits.

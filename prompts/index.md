@@ -7,11 +7,11 @@
 Activate workflows explicitly when needed:
 ```
 @workspace use al-initialize
-@workspace use al-diagnose
+@workspace use al-spec.create
 @workspace use al-build
 ```
 
-## Available Workflows (18 files)
+## Available Workflows (12 files)
 
 ### Environment & Setup
 
@@ -21,45 +21,42 @@ Activate workflows explicitly when needed:
 | [al-context.create](al-context.create.prompt.md) | Generate project context for AI assistants |
 | [al-memory.create](al-memory.create.prompt.md) | Create session memory for continuity |
 
-### Development
+### Development & Delivery
 
 | Workflow | Purpose |
 |----------|---------|
-| [al-build](al-build.prompt.md) | Build & deploy extensions |
-| [al-events](al-events.prompt.md) | Event implementation |
-| [al-pages](al-pages.prompt.md) | Page designer & UI |
-| [al-spec.create](al-spec.create.prompt.md) | Functional-technical specifications |
+| [al-spec.create](al-spec.create.prompt.md) | Functional-technical specification as an implementable blueprint |
+| [al-build](al-build.prompt.md) | Build, package, and deploy extensions |
+| [al-pr-prepare](al-pr-prepare.prompt.md) | Pull request draft with summary, testing notes, checklist |
+| [al-doc-update.aproda](al-doc-update.aproda.prompt.md) 🟦 | Refresh per-module technical reference (EN) + handbook (de-CH) at the delivery boundary |
 
-### Debugging & Performance
-
-| Workflow | Purpose |
-|----------|---------|
-| [al-diagnose](al-diagnose.prompt.md) | Runtime debugging & troubleshooting |
-| [al-performance](al-performance.prompt.md) | Deep performance analysis with CPU profiling |
-| [al-performance.triage](al-performance.triage.prompt.md) | Quick performance diagnosis |
-
-### Quality & Security
+### BC Agents Pack
 
 | Workflow | Purpose |
 |----------|---------|
-| [al-permissions](al-permissions.prompt.md) | Permission set management |
-| [al-pr-prepare](al-pr-prepare.prompt.md) | Pull request preparation |
-| [al-translate](al-translate.prompt.md) | XLF translation file management |
+| [al-agent.create](al-agent.create.prompt.md) | End-to-end creation of a coded agent via the Agent SDK (7 phases) |
+| [al-agent.task](al-agent.task.prompt.md) | AL code for Agent SDK task integration |
+| [al-agent.instructions](al-agent.instructions.prompt.md) | Natural-language agent instructions (Responsibilities-Guidelines-Instructions) |
+| [al-agent.build-instructions](al-agent.build-instructions.prompt.md) | Same framework, build-oriented variant |
+| [al-agent.test](al-agent.test.prompt.md) | Test codeunits for Agent SDK integrations (6 categories) |
 
-### Maintenance
+> 🟦 = Aproda layer (`.aproda.` infix). See [`decisions.aproda.md`](../.github/decisions.aproda.md) D-13 / D-14.
 
-| Workflow | Purpose |
-|----------|---------|
-| [al-migrate](al-migrate.prompt.md) | Version migration |
+## Not workflows — these are skills
 
-### AI/Copilot Features
+Debugging, events, pages, permissions, translation, migration, performance and Copilot features have **no**
+`.prompt.md` workflow. They are [skills](../skills/index.md) that agents load on demand:
 
-| Workflow | Purpose |
-|----------|---------|
-| [al-copilot-capability](al-copilot-capability.prompt.md) | Register Copilot capability |
-| [al-copilot-promptdialog](al-copilot-promptdialog.prompt.md) | Create PromptDialog pages |
-| [al-copilot-generate](al-copilot-generate.prompt.md) | AI-assisted code generation |
-| [al-copilot-test](al-copilot-test.prompt.md) | Test with AI Test Toolkit |
+| You might look for | Use instead |
+|--------------------|-------------|
+| `al-diagnose` | `skill-debug` via `@AL Implementation Specialist` or `@AL Triage` |
+| `al-events` | `skill-events` |
+| `al-pages` | `skill-pages` |
+| `al-permissions` | `skill-permissions` |
+| `al-translate` | `skill-translate` |
+| `al-migrate` | `skill-migrate` |
+| `al-performance`, `al-performance.triage` | `skill-performance` |
+| `al-copilot-*` | `skill-copilot` |
 
 ## Workflows vs Orchestra
 
@@ -74,5 +71,5 @@ Activate workflows explicitly when needed:
 
 ---
 
-**Version**: 2.11.0  
-**Last Updated**: 2026-02-06
+**Framework**: ALDC Core v1.2 · **Layer**: 1.2.0_aproda.17  
+**Last Updated**: 2026-09-24

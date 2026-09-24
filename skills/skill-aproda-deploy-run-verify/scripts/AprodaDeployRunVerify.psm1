@@ -799,7 +799,7 @@ $res | ConvertTo-Json -Depth 6 -Compress | Out-File -FilePath $resultJson -Encod
 # credential is cheap and often fixes a typo; a second consecutive failure is a real
 # blocker, not brute-forced further. A run that DOES reach 'ran' (regardless of pass/fail
 # counts) proves the credential worked — it is then saved/updated in the store
-# unconditionally, no confirmation prompt (explicit decision, D-37 addendum).
+# unconditionally, no confirmation prompt (explicit decision, D-43 addendum).
 # ---------------------------------------------------------------------------
 function Invoke-DeployRunVerifyRun {
     param([Parameter(Mandatory)]$Cfg)
