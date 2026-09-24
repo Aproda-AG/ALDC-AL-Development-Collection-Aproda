@@ -55,8 +55,9 @@ The internal **Aproda ALDC** extension is the standard path for initializing and
 3. On first activation, select **Open Get Started** in the notification, then run **Configure Settings** in the native walkthrough.
 4. Run **Preview Update Changes** and review the result. Run **Apply Layer to Project** only after confirming the preview.
 5. Run **Install / Update BCQuality** when the walkthrough reaches that step. The wizard proposes a shared, standalone `BCQuality-Aproda` location outside project repositories.
-6. Follow the walkthrough's **Azure CLI setup** step (one-time per workstation) so `skill-aproda-ado`'s CLI operations work — see [Azure CLI setup](#azure-cli-setup-one-time-per-workstation) below.
-7. Run the walkthrough's **Validate Installation** step. If it fails, use **Environment Diagnostics** or **Show Log** to troubleshoot.
+6. Follow the walkthrough's **Set up recommended MCP servers** step (one-time per workstation) so `skill-aproda-ado` can use the Azure DevOps MCP Server — see [Recommended MCP servers](#recommended-mcp-servers-one-time-per-workstation) below.
+7. Follow the walkthrough's **Azure CLI setup** step (one-time per workstation, recommended fallback) so `skill-aproda-ado`'s az-CLI fallback works when MCP isn't reachable — see [Azure CLI setup](#azure-cli-setup-one-time-per-workstation) below.
+8. Run the walkthrough's **Validate Installation** step. If it fails, use **Environment Diagnostics** or **Show Log** to troubleshoot.
 
 For later changes, use **Check for Updates** and **Check for Extension Updates**.
 
@@ -68,7 +69,7 @@ All commands are available via the Command Palette (`Aproda ALDC: …`). Source 
 
 | Command | Function |
 |---------|----------|
-| **Open Get Started** | Opens the native VS Code walkthrough (configure → apply toolkit → install BCQuality → Azure CLI setup → validate installation → read onboarding). |
+| **Open Get Started** | Opens the native VS Code walkthrough (configure → apply toolkit → install BCQuality → set up recommended MCP servers → Azure CLI setup → validate installation → read onboarding). |
 | **Configure Settings** | Configures developer root, toolkit source/channel, BCQuality location, and toolkit/extension update checks. |
 | **Apply Toolkit to Project** | Initializes or updates the current repository from the managed toolkit cache (overlay-only, never deletes project files). |
 | **Preview Update Changes** | Calculates pending toolkit changes for the project without modifying anything. |
@@ -128,9 +129,27 @@ git clone https://github.com/Aproda-AG/BCQuality-Aproda BCQuality-Aproda
 
 The folder must sit **next to** (not inside) the project repo so its `.al` files never enter the AL compiler's scope. Once cloned, it is available to all projects on the same workstation — no per-project setup needed. 
 
+### Recommended MCP servers (one-time, per workstation)
+
+`skill-aproda-ado` prefers the official, Microsoft-hosted Azure DevOps MCP Server over the az-CLI fallback below — no local server, no Node.js dependency. Set up once, globally, for every workspace:
+
+1. Command Palette → **`MCP: Open User Configuration`**.
+2. Add the recommended server bundle to the `"servers": { }` object (safe to merge with anything already there):
+
+   ```jsonc
+   "microsoft-learn": { "type": "http", "url": "https://learn.microsoft.com/api/mcp" },
+   "context7": { "type": "http", "url": "https://mcp.context7.com/mcp" },
+   "ado": { "type": "http", "url": "https://mcp.dev.azure.com/alphasol" }
+   ```
+
+   `microsoft-learn`/`context7` are zero-config. `ado` needs the org-specific URL and a one-time Entra sign-in; no `X-MCP-Toolsets`/`X-MCP-Readonly` headers — the default `all` toolset is used unscoped (do **not** add `X-MCP-Readonly: true`, it would block every Tier-2/3 write the skill performs through MCP). This means most Tier-1 categories still have no MCP tool at all, but `pipelines` tools are technically reachable — Agent Instructions (`SKILL.md`) plus ADO's own permission model are the backstop for that, the same acceptance already made for the uncoded rest of Tier 1 on the az-CLI path.
+3. Sign in with the same Microsoft Entra account used for `az login` on first use.
+
+For deeper reasoning (why MCP over CLI, troubleshooting, supported clients), see `_A-ALDC-Plans/E-007-azure-cli-skill/howto-setup-ado-mcp.md` — fork-only reference material, not shipped to consumer projects; the configuration above is the authoritative, shipping copy.
+
 ### Azure CLI setup (one-time, per workstation)
 
-`skill-aproda-ado`'s CLI operations (work item/PR fetch, PR creation, work item updates) require the Azure CLI with the `azure-devops` extension, plus an interactive sign-in against the **Aproda AG** tenant and **Aproda-DevOps** subscription:
+`skill-aproda-ado` falls back to Azure CLI when the MCP connection above isn't reachable (proxy/firewall blocking `mcp.dev.azure.com`, an outage, or before MCP is configured on a given workstation) — recommended, not skippable once MCP works. Requires the Azure CLI with the `azure-devops` extension, plus an interactive sign-in against the **Aproda AG** tenant and **Aproda-DevOps** subscription:
 
 ```powershell
 az extension add --name azure-devops
@@ -162,19 +181,19 @@ Requirements, bugs, and tasks are tracked in Azure DevOps and flow directly into
 
 - **Type-ID-short-name pattern** — the `req_name` (plans folder name) is derived as `{type}-{id}-{short-name}` (e.g. `bug-36370-posting-error`). The short name is derived from the work item title in kebab-case, with up to four or five meaningful words.
 - **ADO header** — every plan document gets an `**ADO**: [Bug 36370](…)` link at the top so context is never lost.
-- **Process** — the agent fetches title/type/status/description directly via Azure CLI (`Get-AdoWorkItem.ps1`), and for `Bug`/`User Story` also repro steps or acceptance criteria. The planner creates `.github/plans/{type}-{id}-{short-name}/` with spec, architecture, and test-plan files using the ADO ID as the anchor throughout.
+- **Process** — the agent fetches title/type/status/description directly via a Tier-4 read (MCP preferred, `az` CLI fallback per `skill-aproda-ado`), and for `Bug`/`User Story` also repro steps or acceptance criteria. The planner creates `.github/plans/{type}-{id}-{short-name}/` with spec, architecture, and test-plan files using the ADO ID as the anchor throughout.
 
 **How to start:**
 
    > **Tip:** You can also attach a technical specification document to the chat prompt — the agent will incorporate it when generating the plan.
-   > Requires the one-time Azure CLI setup below.
+   > Requires the one-time MCP or Azure CLI setup below.
 
 1. **Review the work item in ADO** — check title, description, and acceptance criteria. Add technical details, edge cases, or test scenarios directly in ADO if they are missing. The richer the work item, the better the generated spec.
 2. **Paste the work item URL into the chat prompt**:
      ```
      https://dev.azure.com/alphasol/GustavGerigAG/_workitems/edit/36370
      ```
-   For `Bug`/`User Story`, the agent fetches title, description, and repro steps/acceptance criteria via Azure CLI — no manual copy needed. For `Task`/`Feature` (no equivalent acceptance-criteria/repro-steps field), also paste the relevant work item content as additional context.
+   For `Bug`/`User Story`, the agent fetches title, description, and repro steps/acceptance criteria via the Azure DevOps MCP Server (or az CLI fallback) — no manual copy needed. For `Task`/`Feature` (no equivalent acceptance-criteria/repro-steps field), also paste the relevant work item content as additional context.
 
    Hand it to the appropriate agent (`@al-architect` for MEDIUM/HIGH complexity, or start with `/al-spec.create` for LOW). The agent confirms the derived `req_name` before creating any files — if a plan folder for that `req_name` already exists, it stops and asks whether to extend it or choose a different name.
 

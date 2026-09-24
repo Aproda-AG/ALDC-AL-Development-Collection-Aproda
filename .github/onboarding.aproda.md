@@ -94,14 +94,23 @@ ADO Work Item/Spez      → Anforderung, Akzeptanzkriterien
 4. Im Walkthrough **Configure Settings** ausführen. Der Wizard konfiguriert Developer Root, Toolkit-Quelle, Channel, BCQuality-Standort und Toolkit-Update-Checks.
 5. **Apply Toolkit to Project** auswählen.
 6. **Install / Update BCQuality** ausführen.
-7. Den Walkthrough-Schritt **Azure CLI Setup** ausführen (einmalig pro Workstation, siehe Abschnitt 1b) und danach manuell als erledigt markieren.
-8. **Validate Installation** ausführen. Bei Fehlern **Environment Diagnostics** oder **Show Log** zur Fehlersuche nutzen.
+7. Den Walkthrough-Schritt **Set up recommended MCP servers** ausführen (einmalig pro Workstation, siehe Abschnitt 1b) und danach manuell als erledigt markieren.
+8. Den Walkthrough-Schritt **Azure CLI Setup** ausführen (einmalig pro Workstation, empfohlener Fallback, siehe Abschnitt 1c) und danach manuell als erledigt markieren.
+9. **Validate Installation** ausführen. Bei Fehlern **Environment Diagnostics** oder **Show Log** zur Fehlersuche nutzen.
 
 Für spätere Toolkit-Versionen stehen **Check for Updates** und optional **Preview Update Changes** bereit. Die Extension selbst prüft interne VSIX-Releases und bietet nach expliziter Bestätigung die Installation an.
 
-### 1b — Azure CLI einrichten (einmalig pro Workstation)
+### 1b — Azure DevOps MCP einrichten (empfohlen, primärer Weg, einmalig pro Workstation)
 
-Für die CLI-Operationen von `skill-aproda-ado` (Work-Item-/PR-Abruf, PR-Erstellung, Work-Item-Updates):
+`skill-aproda-ado` bevorzugt den offiziellen, von Microsoft gehosteten Azure DevOps MCP Server gegenüber dem CLI-Fallback (Abschnitt 1c) — kein lokaler Server, keine Node.js-Abhängigkeit. Einmalig global für alle Workspaces einrichten:
+
+1. Command Palette (`Strg+Shift+P`) → **`MCP: Open User Configuration`**.
+2. Empfohlenes Server-Bündel eintragen (`microsoft-learn` + `context7` sind zero-config, `ado` braucht die org-eigene URL + einmaligen Entra-Login) — die genaue Konfiguration steht in [readme.aproda.md → Recommended MCP servers](readme.aproda.md#recommended-mcp-servers-one-time-per-workstation) (die dort gezeigte JSON ist die verbindliche, mit dem Projekt ausgelieferte Fassung — nicht die in `_A-ALDC-Plans/`, die nie synchronisiert wird).
+3. GitHub Copilot Chat im Agent-Modus öffnen — beim ersten Zugriff einmalig mit dem Microsoft-Entra-Konto anmelden (demselben Tenant wie `az login`).
+
+### 1c — Azure CLI einrichten (empfohlener Fallback, einmalig pro Workstation)
+
+`skill-aproda-ado` nutzt MCP bevorzugt; Azure CLI hält den ADO-Zugriff funktionsfähig, wenn MCP nicht erreichbar ist (Proxy/Firewall blockiert `mcp.dev.azure.com`, Ausfall, oder MCP ist auf diesem Rechner noch nicht eingerichtet) — deshalb weiterhin empfohlen, nicht überspringbar, sobald MCP läuft:
 
 ```powershell
 az extension add --name azure-devops
@@ -183,7 +192,7 @@ Alle Befehle über die Command Palette (`Aproda ALDC: …`). Quelle der Wahrheit
 
 | Befehl | Funktion |
 |--------|----------|
-| **Open Get Started** | Öffnet den nativen VS Code Walkthrough (Configure → Toolkit anwenden → BCQuality installieren → Azure CLI Setup → Validate Installation → Onboarding lesen). |
+| **Open Get Started** | Öffnet den nativen VS Code Walkthrough (Configure → Toolkit anwenden → BCQuality installieren → MCP-Server einrichten → Azure CLI Setup → Validate Installation → Onboarding lesen). |
 | **Configure Settings** | Konfiguriert Developer Root, Toolkit-Quelle/-Channel, BCQuality-Standort sowie Toolkit-/Extension-Update-Checks. |
 | **Apply Toolkit to Project** | Initialisiert oder aktualisiert das aktuelle Repository aus dem verwalteten Toolkit-Cache (Overlay-only, löscht nie Projektdateien). |
 | **Preview Update Changes** | Berechnet anstehende Toolkit-Änderungen für das Projekt, ohne etwas zu verändern. |
