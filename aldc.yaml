@@ -79,10 +79,13 @@ contracts:
 
 copilotEntrypoint: ".github/copilot-instructions.md"
 copilotSource: "instructions/copilot-instructions.md"
-# "trimmed": the always-on entrypoint is an intentional lean subset of the source
-# (the ~31% trim). The validator then checks it is non-empty and smaller than the
-# source instead of requiring byte-identity. Use "mirror" to require byte-identity.
-copilotEntrypointMode: "trimmed"
+# "extended": the entrypoint is the MAINTAINED artifact and deliberately carries
+# Aproda layer content the upstream source does not (routing rows, Aproda skills
+# and instructions, corrected primitive counts). Size is therefore not a staleness
+# signal; the validator only checks existence + non-emptiness. Upstream ships
+# "trimmed" (entrypoint must be SMALLER); that held until the layer rows were
+# added. See decisions.aproda.md D-45.
+copilotEntrypointMode: "extended"
 
 required:
   agents:

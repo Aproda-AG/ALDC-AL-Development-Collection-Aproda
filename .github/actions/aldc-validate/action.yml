@@ -1,5 +1,5 @@
 name: "ALDC Core Validate"
-description: "Validates ALDC Core v1.1 compliance"
+description: "Validates ALDC Core v1.2 compliance"
 inputs:
   config:
     description: "Path to aldc.yaml"

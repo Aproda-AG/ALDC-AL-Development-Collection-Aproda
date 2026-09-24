@@ -47,11 +47,11 @@ generator — hand-maintaining two copies is what produced F-6.
 
 ## Phase 1 — Install the missing rule (governance first)
 
-### 1.1 New decision: **D-45 — Catalog synchronisation is part of a primitive change**
+### 1.1 New decision: **D-46 — Catalog synchronisation is part of a primitive change**
 
 Proposed text for `.github/decisions.aproda.md`:
 
-> ### D-45 — Adding or removing a primitive includes updating every catalog that enumerates it
+> ### D-46 — Adding or removing a primitive includes updating every catalog that enumerates it
 >
 > **Context.** The layer's two extension rules (D-2 net-new / in-place, D-4 `.aproda.` convention) are
 > complete for *conflict avoidance* and silent on *discoverability*. An artifact can satisfy both
@@ -62,7 +62,7 @@ Proposed text for `.github/decisions.aproda.md`:
 > `prompts/index.md`.
 >
 > **Decision.** A change that adds, removes, or renames a primitive is **not complete** until every
-> catalog in the canonical list (below) reflects it. Enforced by `aldc-validate` (D-46) and re-checked
+> catalog in the canonical list (below) reflects it. Enforced by `aldc-validate` (D-47) and re-checked
 > at release time by `skill-aproda-aldc-release`.
 >
 > **Rejected alternative.** "Generate all catalogs from `aldc.yaml`." Attractive, but `aldc.yaml`
@@ -74,7 +74,7 @@ Proposed text for `.github/decisions.aproda.md`:
 
 | Primitive added/removed | Catalogs that MUST be updated |
 |---|---|
-| **Skill** | `skills/index.md` · `.github/copilot-instructions.md` → Skills table · `.github/readme.aproda.md` → inventory (if `skill-aproda-*`) · `aldc.yaml` → `required`/`optional` (Core only) or `aproda` inventory (D-46) |
+| **Skill** | `skills/index.md` · `.github/copilot-instructions.md` → Skills table · `.github/readme.aproda.md` → inventory (if `skill-aproda-*`) · `aldc.yaml` → `required`/`optional` (Core only) or `aproda` inventory (D-47) |
 | **Agent** | `agents/index.md` · `.github/copilot-instructions.md` → Agent Routing + Quick routing guide · `.github/readme.aproda.md` → inventory (if `.aproda.`) · `aldc.yaml` |
 | **Workflow** | `prompts/index.md` · `prompts/README.md` · `.github/copilot-instructions.md` → Workflows table · `.github/readme.aproda.md` → inventory (if `.aproda.`) · `aldc.yaml` |
 | **Instruction** | `instructions/index.md` · `.github/copilot-instructions.md` → Auto-Applied Instructions table · `.github/readme.aproda.md` → inventory (if `.aproda.`) · `aldc.yaml` |
@@ -89,7 +89,7 @@ Concrete text in **§ Proposed skill content** below.
 
 ## Phase 2 — Make it falsifiable (validator)
 
-### 2.1 New decision: **D-46 — `aldc-validate` covers catalogs, versions, and the Aproda inventory**
+### 2.1 New decision: **D-47 — `aldc-validate` covers catalogs, versions, and the Aproda inventory**
 
 Three new rules, all starting as `warn` and promoted to `error` after the Phase 3 sweep:
 
@@ -188,12 +188,12 @@ consolation prize.
 ### A. `skills/skill-aproda-aldc/SKILL.md` — replace the session's provisional Step 2.5
 
 The session already inserted a "Step 2.5 — Update the catalogs" (Appendix A). It should be **replaced**
-by this version once D-45/D-46 exist, so the skill cites decisions rather than anecdotes:
+by this version once D-46/D-47 exist, so the skill cites decisions rather than anecdotes:
 
-> ### Step 2.5 — Update the catalogs (D-45, mandatory)
+> ### Step 2.5 — Update the catalogs (D-46, mandatory)
 >
 > A primitive that follows D-2 and D-4 perfectly is still **invisible** until every catalog that
-> enumerates it is updated. D-45 makes catalog synchronisation part of the change, not a follow-up.
+> enumerates it is updated. D-46 makes catalog synchronisation part of the change, not a follow-up.
 >
 > | You added/removed/renamed | Update these |
 > |---|---|
@@ -204,7 +204,7 @@ by this version once D-45/D-46 exist, so the skill cites decisions rather than a
 > | Any | entrypoint header count + footer "Primitives" line · `docs/copilot-reference.md` Workspace Structure tree · `aldc.yaml` (`required`/`optional` for Core, `aproda.primitives` for layer) |
 >
 > **Verify, don't recall.** Re-open each catalog and confirm the row and the count. `aldc-validate`'s
-> `catalogCoherence` rule (D-46) is the backstop; `skill-aproda-aldc-release` re-checks at release time.
+> `catalogCoherence` rule (D-47) is the backstop; `skill-aproda-aldc-release` re-checks at release time.
 > Neither substitutes for doing it here.
 >
 > **Two layouts, one table.** Catalog paths differ between fork (`skills/…`) and project
@@ -213,7 +213,7 @@ by this version once D-45/D-46 exist, so the skill cites decisions rather than a
 
 Additionally in the same file:
 
-- **Knowledge map** — add a row: *"Which catalogs must I update when adding a primitive? → D-45 +
+- **Knowledge map** — add a row: *"Which catalogs must I update when adding a primitive? → D-46 +
   Step 2.5"*.
 - **Lines 8 and 26** — replace the hard-coded `D-1..D-25` / `D-1..D-22` with `D-1…D-N (see the file)`
   so this class of drift cannot recur (F-10).
@@ -224,7 +224,7 @@ Additionally in the same file:
 
 Replace the provisional "Catalog consistency check" (Appendix A) with a decision-backed, two-part gate:
 
-> ## Pre-release consistency gate (mandatory — D-45 / D-46)
+> ## Pre-release consistency gate (mandatory — D-46 / D-47)
 >
 > A layer release ships whatever is on disk to every consumer project, **including drift**. Run all three
 > checks before bumping `aproda.layerVersion`. Any mismatch is a **release blocker**, fixed in the same
@@ -264,8 +264,8 @@ recurring source of confusion (F-3, F-11):
 
 ```
 Phase 0  Q-1 (fork discovery) + Q-2 (copilotSource)      <- maintainer decision, blocks 3.5/3.6
-Phase 1  D-45 + canonical catalog list + skill wiring     <- the rule
-Phase 2  D-46 validator rules + aproda.primitives + R-3   <- the enforcement
+Phase 1  D-46 + canonical catalog list + skill wiring     <- the rule
+Phase 2  D-47 validator rules + aproda.primitives + R-3   <- the enforcement
 Phase 3  3.1 -> 3.12 fork-owned cleanup                   <- protected against recurrence by 1+2
 Phase 4  one upstream PR (inherited v1.1 drift)           <- independent, can run in parallel
 ```

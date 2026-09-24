@@ -92,6 +92,13 @@ Evidence that `.claude/` is alive upstream: 6 of the last 27 upstream commits to
 **So in the fork, Copilot sees the upstream Claude tree — which contains zero Aproda primitives.**
 The D-16 steward guardrail therefore does **not** fire on layer edits made here. Verify with §6-C.
 
+> **Mitigation (2026-09-23, D-5 scope correction).** A settings-based fix is **not available**:
+> `chat.instructionsFilesLocations` / `chat.agentFilesLocations` are deprecated and honoured only by the
+> Local agent, and the supported discovery paths are fixed. Instead, the guardrail is restated as a short
+> **pointer** in `.github/copilot-instructions.md` — the one channel demonstrably loaded in the fork.
+> It is a pointer, not a copy; the rule itself stays in `instructions/aproda-aldc-steward.aproda.instructions.md`.
+> **You still apply it consciously here** — nothing attaches it automatically to the file you are editing.
+
 > `readme.aproda.md` claims discovery works "without any `.vscode/settings.json` registration" (D-5).
 > That is true **for projects only**. The statement is unqualified and therefore wrong for the fork.
 
@@ -106,7 +113,7 @@ The D-16 steward guardrail therefore does **not** fire on layer edits made here.
 The `.aproda.` infix keeps the type suffix intact (`.prompt.md`, `.instructions.md`, `.agent.md`) so
 discovery and `applyTo` keep working. There is **no** `aproda/` override folder and **no** agent clones.
 
-**The missing third rule** (E-006 F-7, proposed as D-45): a primitive is not "added" until every catalog
+**The missing third rule** (E-006 F-7, proposed as D-46): a primitive is not "added" until every catalog
 that enumerates it is updated — see §5.
 
 ### 2.5 Sync model — default-deny
@@ -132,6 +139,29 @@ directions.
 | `al_getdiagnostics` | ~~`al_get_diagnostics`~~ | The wrong form silently resolves to **nothing** — no error. Was present in 5 agent frontmatters. |
 | `al-symbols-mcp/*` | — | Community MCP server, **optional**, not always registered. The wildcard resolves to zero tools when absent — again silently. |
 | `bclsp_*` | — | Requires the separate `SShadowSdk.al-lsp-for-agents` extension, not the AL Language extension. |
+
+### 2.7 The UTF-8 BOM trap — a silent frontmatter killer
+
+A byte-order mark before `---` makes the YAML frontmatter parser fail. VS Code then falls back to the
+**file name**, so a custom agent shows up as `al-conductor` instead of `AL Development Conductor`, and
+its `tools`, `model` and `agents` declarations are **never applied**.
+
+What makes it vicious is that every normal way of looking finds nothing:
+
+| Method | What it shows |
+|---|---|
+| VS Code editor | nothing — the BOM is invisible in the buffer |
+| `Get-Content` / `Select-String` | nothing — PowerShell strips the BOM while decoding |
+| `git show file \| Select-Object -First 1` | unreliable — decoding may drop it, so a naive `.StartsWith([char]0xFEFF)` test reports "clean" on a file that has one |
+| **Byte inspection** | `EF BB BF 2D 2D 2D` instead of `2D 2D 2D` — **the only reliable check** |
+
+**Found 2026-09-23: 10 toolkit files carried a committed BOM**, including
+`agents/al-conductor.agent.md` and all four `skill-aproda-deploy-run-verify` files. Three of them had
+already propagated into the reference project. All cleaned; verify with §6-G.
+
+> This is **independent of F-1**. `.claude/` being loaded in the fork was proven by other evidence
+> (Claude-only `model: haiku`, `.claude/rules` `paths:` dialect, 15 vs 21 skills). The BOM is a second,
+> unrelated defect that would break the agent **in any layout, including a project**.
 
 ---
 
@@ -171,10 +201,15 @@ directions.
 | S-7 | Catalogs drift silently: `prompts/index.md` still describes an obsolete 18-workflow set (v2.11.0 era) **and ships to every project** | Consumers get a wrong catalog | §6-E |
 | S-8 | `readme.aproda.md` inventory is missing 5 of 19 layer artifacts | The self-declared index is incomplete | §6-E |
 | S-9 | Decision-range claims are stale everywhere (`D-1…D-27`, `D-1..D-22`); actual max is **D-41**, and **D-42 is cited but never defined** | Cross-references mislead | §6-F |
+| S-10 | **Measured in a real project** (`straub-medical-ag-base`, 2026-09-23): its `prompts/index.md` claims 18 workflows, holds 12, and names **12 that do not exist** | 🔴 F-4 is an active customer-facing defect, not a risk | §7.5 |
+| S-11 | `docs/copilot-reference.md` and `agents/index.md` are **absent** in that project | Linked ≠ shipped, proven (F-11, F-5) | §7.5 |
+| S-12 | `CHANGELOG.aproda.md` and `onboarding.aproda.md` never reach a project despite matching `includeGlobs` | The onboarding guide is missing where newcomers work (**F-14**) | §7.5 |
+| S-13 | **10 toolkit files carried a committed UTF-8 BOM** (incl. `agents/al-conductor.agent.md`, all 4 `skill-aproda-deploy-run-verify` files); 3 had already reached the reference project | Frontmatter silently unparsed → agent loses `name`/`tools`/`model` (**F-15**). *Cleaned 2026-09-23* | §6-G |
 
-Open design decisions blocking remediation: **Q-1** (how the fork exposes the toolkit to Copilot) and
-**Q-2** (is `instructions/copilot-instructions.md` still the `copilotSource`?) — both in
-[`E-006-plan.md`](E-006-layer-visibility-and-version-consistency/E-006-plan.md) Phase 0.
+**Resolved since this table was written:** Q-1 → option **A′** (pointer in the entrypoint; settings route
+rejected on evidence — D-5 scope correction). Q-2 → **keep** `instructions/copilot-instructions.md`
+(upstream-maintained; deleting it would create a delete/modify conflict). The `trimmed` breakage that
+followed is handled by **D-45** (`extended` mode). Remaining open decision: **Q-3** (release strategy).
 
 ---
 
@@ -186,7 +221,7 @@ Open design decisions blocking remediation: **Q-1** (how the fork exposes the to
    *relaxes* a deliberate decision; **get explicit confirmation** (D-16).
    *Note S-1: this guardrail does not auto-fire in the fork — apply it manually.*
 2. Choose the mechanism per §2.4 (net-new vs in-place).
-3. **Update the catalogs** — the rule that is missing today (proposed D-45):
+3. **Update the catalogs** — the rule that is missing today (proposed D-46):
 
    | Added/removed | Update |
    |---|---|
@@ -255,9 +290,168 @@ $p='tools/aldc-validate/index.js'
 Select-String -Path .github\decisions.aproda.md -Pattern 'D-4[0-9]'
 ```
 
+**G — UTF-8 BOM (§2.7) — byte check, nothing else is reliable**
+```powershell
+Get-ChildItem agents,skills,instructions,prompts,.github -Recurse -File -Include *.md,*.yaml,*.json |
+  Where-Object { $_.FullName -notmatch '\\node_modules\\' } | ForEach-Object {
+    $fs=[IO.File]::OpenRead($_.FullName); $b=New-Object byte[] 3; $n=$fs.Read($b,0,3); $fs.Close()
+    if ($n -ge 3 -and $b[0] -eq 0xEF -and $b[1] -eq 0xBB -and $b[2] -eq 0xBF) { 'BOM: ' + $_.FullName }
+  }
+```
+
 ---
 
-## 7. What does **not** belong in this file
+## 7. Fork vs. project — what transfers, and what can only be checked in a real project
+
+> Everything in E-006 was audited **inside the fork**. That is not the environment consumers run in.
+> This section separates the three categories, so nobody chases a fork-only symptom in a customer repo —
+> or, worse, assumes a shipped defect is fork-only.
+
+### 7.1 Fork-only — do **not** look for these in a project
+
+| Finding | Why it cannot occur in a project |
+|---|---|
+| **F-1** Copilot loads `.claude/`; Aproda primitives invisible | A project keeps the whole toolkit under `.github/`, which *is* a supported discovery path. Discovery works there by design. **Confirmed 2026-09-23 in `straub-medical-ag-base`: no `.claude/` folder exists at all**, and its Copilot session lists all 11 agents, ~21 skills and 10 instructions from `.github/` |
+| **F-2** D-16 steward guardrail never fires | Direct consequence of F-1 |
+| **F-8** Four parallel primitive trees | `.claude/`, `claude-plugin/`, `packages/foundation/` are upstream repo content; the overlay ships none of them |
+| **F-12** `.github/agents/test.agent.md` | Fork-local stray file |
+| Broken `../../` companion links | Those links resolve **correctly** in the project layout — they were only broken in the fork (§2.1) |
+
+### 7.2 Ships to projects — fix once in the fork, every project benefits
+
+| Finding | Reaches the project via | Consumer impact |
+|---|---|---|
+| **F-4** `prompts/index.md` lists 18 non-existent workflows | `aldc.yaml → required.catalog` | 🔴 **Highest** — every project carries a wrong workflow catalog today |
+| **F-6** `instructions/copilot-instructions.md`: v1.1, no Aproda content | `required.instructions` | A second, contradicting framework description sits one folder below the real entrypoint |
+| **F-3** `readme.aproda.md` inventory incomplete (5 of 19) | `includeFiles` | The self-declared index under-reports the layer |
+| **F-13** `skills/index.md` incomplete | `required.catalog` | Skills catalog under-reports *(fixed this session)* |
+| **F-10** stale D-ranges, dangling `D-42` | `includeFiles` | Cross-references mislead *(resolved this session)* |
+| **F-9** validator blind to Aproda primitives | `inPlaceEdits` | A missing or renamed Aproda artifact is undetectable |
+| v1.1 banner in `aldc-validate` | `inPlaceEdits` | Every project CI reports a false compliance version |
+| **D-45** `extended` entrypoint mode | `aldc.yaml` + `inPlaceEdits` | Required wherever the entrypoint is extended — i.e. every Aproda project |
+
+### 7.3 Only verifiable in a real project repo — **first measured 2026-09-23**
+
+> Reference project: `straub-medical-ag-base` (AL-Go repo, layer `1.2.0_aproda.17`). Sync confirmed
+> current — it already carries the A′ pointer added the same day. These rows are no longer assumptions.
+
+| # | What to check | Result |
+|---|---|---|
+| P-1 | `toolkitRoot` rewritten to `.github` | ✅ `".github"` — the dual-variant rewrite works |
+| P-2 | `.github/instructions\|agents\|prompts\|skills` exist | ✅ all four (13 / 11 / 14 / 22 entries) |
+| P-2b | Aproda primitives arrived | ✅ 4 × `skill-aproda-*`, both `.aproda.instructions.md`, `al-translate-subagent.aproda.agent.md`, `al-doc-update.aproda.prompt.md` |
+| P-3 | The two Aproda instructions fire on their globs | ⏳ needs an interactive Copilot session in that repo |
+| P-4 | `.github/` at the real git root (D-19) | ✅ AL-Go repo, `.github` at root |
+| P-5 | **Linked ≠ shipped** | ❌ **confirmed** — `docs/copilot-reference.md` and `agents/index.md` absent (§7.5) |
+| P-6 | Relative links resolve in project layout | ⏳ open |
+| P-7 | BCQuality `home` resolves | ⏳ open — needs the clone present next to that repo |
+| P-8 | AL-Go coexistence | ✅ `.AL-Go/`, `AL-Go-Settings.json`, `Test *.settings.json` untouched — the project even keeps its **own** `.AL-Go/settings.aproda.md` |
+| P-9 | `memory.md` + `plans/` present | ✅ `plans/memory.md` + 7 requirement folders |
+| P-10 | Validator green against the project | ⏳ open |
+
+**The allowlist behaves exactly as designed** — two confirmations worth recording:
+`skill-aproda-aldc-release` is **absent** in the project (fork-only via `neverTouch`) ✅, and the
+project's **own** `skill-audit-trail` survived untouched ✅. Default-deny protects project content in
+both directions.
+
+### 7.4 Two concrete path findings (verified 2026-09-23)
+
+**(a) `aldc.yaml → external.bcquality.home` is project-correct and fork-wrong.**
+
+```text
+configured   : ../../BCQuality-Aproda
+from repo    : C:\_EphemeralWorkspace\BCQuality-Aproda          [missing]
+from .github : C:\_EphemeralWorkspace\<user>\BCQuality-Aproda   [EXISTS]
+```
+
+The value assumes resolution relative to `.github/` — the project layout. Same class as the broken skill
+links in §2.1: **correct in a project, wrong in the fork, and therefore unnoticed.**
+
+**(b) `aldc.code-workspace` (fork-local only) points at a folder that does not exist.** It declares
+`../bcquality`, while the clone is named `BCQuality-Aproda` — the second workspace root is dead, which is
+why BCQuality never surfaced during this audit. **Scope corrected 2026-09-23:** this is **fork-only**.
+The template that projects actually receive, `tools/aproda-sync/templates/workspace.seed.jsonc`, already
+carries the correct `../BCQuality-Aproda`, and `*.code-workspace` is in `neverTouch`, so no project is
+affected.
+
+**Path-resolution rule** (`tools/aldc-validate/index.js:54`):
+
+```js
+const root = cfg.toolkitRoot === "." ? "" : cfg.toolkitRoot + "/";
+```
+
+`aldc.yaml` therefore carries **two deliberate path conventions**; mixing them up is the trap:
+
+| Convention | Examples | Resolution |
+|---|---|---|
+| **toolkit-relative** (no prefix) | `specFile`, `validator`, `copilotSource`, `required.*` | prefixed with `toolkitRoot` → correct in both layouts |
+| **repo-root absolute** (`.github/…`) | `copilotEntrypoint`, `plans.root`, `inventory`, `decisions` | used as-is; correct because these files live under `.github/` in **both** layouts |
+
+A new key must consciously pick one. `external.bcquality.home` belongs to neither — it is the exception
+that currently breaks.
+
+### 7.5 What the reference project proved (2026-09-23)
+
+Three findings stopped being theoretical, and one is new.
+
+| Finding | Evidence in `straub-medical-ag-base` |
+|---|---|
+| **F-4** wrong workflow catalog | `.github/prompts/index.md` claims **18 workflows**; the folder holds **12**. **12 listed workflows do not exist**: `al-diagnose`, `al-events`, `al-pages`, `al-permissions`, `al-translate`, `al-migrate`, `al-performance`, `al-performance.triage`, `al-copilot-{capability,promptdialog,generate,test}` |
+| **F-11** linked ≠ shipped | The entrypoint links `docs/copilot-reference.md`; the file **does not exist** in the project |
+| **F-5** `agents/index.md` unregistered | **Absent** in the project — it is in no `aldc.yaml` list, while its three sibling catalogs shipped |
+
+**New — F-14: two `.aproda.` companions never reach a project.**
+
+| File | Fork | Project |
+|---|---|---|
+| `readme.aproda.md` · `decisions.aproda.md` · `site-profile.aproda.md` | ✅ | ✅ |
+| **`CHANGELOG.aproda.md`** | ✅ | ❌ |
+| **`onboarding.aproda.md`** | ✅ | ❌ |
+
+Both match `includeGlobs: **/*.aproda.*`, yet neither arrives. `CHANGELOG.aproda.md` is listed in
+`layouts.fork.dotGithub` but **not** in `includeFiles`; `onboarding.aproda.md` is in neither. So the
+onboarding guide — the document `readme.aproda.md` directs new contributors to — is unavailable in
+exactly the repos where new contributors work. **Decision needed:** ship both, or declare them fork-only
+and stop referencing them from shipped documents.
+
+> **Methodical takeaway.** Every one of these was invisible from inside the fork, and three of them were
+> *already suspected* but unprovable here. A reference project is not a nice-to-have for this kind of
+> audit — it is the only place where "ships to projects" can be distinguished from "exists in the fork".
+> Re-run §7.6 against a real repo whenever the layer changes materially.
+
+### 7.6 Project verification checklist
+
+```powershell
+# 1 layout
+Select-String aldc.yaml -Pattern '^toolkitRoot:'            # expect ".github"
+
+# 2 discovery paths exist
+Get-ChildItem .github -Directory | Where-Object Name -in 'instructions','agents','prompts','skills'
+
+# 3 Aproda primitives arrived
+Get-ChildItem .github -Recurse -Filter '*.aproda.*' | Select-Object Name
+Get-ChildItem .github/skills -Directory | Where-Object Name -like 'skill-aproda-*'
+
+# 4 catalogs match reality (F-4)
+(Get-ChildItem .github/prompts/*.prompt.md).Count   # vs the count claimed in prompts/index.md
+
+# 5 linked-but-not-shipped
+Test-Path .github/docs/copilot-reference.md          # F-11
+
+# 6 BCQuality resolves
+Select-String aldc.yaml -Pattern 'home:'
+
+# 7 validator green
+node .github/tools/aldc-validate/index.js
+```
+
+Then, in Copilot, open the Agent Customizations editor and confirm the Aproda skills, agents and
+instructions are listed. Discovery there proves **availability**, not that the rules are followed.
+
+> This checklist lives in a fork-only document on purpose: it is a **maintainer** task, planned here and
+> executed in a project. Copy it into the project's plan folder when you run it.
+
+## 8. What does **not** belong in this file
 
 - **Decisions** → `decisions.aproda.md` (a D-entry, with rationale and rejected alternative).
 - **The artifact inventory** → `readme.aproda.md` (D-17 declares it the single index).
@@ -270,7 +464,7 @@ If something here starts duplicating one of those, delete it here and link inste
 
 ---
 
-## 8. Reading order for a new contributor
+## 9. Reading order for a new contributor
 
 1. [`../.github/onboarding.aproda.md`](../.github/onboarding.aproda.md) — de, practical setup
 2. This file §1–§3 — orientation and where truth lives

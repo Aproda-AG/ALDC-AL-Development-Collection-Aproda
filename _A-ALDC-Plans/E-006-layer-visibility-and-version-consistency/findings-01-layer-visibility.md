@@ -347,6 +347,95 @@ Note the classification also disagrees with `aldc.yaml`, which places `skill-man
 
 ---
 
+## F-14 🟠 Two `.aproda.` companions never reach a consumer project
+
+*Added 2026-09-23 after the first measurement against a real project (see "Reference-project verification" below).*
+
+| File | Fork | Project |
+|---|---|---|
+| `readme.aproda.md` · `decisions.aproda.md` · `site-profile.aproda.md` | ✅ | ✅ |
+| **`CHANGELOG.aproda.md`** | ✅ | ❌ |
+| **`onboarding.aproda.md`** | ✅ | ❌ |
+
+Both match `includeGlobs: "**/*.aproda.*"`, yet neither arrives:
+
+- `CHANGELOG.aproda.md` is listed in `layouts.fork.dotGithub` but **not** in `includeFiles`.
+- `onboarding.aproda.md` appears in **neither** list.
+
+Consequence: `readme.aproda.md` — which *does* ship — points new contributors at an onboarding guide that
+does not exist in their repo. The curated release notes (D-27) are likewise fork-only in practice,
+although nothing says they are meant to be.
+
+**Decision needed:** ship both, or declare them fork-only and remove the references from shipped
+documents. Silently half-shipping is the worst of the three.
+
+---
+
+## F-15 🔴 Committed UTF-8 BOM silently disabled a custom agent
+
+*Found 2026-09-23, triggered by a report from the reference project's own Copilot session.*
+
+`agents/al-conductor.agent.md` started with `EF BB BF 2D 2D 2D` — a byte-order mark **before** the `---`
+frontmatter delimiter. The YAML parser therefore never recognised the frontmatter, so VS Code fell back
+to the file name: the agent appeared as `al-conductor` instead of `AL Development Conductor`, and its
+declared `tools`, `model`, `agents` and `handoffs` were **never applied**.
+
+**Scope:** 10 toolkit files carried a committed BOM.
+
+| Files | |
+|---|---|
+| `agents/al-conductor.agent.md` | 🔴 frontmatter broken |
+| `skills/skill-aproda-deploy-run-verify/` — `SKILL.md`, `references/build-deploy.md`, `references/runner.md`, `scripts/README.md` | `SKILL.md` has frontmatter → same risk |
+| `.github/` — `copilot-instructions.md`, `decisions.aproda.md`, `readme.aproda.md`, `site-profile.aproda.md`, `onboarding.aproda.md` | no frontmatter → cosmetic, but propagates |
+
+**It reached the reference project.** `.github/skills/skill-aproda-deploy-run-verify/SKILL.md`,
+`.github/copilot-instructions.md` and `.github/readme.aproda.md` all carry the BOM in
+`straub-medical-ag-base` — so this is not a fork-only artifact.
+
+**Why it survived so long — every ordinary check is blind to it:**
+
+| Method | Result |
+|---|---|
+| VS Code editor | invisible in the buffer |
+| `Get-Content` / `Select-String` | invisible — PowerShell strips the BOM while decoding |
+| `git show \| Select-Object -First 1` + `.StartsWith([char]0xFEFF)` | **reports "clean" on a file that has one** — this test was used first here and gave a false negative |
+| Byte inspection | `EF BB BF` — the only reliable method |
+
+The decisive proof of provenance was indirect: after stripping the BOMs, `git diff` listed **8 files that
+had not been modified otherwise** — so the BOM was committed, not a local editor artifact.
+
+**Resolved:** all 10 files rewritten as UTF-8 without BOM; `al-conductor.agent.md` now starts
+`2D 2D 2D 0D 0A`. Detection command added as Ground-Truth §6-G.
+
+> **This is independent of F-1.** `.claude/` being the discovery source in the fork was established by
+> separate evidence (Claude-only `model: haiku`, the `.claude/rules` `paths:` dialect, 15 vs 21 skills).
+> F-15 would break the agent **in any layout, including a consumer project** — which is exactly why it
+> must not be filed under "fork-only".
+
+---
+
+## Reference-project verification (2026-09-23)
+
+Everything above was found **inside the fork**. A real consumer repo — `straub-medical-ag-base`
+(AL-Go, layer `1.2.0_aproda.17`, sync confirmed current) — was then measured for the first time. Three
+findings stopped being theoretical:
+
+| Finding | Status before | Evidence in the project |
+|---|---|---|
+| **F-4** wrong workflow catalog | suspected | `.github/prompts/index.md` claims **18** workflows, folder holds **12**, and **12 named workflows do not exist** (`al-diagnose`, `al-events`, `al-pages`, `al-permissions`, `al-translate`, `al-migrate`, `al-performance`, `al-performance.triage`, `al-copilot-{capability,promptdialog,generate,test}`) |
+| **F-11** linked ≠ shipped | suspected | `docs/copilot-reference.md` is linked from the entrypoint and **absent** in the project |
+| **F-5** `agents/index.md` unregistered | suspected | **Absent** in the project, while its three sibling catalogs shipped |
+
+Equally important, two design properties were **confirmed working**: `skill-aproda-aldc-release` is
+correctly absent (fork-only via `neverTouch`), and the project's own `skill-audit-trail` survived
+untouched — the allowlist protects project content in both directions, exactly as D-18 intends.
+
+> **Methodical conclusion.** "Ships to a project" cannot be verified from the fork. Three suspicions sat
+> unresolved in this document until a reference repo was available. Any future layer audit should include
+> one — the checklist is in Ground-Truth §7.7.
+
+---
+
 ## Cross-cutting assessment
 
 The layer's **governance design is sound**: an allowlist syncer with a self-identifying convention (D-4,

@@ -36,6 +36,7 @@
                 "decisions.aproda.md",
                 "readme.aproda.md",
                 "CHANGELOG.aproda.md",
+                "onboarding.aproda.md", // omission until 2026-09-24: layout mapping runs before the globs, so this file was invisible to the syncer (E-006 F-14)
                 "site-profile.aproda.md",
                 "plans/**"
             ]

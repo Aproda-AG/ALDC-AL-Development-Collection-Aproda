@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * ALDC Core Validator v1.1
- * Validates repository compliance against ALDC Core Spec v1.1.
+ * ALDC Core Validator v1.2
+ * Validates repository compliance against ALDC Core Spec v1.2.
  *
  * Checks:
  *   1. aldc.yaml exists and parses correctly
@@ -77,11 +77,11 @@ if (!fileExists(memoryPath)) {
 if (fileExists(plansRoot)) {
   const contractTypes = cfg.contracts?.types || ["spec", "architecture", "test-plan"];
   const files = fs.readdirSync(plansRoot).filter(f => f.endsWith(".md") && f !== memoryFile);
-  
+
   // Extract unique req_names
   const reqNames = new Set();
   const filesByReq = {};
-  
+
   for (const f of files) {
     for (const type of contractTypes) {
       const suffix = `.${type}.md`;
@@ -93,18 +93,18 @@ if (fileExists(plansRoot)) {
       }
     }
   }
-  
+
   for (const reqName of reqNames) {
     const found = filesByReq[reqName] || [];
     const missing = contractTypes.filter(t => !found.includes(t));
     if (missing.length > 0) {
-      issue("incompleteRequirementSets", 
+      issue("incompleteRequirementSets",
         `Requirement "${reqName}" incomplete: missing ${missing.map(t => `${reqName}.${t}.md`).join(", ")}`);
     } else {
       info(`Requirement "${reqName}" has complete set (${contractTypes.length}/${contractTypes.length})`);
     }
   }
-  
+
   if (reqNames.size === 0) {
     info("No requirement sets found in plans directory (may be initial setup)");
   }
@@ -253,13 +253,17 @@ if (alFiles.length === 0) {
 }
 
 // ─── 8. Copilot entrypoint coherence ─────────────────────────────
-// Two modes (cfg.copilotEntrypointMode, default "mirror"):
-//   "mirror"  — the entrypoint must be byte-identical to its source (install.js
-//               copies source -> entrypoint; any drift is a stale copy).
-//   "trimmed" — the entrypoint is an intentional lean subset of the source (the
-//               ~31% always-on trim): we no longer require byte-identity, only
-//               that it exists, is non-empty, and is genuinely smaller than the
-//               source (a larger/equal "trim" means it went stale, not lean).
+// Three modes (cfg.copilotEntrypointMode, default "mirror"):
+//   "mirror"   — the entrypoint must be byte-identical to its source (install.js
+//                copies source -> entrypoint; any drift is a stale copy).
+//   "trimmed"  — the entrypoint is an intentional lean subset of the source (the
+//                ~31% always-on trim): we no longer require byte-identity, only
+//                that it exists, is non-empty, and is genuinely smaller than the
+//                source (a larger/equal "trim" means it went stale, not lean).
+//   "extended" — the entrypoint is the maintained artifact and deliberately adds
+//                content the source does not carry (e.g. a fork layer). Size is
+//                not a staleness signal here, so only existence and non-emptiness
+//                are checked. Use this instead of silencing the rule.
 const entrypoint = cfg.copilotEntrypoint;
 const source = cfg.copilotSource;
 const entrypointMode = cfg.copilotEntrypointMode || "mirror";
@@ -280,6 +284,12 @@ if (entrypoint && !fileExists(entrypoint)) {
       } else {
         info(`Copilot entrypoint is an intentional trim (${ep.length} vs ${src.length} source chars)`);
       }
+    } else if (entrypointMode === "extended") {
+      if (ep.length === 0) {
+        issue("copilotEntrypointCoherence", `Copilot entrypoint is empty: ${entrypoint}`);
+      } else {
+        info(`Copilot entrypoint deliberately extends its source (${ep.length} vs ${src.length} source chars)`);
+      }
     } else if (ep !== src) {
       issue("copilotEntrypointCoherence",
         `Copilot entrypoint drift detected: ${entrypoint} differs from ${sourcePath}`);
@@ -292,7 +302,7 @@ if (entrypoint && !fileExists(entrypoint)) {
 // ─── Report ──────────────────────────────────────────────────────
 function report() {
   console.log("\n╔══════════════════════════════════════════╗");
-  console.log("║     ALDC Core Validator v1.1             ║");
+  console.log("║     ALDC Core Validator v1.2             ║");
   console.log("╚══════════════════════════════════════════╝\n");
 
   if (S.info.length) {
@@ -313,7 +323,7 @@ function report() {
 
   const total = S.errors.length + S.warnings.length;
   if (S.errors.length === 0) {
-    console.log(`✅ ALDC Core v1.1 COMPLIANT (${S.warnings.length} warning(s))`);
+    console.log(`✅ ALDC Core v1.2 COMPLIANT (${S.warnings.length} warning(s))`);
   } else {
     console.log(`❌ NOT COMPLIANT — ${S.errors.length} error(s), ${S.warnings.length} warning(s)`);
   }
