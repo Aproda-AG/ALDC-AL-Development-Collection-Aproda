@@ -16,6 +16,8 @@ import { openGettingStarted, openWalkthrough } from "./commands/gettingStarted";
 import { validateInstallation } from "./commands/validate";
 import { checkForExtensionUpdates, shouldRunExtensionUpdateCheck } from "./commands/extensionUpdate";
 import { hasInitializedAlProject, offerRepositoryInitialization } from "./startup/repositoryInitialization";
+import { copyAdoCliSetupCommand } from "./commands/copyAdoCliSetupCommand";
+import { copyRecommendedMcpServers } from "./commands/copyRecommendedMcpServers";
 
 export function activate(context: vscode.ExtensionContext): void {
   const logger = new Logger();
@@ -45,6 +47,8 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.openWalkthrough", () => openWalkthrough()));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.gettingStarted", () => openGettingStarted()));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.validate", () => validateInstallation(logger)));
+  context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.copyAdoCliSetupCommand", () => copyAdoCliSetupCommand()));
+  context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.copyRecommendedMcpServers", () => copyRecommendedMcpServers()));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.resetData", () => resetLocalData(context, layerSource, logger, () => startupCheck)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.repairCache", async () => {
     try {

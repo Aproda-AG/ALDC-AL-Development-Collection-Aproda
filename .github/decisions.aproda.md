@@ -563,6 +563,7 @@ The few places where we touched Upstream files in-place. This is the list the up
 | `tools/aproda-ps-xliffsync/Invoke-AprodaBuildXliffSync.ps1`, `tools/aproda-ps-xliffsync/vendor/XliffSync/Public/Test-XliffTranslations.ps1` | Exclude obsolete `translate="yes"` units without source text from Stage 0 export, statistics, and missing-translation validation. | D-2 / D-31 / D-38 | 2026-09-14 |
 | `tools/aproda-ps-xliffsync/vendor/XliffSync/Model/XlfDocument.ps1` | Normalize translation-unit method results to arrays before accessing `.Count` under Strict Mode. | D-2 / D-31 / D-41 | 2026-09-14 |
 | `skills/skill-aproda-fkh/SKILL.md`, `skills/skill-aproda-deploy-run-verify/**` | Adopt FKH Dev Endpoint deployment as the default; add explicit `fkhSyncMode` with non-destructive `Add` default and documented ForceSync notification. | D-2 / D-39 | 2026-09-14 |
+| `skills/skill-aproda-ado/SKILL.md` + `scripts/` | Superseded the D-4 2-command allowlist with the hybrid MCP/az-CLI tiered write policy (Read/Trusted-on-request/HITL/Forbidden across both backends), replacing the 4 operation-specific scripts with composable building blocks (auth/preflight, parameter-safety, disclaimer, forbidden-check). | D-48 | 2026-09-24 |
 | `skills/skill-aproda-deploy-run-verify/scripts/AprodaDeployRunVerify.psm1`, `scripts/README.md` | Add compact Stopwatch timing evidence for build, deploy, tests, and total runtime. | D-2 / D-40 | 2026-09-14 |
 | `skills/skill-aproda-deploy-run-verify/scripts/AprodaDeployRunVerify.psm1` | Preserve sanitized FKH publish diagnostics and exit code; do not label every publish failure as a Global-scope migration. | D-2 / D-39 / D-42 | 2026-09-15 |
 | `tools/aldc-validate/index.js` | Added a third `copilotEntrypointMode`, `"extended"`: entrypoint may deliberately carry more than its source; only existence + non-emptiness are checked. `"mirror"`/`"trimmed"` unchanged. | D-2 / D-45 | 2026-09-23 |
@@ -751,4 +752,35 @@ That assumption broke on 2026-09-22. The E-006 catalog work added the Aproda rou
 **`aldc.yaml → aproda.primitives`** (optional, added alongside): an explicit primitive list makes the Aproda layer machine-checkable without polluting the Core `required`/`optional` sets. Not currently consumed by the three rules above (which walk the filesystem directly) — it exists as the future anchor for a stricter, list-driven check once the sweep is done.
 
 **Rejected alternative.** Starting all three rules at `"error"`. Rejected because the fork's own catalogs are the very files these rules were written to catch drifting (D-46's context) — shipping at `"error"` would break every validation run before the sweep (T-10/T-11) has a chance to run, punishing the messenger.
+
+### D-48 — Hybrid MCP/az-CLI architecture with a tiered write policy replaces the narrow 2-command allowlist
+
+**Context.** `skill-aproda-ado` (D-4) originally exposed exactly 2 write operations through 4 fixed
+PS1 scripts, with a blanket "Forbidden: everything else" clause. The E-007 audit (2026-09-24) found the
+fixed scripts carried a parameter-format bug (bare org name vs. the fully qualified URL `az --organization`
+requires) that looked like a permissions problem, and that the design structurally cannot reach PR-thread
+comments — no such `az` command exists at all. The official Azure DevOps MCP Server covers that gap and
+offers broader read/write tool coverage via a Microsoft-hosted, Microsoft-maintained endpoint requiring no
+local install.
+
+**Decision.** Adopt a hybrid backend: MCP preferred when its connection is reachable, `az` CLI as
+fallback. Both are governed by one shared tier policy — Read (4, always allowed) / Trusted-on-request
+(2: PR create, comment, state change, reviewer-add, vote, non-merge PR-field edits — never automatic)
+/ HITL-every-time (3: PR merge/auto-complete, work-item creation, field updates, relations) / Forbidden
+(1: policy, permissions, repo-lifecycle, pipeline-definition, and service-connection commands, plus
+`az devops invoke` as a standalone hard carve-out since it is a raw REST passthrough with no MCP
+equivalent to reason about). Enforcement is two-layered: an instructional layer (route writes only
+through the sanctioned building blocks) plus a code layer that is unconditional once that path is used
+(the AI disclaimer append; the `invoke`/`--bypass-policy true` denylist inside the az-CLI wrapper). The
+4 original operation-specific scripts are replaced by small composable building blocks (auth/preflight,
+parameter-safety, disclaimer, forbidden-check).
+
+**Rejected alternative.** Keep `az` CLI as the only backend and simply widen its allowlist — rejected
+because it can never reach PR-thread comments/votes (structurally absent from the CLI, not a policy
+choice), and because MCP's connection-level `X-MCP-Readonly`/`X-MCP-Toolsets` scoping is a genuine,
+Microsoft-enforced technical floor that a pure-CLI design cannot obtain for free.
+
+**Supersedes.** The narrow 2-command allowlist design recorded under D-4 for `skill-aproda-ado/SKILL.md` +
+`scripts/` (register row dated 2026-08-31). Full design trail: `_A-ALDC-Plans/E-007-azure-cli-skill/`.
+
 

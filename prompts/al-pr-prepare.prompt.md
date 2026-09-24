@@ -155,15 +155,16 @@ Load **`skill-aproda-ado`** (SRP-safe execution, see its `SKILL.md`). Before eit
 
 Obtain **one explicit approval** authorizing exactly these two writes: create (or reuse) this PR, then post this exact completion comment with `<PR_ID>` replaced only by the returned PR ID. Any changed text, branch, or work item requires a new explicit confirmation.
 
-1. Call `Create-AdoPullRequest.ps1` with the title proposal, `-DescriptionFile` pointing at `/reports/pr-draft.md` (the script extracts its `PR Description` section), `-SourceBranch ${input:Branch}`, `-TargetBranch` (ask once if not obvious from the repo default), and the linked `-WorkItemId`.
-2. On `created: true` **or** `existing-open-pull-request`, replace only `<PR_ID>` in the approved completion-comment proposal with the returned ID and call `Update-AdoWorkItem.ps1 -Comment`. On PR creation failure, stop and report — do not retry silently or post a comment.
+1. Check for an existing open PR for this source/target branch first (Tier 4 read: MCP `repo_pull_request list`, or `Invoke-AdoAzCli.ps1` with `az repos pr list`) — recommended sequence per `skill-aproda-ado`, not code-enforced. If one exists, reuse it instead of creating a duplicate.
+2. Otherwise create the PR (Tier 2, on-request-approved): MCP `repo_pull_request_write create`, or `Invoke-AdoAzCli.ps1` with `az repos pr create` (title via `ConvertTo-AdoFileArgument.ps1` if it contains untrusted/multiline text) — title proposal, description from `/reports/pr-draft.md`'s `PR Description` section, `--source-branch ${input:Branch}`, `--target-branch` (ask once if not obvious from the repo default), and the linked work item.
+3. On success (created or reused), run `Add-AdoAiDisclaimer.ps1` on the approved completion-comment proposal, replace only `<PR_ID>` with the returned PR ID, then post it (Tier 2, on-request-approved): MCP `wit_work_item_comment_write add`, or `Invoke-AdoAzCli.ps1` with `az boards work-item update --discussion @<file>`. On PR creation failure, stop and report — do not retry silently or post a comment.
 3. On completion-comment failure, stop and report. Do not move the requirement to Completed; a retry needs a fresh preview and approval.
 
 After the PR and comment both succeed, delete `/reports/pr-draft.md` — it must not be committed to the repo. No `.gitignore` entry as a safety net (deliberately omitted); the explicit delete is the only measure.
 
 ## 🔒 Completion Gate (before moving the req to Completed)
 
-- [ ] PR created (`Create-AdoPullRequest.ps1` → `created:true` or `existing-open-pull-request`) — ADO-hosted repos only; for GitHub-hosted repos, the PR is submitted manually from `/reports/pr-draft.md`
+- [ ] PR created or reused (per `skill-aproda-ado`'s Tier 2 write) — ADO-hosted repos only; for GitHub-hosted repos, the PR is submitted manually from `/reports/pr-draft.md`
 - [ ] `/reports/pr-draft.md` deleted — **only if the PR was actually created** in this run (ADO-hosted repos); if PR creation failed, was never attempted, or the repo is GitHub-hosted, the file is expected to still exist and its presence is not a gate failure
 - [ ] ADO completion comment posted — ADO-hosted repos only
 - [ ] `al-doc-update` run and its changes committed and pushed before PR creation
