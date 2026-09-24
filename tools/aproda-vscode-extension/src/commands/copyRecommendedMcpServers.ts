@@ -13,10 +13,7 @@ const RECOMMENDED_MCP_SERVERS = `"microsoft-learn": {
 },
 "ado": {
     "type": "http",
-    "url": "https://mcp.dev.azure.com/alphasol",
-    "headers": {
-        "X-MCP-Toolsets": "repos,wit"
-    }
+    "url": "https://mcp.dev.azure.com/alphasol"
 }`;
 
 export async function copyRecommendedMcpServers(): Promise<void> {

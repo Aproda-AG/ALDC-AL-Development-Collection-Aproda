@@ -105,7 +105,7 @@ Für spätere Toolkit-Versionen stehen **Check for Updates** und optional **Prev
 `skill-aproda-ado` bevorzugt den offiziellen, von Microsoft gehosteten Azure DevOps MCP Server gegenüber dem CLI-Fallback (Abschnitt 1c) — kein lokaler Server, keine Node.js-Abhängigkeit. Einmalig global für alle Workspaces einrichten:
 
 1. Command Palette (`Strg+Shift+P`) → **`MCP: Open User Configuration`**.
-2. Empfohlenes Server-Bündel eintragen (`microsoft-learn` + `context7` sind zero-config, `ado` braucht die org-eigene URL + einmaligen Entra-Login) — siehe [`_A-ALDC-Plans/E-007-azure-cli-skill/howto-setup-ado-mcp.md`](../_A-ALDC-Plans/E-007-azure-cli-skill/howto-setup-ado-mcp.md) für die genaue Konfiguration.
+2. Empfohlenes Server-Bündel eintragen (`microsoft-learn` + `context7` sind zero-config, `ado` braucht die org-eigene URL + einmaligen Entra-Login) — die genaue Konfiguration steht in [readme.aproda.md → Recommended MCP servers](readme.aproda.md#recommended-mcp-servers-one-time-per-workstation) (die dort gezeigte JSON ist die verbindliche, mit dem Projekt ausgelieferte Fassung — nicht die in `_A-ALDC-Plans/`, die nie synchronisiert wird).
 3. GitHub Copilot Chat im Agent-Modus öffnen — beim ersten Zugriff einmalig mit dem Microsoft-Entra-Konto anmelden (demselben Tenant wie `az login`).
 
 ### 1c — Azure CLI einrichten (empfohlener Fallback, einmalig pro Workstation)

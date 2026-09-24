@@ -53,8 +53,9 @@ When an ADO work item URL is pasted for a **new** requirement, derive `{req_name
 
 **MCP (preferred backend):** the official Azure DevOps MCP Server, configured once per workstation at
 VS Code user level — see the "Set up recommended MCP servers" walkthrough step and
-`_A-ALDC-Plans/E-007-azure-cli-skill/howto-setup-ado-mcp.md`. No local install (remote server), Microsoft
-Entra auth (same tenant as `az login`).
+`readme.aproda.md → Recommended MCP servers` (the shipping, authoritative configuration; `_A-ALDC-Plans/`
+is fork-only reference material and never reaches a consumer project). No local install (remote server),
+Microsoft Entra auth (same tenant as `az login`).
 
 **az CLI (fallback):**
 - Azure CLI (`az`) installed, with the `azure-devops` extension: `az extension add --name azure-devops`.
@@ -68,7 +69,7 @@ Entra auth (same tenant as `az login`).
 Check once per chat session whether the `ado` MCP connection is reachable:
 
 1. **Reachable** → prefer MCP for everything in the tier table below (per-tool mapping).
-2. **Not reachable / not configured** → offer the setup **once** per session (not repeated nagging), pointing at `howto-setup-ado-mcp.md`, then continue that session entirely via the az-CLI fallback regardless of the answer.
+2. **Not reachable / not configured** → offer the setup **once** per session (not repeated nagging), pointing at `readme.aproda.md → Recommended MCP servers`, then continue that session entirely via the az-CLI fallback regardless of the answer.
 
 This check-once/offer-once behavior applies per session, not per call — do not re-prompt for MCP setup on every ADO operation within the same conversation.
 
@@ -79,14 +80,14 @@ silent allow or silent forbid — except `az devops invoke`, which is a standalo
 
 | Tier | az CLI | MCP tool | Enforcement |
 |---|---|---|---|
-| **1 — Forbidden** | `az devops invoke`; `az repos pr update --bypass-policy true`; `az repos policy *`; `az devops project *`; `az devops security permission *`; `az repos create/delete/update`; `az devops service-endpoint *`; `az pipelines create/delete`, `variable-group *`; `az boards work-item delete` | *(no generic `invoke`-equivalent tool exists in the ADO MCP catalog)*; the rest excluded via `X-MCP-Toolsets` at connection setup | az: code-enforced by `Invoke-AdoAzCli.ps1`'s denylist (only `invoke` + `--bypass-policy true` — the rest relies on ADO's own permission model as the backstop, a conscious accepted gap). MCP: connection-level toolset scoping, server-enforced |
+| **1 — Forbidden** | `az devops invoke`; `az repos pr update --bypass-policy true`; `az repos policy *`; `az devops project *`; `az devops security permission *`; `az repos create/delete/update`; `az devops service-endpoint *`; `az pipelines create/delete`, `variable-group *`; `az boards work-item delete` | *(no generic `invoke`-equivalent tool exists in the ADO MCP catalog; most other Tier-1 categories have no MCP tool at all regardless of toolset)* | az: code-enforced by `Invoke-AdoAzCli.ps1`'s denylist (only `invoke` + `--bypass-policy true` — the rest relies on ADO's own permission model as the backstop, a conscious accepted gap). MCP: **no connection-level technical floor** — the shipped `ado` connection uses the default `all` toolset, unscoped (see `readme.aproda.md`); relies entirely on Agent Instructions + ADO's own permission model, same backstop as the az-CLI path's uncoded rest of Tier 1 |
 | **2 — Trusted (on-request only, never automatic)** | `az repos pr create`; `az boards work-item update --discussion @file` (comment — may be automatic as part of a routine flow); `--state ...`; `az repos pr reviewer add`; `az repos pr set-vote`; `az repos pr update --description/--title` (non-merge fields) | `repo_pull_request_write create`; `wit_work_item_comment_write add`; `wit_work_item_write update` (state field); `repo_pull_request_write update_reviewers`; `repo_pull_request_write vote`; `repo_pull_request_write update` (non-merge fields) | Standard preview-and-approve gate; `Add-AdoAiDisclaimer.ps1` always runs first for comments. State/reviewer/vote/field-edit calls only when the user explicitly asks — never as a side effect of another flow |
 | **3 — HITL every time** | `az pipelines run`; `az repos pr update --status completed`/`--auto-complete true`; `az boards work-item create`; field updates (`--assigned-to/--area/--iteration/--tags`); `relation add` | `repo_pull_request_write update` (incl. auto-complete — same bundling risk as `az`); `wit_work_item_write create`; `wit_work_item_link_write *` | Explicit confirmation per call, self-verified per D-35 |
 | **4 — Read** | any `show`/`list`/`query` | any read-only tool (`repo_pull_request`, `wit_work_item`, `wit_query`, …) | Always allowed, no gate |
 
 **The two-layer enforcement model, stated explicitly:**
 1. **Soft (instructional):** writes always go through the building blocks below or the configured MCP connection — never a raw, unwrapped call. Like any instruction, this can in principle be bypassed by an agent that ignores it.
-2. **Hard (code, only once Layer 1 is followed):** the denylist inside `Invoke-AdoAzCli.ps1` and the unconditional append inside `Add-AdoAiDisclaimer.ps1` cannot be parameterized away once that path is actually used. MCP has no per-call equivalent — its only genuinely server-enforced floor is the connection-level `X-MCP-Toolsets`/`X-MCP-Readonly` configuration set once at setup.
+2. **Hard (code, only once Layer 1 is followed):** the denylist inside `Invoke-AdoAzCli.ps1` and the unconditional append inside `Add-AdoAiDisclaimer.ps1` cannot be parameterized away once that path is actually used. MCP has no per-call equivalent, and (by deliberate choice, see `readme.aproda.md`) no connection-level floor either — the `ado` MCP connection ships unscoped (default `all` toolset, no `X-MCP-Readonly`), so its Tier-1 backstop is Agent Instructions plus ADO's own permission model only.
 
 **Recommended (not code-enforced) sequences:** check for an existing open PR before creating one; read a work item's current state before changing it. These used to be hardcoded in dedicated scripts; they are now Agent Instructions, not code — a conscious, accepted trade-off for dropping the long per-operation scripts.
 

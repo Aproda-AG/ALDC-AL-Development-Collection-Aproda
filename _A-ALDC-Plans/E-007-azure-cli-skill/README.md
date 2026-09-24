@@ -1,10 +1,11 @@
 # E-007 — Azure CLI Skill (`skill-aproda-ado`) Hardening
 
-> **Status (2026-09-24):** Root cause found and fixed (org-URL default). Design has since evolved from a
-> pure-`az`-CLI tier model (V1) to an **MCP-first hybrid architecture (V2)** — see
-> [E-007-V2.md](E-007-V2.md) for the current target design. Nothing beyond the org-URL fix is
-> implemented yet. The tier-model/architecture change is a D-16 layer edit and requires explicit
-> maintainer sign-off + a new `decisions.aproda.md` entry before any file is touched.
+> **Status (2026-09-24):** **Implemented and reviewed.** Design evolved from a pure-`az`-CLI tier model
+> (V1) to an **MCP-first hybrid architecture (V2)** — see [E-007-V2.md](E-007-V2.md) for the target
+> design. D-48 recorded in `decisions.aproda.md`; `skill-aproda-ado` rewritten (building blocks +
+> tiered policy), the 4 old per-operation scripts retired, onboarding/walkthrough/readme updated. An
+> independent review (Claude Opus 5) found 5 major issues, all fixed and re-verified — see
+> [E-007-V2.md](E-007-V2.md) for the outcome.
 
 ## Why this exists
 

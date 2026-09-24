@@ -134,8 +134,18 @@ The folder must sit **next to** (not inside) the project repo so its `.al` files
 `skill-aproda-ado` prefers the official, Microsoft-hosted Azure DevOps MCP Server over the az-CLI fallback below — no local server, no Node.js dependency. Set up once, globally, for every workspace:
 
 1. Command Palette → **`MCP: Open User Configuration`**.
-2. Add the recommended server bundle (`microsoft-learn` + `context7` are zero-config; `ado` needs the org-specific URL and a one-time Entra sign-in) — see [`_A-ALDC-Plans/E-007-azure-cli-skill/howto-setup-ado-mcp.md`](../_A-ALDC-Plans/E-007-azure-cli-skill/howto-setup-ado-mcp.md) for the exact configuration.
+2. Add the recommended server bundle to the `"servers": { }` object (safe to merge with anything already there):
+
+   ```jsonc
+   "microsoft-learn": { "type": "http", "url": "https://learn.microsoft.com/api/mcp" },
+   "context7": { "type": "http", "url": "https://mcp.context7.com/mcp" },
+   "ado": { "type": "http", "url": "https://mcp.dev.azure.com/alphasol" }
+   ```
+
+   `microsoft-learn`/`context7` are zero-config. `ado` needs the org-specific URL and a one-time Entra sign-in; no `X-MCP-Toolsets`/`X-MCP-Readonly` headers — the default `all` toolset is used unscoped (do **not** add `X-MCP-Readonly: true`, it would block every Tier-2/3 write the skill performs through MCP). This means most Tier-1 categories still have no MCP tool at all, but `pipelines` tools are technically reachable — Agent Instructions (`SKILL.md`) plus ADO's own permission model are the backstop for that, the same acceptance already made for the uncoded rest of Tier 1 on the az-CLI path.
 3. Sign in with the same Microsoft Entra account used for `az login` on first use.
+
+For deeper reasoning (why MCP over CLI, troubleshooting, supported clients), see `_A-ALDC-Plans/E-007-azure-cli-skill/howto-setup-ado-mcp.md` — fork-only reference material, not shipped to consumer projects; the configuration above is the authoritative, shipping copy.
 
 ### Azure CLI setup (one-time, per workstation)
 

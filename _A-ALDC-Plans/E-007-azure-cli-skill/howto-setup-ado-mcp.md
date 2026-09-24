@@ -60,35 +60,40 @@ Aproda's stack (VS Code + GitHub Copilot) is fully supported out of the box.
 No `.vscode/mcp.json` in any project repo, no `package.json`, no `node_modules` — one config, one time,
 covers every ALDC/Aproda repo on that workstation.
 
-## Scoping (recommended before enabling writes)
+## Scoping (deliberately none)
 
-Two headers narrow what the connection can do — add them under the server entry:
+No `X-MCP-Toolsets`/`X-MCP-Readonly` headers — the `ado` entry uses the default `all` toolset, unscoped.
+This matches what `readme.aproda.md → Recommended MCP servers` and the walkthrough's copy-to-clipboard
+command actually ship; keep all three in sync if this changes.
 
 ```json
 {
   "servers": {
     "ado": {
       "type": "http",
-      "url": "https://mcp.dev.azure.com/alphasol",
-      "headers": {
-        "X-MCP-Toolsets": "repos",
-        "X-MCP-Readonly": "true"
-      }
+      "url": "https://mcp.dev.azure.com/alphasol"
     }
   }
 }
 ```
 
-- `X-MCP-Toolsets` — comma-separated category scoping (`repos`, `wit`, `pipelines`, `wiki`, `work`,
-  `testplan`, `elm`; default `all`). Per [mcp-vs-cli.md](mcp-vs-cli.md)'s recommendation, start with
-  `repos` only — that's the toolset containing the PR-thread-comment gap this is meant to close.
-- `X-MCP-Readonly` — global read-only switch for the whole connection. Turn this **off** only once the
-  preview-and-approve wrapper around the write-classified PR tools exists (see mcp-vs-cli.md) — until
-  then, keep it `true` so the connection can be explored/tested without any write risk.
+- `X-MCP-Toolsets` (comma-separated category scoping — `repos`, `wit`, `pipelines`, `wiki`, `work`,
+  `testplan`, `elm`; default `all`) is **not set**. Consequence to know: unlike the az-CLI fallback,
+  MCP then has **no connection-level technical floor at all** for this skill — every Tier-1 MCP tool
+  that exists in the catalog is reachable (most Tier-1 categories — policy, project settings,
+  permissions, repo lifecycle, service-endpoints, work-item delete — have no MCP tool regardless of
+  toolset, per the ADO MCP catalog; `pipelines` is the one toolset where this matters in practice, since
+  it can expose pipeline-definition/variable-group tools). Enforcement for MCP Tier-1 items therefore
+  relies entirely on Agent Instructions (`SKILL.md`) plus ADO's own permission model, the same backstop
+  already accepted for the uncoded rest of Tier 1 on the az-CLI path.
+- `X-MCP-Readonly` is also **not set** — it is a global, connection-level read-only switch; setting it
+  to `true` would block every Tier-2/3 MCP write the skill performs (PR create, comment, state change,
+  etc.) via `SKILL.md`'s own preview-and-approve gate — that gate, not this header, is the write control
+  for this skill's normal operation.
 
-> These two headers are **connection-level**, not per-call — they cannot replicate the parameter-level
-> carve-outs (e.g. blocking only `--bypass-policy true`) the `az`-CLI scripts have. Don't rely on them as
-> a substitute for the HITL wrapper that still needs to be built around the write tools.
+> Neither header is a substitute for the HITL preview-and-approve gate `SKILL.md` documents, and MCP has
+> no per-call equivalent to `Invoke-AdoAzCli.ps1`'s parameter-level carve-outs (e.g. blocking only
+> `--bypass-policy true`) on the az-CLI fallback path.
 
 ## Verify the connection
 

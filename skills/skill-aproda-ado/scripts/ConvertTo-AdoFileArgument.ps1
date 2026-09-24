@@ -20,7 +20,9 @@ param(
 )
 
 $path = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "aproda-ado-$([guid]::NewGuid()).txt")
-Set-Content -LiteralPath $path -Value $Content -NoNewline -Encoding utf8
+# -Encoding utf8 means UTF-8-with-BOM under PowerShell 5.1 (no BOM under 7+); write bytes directly so the
+# temp file is BOM-free regardless of which PowerShell version runs this.
+[System.IO.File]::WriteAllText($path, $Content, [System.Text.UTF8Encoding]::new($false))
 
 [pscustomobject]@{
     Argument = "@$path"

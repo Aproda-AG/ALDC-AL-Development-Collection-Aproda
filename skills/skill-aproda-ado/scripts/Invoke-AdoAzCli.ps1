@@ -22,12 +22,14 @@ param(
 $global:LASTEXITCODE = 1
 
 # Tier 1 -- Forbidden, code-checked (D-48): the rest of Tier 1 has no code check and relies on ADO's own
-# permission model as the backstop; these two are the standalone hard carve-outs.
-if ($Arguments -contains 'invoke') {
+# permission model as the backstop; these two are the standalone hard carve-outs. Both match against the
+# joined argument string with a word boundary so a caller cannot split/concatenate around either check.
+$joinedArguments = $Arguments -join ' '
+if ($joinedArguments -match '(?<![\w-])invoke(?![\w-])') {
     Write-Error "az devops invoke is not permitted by skill-aproda-ado (Tier 1 - Forbidden, D-48)."
     return
 }
-if (($Arguments -join ' ') -match '--bypass-policy\s+true') {
+if ($joinedArguments -match '--bypass-policy[\s=]+true') {
     Write-Error "--bypass-policy true is not permitted by skill-aproda-ado (Tier 1 - Forbidden, D-48)."
     return
 }
@@ -42,11 +44,12 @@ if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
 }
 
 # Fixed Aproda org -- az CLI requires the fully qualified URL, not the bare org name; callers normally
-# never pass --organization themselves.
-if (($Arguments -join ' ') -notmatch '--organization|-o\s') {
+# never pass --organization themselves. `-o` is az's short form for --output, NOT --organization -- az
+# has no short alias for --organization, so only the long form is ever checked here.
+if ($Arguments -notcontains '--organization') {
     $Arguments += @('--organization', 'https://dev.azure.com/alphasol')
 }
-if ($Arguments -notcontains '--output') {
+if ($Arguments -notcontains '--output' -and $Arguments -notcontains '-o') {
     $Arguments += @('--output', 'json')
 }
 if ($Arguments -notcontains '--only-show-errors') {
@@ -56,9 +59,11 @@ if ($Arguments -notcontains '--only-show-errors') {
 $stderrLines = [System.Collections.Generic.List[string]]::new()
 $stdout = az @Arguments 2>&1 | ForEach-Object {
     if ($_ -is [System.Management.Automation.ErrorRecord]) {
+        # List<T>.Add() returns void, so this branch emits nothing to the pipeline -- a bare `$null`
+        # statement here would otherwise insert an empty line into $stdout on every az warning.
         $stderrLines.Add($_.ToString())
-        $null
-    } else {
+    }
+    else {
         $_
     }
 }

@@ -765,11 +765,13 @@ local install.
 
 **Decision.** Adopt a hybrid backend: MCP preferred when its connection is reachable, `az` CLI as
 fallback. Both are governed by one shared tier policy — Read (4, always allowed) / Trusted-on-request
-(2: PR create, comment, state change, reviewer-add, vote, non-merge PR-field edits — never automatic)
-/ HITL-every-time (3: PR merge/auto-complete, work-item creation, field updates, relations) / Forbidden
-(1: policy, permissions, repo-lifecycle, pipeline-definition, and service-connection commands, plus
-`az devops invoke` as a standalone hard carve-out since it is a raw REST passthrough with no MCP
-equivalent to reason about). Enforcement is two-layered: an instructional layer (route writes only
+(2: PR create and its completion comment may run under one bounded, single-approval flow such as
+`al-pr-prepare`'s; state change, reviewer-add, vote, and non-merge PR-field edits are on-request only —
+never an automatic side effect of another flow) / HITL-every-time (3: PR merge/auto-complete, work-item
+creation, field updates, relations) / Forbidden (1: policy, permissions, repo-lifecycle,
+pipeline-definition, and service-connection commands, plus `az devops invoke` as a standalone hard
+carve-out since it is a raw REST passthrough with no MCP equivalent to reason about). Enforcement is
+two-layered: an instructional layer (route writes only
 through the sanctioned building blocks) plus a code layer that is unconditional once that path is used
 (the AI disclaimer append; the `invoke`/`--bypass-policy true` denylist inside the az-CLI wrapper). The
 4 original operation-specific scripts are replaced by small composable building blocks (auth/preflight,

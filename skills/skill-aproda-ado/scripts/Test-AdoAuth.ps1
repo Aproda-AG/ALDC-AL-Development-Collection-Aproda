@@ -29,4 +29,16 @@ if (-not ($extensions | Where-Object { $_.name -eq 'azure-devops' })) {
     return $false
 }
 
+# `az extension list` succeeds even when nobody is logged in, so it alone does not verify the login
+# session the synopsis promises -- `az account show` actually requires an active session.
+$accountRaw = az account show --output json --only-show-errors 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "az is not logged in (exit $LASTEXITCODE): $accountRaw. Run: az login --tenant 8ad57af3-4ca5-4c66-bc7d-a52dd71dc7c9 --subscription bdcf3613-1ee6-4c3c-9caf-962112b8a6aa"
+    return $false
+}
+
+$true
+return $false
+}
+
 $true
