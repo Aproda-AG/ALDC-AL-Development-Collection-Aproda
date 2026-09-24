@@ -142,7 +142,13 @@ report as a claim, not as proof.
 
 | # | Item |
 |---|---|
-| **T-22** | **Per-user clone path** — the actual requirement: the clone location is a property of the workstation, not the repo. Today repo-scoped in `aldc.yaml` + `*.code-workspace`. Needs design |
+| **T-22** | **Per-user clone path** — the actual requirement: the clone location is a property of the workstation, not the repo. Today repo-scoped in `aldc.yaml` + `*.code-workspace`. **Designed 2026-09-24** (resolver + `#bcquality` LM tool); junction sidecar plan B **tested 2026-09-24 → viable**, one confirmed limitation (B-9). Implementation open |
+| **T-28** | **B-10** — in a consuming project `aldc.yaml` is deliberately gitignored **and** sits outside every workspace root. The agents' documented *"fall back to direct root-level access"* clause therefore cannot succeed; `#aldcConfiguration` is load-bearing, not optional. Fix the prose, not the ignore rule |
+| **T-29** | **B-9** — a workspace root cannot exclude itself from search; **fix found in round 4** (mount a wrapper folder, nest the clone one level down; shipped layout `.external/bcquality`). Decide whether to apply it to **the sibling-root mount shipping today**, which is unexcludable as laid out |
+| **T-30** | ✅ **Closed 2026-09-24** — an excluded mount stays readable (consumption is read-by-path, never search). Implementation constraint carried forward: `search.exclude` + `files.watcherExclude` only, **never `files.exclude`** |
+| **T-31** | ✅ **Closed 2026-09-24** — `aldc-validate` and `aproda-sync -WhatIf` produce **identical output with and without the junction** (control comparison, not a single run). The feared allowlist blow-up did not occur. Residual: Windows-specific — re-measure for POSIX symlinks |
+| **T-32** | ✅ **Closed 2026-09-24** — a missing mount is cosmetic: yellow Explorer entry, no workspace-file rewrite, and a junction created live is readable immediately without a reload. No reload prompt or activation-timing logic needed; `BCQuality/.gitkeep` **decided against** |
+| **T-33** | **Move `aldc.yaml` to `toolkitRoot`** (`.github/` in a consumer) — the structural fix for B-10. `.github` is a workspace root, so the direct read finally works without the extension. Fork unaffected (`toolkitRoot: "."`). Two-rung lookup for a non-breaking migration; prose lands with T-22/T-28 in one pass |
 | **T-17** | `external.bcquality.home` resolves to a non-existent directory in the fork — the validator skips citation checking *although a clone is present* |
 | **T-23** | Validator **passes vacuously**: three paths to false green, all exit `0`. Prerequisite for any gate |
 | **T-24** | Restore honesty in shipped docs: `aldc.yaml` points at absent files, `copilot-instructions.md` promises CI that is not there, the script advertises a pin check it no longer performs |
@@ -169,7 +175,7 @@ report as a claim, not as proof.
 
 | | Why |
 |---|---|
-| Sweeping the ~22 inherited v1.1 files in the fork | Converts conflict-free files into permanent D-2 merge-points for a defect Aproda did not cause → Block 4 |
+| Sweeping the ~22 inherited v1.1 files in the fork | Converts conflict-free files into permanent D-2 merge-points for a defect Aproda did not cause → **Block 5** (upstream PR, T-15) |
 | Deleting `.claude/` or `claude-plugin/` | Upstream-owned and actively maintained; deletion guarantees a pull conflict |
 | Deleting `.github/agents/test.agent.md` | Confirmed 2026-09-24 (T-10/T-13) to originate from upstream commit `179e782` — same reasoning as `.claude/` |
 | Deleting `instructions/copilot-instructions.md` | Q-2 — upstream-maintained, would break the validator and create a delete/modify conflict |
@@ -197,4 +203,8 @@ bump `layerVersion` at release time via `skill-aproda-aldc-release`, not as part
 One planned fix turned out to be unnecessary on verification: T-6's `versionCoherence` flag on
 `skill-aproda-aldc-release/SKILL.md` was historical prose quoting the T-9 incident, not live drift —
 left as-is, and the register text corrected instead of the file. Only Block 4 (BCQuality) and Block 5
-(upstream) remain, both independent tracks. Not committed/pushed yet.
+(upstream) remain, both independent tracks. **Committed as `5f7d042` and pushed.**
+
+**Block 4 status (2026-09-24).** Not opened. **T-22 is designed, tested and decided** — five measured
+rounds in `straub-medical-ag-base`, recorded in [`bcquality.md`](bcquality.md) §1.3–§1.6 with two new
+findings (B-9, B-10) and six new items (T-28–T-33). Nothing implemented; no shipped artifact touched.

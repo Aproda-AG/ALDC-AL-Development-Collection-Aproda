@@ -5,9 +5,12 @@
 > requirement, its own defects and its own decision. Keeping it inside
 > [`findings-01`](findings-01-layer-visibility.md) would bury it.
 >
-> **Status until Block 4: leave everything as-is.** Nothing in this file has been changed. It is a
-> notebook, not a change log. Everything below was observed during the Block-1 session — no separate
-> research has been done yet, and several entries explicitly need it.
+> **Status until Block 4: leave everything as-is.** No code, config or shipped doc has been changed.
+> It is a notebook, not a change log — with one growing exception: **T-22 has been designed, tested and
+> decided** (2026-09-24). §1.3–§1.6 carry a researched design, five measured test rounds, and four
+> decisions (`.external/bcquality` layout, dual path, no `.gitkeep`, S1 opt-in). Designing and measuring
+> is not changing — no shipped artifact has been touched. Findings **B-9** and **B-10** and items
+> **T-28–T-33** came out of that work.
 
 ---
 
@@ -22,9 +25,7 @@ configured in two repo-scoped places (`aldc.yaml → external.bcquality.home`, `
 forces every developer onto the same relative layout and makes the value wrong for anyone who deviates —
 including the fork itself (see B-5). The target is a single, user-scoped, reliably resolved path.
 
-**Not yet designed.** What follows is only what is already known from reading the code, not a solution.
-
-### Resolution mechanisms that already exist
+### 1.1 Resolution mechanisms that already exist
 
 `validate_evidence.py` resolves the clone in this order (lines 81–115):
 
@@ -34,21 +35,276 @@ including the fork itself (see B-5). The target is a single, user-scoped, reliab
 
 Then it confirms the clone by probing `skills/entry.md`.
 
-So a user-scoped channel **exists at the script level**. Open question is what fills it, and whether the
-same channel is honoured by the other consumers (agents/skills reading `entry.md`, the install scripts,
-the multi-root workspace, the VS Code extension).
+So a user-scoped channel **exists at the script level** — but none of it reaches the two consumers that
+actually matter. See §1.2.
 
-### Candidate directions (unresearched, listed to be checked — not chosen)
+### 1.2 Five consumers, four channels, no precedence (measured 2026-09-24)
 
-| Direction | Note |
+| Consumer | Reads | Scope |
+|---|---|---|
+| Agents (`al-conductor`, `al-review-subagent`, `dredd`, `al-triage`) | `#aldcConfiguration` → `home` (repo-relative), then `read_file <home>/skills/entry.md` | **repo** |
+| VS Code multi-root | `*.code-workspace → folders[].path` (repo-relative) | **repo, tracked** |
+| `validate_evidence.py` | `--bcquality-root` → `$BCQUALITY_HOME` → `aldc.yaml home` | mixed |
+| `install.sh` / `install.ps1` | `$BCQUALITY_HOME` → `../bcquality` | env / default |
+| Aproda VS Code extension (`bcquality/install.ts`) | `aprodaAldc.bcquality.path` → `<devRoot>/BCQuality-Aproda` | **user (Global)** ✅ |
+
+**The decisive finding:** a user-scoped channel already exists (`aprodaAldc.bcquality.path`), but it
+reaches neither consumer that matters.
+
+- `readAldcConfigurationTool.ts` returns `home` **verbatim from `aldc.yaml`** and never consults the user
+  setting. Agents therefore always receive the repo value — even when it is wrong (= B-5 / T-17).
+- `workspace/bcqualityRoot.ts` writes the per-user path **into the tracked `*.code-workspace`**, plus
+  `BCQUALITY_HOME` into `terminal.integrated.env.windows`. A workstation property is persisted into a
+  versioned repo file → per-developer git churn. The syncer's `neverTouch` does not prevent this; it
+  only prevents overwriting, not dirtying.
+
+**Second finding, easy to miss:** agents cannot read files outside the workspace roots. A correct user
+setting alone does **not** make BCQuality readable to an agent. Any solution must deliver both —
+*resolve* **and** *reach*.
+
+### 1.3 Design (2026-09-24) — recommendation: resolver + `#bcquality` LM tool
+
+**Canonical channel = `aprodaAldc.bcquality.path`** (VS Code Global/Machine, absolute). That is the only
+layer that models "per workstation, across all repos" correctly.
+
+**One resolver in the extension** (new `src/bcquality/resolve.ts`), documented precedence, every candidate
+confirmed by probing `<root>/skills/entry.md` — never an unverified path. Returns
+`{ root, resolvedFrom, verified }`:
+
+```
+1. aprodaAldc.bcquality.path              (user / machine setting)
+2. mounted workspace folder containing <entryPoint>   (discovery)
+3. $BCQUALITY_HOME                        (script bridge)
+4. <devRoot>/BCQuality-Aproda             (convention)
+5. aldc.yaml → external.bcquality.home    (repo default, last)
+```
+
+**Reaching the agent — the key move.** Instead of mounting the clone, the extension contributes a
+**`#bcquality` language-model tool** (`read` + `list`) that serves files relative to the resolved clone.
+Precedent is already in the repo: `#aldcConfiguration` exists precisely because it *"works when the
+repository root is not itself a workspace folder"* ([D-24](../../.github/decisions.aproda.md)). With the
+tool, the clone may sit anywhere on disk and **needs no workspace root at all** — no repo file carries a
+per-user value any more.
+
+**Planned change set:**
+
+| # | Change | Owner | Merge point (D-2) |
+|---|---|---|---|
+| 1 | `resolve.ts` — the resolver above | Aproda extension | none |
+| 2 | `bcquality/install.ts` → use the resolver (today: setting → `<devRoot>/…`, unverified) | Aproda extension | none |
+| 3 | `readAldcConfigurationTool.ts` → add `resolvedHome`, `resolvedFrom`, `mounted`; keep `home` | Aproda extension | none |
+| 4 | **New `#bcquality` tool** (`read` + `list`) + agent prose switched from `read_file ../bcquality/…`, **keeping the path read as a documented fallback** (dual path, see §1.6) | extension + 4 agent files | **existing** (D-24 already edited all four for `#aldcConfiguration`) |
+| 5 | `aldc.yaml → home` — **value fix only** (= T-17), comment and schema untouched | dualVariant | T-17's, no extra |
+| 6 | `BCQUALITY_HOME` → `ConfigurationTarget.Global`, for `windows`/`linux`/`osx`; stop writing it into the workspace file | Aproda extension | none |
+| 7 | Fail loudly (→ T-23): `enabled: true` + unverified = visible error; `auto` = explicit `not-applicable` **with the resolver's reason**, surfaced in the checkpoint card | extension + agent prose | existing |
+
+Precedence changes in `validate_evidence.py` and the install scripts stay **upstream-PR candidates**
+(§2), not fork edits.
+
+**Comfort features (Aproda extension, additive):**
+
+| Feature | Why | Verdict |
+|---|---|---|
+| Status-bar item `🟢/⚪ BCQuality` | The only permanently visible proof that the knowledge layer is live; today you notice at review time | yes |
+| Command `Show BCQuality Status` — quick-pick of the full resolver chain, per candidate path + verdict (`verified` / `no entry.md` / `not set`) | Makes the silent failure class B-5 visible in one click; the UI half of "fail loudly" | yes |
+| Startup self-heal — setting points at a missing directory → notification with *Install / Update BCQuality* (`startup/check.ts` already has the pattern) | Covers the common real case: clone deleted or moved | yes |
+| `Mount BCQuality in this Workspace` via `updateWorkspaceFolders` | Does **not** help: in a saved multi-root workspace VS Code writes the change back into the `.code-workspace` — the very churn being removed | no |
+| Show BCQuality HEAD SHA in the status | Belongs to the pin question (T-24 / B-7), not to T-22 | defer |
+| Extend `commands/validate.ts` with the BCQuality resolution | One command instead of two | optional |
+
+**Order:** resolver → tool output → `#bcquality` tool → status-bar / show-status. Agent prose last, so the
+resolver is proven before agents depend on it.
+
+### 1.4 Alternatives considered and rejected
+
+| Option | Why not |
 |---|---|
-| VS Code **user** setting read by the Aproda extension | `tools/aproda-vscode-extension/src/workspace/bcqualityRoot.ts` and `src/bcquality/install.ts` already exist and appear to own this concern — start here |
-| `$BCQUALITY_HOME` as the canonical channel, set once per workstation | Already honoured by the validator; unclear whether agents/workspace honour it |
-| `aldc.yaml` value demoted to a fallback/default | Would keep repos working without per-user setup |
-| `site-profile.aproda.md` | Aproda-wide infra facts live here, but it is repo-scoped too — likely wrong layer |
+| **`$BCQUALITY_HOME` as the canonical channel** | Agents do not read env vars; requires out-of-band per-machine setup and a VS Code restart; today only `terminal.integrated.env.windows` (terminal-only, Windows-only) → reaches neither the extension host nor the agents. Fails the stated reliability bar. Kept as the *script/CI bridge* only |
+| **Repo-local untracked override** (`aldc.local.yaml`) | Per-repo **and** per-user → does not scale across a project fleet; contradicts "property of the workstation" |
+| **`site-profile.aproda.md`** | Repo-scoped as well — wrong layer |
+| **Discovery only** | Good as a fallback rung, but does not solve reachability and must fail loudly or it just trades one silent failure for another. Folded in as rung 2 of the resolver |
+| **Agents reference the workspace-root *name* instead of a path** | Only moves the problem into the still-tracked `.code-workspace` |
+| **Gitignore the generated `*.code-workspace`** (proposed, then withdrawn) | Converts an upstream-shipped, conflict-free file into a permanent D-2 merge point and contradicts the upstream doc ("commit the file") — exactly what E-006's *Explicitly not doing* rejects |
+| **Per-user workspace copy `aldc.local.code-workspace`** (S2) | Works, but re-introduces the withdrawn design in a milder form: the repo file stops being the truth and a second file must be kept in sync |
 
-**Reliability is the stated bar.** Whatever is chosen must fail *loudly* when the clone is missing —
-today it fails silently (B-6), which is the worst possible behaviour for a verification tool.
+**Placeholders in the workspace file are impossible — verified against the VS Code docs (2026-09-24).**
+The workspace schema allows *"either absolute or relative paths"*; variable substitution exists only in
+`launch.json`, `tasks.json` and *"some select settings"* (`terminal.integrated.cwd/env/shell/shellArgs`,
+`window.title`). `${env:BCQUALITY_HOME}` or `${config:aprodaAldc.bcquality.path}` in `folders[].path`
+resolves to a **literal folder name**. A path "pulled from user settings" inside the workspace file is
+therefore ruled out.
+
+### 1.5 Plan B — junction sidecar (S1), if a real mount is wanted
+
+> **Final layout, decided 2026-09-24** (after the round-4 fix below). The tests were run with
+> `.bcquality` and later `BCQuality/.bcquality`; **every result is name-independent** — nothing measured
+> depends on the strings, only on the wrapper/subfolder relationship.
+>
+> ```
+> .external/                ← wrapper; mounted as the workspace root
+>   └─ bcquality/           ← the junction onto the resolved clone
+> ```
+>
+> `aldc.yaml → home: ".external/bcquality"` **only where the mount is actually in use** (see the
+> correction below), exclude glob `bcquality/**`, gitignore `/.external/bcquality/`.
+>
+> Why not `BCQuality/.bcquality` (the tested layout): it sorts into the repo root between `Base` and
+> `Test` and reads like a third AL app — exactly the confusion `install.sh` warns about; the repetition
+> looks like a typo in logs and config; and the dot sat on the inner level, where it hides the
+> implementation detail instead of the thing that clutters the repo root. `.external` states the
+> semantics (consumed from outside, not compiled) and groups with `.github` / `.vscode`.
+
+The tracked `aldc.code-workspace` carries a **constant** path identical for every user:
+
+```jsonc
+{ "name": "BCQuality (Aproda ALDC)", "path": ".external" }
+```
+
+`.external/bcquality` is not a directory but an extension-managed **directory junction** (Windows
+`mklink /J`, no elevation) / symlink (macOS, Linux) onto the resolved clone. The indirection moves from
+the path string into the filesystem.
+
+> **Correction 2026-09-24 — the "home becomes a constant" claim was overstated.** It only holds if the
+> junction is **mandatory**. §1.6 makes S1 **opt-in, default off**, and the junction is created by the
+> extension — so the group without a junction is exactly the group without the extension, i.e. the group
+> that depends on the `aldc.yaml → home` fallback. `home` must therefore stay the **repo default**
+> (sibling layout); the `.external/bcquality` constant applies only where the mount is in use, and there
+> the resolver's `resolvedHome` wins anyway. **Consequence: S1 does not retire T-17** — T-17 remains a
+> separate fix, and the validator/install scripts still need their own resolution order.
+
+| Risk | Handling |
+|---|---|
+| The link sits **inside** the repo — precisely what `install.sh` warns about (example `.al` files polluting the build) | Repo root, not an app folder (the AL compiler only walks `app.json` folders); plus `.gitignore`, `files.watcherExclude`, `search.exclude` |
+| Repo-walking tools follow the link (aproda-sync, aldc-validate, Dredd's "changed files", `git status`) | Each must be checked for an exclude — **this is the real cost**, not creating the link |
+| `aldc.code-workspace` + `workspace.seed.jsonc` change | Upstream in-place edit → new D-2 merge point |
+| Junction creation may be restricted by GPO/AppLocker | Verify on an Aproda workstation before committing to it |
+
+S1 and the `#bcquality` tool are **not mutually exclusive**: tool as the agent channel, S1 as an optional
+human-convenience mount. S1 is strictly better than the withdrawn gitignore variant — it makes every
+repo-scoped value constant instead of hiding it in an untracked file.
+
+> **Tested with an agent-executable protocol** in a real consuming project (general Copilot agent mode,
+> not the Conductor). Protocol and raw result files were **deleted after the run (2026-09-24)** — they
+> were single-use scaffolding. The criterion IDs below (A1…H3, D1…D6, G1…G4, J1…J4) refer to that
+> protocol; the findings they produced are carried here and in §4 / §5, which are now the only record.
+
+#### Test result — executed 2026-09-24 in `straub-medical-ag-base`
+
+Five rounds, two of them after a full VS Code reload. The raw result files were deleted with the
+protocol; everything load-bearing is summarised below and in the T-29–T-32 entries of §5.
+
+**Verdict: S1 is technically viable.** Every rejection-tier criterion passed:
+
+| Cleared | Evidence |
+|---|---|
+| Junction without elevation, no GPO/AppLocker block | A1, A2, A4 |
+| Git does not descend; `git clean -ndx` lists nothing inside | B2, B3, B4 |
+| **Bonus safety net**: the clone carries its own `.git`, so git treats `.bcquality` as a **nested-repo boundary** and refuses to descend even without the `.gitignore` rule | B4 (surprise finding) |
+| AL build isolated — 246 `.al` files in the clone, 0 diagnostics under `.bcquality` | C1, C2, C3 |
+| PowerShell `Get-ChildItem -Recurse` does not follow the junction (PS 7.6) | G1 |
+| Dredd's scope source (`git diff --name-only main...`) unaffected | G4 |
+| **The clone survived byte-for-byte** — 489 files before and after | **H2**, H1, H3 |
+
+**The one failure — root-caused in round 3, fixed in round 4.** **D4: a workspace root cannot exclude
+itself.** `search.exclude` globs are evaluated *relative to each mounted folder root*, so as long as the
+clone **is** the root, `.bcquality/**` looks for a nested `.bcquality` inside it and never fires — for
+`grep_search`, the Search view and Quick Open alike. Mounted clone content then appears in workspace
+searches: a search for an AL symbol returns BCQuality's **example `.al` files** as if they were project
+code. That is an analysis-quality risk, not a cosmetic one.
+
+> **Correction to the round-2 reading.** Round 2 concluded *"`grep_search` does not honour
+> `search.exclude` at all"*. That was wrong: the setting was never violated — the **glob simply could
+> not match**. Same observable outcome, different mechanism — and only the corrected mechanism pointed
+> at the fix.
+
+**The fix (round 4, user's proposal): never mount the junction itself — mount a wrapper.**
+
+```
+BCQuality/                 ← mounted as the workspace root      (as tested)
+  └─ .bcquality/          ← the junction; a genuine SUBFOLDER, so ".bcquality/**" resolves
+```
+
+→ shipped as `.external/` + `bcquality/` per the decision at the top of §1.5 — same relationship,
+better names.
+
+With `search.exclude` / `files.watcherExclude` on the junction's glob relative to that root, the content
+disappears from search and Quick Open — verified twice, independently: by the user via Ctrl+P (`do.md`
+no longer findable) and by the agent via `grep_search` (0 hits under the mount, remaining hits all
+legitimate elsewhere). Shipped, that is `bcquality/**` and gitignore `/.external/bcquality/`.
+
+**Two consequences worth holding on to:**
+
+1. **This is a design constraint, not a defect of S1** — but it *is* an unfixed defect of the layout
+   shipping today: `../BCQuality-Aproda` is likewise its own root and therefore cannot be excluded
+   without the same restructuring. The junction variant is in fact *easier* to fix, because the wrapper
+   lives inside the repo and can be created by the extension; for the sibling layout the wrapper would
+   have to be created outside the repo. Recorded as **B-9** / **T-29**.
+2. **Settled: the exclude strips false positives, not capability (round 5).** Measured after the fix
+   and a reload, the **entire consumption chain** resolves through the junction — `skills/entry.md`
+   (routing contract) → `skills/read.md` → `skills/do.md` → a real knowledge file
+   (`microsoft/knowledge/performance/use-setloadfields-for-partial-records.md`, frontmatter + body).
+   At the same time `grep_search` finds **zero** hits under the mount, and the workspace's
+   `files.exclude` block was verified to contain only unrelated AL patterns (`**/*.dep.app`,
+   `**/rad.json`). This is exactly what the agent contracts predict — `dredd` and
+   `al-review-subagent` consume BCQuality **by explicit path only** and never search it; dredd's own
+   prose states the root *"never surfaces unless you read its path explicitly"*. **The mount is
+   therefore strictly better with the exclude than without it.**
+
+> **Standing constraint for the implementation:** use `search.exclude` + `files.watcherExclude` —
+> **never `files.exclude`**. The first two hide the clone from search and the watcher; the last would
+> hide it outright and endanger the read path the agents depend on. Making the exclusion "more
+> thorough" is exactly how this breaks.
+
+Either way the §1.3 recommendation is unaffected: the `#bcquality` tool design mounts nothing, so clone
+content never enters the search scope and the wrapper question does not arise.
+
+**Still open** (environment gaps, not junction behaviour): **C4** had no pre-junction diagnostics
+baseline (protocol gap, since fixed). **G2/G3 were closed on 2026-09-24** — `aldc-validate` and
+`aproda-sync -WhatIf` produce **identical output with and without the junction** (T-31), which removes
+what was the largest remaining technical risk for S1.
+
+**Method note.** Both runs executed the whole protocol in **one agent session**, which was correct: every
+unverified item failed on environment or VS Code window state (reload, active-editor binding, missing
+npm dependency, missing parameter) — none on context. A subagent shares the same window and would have
+changed nothing, while splitting T1 from T9 would have risked leaving the junction orphaned.
+
+---
+
+### 1.6 Behaviour when BCQuality is *not* used
+
+"Not used" is not one state but four, and each needs its own rule. Getting this wrong is how an optional
+layer becomes a mandatory one by accident.
+
+| Case | Rule |
+|---|---|
+| **1. `enabled: false`** — deliberately off | **No resolve, no junction, no wrapper.** The extension must not build infrastructure for a feature the project switched off. The reconcile is **bidirectional**: flipping to `false` **removes** an existing junction, it does not merely stop creating one |
+| **2. `auto`, no clone installed** — the default for a new project | Resolver returns `verified: false` → no junction → no workspace root → agents probe, get *absent*, fall back to native A–G, `fallback.neverBlock: true`. Unchanged from today's contract. **The trap: never materialise a root that points at nothing.** "Verify first, then act" applies here too |
+| **3. Aproda extension not installed** | The weak point — and it exists **today**, independent of T-22: per **B-10** the documented *"direct root-level access"* fallback cannot succeed in a consuming project. Addressed by the dual path below **plus T-33**, which makes the third rung actually reachable |
+| **4. Upstream / non-Aproda consumers** | Untouched — the whole construction is fork-local; upstream keeps the sibling mount |
+
+#### Dual path — decided 2026-09-24
+
+Switching the agent prose to `#bcquality` alone would **increase the extension dependency at a point
+where something still works today**: without the extension there would be no route to BCQuality at all,
+whereas the multi-root mount currently functions without it.
+
+**Decision: dual path.** The agent prose keeps a direct path read as an explicit, documented fallback
+for when `#bcquality` is unavailable. It costs some prose complexity in the same four agent files, and
+it avoids reproducing exactly the failure class E-006 criticises everywhere else — a documented
+capability that is not in effect.
+
+Three rungs, each reachable once **T-33** lands:
+`#bcquality` → `#aldcConfiguration` → `read_file <toolkitRoot>/aldc.yaml`.
+
+> Rejected alternative: *tool-only*. Simpler, but then `copilot-instructions.md` would have to declare
+> the extension a **prerequisite** for BCQuality instead of promising a fallback that does not exist.
+
+#### Two further rules for the implementation
+
+- **S1 is opt-in, default off.** The `.external/` wrapper appears only when the user wants the
+  convenience mount. Anyone who only needs agent consumption gets no extra folder in their repo.
+- **The `.gitignore` entry belongs inside the `Aproda ALDC Tool BEGIN/END` block**, not loose below it —
+  otherwise it will not survive the next sync.
 
 ---
 
@@ -98,11 +354,12 @@ Two artifact families feed the validator — both count as "audit checking" in t
 | **B-2** | The manifest comment calls it *"our BCQuality evidence workflow"* — **false ownership**, it is Upstream's | `aproda-sync.json` lines 134–135 vs. §2 above |
 | **B-3** | `aldc.yaml` lines 64–66 declare `validator:` and `ciWorkflow:` as machine-readable config. **Both files are absent in a consuming project**, and `aldc.yaml` ships as `dualVariant` — so the shipped config points at nothing | Reference project: `tools/bcquality/validate_evidence.py` and `.github/workflows/bcquality-evidence.yaml` both FEHLT |
 | **B-4** | `copilot-instructions.md` line 127 promises CI validation *"A hallucinated citation or a drifted pin fails the check"*. In a project the whole apparatus is missing ⇒ the evidence chain is **purely declarative there**, i.e. precisely what that section rules out | Same measurement as B-3 |
-| **B-5** | `external.bcquality.home: "../../BCQuality-Aproda"` resolves from the fork root to `C:\_EphemeralWorkspace\BCQuality-Aproda` — **does not exist**. The clone is one level up, at `…\Florian Köll\BCQuality-Aproda`. The validator therefore skips citation resolution **although a clone is present** | = **T-17**; reproduced live: run without `--bcquality-root` reported *"clone not available"*, run with the real path found it |
+| **B-5** | `external.bcquality.home: "../../BCQuality-Aproda"` resolves from the fork root to `C:\_EphemeralWorkspace\BCQuality-Aproda` — **does not exist**. The clone is one level up, at `…\Florian Köll\BCQuality-Aproda`. The validator therefore skips citation resolution **although a clone is present**. **Corroborated in a live project (T-22 test, P3):** `straub-medical-ag-base` carried **three different paths for the same clone** before the experiment began — `.code-workspace` → `../../../BCQuality-Aproda`, `aldc.yaml` → `../../BCQuality-Aproda`, `$BCQUALITY_HOME` → `c:\_EphemeralWorkspace\BCQuality-Aproda`, while the real clone sat at `…\Florian Köll\BCQuality-Aproda`. **None of the three was correct.** This is the strongest evidence for the T-22 requirement | = **T-17**; reproduced live: run without `--bcquality-root` reported *"clone not available"*, run with the real path found it |
 | **B-6** | **The validator reports PASSED when it has verified nothing.** Three independent paths to false green: no clone, wrong clone path (B-5), no evidence files. All three exited `0` | 3 local runs, each `BCQuality evidence validation PASSED (0 citation(s) across 0 file(s))`, exit 0 |
 | **B-7** | **Check 1 (pin coherence) no longer exists.** The docstring claims a three-way cross-check (`aldc.yaml` + both install scripts, *"a drift in any of them fails the build"*); the code states `# there is no hardcoded pin to cross-check` and only prints a note. `copilot-instructions.md` still advertises the three-way check | `validate_evidence.py` docstring lines 6–10 vs. code line 101; `copilot-instructions.md` line 127 |
 | **B-8** | `.github/audits/` does **not exist** in the fork (0 files), although it is a declared trigger path and Dredd's output location. Audit evidence has therefore never been exercised end-to-end | Directory listing during the Block-1 session |
-
+| **B-9** | **A workspace root cannot exclude itself — and the BCQuality mount is exactly that.** `search.exclude` / `files.watcherExclude` globs are evaluated **relative to each mounted folder root**. When the clone *is* the root, `.bcquality/**` looks for a *nested* `.bcquality` inside it and can structurally never match — confirmed for `grep_search`, the Search view **and** Quick Open, after a real reload. Consequence: the clone's 246 example `.al` files surface in symbol searches as if they were project code. **Fixed in round 4:** nest the junction one level down (`BCQuality/.bcquality`) and mount the **wrapping folder** as the root — then the glob resolves and the content disappears from search and Quick Open (verified independently by the user via Ctrl+P and by the agent via `grep_search`). **The defect applies to the `../BCQuality-Aproda` sibling root shipping today**, which is likewise its own root and therefore unexcludable in its current layout | T-22 test, D4 (rounds 2–4); root-caused round 3, fixed round 4 |
+| **B-10** | **The documented "direct root-level access" fallback cannot be executed in a consuming project.** `aldc.yaml` sits at the repo root and is **deliberately gitignored** (`/aldc.yaml`, inside the `Aproda ALDC Tool BEGIN/END` block — as is the whole synced layer). Three access paths, three different outcomes: **(a)** `read_file aldc.yaml` fails on **workspace scope** — the repo root is not a workspace folder (roots are `.github`, the apps, BCQuality); **(b)** `file_search **/aldc.yaml` fails on the **ignore rule** — exactly the false negative run 2 produced; **(c)** a **terminal** read would work (neither scope nor ignore applies), **but neither BCQuality consumer has a terminal**: `dredd` = `[changes, read/readFile, read/problems, search, edit, todo, …]`, `al-review-subagent` = `[read/problems, read/readFile, search, …]` — no `runCommands` in either, and both are deliberately cut read-only-near. So the agents' precondition promises a backstop that **has no way to succeed**, and `#aldcConfiguration` is load-bearing rather than convenient. **Fix: T-33** — move `aldc.yaml` to `toolkitRoot` | Confirmed by the user 2026-09-24 (`aldc.yaml` + `.gitignore` of `straub-medical-ag-base`); tool allowlists read from the agent frontmatter; same failure class as B-3/B-4/B-7 |
 ### Cross-cutting
 
 B-3, B-4 and B-7 are the same failure mode as E-006's T-9/T-19: **a documented or declared capability
@@ -114,15 +371,22 @@ independent of whether the CI ever ships.
 
 ## 5. Open items
 
-*Numbering continues E-006's. Nothing below is started.*
+*Numbering continues E-006's. Nothing is **implemented**; T-30/T-31/T-32 are closed as measurements, not
+as changes.*
 
 | # | Item | Depends on |
 |---|---|---|
-| **T-17** | Fix `external.bcquality.home` (B-5). **Moved into this chapter from Block 3** — it is not a path-layout nit, it silently disables citation checking | — |
+| **T-17** | Fix `external.bcquality.home` (B-5). **Moved into this chapter from Block 3** — it is not a path-layout nit, it silently disables citation checking. **Note (2026-09-24):** S1 does **not** retire this — see the correction in §1.5; `home` stays the repo default because the junction is opt-in | — |
 | **T-21** | Decide B-1: make the declared exception work (`workflows/**` in `dotGithub` + `tools/bcquality/**`), or declare the CI fork-only and drop it from `neverTouchExceptions`. **Note:** the workflow clones `Aproda-AG/BCQuality-Aproda` unauthenticated — if that repo is private, the job fails on a GitHub runner. Verify before choosing option (a) | — |
-| **T-22** | **Per-user clone path** (§1) — the actual requirement. Design first, then implement | — |
-| **T-23** | Make the validator **fail loudly instead of passing vacuously** (B-6): distinguish "verified N citations" from "verified nothing". Prerequisite for any gate | — |
+| **T-22** | **Per-user clone path** (§1) — the actual requirement. **Designed 2026-09-24 (§1.3): resolver + `#bcquality` LM tool + user-scoped setting, with the path read kept as a documented fallback (dual path, §1.6).** Plan-B junction sidecar (§1.5) **tested 2026-09-24: viable**, one confirmed limitation (B-9). Implementation open | — |
+| **T-28** | **B-10** — the ignore is *deliberate* (D-18: fork is the source of truth, the consumer copy is a cache), so the fix is **not** to track the file. Fix the **prose**: the agents' *"fall back to direct root-level access"* clause is unexecutable in a consuming project. **Resolved in principle by the §1.6 dual-path decision** — state the extension requirement, and give a fallback that actually works. Touches the same four agent files as T-22's tool change — do both in one pass | — |
+| **T-29** | **B-9** — a workspace root cannot exclude itself; **fix known** (mount a wrapper, nest the clone one level down). Decide whether to apply it to the `../BCQuality-Aproda` sibling root **shipping today**, which is unexcludable in its current layout. Note the wrapper folder is empty in git and must be created by tooling on a fresh clone | — |
+| **T-30** | ✅ **Closed 2026-09-24 (round 5).** The excluded mount stays fully readable: the **complete four-link chain** resolves through the junction — `skills/entry.md` (routing) → `skills/read.md` → `skills/do.md` → a real knowledge file (`microsoft/knowledge/performance/use-setloadfields-for-partial-records.md`, frontmatter + body) — while `grep_search` returns zero hits under the mount and `files.exclude` was verified not to target BCQuality. Consistent with the agent contracts: consumption is **read-by-path only**, never search. **Carry forward as an implementation constraint:** `search.exclude` + `files.watcherExclude` only, **never `files.exclude`** | T-29 |
+| **T-31** | ✅ **Closed 2026-09-24 — both PASS, by control comparison.** `aproda-sync -WhatIf`: 130 resolved files, **identical with and without the junction**, zero `BCQuality` mentions — the feared "489 clone files as foreign changes" did not materialise. `aldc-validate`: identical verdict (`COMPLIANT`, 4 warnings, 503/507 naming), `Compare-Object` byte-for-byte equal. Measured **with/without** rather than in a single run, which is what makes it evidence. `js-yaml` removed again, repo clean. **Residual: the result rests on Windows junction semantics** — PowerShell and Node do not follow reparse points here; a POSIX `ln -s` behaves differently for tree-walkers → re-measure before shipping S1 on macOS/Linux (T8) | T-29 |
+| **T-32** | ✅ **Closed 2026-09-24 — cosmetic, not a risk.** Measured by hand (no extension code required, since the mitigation does not exist yet): **J1** a missing mount renders as a yellow, non-expandable Explorer entry and **does not rewrite the workspace file** (`git diff` clean); **J2** recreating the junction in a live window fills the root **immediately, no reload**; **J3** reads work instantly, even before any Explorer refresh; **J4** the full cycle leaves zero trace on tracked files. **Consequence — the implementation gets simpler:** no *Reload Window* prompt and no activation-timing logic are needed; creating the junction whenever the resolver verifies a clone is sufficient. **`BCQuality/.gitkeep` decided against 2026-09-24** — it would buy only the absence of a yellow Explorer entry on the very first open, at the price of a tracked file in every consumer repo | T-29 |
+| **T-33** | **Move `aldc.yaml` to `toolkitRoot`** — the structural fix for **B-10** (user's proposal, 2026-09-24). **Rule: `aldc.yaml` lives at `toolkitRoot`.** In the fork `toolkitRoot: "."`, so the file already sits there; in a consumer `toolkitRoot: ".github"`, so the file belongs at `.github/aldc.yaml` — today's consumer layout is the one violating the rule, not the proposal. `.github` **is** a workspace root, so `read_file .github/aldc.yaml` works: no extension, no terminal, unaffected by the ignore rule. Everything else of the toolkit already lives there, and the file is gitignored anyway — it is treated as part of the synced layer but stored outside it. **Supersedes the generated-projection idea** (`.github/aldc.config.json`): no extra artifact, no drift, no freshness check. **Cost:** `resolveAldcRepository()` hardcodes `path.join(repositoryRoot, "aldc.yaml")` (Aproda, small); `aldc-validate` takes `--config` (trivial); the syncer must write the new location and migrate the `.gitignore` block; the upstream readers that assume repo root (`validate_evidence.py`, `install.{sh,ps1}`, the claude-plugin hook) are **not shipped to consumers** (B-3) — an upstream PR can add the same two-rung lookup. **Implement as a two-rung lookup** (`<toolkitRoot>/aldc.yaml` → `<repoRoot>/aldc.yaml`) so the migration is non-breaking. The prose changes land in the same four agent files as T-22/T-28 — **one pass** | T-22, T-28 |
 | **T-24** | Restore honesty in the shipped docs (B-3, B-4, B-7): `aldc.yaml` pointers, `copilot-instructions.md` line 127, the script docstring | — |
+| **T-23** | Make the validator **fail loudly instead of passing vacuously** (B-6): distinguish "verified N citations" from "verified nothing". Prerequisite for any gate | — |
 | **T-25** | Correct the false-ownership comment (B-2). One line, no dependencies | — |
 | **T-26** | **Agent-executed gate in `al-pr-prepare`** — run the validator at the Completion Gate so hallucinated citations are caught *before* the PR, independent of whether the CI ever ships. Feasibility confirmed: Python 3.14.7, stdlib only, clean exit codes, runs over our umlaut path; the gate already has the pattern (*"HARD GATE — a verification step, not a checklist to narrate"*, line 173). **Must evaluate the `notes`, not the exit code** (B-6), and must be labelled a self-check: the agent that produced the citations is not an independent verifier | T-17, T-23 |
 | **T-27** | Exercise audit evidence end-to-end (B-8) — does a Dredd run actually produce a validatable `*-audit-*.json`? | T-17 |

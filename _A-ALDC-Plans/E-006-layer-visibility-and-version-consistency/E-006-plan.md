@@ -1,5 +1,16 @@
 # E-006 — Remediation Plan
 
+> **⚠️ Superseded as a status document (2026-09-24).** This file is the **original proposal**; the live
+> tracker is [`action-plan.md`](action-plan.md). Phases 1–3 have been executed (Blocks 1–3, commit
+> `5f7d042`), so the "nothing has been executed" note below applies only to the moment of writing.
+> Kept for its rationale — the option tables and the *why* behind each rule — not for its status.
+>
+> **One recommendation was overruled, deliberately:** **Q-2** recommends *retiring* `copilotSource`
+> (option B). The decision taken in **T-3** was the opposite — **keep it**: upstream actively maintains
+> it (2 of 27 commits), the fork never modified it, and deleting it would produce a delete/modify
+> conflict plus a `missingToolkitFiles: error`. **Q-1** was decided as recommended (option A′).
+> Read the Q-2 section below as the argument that was *weighed and rejected*, not as guidance.
+
 > **Nothing in this plan has been executed.** It is a proposal for maintainer approval.
 > Edits already made during the 2026-09-21/22 session (before this plan existed) are listed in
 > **Appendix A** — they must be reviewed under the D-16 steward guardrail, which did **not** fire (F-2).
