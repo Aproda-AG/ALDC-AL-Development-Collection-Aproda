@@ -1,4 +1,4 @@
-﻿# Reference: Test Runner (headless, web client)
+# Reference: Test Runner (headless, web client)
 
 > Loaded on demand by [`../SKILL.md`](../SKILL.md). Describes the **standardized Aproda Deploy-Run-Verify engine** (`scripts/AprodaDeployRunVerify.psm1`). ✅ = verified end-to-end.
 

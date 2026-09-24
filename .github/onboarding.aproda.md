@@ -1,4 +1,4 @@
-﻿# Aproda ALDC — Developer Onboarding
+# Aproda ALDC — Developer Onboarding
 
 > **Aproda ALDC** ist Aprodas angepasste Version des quelloffenen [ALDC (AL Development Collection)](https://github.com/javiarmesto/AL-Development-Collection-for-GitHub-Copilot) Frameworks — ein strukturiertes, spec-getriebenes KI-Entwicklungsframework für Microsoft Dynamics 365 Business Central.
 >

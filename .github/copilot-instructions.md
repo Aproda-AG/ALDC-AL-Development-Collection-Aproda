@@ -1,4 +1,4 @@
-﻿# GitHub Copilot Instructions for AL Development
+# GitHub Copilot Instructions for AL Development
 
 <!-- Workspace-specific custom instructions for Copilot. Reference: https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
 

@@ -1,4 +1,4 @@
-﻿# Aproda ALDC Layer — Design Decisions
+# Aproda ALDC Layer — Design Decisions
 
 > Decision record for **how Aproda customizes and maintains its ALDC fork**.
 > Companion to [`readme.aproda.md`](readme.aproda.md). This file captures the **why**; the README captures the **how/what**.

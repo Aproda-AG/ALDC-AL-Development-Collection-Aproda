@@ -1,4 +1,4 @@
-﻿# Reference: Build & Deploy (BC OnPrem)
+# Reference: Build & Deploy (BC OnPrem)
 
 > Loaded on demand by [`../SKILL.md`](../SKILL.md). **SKELETON** — verified facts are marked ✅; `TODO` items need finishing/generalizing (current values are from the Audit Trail validation environment and must be parameterized).
 

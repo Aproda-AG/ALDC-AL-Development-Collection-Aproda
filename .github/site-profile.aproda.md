@@ -1,4 +1,4 @@
-﻿# Aproda Site Profile — Infrastructure Facts
+# Aproda Site Profile — Infrastructure Facts
 
 > **Aproda ALDC layer — site profile.** Concrete, organization-wide infrastructure facts for Aproda BC/AL development. Referenced on demand by the Aproda skills (`skill-aproda-deploy-run-verify`, `skill-aproda-aldc`); **not** auto-loaded. Source of truth = the aproda-aldc fork; distributed into every project via the `.github/` subtree (see [`decisions.aproda.md`](decisions.aproda.md) D-6).
 >

@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-aproda-deploy-run-verify
 description: "Aproda Deploy-Run-Verify Cycle for Business Central (formerly: Aproda test-loop): build → deploy → run → review, looped until green or a real blocker. Use when validating an AL extension end-to-end against a live BC service (publish app + test app, run the AL test runner, triage failures, fix, re-deploy). Aproda custom skill (see readme.aproda.md)."
 ---
