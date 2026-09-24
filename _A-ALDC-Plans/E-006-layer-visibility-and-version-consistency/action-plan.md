@@ -55,6 +55,22 @@
 > documents; both need a check against reality. That is precisely **T-7**'s job — which raises its
 > priority in Block 2.
 
+### Follow-up from Block 1 (found by generalising the two findings)
+
+*Closing T-9 and T-19 fixed the two known instances. Asking "are there more of the same" produced these.*
+
+| # | Finding | Status |
+|---|---|---|
+| **F-16** | `neverTouchExceptions → workflows/bcquality-evidence.yaml` is **inert** — declared as the one Aproda-owned file under a denied folder, but `.github/workflows/…` reverse-maps to `$null` before the exception is consulted. Verified absent in the reference project. Same mechanism as F-14 | ⏳ **T-21**, needs a decision |
+| — | `.github/actions/aldc-validate/action.yml` + `workflows/aldc-validate.yml` do **not** ship either. Not a defect: a consuming repo runs AL-Go workflows. The register entry now says so explicitly | ✅ register corrected |
+| — | `readme.aproda.md` carries a **second, partial in-place register** (8 rows vs. 47 in `decisions.aproda.md`) and claimed the never-applied v1.1→v1.2 fix too. A third source of truth next to the register and `aproda-sync.json` | ⏳ folded into **T-10** |
+| — | `agents/al-conductor.agent.md` says "Core **v1.1** violation" twice. The file is already an `inPlaceEdits` merge-point, so fixing it adds no new conflict surface — the "don't sweep inherited v1.1" argument does not apply here | ⏳ folded into **T-9** leftovers |
+
+**T-21 — decide and fix F-16.** Two options: (a) add `workflows/**` to `dotGithub` so the declared
+exception actually works and the BCQuality evidence CI reaches projects; (b) declare the workflow
+fork-only and remove it from `neverTouchExceptions`, since a consuming repo's CI is AL-Go's. Option (a)
+is what the manifest currently *claims*; (b) is what it currently *does*. Either way the two must agree.
+
 ---
 
 ## Next — Block 2: the rule (durable value)
