@@ -223,6 +223,14 @@ else {
             }
         }
         if ($added.Count -gt 0 -or $settingChanged) {
+            # ConvertTo-Json drops comments and reformatting, and this is a tracked file a
+            # developer edits by hand -- so back it up before the FIRST rewrite, not before
+            # the migration's later one (E-006 F2). Write-once: never clobber an existing .bak.
+            $wsBackup = "$($wsFile.FullName).bak"
+            if (-not (Test-Path -LiteralPath $wsBackup)) {
+                Copy-Item -LiteralPath $wsFile.FullName -Destination $wsBackup -Force
+                Write-Host "Init: $($wsFile.Name) — comments and formatting are NOT preserved by this rewrite; original saved to $($wsFile.Name).bak."
+            }
             [System.IO.File]::WriteAllText($wsFile.FullName, ($json | ConvertTo-Json -Depth 10), [System.Text.UTF8Encoding]::new($false))
             $changes = @()
             if ($added.Count -gt 0) { $changes += "root(s): $($added -join ', ')" }

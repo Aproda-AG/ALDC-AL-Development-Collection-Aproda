@@ -193,12 +193,13 @@ else {
 
         if ($changed) {
             if ($PSCmdlet.ShouldProcess($wsFile.FullName, 'Migrate legacy BCQuality workspace root / BCQUALITY_HOME')) {
-                # One backup per file, ever -- it is the only copy of the pre-migration
-                # comments/formatting, so a second run must never clobber it.
+                # One backup per file, ever -- it is the only copy of the pre-rewrite
+                # comments/formatting. Init 3 may already have taken it (E-006 F2); a
+                # second run must never clobber it.
                 $backupPath = "$($wsFile.FullName).bak"
                 if (-not (Test-Path -LiteralPath $backupPath)) {
                     Copy-Item -LiteralPath $wsFile.FullName -Destination $backupPath -Force
-                    $migrated.Add("$($wsFile.Name): comments and formatting are NOT preserved by this rewrite -- original saved to $($wsFile.Name).bak before the first edit.")
+                    $migrated.Add("$($wsFile.Name): comments and formatting are NOT preserved by this rewrite -- original saved to $($wsFile.Name).bak.")
                 }
                 $jsonText = $json | ConvertTo-Json -Depth 10
                 [System.IO.File]::WriteAllText($wsFile.FullName, $jsonText, [System.Text.UTF8Encoding]::new($false))

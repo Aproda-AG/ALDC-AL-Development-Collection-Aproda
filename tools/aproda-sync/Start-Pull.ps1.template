@@ -28,10 +28,18 @@ $env:APRODA_FORK_PATH = 'I:\[Your Path]\ALDC-AL-Development-Collection-Aproda'
 # Example: 'C:\MyWorkspace\ALDC-AL-Development-Collection-Aproda'
 
 # ── 1) Pull the layer (SRP-safe: content-load, no path-based execution) ───────
-$src = Get-Content "$env:APRODA_SYNC_SCRIPTDIR\Sync-AprodaLayer.ps1" -Raw
-& ([ScriptBlock]::Create($src)) -Direction pull -ForkPath $env:APRODA_FORK_PATH
+# Run the FORK's engine + manifest, not the project's copy. The pull updates that
+# copy in place, so running it would execute the PREVIOUS version and deliver the
+# new one only on the next run (E-006 B-18). Mirrors Bootstrap-AprodaProject.ps1.
+$projectSyncDir = $env:APRODA_SYNC_SCRIPTDIR
+$forkSyncDir = Join-Path $env:APRODA_FORK_PATH 'tools\aproda-sync'
+$src = Get-Content "$forkSyncDir\Sync-AprodaLayer.ps1" -Raw
+$env:APRODA_SYNC_SCRIPTDIR = $forkSyncDir
+try { & ([ScriptBlock]::Create($src)) -Direction pull -ForkPath $env:APRODA_FORK_PATH }
+finally { $env:APRODA_SYNC_SCRIPTDIR = $projectSyncDir }
 
 # ── 2) Initialize project-local artifacts (memory seed, .gitignore, workspace) ─
 # Kept in its own script so this starter stays thin. SRP-safe: content-load too.
+# Loaded from the PROJECT: it anchors its .git-walk at its own location.
 $initSrc = Get-Content "$env:APRODA_SYNC_SCRIPTDIR\Initialize-AprodaProject.ps1" -Raw
 & ([ScriptBlock]::Create($initSrc))
