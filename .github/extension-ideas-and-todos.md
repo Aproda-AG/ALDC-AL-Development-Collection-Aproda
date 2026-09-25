@@ -25,6 +25,7 @@
 | E-003 | Run Auto-Cleanup on task completion (Aproda VS Code extension command) | `todos.md` session note | Medium | Proposed |
 | E-004 | Next AL object ID suggestion via a rule-based system + global per-repo assignment | Session note (Aproda) | Medium | Proposed |
 | E-005 | Tiered AI translation workflow for XLIFF (Adaptive Waterfall) | Session note (Aproda) | High | In Progress |
+| E-008 | Use BCQuality for **implementation**, not only for review (shift-left) | Session note (Aproda), 2026-09-25 | High | Proposed |
 
 ## Status Values
 
@@ -96,3 +97,21 @@
 - **Source:** Session note (Aproda)
 - **Plans folder:** `_A-ALDC-Plans/E-005-translation-ai-workflow/`
 - **Summary:** Cost-and-quality-optimized, staged AI translation workflow for BC/AL XLIFF files (Stage 0 delegated execution, Stage 1 deterministic resolution, Stage 2 terminology/glossary, Stage 3 adaptive retrieval). Stage 0 and Stage 1 are implemented and validated against a real BC app; Stage 2/3 are still design-only.
+
+## E-008 - Use BCQuality for Implementation, Not Only for Review (Shift-Left)
+
+- **Status:** Proposed
+- **Source:** Session note (Aproda), 2026-09-25 — arose while deciding E-006 T-29
+- **Problem:** BCQuality is consulted **only after the code exists**. `aldc.yaml → external.bcquality.consumedBy` lists exactly three agents: `al-review-subagent`, `dredd`, `al-triage`. The knowledge that would have prevented a defect is therefore applied at the moment the defect is *found*, not at the moment it is *written* — every cited finding is, by construction, rework.
+- **Proposal:** Let the authoring side consult BCQuality **through the same routed contract**: invoke `skills/entry.md` with a task context whose `goal` describes authoring rather than reviewing, and apply the dispatched knowledge while writing. Candidate consumers: `al-implement-subagent` (per phase, scoped to the objects it is about to create) and `al-developer`.
+- **Constraints:**
+  - **Today's action skills are *review* skills** (`microsoft/skills/review/al-*-review.md`) — they judge finished code against a diff or file. Reusing them naively for authoring is a category error. An authoring path needs either a new action skill in the **`custom/`** layer (which exists for exactly this) or direct consumption of the knowledge files, shaped by READ.
+  - **Never by ad-hoc search.** Routed consumption is what enforces the relevance filters (`bc-version`, `technologies`, `countries`, `application-area`) and the consumer's policy pruning — BCQuality states the guarantee explicitly: *"policy-excluded rules cannot leak into discovery."* A grep bypasses both, and can surface an `## Anti Pattern` body without its label.
+  - **Token budget and double work.** If implementer and reviewer both consult, findings duplicate and cost doubles. Ownership per domain must be defined — e.g. the implementer consumes knowledge, the reviewer keeps the citable verdict.
+  - Must degrade exactly like the review path: absent clone → `not-applicable`, never blocking.
+- **Acceptance Criteria:**
+  - The authoring agent applies cited BCQuality knowledge and names it in its skills-evidencing line.
+  - No duplicated findings between implementation and review for the same object.
+  - Measurable effect: fewer BCQuality findings at review time for comparable phases.
+  - Works through `entry.md`; no direct knowledge-file globbing.
+- **Approval Gate:** Approve a dedicated plan before any change. Depends on E-006 Block 4 (`#bcquality` tool / resolver) being in place, since the authoring path needs the same access channel.

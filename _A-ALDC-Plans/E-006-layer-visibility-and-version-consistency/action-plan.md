@@ -4,7 +4,7 @@
 > [`findings-01`](findings-01-layer-visibility.md) / [`findings-02`](findings-02-version-drift.md); the
 > *strategy* in [`E-006-plan.md`](E-006-plan.md). **This file tracks what is done and what is next.**
 >
-> **Last updated:** 2026-09-24 · **Branch:** `feature/e006-catalog-consistency` · **Layer:** `1.2.0_aproda.17`
+> **Last updated:** 2026-09-25 · **Branch:** `feature/e007-ado-mcp-cli-and-e006-part1` (renamed from `feature/e006-catalog-consistency`; E-006 commits end at `5f7d042`, E-007 sits on top) · **Layer:** `1.2.0_aproda.17`
 
 ---
 
@@ -140,29 +140,49 @@
 mounted; only the **verification** layer is broken. Treat any "BCQuality Evidence" block in a phase
 report as a claim, not as proof.
 
+> **Governing decision: [D-49](../../.github/decisions.aproda.md)** (2026-09-25) — written before any
+> implementation, as D-16 requires. It carries the four-part design (resolver · `#bcquality` tool + dual
+> path · `aldc.yaml` at `toolkitRoot` · `.external/` wrapper), the measured evidence, and the rejected
+> alternatives. Register rows for the in-place edits follow at implementation time.
+
 | # | Item |
 |---|---|
 | **T-22** | **Per-user clone path** — the actual requirement: the clone location is a property of the workstation, not the repo. Today repo-scoped in `aldc.yaml` + `*.code-workspace`. **Designed 2026-09-24** (resolver + `#bcquality` LM tool); junction sidecar plan B **tested 2026-09-24 → viable**, one confirmed limitation (B-9). Implementation open |
 | **T-28** | **B-10** — in a consuming project `aldc.yaml` is deliberately gitignored **and** sits outside every workspace root. The agents' documented *"fall back to direct root-level access"* clause therefore cannot succeed; `#aldcConfiguration` is load-bearing, not optional. Fix the prose, not the ignore rule |
-| **T-29** | **B-9** — a workspace root cannot exclude itself from search; **fix found in round 4** (mount a wrapper folder, nest the clone one level down; shipped layout `.external/bcquality`). Decide whether to apply it to **the sibling-root mount shipping today**, which is unexcludable as laid out |
+| **T-29** | ✅ **Decided 2026-09-25** — **B-9**: the seed **swaps** the BCQuality root instead of dropping it. `workspace.seed.jsonc` mounts `.external/` (wrapper + tracked `README.md`) with the excludes on `bcquality/**`; the junction inside is created by the extension, or by hand per the README. Aproda-owned file — no upstream edit. The unexcludable sibling root goes away. **Two writers, not one:** `Initialize-AprodaProject.ps1` carries its own fallback workspace writer — updating only the seed would leave projects created through that path on the old layout (F-14 class) |
 | **T-30** | ✅ **Closed 2026-09-24** — an excluded mount stays readable (consumption is read-by-path, never search). Implementation constraint carried forward: `search.exclude` + `files.watcherExclude` only, **never `files.exclude`** |
 | **T-31** | ✅ **Closed 2026-09-24** — `aldc-validate` and `aproda-sync -WhatIf` produce **identical output with and without the junction** (control comparison, not a single run). The feared allowlist blow-up did not occur. Residual: Windows-specific — re-measure for POSIX symlinks |
-| **T-32** | ✅ **Closed 2026-09-24** — a missing mount is cosmetic: yellow Explorer entry, no workspace-file rewrite, and a junction created live is readable immediately without a reload. No reload prompt or activation-timing logic needed; `BCQuality/.gitkeep` **decided against** |
+| **T-32** | ✅ **Closed 2026-09-24** — a missing mount is cosmetic: yellow Explorer entry, no workspace-file rewrite, and a junction created live is readable immediately without a reload. No reload prompt or activation-timing logic needed. `.gitkeep` was decided against, then **superseded 2026-09-25** by the tracked `.external/README.md`, which anchors the folder *and* explains the junction |
 | **T-33** | **Move `aldc.yaml` to `toolkitRoot`** (`.github/` in a consumer) — the structural fix for B-10. `.github` is a workspace root, so the direct read finally works without the extension. Fork unaffected (`toolkitRoot: "."`). Two-rung lookup for a non-breaking migration; prose lands with T-22/T-28 in one pass |
-| **T-17** | `external.bcquality.home` resolves to a non-existent directory in the fork — the validator skips citation checking *although a clone is present* |
-| **T-23** | Validator **passes vacuously**: three paths to false green, all exit `0`. Prerequisite for any gate |
-| **T-24** | Restore honesty in shipped docs: `aldc.yaml` points at absent files, `copilot-instructions.md` promises CI that is not there, the script advertises a pin check it no longer performs |
-| **T-21** | Decide the CI question (ship or declare fork-only). Check first whether `BCQuality-Aproda` is private — an unauthenticated clone would fail on a GitHub runner |
+| **T-17** | ✅ **Decided 2026-09-25 (revised after T-29)** — `external.bcquality.home` becomes the **constant `.external/bcquality`**: once the seed mounts the wrapper for everyone, the junction sits at the same repo-relative path in every project, so B-5 is fixed as a *class*. Framing stays "static default" — authority is the resolver's `resolvedHome` (T-22). Deliverables: set the value, rewrite the comment (static fallback **+ how to check the real value**: user setting / `Show BCQuality Status`), extension sets `BCQUALITY_HOME` (Global) for the script side. Fork value deliberately left alone. **Rejected**: extension writes `home` (redundant — gitignored, never leaves the machine that already knows better; fleet bootstrap would silently reset it) |
+| **T-24** | Restore honesty in shipped docs: `aldc.yaml` points at absent files (B-3), `copilot-instructions.md` promises CI that is not there (B-4), the script advertises a pin check it no longer performs (B-7) — **and the `external.bcquality` comment claims the install scripts read `url`/`ref`/`pinnedCommit` from there, which B-11 disproved for the only install path Aproda uses.** The *fix* is deferred (T-34); the *claim* must not stay false meanwhile |
 | **T-25** | One-line fix: the manifest calls an Upstream workflow "ours" |
-| **T-26** | Agent-executed gate in `al-pr-prepare` — feasibility confirmed, but must evaluate `notes` not exit code, and is a self-check, not independent verification |
-| **T-27** | Exercise audit evidence (`.github/audits/`) end-to-end — never done |
+| **T-35** | **Upgrade path from the old layout — last step of the block.** Existing projects carry the pre-Block-4 state: sibling BCQuality root in `*.code-workspace`, `aldc.yaml` at the repo root with `/aldc.yaml` in the ignore block, `BCQUALITY_HOME` written into the workspace file. **Design it only after T-33/T-22/T-28/T-29 are implemented** — the target shape must exist before a migration to it can be specified. Must be idempotent and a no-op on an already-migrated project |
 
-> **BCQuality is Upstream, not Aproda** (`fa37cf7`, Javier Armesto Gonzalez, PR #51). Most fixes here are
-> upstream-PR candidates rather than fork edits — the per-user path is the likely exception.
+> **BCQuality is Upstream, not Aproda** (`fa37cf7`, Javier Armesto Gonzalez, PR #51) — but after the
+> Block-4/5 split that matters mainly for **Block 5**: the upstream-owned pieces (`validate_evidence.py`,
+> the CI workflow, the install scripts) all moved there. Block 4's remaining items are Aproda-owned —
+> the seed, the extension, the agent prose, `aldc.yaml` — with `aldc.yaml` and the agent files as the
+> known in-place edits (D-7 register rows required).
 
 ---
 
-## Next — Block 5: upstream (independent track)
+## Next — Block 5: BCQuality part 2 (deferred)
+
+*Split off Block 4 on 2026-09-25. Not urgent, and each item carries real effort — deferred deliberately
+rather than left unnoticed.*
+
+| # | Item | Why deferred |
+|---|---|---|
+| **T-34** | **B-11** — the extension's BCQuality install ignores `aldc.yaml`: hardcoded repo URL, and **`pinnedCommit` is never checked out**, so a configured pin is inert on the only install path Aproda uses | Pinning, checkout-on-update and the surrounding update semantics are their own piece of work. **No pin is set today** (`pinnedCommit: ""`), so nothing is currently mis-resolving — the defect is latent, not active. Revisit when reproducible, pinned evidence is actually wanted |
+| **T-23** | Validator **passes vacuously**: three paths to false green, all exit `0` | The validator **is not shipped to consumers** (B-3), so "fail loudly" has nothing to fail in yet. Prerequisite for T-26 — do both together |
+| **T-21** | Decide the CI question (ship or declare fork-only). **Precondition resolved 2026-09-24:** `BCQuality-Aproda` is **public** (unauthenticated `git ls-remote` succeeded) — the decision is about scope, not feasibility | The CI runs nowhere today (B-1). Deciding it changes nothing until something consumes it; T-24 records the *current* truth regardless of the outcome |
+| **T-26** | Agent-executed gate in `al-pr-prepare` — must evaluate `notes` not the exit code, and is a self-check, not independent verification | Depends on T-23. A gate over a validator that passes vacuously would be gate theatre |
+| **T-27** | Exercise audit evidence (`.github/audits/`) end-to-end — never done | Exploratory; nothing depends on it, and it needs a real Dredd run to produce input |
+
+---
+
+## Next — Block 6: upstream (independent track)
 
 | # | Todo |
 |---|---|
@@ -175,7 +195,7 @@ report as a claim, not as proof.
 
 | | Why |
 |---|---|
-| Sweeping the ~22 inherited v1.1 files in the fork | Converts conflict-free files into permanent D-2 merge-points for a defect Aproda did not cause → **Block 5** (upstream PR, T-15) |
+| Sweeping the ~22 inherited v1.1 files in the fork | Converts conflict-free files into permanent D-2 merge-points for a defect Aproda did not cause → **Block 6** (upstream PR, T-15) |
 | Deleting `.claude/` or `claude-plugin/` | Upstream-owned and actively maintained; deletion guarantees a pull conflict |
 | Deleting `.github/agents/test.agent.md` | Confirmed 2026-09-24 (T-10/T-13) to originate from upstream commit `179e782` — same reasoning as `.claude/` |
 | Deleting `instructions/copilot-instructions.md` | Q-2 — upstream-maintained, would break the validator and create a delete/modify conflict |
@@ -189,8 +209,9 @@ report as a claim, not as proof.
 Block 1  T-8, T-9, T-19                                -> commit + push      ✅ done 2026-09-24
 Block 2  T-7, T-5, T-6                                 -> commit + push      ✅ done 2026-09-24
 Block 3  T-10, T-11, T-13, T-14, T-4                   -> commit + push      ✅ done 2026-09-24
-Block 4  T-22, T-17, T-23 …                            BCQuality -> bcquality.md (as-is until then)
-Block 5  T-15, T-16                                    upstream, parallel at any time
+Block 4  T-33, T-22, T-28, T-29, T-24, T-25 → T-35    BCQuality part 1 — make the path work + shipped docs honest; migration last
+Block 5  T-23, T-21, T-26, T-27, T-34                  BCQuality part 2 — deferred, latent / nothing depends on them
+Block 6  T-15, T-16                                    upstream, parallel at any time
 ```
 
 **Block 3 is closed.** All five items landed clean: `readme.aproda.md`'s inventory, path-prefix
