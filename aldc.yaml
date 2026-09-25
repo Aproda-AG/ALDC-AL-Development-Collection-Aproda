@@ -48,7 +48,7 @@ aproda:
 # audit/citation layer. Does NOT replace instructions or skills.
 external:
   bcquality:
-    mode: "external-multiroot"            # consumed from OUTSIDE the AL project (see aldc.code-workspace)
+    mode: "external-multiroot"            # the clone lives OUTSIDE the AL project and is reached through the tracked `.external/` wrapper root (see docs/bcquality.md)
     # Master switch resolved ONCE by al-conductor and propagated to the subagents
     # (it is recorded in the plan doc; subagents consume the decision, they don't re-probe):
     #   auto  (default) — probe <home>/<entryPoint> to detect; mounted -> consult, absent -> native A-G
@@ -56,17 +56,29 @@ external:
     #   false           — disabled: never probe, always native A-G (the explicit off switch)
     enabled: "auto"
     # Source of the knowledge base. Configurable: defaults to the canonical upstream
-    # (microsoft/BCQuality). Override `url` to point at your own fork. The install
-    # scripts read `url` / `ref` / `pinnedCommit` from here — this file is the single
-    # source of truth.
+    # (microsoft/BCQuality). Override `url` to point at your own fork. NOTE (E-006
+    # B-11): only the upstream `install.sh`/`install.ps1` actually read `url` / `ref`
+    # / `pinnedCommit` from here. The Aproda VS Code extension's install path
+    # (`installOrUpdateBcquality`) hardcodes the repo URL and does not check out
+    # `pinnedCommit` yet — tracked as T-34 (deferred to Block 5). Until then this
+    # field is authoritative only for the upstream scripts, not for the extension.
     url: "https://github.com/Aproda-AG/BCQuality-Aproda.git"
     ref: "main"                           # branch/tag to track when pinnedCommit is empty
     pinnedCommit: ""                       # optional: set a 40-hex SHA for reproducible, pinned evidence
-    home: "../../BCQuality-Aproda"        # external clone location (override: $BCQUALITY_HOME); 2nd workspace root
+    # Static default / last-resort fallback (E-006 T-17), NOT the authority: the
+    # Aproda VS Code extension's resolver (src/bcquality/resolve.ts) re-resolves and
+    # probe-verifies the real clone location on every call, through a five-rung
+    # precedence this value is only the last rung of. Correct by construction for
+    # the shipped `.external/bcquality` junction layout (D-49) — wrong only where no
+    # junction has been created yet, and there the earlier rungs answer first, so
+    # the miss is inert. To see the REAL resolved value, don't read this line: check
+    # the user setting `aprodaAldc.bcquality.path`, or run
+    # "Aproda ALDC: Show BCQuality Status".
+    home: ".external/bcquality"
     entryPoint: "skills/entry.md"         # relative to `home`
-    workspace: "aldc.code-workspace"      # multi-root workspace (this repo root + ../bcquality); see docs/bcquality.md
+    workspace: "aldc.code-workspace"      # multi-root workspace; since T-29 it mounts `.external/` (wrapper) rather than the clone itself — a root cannot exclude itself (B-9). See docs/bcquality.md
     consumedBy: ["agents/al-review-subagent.agent.md", "agents/dredd.agent.md", "agents/al-triage.agent.md"]
-    # Policy when BCQuality is ABSENT (the default until install.sh clones it).
+    # Policy when BCQuality is ABSENT (the default until a clone is installed).
     # The .github/hooks/bcquality-precondition hook reads this and injects the
     # directive (hook ported later as Preview); the agents' prose precondition is
     # the backstop (#49/#54).
@@ -79,6 +91,12 @@ external:
       - "microsoft/skills/review/al-performance-review.md"
       - "microsoft/skills/review/al-security-review.md"
       - "microsoft/skills/review/al-style-review.md"
+    # NOTE (E-006 B-3): `validator`/`ciWorkflow` are fork-only paths. Neither file
+    # ships to a consuming project — `tools/bcquality/**` and
+    # `.github/workflows/bcquality-evidence.yaml` are both absent there (verified
+    # against a real consumer project 2026-09-25) — so the evidence chain is
+    # purely declarative outside the fork/CI. See T-21/T-23 (deferred to Block 5)
+    # for whether/how that ships.
     evidence:
       persistedReportGlob: ".github/plans/**/*-bcquality-phase-*.json"
       validator: "tools/bcquality/validate_evidence.py"
@@ -149,6 +167,7 @@ required:
     - "prompts/README.md"
     - "agents/index.md"          # registered T-11 (E-006): was previously unsynced to consumer projects
     - "docs/copilot-reference.md" # registered T-14 (E-006, F-11): human-facing reference linked from the entrypoint
+    - "docs/bcquality.md"        # registered T-29 (E-006): linked from the tracked .external/README.md, so it must ship too
 
   instructions:
     - "instructions/al-guidelines.instructions.md"

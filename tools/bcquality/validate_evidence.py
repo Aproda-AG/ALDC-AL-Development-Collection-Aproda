@@ -3,12 +3,14 @@
 
 Two independent checks (Nivel 4 of the evidencing design):
 
-  1. Pinned-SHA consistency — the BCQuality pin lives in THREE places that must
-     agree: `external.bcquality.pinnedCommit` in aldc.yaml (canonical) and the
-     hardcoded pin in both `tools/bcquality/install.sh` and `install.ps1`. A
-     drift in any of them fails the build (the install scripts silently regressed
-     before this guard existed). BCQuality is consumed from OUTSIDE the AL project
-     (multi-root), so there is no in-repo submodule gitlink to check.
+  1. Pin policy — the pin is OPTIONAL. `external.bcquality.pinnedCommit` in
+     aldc.yaml is the single source of truth for the install scripts (`url` /
+     `ref` / `pinnedCommit`); there is no hardcoded pin anywhere else to
+     cross-check against it, so this check only records whether a pin is set
+     and prints a note either way. It does not fail the build. (E-006 B-7:
+     an earlier version of this docstring claimed a three-way cross-check
+     against both install scripts — that check no longer exists in the code
+     below; this text now matches the code.)
 
   2. Citation resolvability — every knowledge-file path cited in a persisted
      report (`.github/plans/**/*-review-phase-*.json`, the canonical superset,

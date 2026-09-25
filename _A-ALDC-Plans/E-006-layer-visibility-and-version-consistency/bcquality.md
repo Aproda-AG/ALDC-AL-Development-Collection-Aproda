@@ -11,6 +11,14 @@
 > decisions (`.external/bcquality` layout, dual path, no `.gitkeep`, S1 opt-in). Designing and measuring
 > is not changing — no shipped artifact has been touched. Findings **B-9** and **B-10** and items
 > **T-28–T-33** came out of that work.
+>
+> **✅ Superseded 2026-09-25 — Block 4 is implemented.** The paragraph above describes the state *before*
+> implementation and is kept for the design trail. All eight Block-4 items (**T-33, T-22, T-28, T-29,
+> T-17, T-24, T-25, T-35**) are now implemented, each reviewed by an independent subagent and re-fixed
+> where the review found defects. **Nothing is committed** — the work sits in the working tree for the
+> maintainer. Six new findings (**B-12–B-17**) and three new open items (**T-36–T-38**) came out of the
+> implementation; see §4 and §5. The deferred Block-5 items (**T-21, T-23, T-26, T-27, T-34**) were
+> verified untouched.
 
 ---
 
@@ -403,6 +411,20 @@ Two artifact families feed the validator — both count as "audit checking" in t
 | **B-10** | **The documented "direct root-level access" fallback cannot be executed in a consuming project.** `aldc.yaml` sits at the repo root and is **deliberately gitignored** (`/aldc.yaml`, inside the `Aproda ALDC Tool BEGIN/END` block — as is the whole synced layer). Three access paths, three different outcomes: **(a)** `read_file aldc.yaml` fails on **workspace scope** — the repo root is not a workspace folder (roots are `.github`, the apps, BCQuality); **(b)** `file_search **/aldc.yaml` fails on the **ignore rule** — exactly the false negative run 2 produced; **(c)** a **terminal** read would work (neither scope nor ignore applies), **but neither BCQuality consumer has a terminal**: `dredd` = `[changes, read/readFile, read/problems, search, edit, todo, …]`, `al-review-subagent` = `[read/problems, read/readFile, search, …]` — no `runCommands` in either, and both are deliberately cut read-only-near. So the agents' precondition promises a backstop that **has no way to succeed**, and `#aldcConfiguration` is load-bearing rather than convenient. **Fix: T-33** — move `aldc.yaml` to `toolkitRoot` | Confirmed by the user 2026-09-24 (`aldc.yaml` + `.gitignore` of `straub-medical-ag-base`); tool allowlists read from the agent frontmatter; same failure class as B-3/B-4/B-7 |
 | **B-11** | **The Aproda extension's BCQuality install diverges from the declared config contract — three ways.** `installOrUpdateBcquality` is the *only* Aproda-sanctioned install path (`install.{sh,ps1}` are upstream and unused here), yet: **(a)** the repo URL is **hardcoded** (`https://github.com/Aproda-AG/BCQuality-Aproda.git`) while `aldc.yaml` claims *"the install scripts read `url` / `ref` / `pinnedCommit` from here — this file is the single source of truth"*; **(b)** **`pinnedCommit` is ignored** — it does `clone` + `pull --ff-only` on the default branch, never `checkout <pin>`, so a pin set for reproducible evidence is **silently not honoured** (the most serious of the three: the pin is the reproducibility of the whole evidence chain); **(c)** it never reconciles `aldc.yaml → home` — the direct cause of B-5 surviving an otherwise correct setup. Same failure class as B-3/B-4/B-7: a declared capability that is not in effect | `src/bcquality/install.ts` vs `aldc.yaml → external.bcquality` comment; read 2026-09-25 |
 
+### Findings discovered *during* Block 4 (2026-09-25)
+
+*None of these were predicted by the plan. They were found by implementing it — several by a review
+adjudicating why something the plan assumed to work did not.*
+
+| # | Finding | Status |
+|---|---|---|
+| **B-12** | **The syncer silently dropped every annotated catalog entry.** `Sync-AprodaLayer.ps1`'s framework-file scrape anchored its regex on the closing quote (`"\s*$`), so any `required`/`optional`/`catalog` line carrying a trailing `# comment` never matched. That is exactly the three most recently registered catalog files — `agents/index.md` (T-11), `docs/copilot-reference.md` (T-14/F-11) and `docs/bcquality.md` (T-29) — so **T-11's and T-14's "now it ships" claims were never in effect**, the same failure class those items were opened to fix. Measured against this repo's `aldc.yaml`: **73 → 76** matched entries after the fix, the delta being exactly those three lines | ✅ **fixed in Block 4** |
+| **B-13** | **A catalog change needs two pulls, and the routine path only does one.** The framework scrape read the **destination's** `aldc.yaml`, which is itself rewritten (`dualVariant`) at the *end* of the same run — so a newly registered entry could only resolve on the next pull. `Bootstrap-AprodaProject.ps1` compensated with an explicit settle pull; **`Start-Pull.ps1.template`, the routine per-project update path, did not.** Reproduced: a dry-run pull into the reference project resolved the layer with none of the three newly registered catalog files present. Second, unnoticed half of the same defect: a **removed** entry was kept alive indefinitely by the stale destination list | ✅ **fixed in Block 4 (T-36)** — the scrape now reads the source |
+| **B-14** | **A second distribution channel still writes `aldc.yaml` to the repo root.** `scripts/install.js` (the upstream `npx aldc install` path) writes `path.join(projectDir, 'aldc.yaml')` unconditionally, contradicting T-33's rule — even though it rewrites `toolkitRoot` to a non-`"."` value a few lines earlier. T-33's cost list named the *other* install scripts (`tools/bcquality/install.{sh,ps1}`) as deliberately out of scope; this one it simply did not enumerate. Aproda does not use this channel, and fixing it opens a new D-2 merge point on an Upstream file | ❌ **formally excluded (T-37, 2026-09-25)** |
+| **B-15** | `tools/aproda-sync/templates/workspace.seed.jsonc` is **not registered in the manifest and never ships**; `Initialize-AprodaProject.ps1`'s fallback writer builds the same JSON inline, and its `Write-Host` hint pointed a developer at a path that does not exist in a consuming project. The hint now says "fork-side only, not shipped" | ✅ claim corrected; the seed staying fork-only is deliberate |
+| **B-16** | **`Initialize-AprodaProject.ps1` anchors its `.git`-walk at the *script's own location*** (`$env:APRODA_SYNC_SCRIPTDIR` / `$PSScriptRoot`), not the working directory. Correct in production — the synced copy always sits inside its own project — but a real trap when testing: during Block 4 a subagent ran it against a scratch directory while the env var still pointed at the fork and **initialized the fork itself** (caught and reverted the same minute). Any test must copy the script **and** `templates/` into the scratch tree | ⏳ documented; a guard is worth considering |
+| **B-17** | The agent mirrors under `docs/agents/**` and `packages/foundation/agents/**` still carry the pre-T-28 unexecutable *"fall back to direct root-level access"* prose. `packages/foundation/**` is **out of E-006's scope per the maintainer** (it is the *upstream* extension's packaging source, which Aproda does not ship); `docs/agents/**` is a fork-maintained mkdocs mirror. Confirmed: neither tree ships to a consuming project | ❌ **formally excluded (T-38, 2026-09-25)** |
+
 ### Cross-cutting
 
 B-3, B-4, B-7 and **B-11** are the same failure mode as E-006's T-9/T-19: **a documented or declared
@@ -415,8 +437,22 @@ ever ships.
 
 ## 5. Open items
 
-*Numbering continues E-006's. Nothing is **implemented**; T-30/T-31/T-32 are closed as measurements, not
-as changes.*
+> **Block 4 implemented 2026-09-25.** **T-17, T-22, T-24, T-25, T-28, T-29, T-33, T-35** are all
+> **✅ implemented** (uncommitted, in the working tree), each with an independent review pass and a
+> D-7 register row. The rows below are kept as the design record; read them for *why*, not for status.
+> Still genuinely open: **T-36, T-37, T-38** (new, below) and the Block-5 set **T-21, T-23, T-26,
+> T-27, T-34**.
+
+| # | Item | Depends on |
+|---|---|---|
+| **T-36** | ✅ **Decided and implemented 2026-09-25.** **B-13** — the framework scrape now reads the **source's** `aldc.yaml` instead of the destination's. Two defects in one: a newly registered entry needed a second pull, *and* a **removed** entry was kept alive forever by the stale destination list. The destination copy is a verbatim copy of the source (only `toolkitRoot` diverges), so it never held independent information — reading it merely simulated an autonomy the consuming project does not have. Measured: resolved set **132 → 135**, delta exactly `agents/index.md` + `docs/copilot-reference.md` + `docs/bcquality.md`, nothing dropped. **Rejected:** adding a settle pull to `Start-Pull.ps1.template` — doubles every routine pull to mask an ordering bug, and the generated `Start-Pull.ps1` is git-ignored and machine-local, so it would never reach existing workstations. **Follow-on:** `Bootstrap-AprodaProject.ps1`'s settle pull is now redundant; left in place (idempotent) pending a deliberate removal | — |
+| **T-39** | ⏸️ **Deferred to Block 5, 2026-09-25 (maintainer).** **Overlay → sync: carry removals through.** Today `Sync-AprodaLayer.ps1` is explicitly *"OVERLAY: copy only; never delete anything at the destination"*, so a file dropped from the layer lingers in every project — and a stale agent or catalog file is still **loaded by Copilot**, i.e. invisible drift, exactly E-006's subject. **Nothing breaks today**, which is why it waits. **Do not implement it as a list-diff:** (a) it would abandon a deliberate design invariant (D-18 territory, not a bug fix); (b) the whole synced layer is **git-ignored**, so a wrong deletion has no `git restore` safety net *and* will not come back on the next pull; (c) "absent from the list" ≠ "ours" — the ignore block enumerates skills individually precisely so projects may add their own alongside; (d) the config list is the wrong source anyway — it does not know the files delivered via `includeGlobs` or skill-folder expansion. **The right shape is a manifest of what was actually delivered**, written at pull time and diffed on the next run | T-36 |
+| **T-37** | **B-14 — `scripts/install.js` writes `aldc.yaml` to the repo root**, contradicting T-33. Upstream-owned; Aproda does not use that channel. ❌ **Decided 2026-09-25: formally excluded.** Fixing it in the fork would open a new D-2 merge point on an Upstream file for a distribution channel Aproda never runs — the same merge-economics argument E-006 already used to route the v1.1 drift to an upstream PR instead of a fork sweep. Recorded here so the exclusion is a decision, not an oversight; it may be folded into the Block-6 upstream PR (**T-15**) if that is opened | T-33 |
+| **T-38** | **B-17 — agent mirrors carry pre-T-28 prose.** ❌ **Decided 2026-09-25: formally excluded.** `packages/foundation/**` is already out of E-006's scope per the maintainer (it is the *upstream* extension's packaging source, which Aproda does not ship), and `docs/agents/**` is a documentation mirror of it. Neither reaches a consuming project — verified against the resolved file list of a dry-run pull — so no customer sees the superseded prose. The mirrors lag **by design**; that is the recorded position, not a backlog item | T-28 |
+
+*Design record for the Block-4 items, kept for the reasoning. Numbering continues E-006's. The
+"nothing is implemented" framing these rows were written under held until 2026-09-25 — see the note
+above; T-30/T-31/T-32 remain closed as measurements rather than changes.*
 
 | # | Item | Depends on |
 |---|---|---|
@@ -439,10 +475,16 @@ as changes.*
 
 ---
 
-## 6. What holds until Block 4
+## 6. What held until Block 4 — and what holds now
 
-- **Nothing is changed.** The CI stays fork-only, the paths stay as they are, the docs keep their claims.
-- BCQuality-backed reviews keep working where a clone happens to be mounted — the knowledge base itself
-  is unaffected by all of the above. **Only the verification layer is broken, not the knowledge layer.**
-- Consequence to be aware of meanwhile: any BCQuality citation produced in a project is **unverified**.
-  Treat "BCQuality Evidence" blocks in phase reports as claims, not as proof.
+*The three statements below described the state until 2026-09-25. Block 4 changed the first two.*
+
+- ~~**Nothing is changed.**~~ → Block 4 implemented T-17/T-22/T-24/T-25/T-28/T-29/T-33/T-35. The paths
+  work, the shipped docs are honest, the migration exists. **Uncommitted.**
+- BCQuality-backed reviews keep working where a clone is reachable — now via the resolver and the
+  `#bcquality` tool rather than a hand-maintained mount. **Only the verification layer is still broken,
+  not the knowledge layer.**
+- **Unchanged, and still true:** any BCQuality citation produced in a project is **unverified**. The
+  validator still passes vacuously (**B-6**) and does not ship (**B-3**); the CI does not run in a
+  consuming project (**B-1/B-4**). Treat "BCQuality Evidence" blocks in phase reports as claims, not as
+  proof — until Block 5 (**T-21, T-23, T-26**) says otherwise.

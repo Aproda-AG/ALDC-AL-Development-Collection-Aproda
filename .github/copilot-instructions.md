@@ -99,13 +99,15 @@ Build a BC agent (SDK/Designer)? → @AL Agent Builder
 
 ## External Knowledge: BCQuality
 
-[BCQuality](https://github.com/microsoft/BCQuality) — a curated, citable knowledge base of Business Central guidance (atomic knowledge files + review skills) — is consumed from **outside the AL project**: a clone added as a second VS Code workspace root (multi-root via `aldc.code-workspace`), so its example `.al` files never enter your extension's compilation. Source/version is configurable in `aldc.yaml → external.bcquality` (defaults to upstream; point it at your own fork). See [`docs/bcquality.md`](../docs/bcquality.md) for install + usage.
+[BCQuality](https://github.com/microsoft/BCQuality) — a curated, citable knowledge base of Business Central guidance (atomic knowledge files + review skills) — is consumed from **outside the AL project**, reached through the tracked `.external/` wrapper (never mounted directly: a workspace root cannot exclude itself from search). Source/version is configurable in `aldc.yaml → external.bcquality` (defaults to upstream; point it at your own fork). See [`docs/bcquality.md`](../docs/bcquality.md) for install + usage.
 
-> **Authoritative configuration:** When ALDC configuration affects a decision, invoke `#aldcConfiguration` (Aproda ALDC extension) before reading or inferring configuration. It resolves the Git root and returns root-level `aldc.yaml`, including `toolkitRoot`, plans, layer version, and BCQuality values, even when the repository root is not a workspace folder. Use direct root-level file access only when the tool is unavailable; handle any non-configured result explicitly and never guess configuration values.
+> **Authoritative configuration:** When ALDC configuration affects a decision, invoke `#aldcConfiguration` (Aproda ALDC extension) before reading or inferring configuration. It resolves the Git root and returns root-level `aldc.yaml`, including `toolkitRoot`, plans, layer version, and BCQuality values, even when the repository root is not a workspace folder.
+>
+> **Reaching BCQuality — dual path.** Primary: the `#bcquality` tool (`read`/`list` against the resolver's verified clone). Fallback, in order: `#aldcConfiguration` for the resolved `home`, then `read_file <toolkitRoot>/aldc.yaml` for the declared static default — probe `<home>/<entryPoint>` before trusting it, never assume. Handle any non-configured result explicitly and never guess configuration values.
 
 BCQuality is a **citation/audit layer, not a replacement** for the 7 auto-applied instructions or the 11 skills. The **AL Code Review Subagent** consults it (its "Step 0") before the A-G checklist: it routes via the BCQuality entry point (`<home>/skills/entry.md`, per `aldc.yaml`), runs the dispatched review skills, and folds the resulting findings — each backed by a knowledge-file citation — into the review report. A BCQuality `blocker`/`major` raises the review verdict like a native CRITICAL/MAJOR.
 
-> **Pilot scope**: only `al-performance-review`, `al-security-review`, and `al-style-review` are enabled. Run `bash tools/bcquality/install.sh` to clone BCQuality (to `../bcquality`), then open `aldc.code-workspace`.
+> **Pilot scope**: only `al-performance-review`, `al-security-review`, and `al-style-review` are enabled. Install the clone via the Aproda VS Code extension (*Aproda ALDC: Install / Update BCQuality*), which also creates the `.external/bcquality` link; `Aproda ALDC: Show BCQuality Status` shows where it resolved from.
 
 ## Skills Evidencing
 
@@ -124,7 +126,7 @@ This traceability chain ensures every skill application is auditable end-to-end.
 The chain above is **declarative** — an agent could in principle claim a BCQuality consultation it did not perform. Two mechanisms make it **falsifiable**:
 
 1. **Persisted findings-report** — the raw JSON on disk (`*-bcquality-phase-<N>.json`) carries each finding's `references[].path` (the cited knowledge file) and the pinned BCQuality SHA.
-2. **CI validation** — the `bcquality-evidence` workflow runs `tools/bcquality/validate_evidence.py`, which (a) asserts the pin agrees across `aldc.yaml` and both install scripts, and (b) verifies **every** citation resolves to a real file in the BCQuality clone (cloned at the pin via `--bcquality-root`). A hallucinated citation or a drifted pin fails the check.
+2. **CI validation — fork/CI only, not in a consuming project.** In this fork's CI the `bcquality-evidence` workflow runs `tools/bcquality/validate_evidence.py`, which verifies **every** citation resolves to a real file in the BCQuality clone (cloned via `--bcquality-root`); a hallucinated citation fails the check. Neither the validator nor the workflow ships to a consuming project (`tools/bcquality/**` and `.github/workflows/bcquality-evidence.yaml` are both absent there) — there, mechanism 2 does not exist, and the evidence chain is exactly as declarative as the opening sentence of this section describes. Tracked as E-006 T-21/T-23 (deferred to Block 5).
 
 ## Auto-Applied Instructions
 

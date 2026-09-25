@@ -136,9 +136,24 @@
 
 *Full content in **[`bcquality.md`](bcquality.md)**. Listed here only so the plan stays complete.*
 
+> **✅ Implemented 2026-09-25 — uncommitted.** All eight items below (**T-33, T-22, T-28, T-29, T-17,
+> T-24, T-25, T-35**) are done, in the order the plan prescribed, each built by an implementation
+> subagent and then checked by a **separate** review subagent; every review finding was fixed and
+> re-reviewed. The work sits in the working tree — **nothing was committed**, by instruction.
+>
+> Independent block-wide review verdict: **PASS WITH FINDINGS**. Scope held: no deferred Block-5 item
+> was implemented, and nothing unrelated rode along. Six new findings (**B-12–B-17**) and three new
+> open items (**T-36–T-38**) came out of the implementation — see [`bcquality.md`](bcquality.md) §4/§5.
+>
+> The single most consequential discovery: **B-12** — the syncer's framework scrape silently dropped
+> every catalog entry carrying a trailing `# comment`, so **T-11's and T-14's "now it ships" claims were
+> never in effect**. Same failure class those items existed to fix, found only by asking why a dry-run
+> did not list a file. Fixed; measured 73 → 76 resolved entries.
+
 **Until this block starts, BCQuality stays exactly as-is.** The knowledge layer works where a clone is
 mounted; only the **verification** layer is broken. Treat any "BCQuality Evidence" block in a phase
-report as a claim, not as proof.
+report as a claim, not as proof. *(Still true for the verification layer after Block 4 — T-21/T-23/T-26
+remain deferred.)*
 
 > **Governing decision: [D-49](../../.github/decisions.aproda.md)** (2026-09-25) — written before any
 > implementation, as D-16 requires. It carries the four-part design (resolver · `#bcquality` tool + dual
@@ -179,6 +194,7 @@ rather than left unnoticed.*
 | **T-21** | Decide the CI question (ship or declare fork-only). **Precondition resolved 2026-09-24:** `BCQuality-Aproda` is **public** (unauthenticated `git ls-remote` succeeded) — the decision is about scope, not feasibility | The CI runs nowhere today (B-1). Deciding it changes nothing until something consumes it; T-24 records the *current* truth regardless of the outcome |
 | **T-26** | Agent-executed gate in `al-pr-prepare` — must evaluate `notes` not the exit code, and is a self-check, not independent verification | Depends on T-23. A gate over a validator that passes vacuously would be gate theatre |
 | **T-27** | Exercise audit evidence (`.github/audits/`) end-to-end — never done | Exploratory; nothing depends on it, and it needs a real Dredd run to produce input |
+| **T-39** | **Overlay → sync: carry removals through.** A file dropped from the layer lingers in every project forever — and a stale agent or catalog file is still *loaded by Copilot*, i.e. invisible drift, exactly E-006's subject | **Nothing breaks today** (maintainer, 2026-09-25) — but worth looking at. Must **not** be a list-diff: it abandons the deliberate *"copy only, never delete"* invariant; the synced layer is git-ignored, so a wrong deletion has no `git restore` and will not return on the next pull; "absent from the list" ≠ "ours" (projects may add their own skills alongside); and the config list does not know files delivered via `includeGlobs`/skill-folder expansion. The right shape is a **manifest of what was actually delivered** |
 
 ---
 
@@ -200,6 +216,8 @@ rather than left unnoticed.*
 | Deleting `.github/agents/test.agent.md` | Confirmed 2026-09-24 (T-10/T-13) to originate from upstream commit `179e782` — same reasoning as `.claude/` |
 | Deleting `instructions/copilot-instructions.md` | Q-2 — upstream-maintained, would break the validator and create a delete/modify conflict |
 | Releasing before T-7 exists | Would release exactly the state whose verification is still missing |
+| **T-37** — fixing `scripts/install.js`'s repo-root `aldc.yaml` write (B-14) | Decided 2026-09-25. Upstream-owned file on the `npx aldc install` channel, which Aproda does not use. A fork fix buys nothing and costs a permanent D-2 merge point — the same merge-economics argument that routed the v1.1 drift to an upstream PR. May ride along with **T-15** if that PR is opened |
+| **T-38** — syncing the agent mirrors under `docs/agents/**` and `packages/foundation/agents/**` (B-17) | Decided 2026-09-25. `packages/foundation/**` is already out of E-006's scope per the maintainer; `docs/agents/**` mirrors it. Verified that neither tree reaches a consuming project, so no customer sees the superseded prose. **The mirrors lag by design** |
 
 ---
 
@@ -209,8 +227,10 @@ rather than left unnoticed.*
 Block 1  T-8, T-9, T-19                                -> commit + push      ✅ done 2026-09-24
 Block 2  T-7, T-5, T-6                                 -> commit + push      ✅ done 2026-09-24
 Block 3  T-10, T-11, T-13, T-14, T-4                   -> commit + push      ✅ done 2026-09-24
-Block 4  T-33, T-22, T-28, T-29, T-24, T-25 → T-35    BCQuality part 1 — make the path work + shipped docs honest; migration last
-Block 5  T-23, T-21, T-26, T-27, T-34                  BCQuality part 2 — deferred, latent / nothing depends on them
+Block 4  T-33, T-22, T-28, T-29, T-24, T-25 → T-35    ✅ implemented 2026-09-25, UNCOMMITTED
+Block 4  T-36 (scrape reads the source)                ✅ implemented 2026-09-25 — B-13 fixed
+Block 4b T-37, T-38                                    ❌ formally excluded (decided 2026-09-25)
+Block 5  T-23, T-21, T-26, T-27, T-34, T-39            BCQuality part 2 — deferred, latent / nothing depends on them
 Block 6  T-15, T-16                                    upstream, parallel at any time
 ```
 
@@ -226,6 +246,10 @@ One planned fix turned out to be unnecessary on verification: T-6's `versionCohe
 left as-is, and the register text corrected instead of the file. Only Block 4 (BCQuality) and Block 5
 (upstream) remain, both independent tracks. **Committed as `5f7d042` and pushed.**
 
-**Block 4 status (2026-09-24).** Not opened. **T-22 is designed, tested and decided** — five measured
-rounds in `straub-medical-ag-base`, recorded in [`bcquality.md`](bcquality.md) §1.3–§1.6 with two new
-findings (B-9, B-10) and six new items (T-28–T-33). Nothing implemented; no shipped artifact touched.
+**Block 4 status (2026-09-25).** **Implemented, reviewed, uncommitted.** Eight items delivered in the
+planned order; 31 files modified and 15 added. Every step was built by one subagent and reviewed by a
+separate one, with fixes re-reviewed — that loop caught, among others, a reproduced **data-loss path** in
+the migration script (a byte-length emptiness guard accepted a 1-byte `.github/aldc.yaml` and then
+deleted the only real config) and a **containment boundary** for the new `#bcquality` tool that held
+under an active attack review including a live symlink escape. Three new items (**T-36–T-38**) are
+decisions, not tasks — they belong on the agenda before Block 5.

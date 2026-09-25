@@ -1,7 +1,7 @@
 ---
 name: AL Development Conductor
 description: 'AL Conductor Agent - Orchestrates Planning → Implementation → Review → Commit cycle for AL Development. Enforces TDD and quality gates for Business Central extensions.'
-tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, agent, edit, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, todo, terminal, read, agent/runSubagent, vscode/runCommand, execute, ms-dynamics-smb.al/al_getdiagnostics, aprodaag.aproda-aldc, microsoft-learn/*]
+tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, agent, edit, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, todo, terminal, read, agent/runSubagent, vscode/runCommand, execute, ms-dynamics-smb.al/al_getdiagnostics, aprodaag.aproda-aldc/aldcConfiguration, aprodaag.aproda-aldc/bcquality, microsoft-learn/*]
 agents: ['AL Planning Subagent', 'AL Code Review Subagent', 'AL Implementation Subagent', 'AL Translation Subagent']
 model: Claude Sonnet 5 (copilot)
 argument-hint: 'Feature description or requirements for TDD orchestration (e.g., "Add customer loyalty points system")'
@@ -116,9 +116,7 @@ Progress is by **phase** (N/Total), a real value — never invent per-task perce
 
 2. **Check for Input Documents**: architecture.md, spec.md, requirements doc — use whatever's available to guide planning.
 
-  > **Resolve the BCQuality decision ONCE (here — not in each subagent).** Invoke `#aldcConfiguration` to read `aldc.yaml → external.bcquality.enabled` (**absent field ⇒ `auto`**). Fall back to direct root-level access only when the tool is unavailable:
-   > - `false` → **off**: `bcquality = { decision: "disabled", mounted: false }`. **Do not probe.**
-   > - `auto` / `true` → probe `<home>/<entryPoint>` **once** (e.g. `read_file ../bcquality/skills/entry.md`): a successful read → `{ decision: "active", mounted: true, sha: <pinnedCommit or resolved> }`; absent — **a probe that errors or returns empty counts as absent** → `{ decision: "not-applicable", mounted: false }`; do **not** retry the read (for `true`, note the expected-but-absent in the plan — never block).
+  > **Resolve the BCQuality decision ONCE (here — not in each subagent).** Three rungs, in order: (1) `#bcquality` (`read`, `skills/entry.md`) — `disabled` → `bcquality = { decision: "disabled", mounted: false }`; `unresolved` → `{ decision: "not-applicable", mounted: false }`; `ok` → `{ decision: "active", mounted: true, sha: <pinnedCommit or resolved> }`, content already in hand. (2) Tool unavailable → `#aldcConfiguration` for `external.bcquality.enabled` (absent ⇒ `auto`) + `resolvedHome`; `false` → off, do not probe; `auto`/`true` → probe `<resolvedHome>/<entryPoint>` **once**. (3) Both unavailable → `read_file <toolkitRoot>/aldc.yaml` for the declared `home` (a static default, may be wrong) and probe `<home>/<entryPoint>` before trusting it — never assume. A probe that errors or returns empty counts as absent → `not-applicable`; do **not** retry (for `true`, note the expected-but-absent in the plan — never block).
    >
    > This decision is **authoritative for the whole run**: you (a) **record it in the plan / phase-complete doc** and (b) **pass it inline** to every subagent (planning, implement, review) with the task-context. Subagents **consume** it — they do **not** re-probe (they self-probe only if invoked standalone, outside your orchestration). Surface one line: `🟢 BCQuality · active — <sha>` / `⚪ BCQuality · disabled — native A–G` / `⚪ BCQuality · not mounted — native A–G`.
 
