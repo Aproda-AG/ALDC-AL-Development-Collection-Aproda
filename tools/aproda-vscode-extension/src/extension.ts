@@ -9,15 +9,19 @@ import { LayerSource } from "./source/layerSource";
 import { asMessage, runDoctor } from "./setup/doctor";
 import { offerInitialSetup, runSetupWizard } from "./setup/wizard";
 import { registerReadAldcConfigurationTool } from "./agent/readAldcConfigurationTool";
+import { registerBcqualityTool } from "./agent/bcqualityTool";
 import { installOrUpdateBcquality } from "./bcquality/install";
 import { resolveTargetRepo } from "./env/gitRoot";
-import { reconcileBcqualityWorkspace } from "./workspace/bcqualityRoot";
+import { reconcileBcquality } from "./workspace/bcqualityRoot";
 import { openGettingStarted, openWalkthrough } from "./commands/gettingStarted";
 import { validateInstallation } from "./commands/validate";
+import { showBcqualityStatus } from "./commands/bcqualityStatus";
 import { checkForExtensionUpdates, shouldRunExtensionUpdateCheck } from "./commands/extensionUpdate";
 import { hasInitializedAlProject, offerRepositoryInitialization } from "./startup/repositoryInitialization";
+import { checkBcqualitySelfHeal } from "./startup/bcqualityHealth";
 import { copyAdoCliSetupCommand } from "./commands/copyAdoCliSetupCommand";
 import { copyRecommendedMcpServers } from "./commands/copyRecommendedMcpServers";
+import { BcqualityStatusBar } from "./status/bcqualityStatusBar";
 
 export function activate(context: vscode.ExtensionContext): void {
   const logger = new Logger();
@@ -25,6 +29,16 @@ export function activate(context: vscode.ExtensionContext): void {
   let startupCheck: Promise<void> | undefined;
   context.subscriptions.push(logger);
   registerReadAldcConfigurationTool(context);
+  registerBcqualityTool(context);
+
+  const bcqualityStatusBar = new BcqualityStatusBar();
+  context.subscriptions.push(bcqualityStatusBar);
+  context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((event) => {
+    if (event.affectsConfiguration("aprodaAldc.bcquality")) {
+      void bcqualityStatusBar.refresh();
+    }
+  }));
+  context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => void bcqualityStatusBar.refresh()));
 
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.showLog", () => logger.show()));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.doctor", () => runDoctor(context, logger, layerSource)));
@@ -38,12 +52,24 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.checkForUpdates", () => checkForLayerUpdates(context, logger, true)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.checkExtensionUpdates", () => checkForExtensionUpdates(context, logger, true)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.installBcQuality", async () => {
-    const bcqualityRoot = await installOrUpdateBcquality(logger);
-    const repositoryRoot = await resolveTargetRepo();
-    if (bcqualityRoot && repositoryRoot) {
-      await reconcileBcqualityWorkspace(repositoryRoot, bcqualityRoot, logger);
+    try {
+      const bcqualityRoot = await installOrUpdateBcquality(logger);
+      const repositoryRoot = await resolveTargetRepo();
+      if (bcqualityRoot && repositoryRoot) {
+        await reconcileBcquality(repositoryRoot, bcqualityRoot, logger);
+      }
+    } catch (error) {
+      logger.error(asMessage(error));
+      void vscode.window.showErrorMessage(`Aproda ALDC BCQuality install failed: ${asMessage(error)}`, "Show Log").then((selection) => {
+        if (selection === "Show Log") {
+          logger.show();
+        }
+      });
+    } finally {
+      void bcqualityStatusBar.refresh();
     }
   }));
+  context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.showBcQualityStatus", () => showBcqualityStatus()));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.openWalkthrough", () => openWalkthrough()));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.gettingStarted", () => openGettingStarted()));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.validate", () => validateInstallation(logger)));
@@ -74,6 +100,11 @@ export function activate(context: vscode.ExtensionContext): void {
     const isAlProject = isAlWorkspace();
     const isInitializedProject = await hasInitializedAlProject();
     await vscode.commands.executeCommand("setContext", "aprodaAldc.isAlProject", isAlProject);
+    bcqualityStatusBar.setVisible(isAlProject);
+    if (isAlProject) {
+      void bcqualityStatusBar.refresh();
+      void checkBcqualitySelfHeal(context);
+    }
     const setupCompleted = await offerInitialSetup(context);
     if (!setupCompleted) {
       return;

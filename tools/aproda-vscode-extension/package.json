@@ -30,6 +30,35 @@
                 "toolReferenceName": "aldcConfiguration",
                 "userDescription": "Read authoritative ALDC project configuration",
                 "when": "aprodaAldc.isAlProject"
+            },
+            {
+                "name": "aprodaAldc_bcquality",
+                "displayName": "BCQuality Knowledge",
+                "modelDescription": "Read or list files from the resolved BCQuality clone, a shared external Business Central quality knowledge base used for citable review/audit findings -- it is not part of the current source-code project. Use `read` for the text of one knowledge file and `list` to enumerate a directory, always with a `path` relative to the clone root (for example `skills/entry.md`); omit `path` or use `.` to list the root. It resolves the clone the same way the extension's install command does (a per-workstation setting, a mounted workspace folder, an environment variable, a developer-root convention, or the project's aldc.yaml, in that order), so it works regardless of where the clone sits on disk. Files over 256 KB are refused and directory listings are capped at 200 entries. When the clone cannot be verified, or BCQuality is disabled for the project, the result explains why instead of returning nothing. Do not use it for general source-code questions about the current project.",
+                "canBeReferencedInPrompt": true,
+                "toolReferenceName": "bcquality",
+                "userDescription": "Read BCQuality knowledge-base files",
+                "when": "aprodaAldc.isAlProject",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "operation": {
+                            "type": "string",
+                            "enum": [
+                                "read",
+                                "list"
+                            ],
+                            "description": "'read' returns a knowledge file's text; 'list' enumerates a directory."
+                        },
+                        "path": {
+                            "type": "string",
+                            "description": "Path relative to the BCQuality clone root, using '/' separators, for example 'skills/entry.md'. Omit or use '.' for list to enumerate the root. Must not be absolute or escape the clone root."
+                        }
+                    },
+                    "required": [
+                        "operation"
+                    ]
+                }
             }
         ],
         "commands": [
@@ -68,6 +97,10 @@
             {
                 "command": "aprodaAldc.installBcQuality",
                 "title": "Aproda ALDC: Install / Update BCQuality"
+            },
+            {
+                "command": "aprodaAldc.showBcQualityStatus",
+                "title": "Aproda ALDC: Show BCQuality Status"
             },
             {
                 "command": "aprodaAldc.gettingStarted",
@@ -110,12 +143,18 @@
                 "aprodaAldc.bcquality.setEnvInWorkspace": {
                     "type": "boolean",
                     "default": true,
-                    "markdownDescription": "Set BCQUALITY_HOME in reconciled workspace settings."
+                    "markdownDescription": "Set `BCQUALITY_HOME` in the VS Code user (Global) settings."
                 },
                 "aprodaAldc.bcquality.autoFixWorkspacePath": {
                     "type": "boolean",
                     "default": true,
-                    "markdownDescription": "Keep BCQuality roots and settings aligned in project workspace files."
+                    "deprecationMessage": "Renamed to aprodaAldc.bcquality.autoReconcile.",
+                    "markdownDescription": "Deprecated: use `#aprodaAldc.bcquality.autoReconcile#`."
+                },
+                "aprodaAldc.bcquality.autoReconcile": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Automatically maintain the Global `BCQUALITY_HOME` setting and the `.external/bcquality` junction. Disabling this only stops that additive work: if BCQuality is disabled in `aldc.yaml`, an existing junction is still removed regardless of this setting."
                 },
                 "aprodaAldc.gettingStartedUrl": {
                     "type": "string",
@@ -257,7 +296,7 @@
         "watch": "node ./node_modules/typescript/lib/tsc.js -p . --watch",
         "package": "npm run compile && node ./scripts/package.js",
         "lint": "node ./node_modules/typescript/lib/tsc.js --noEmit",
-        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/extension-version.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js && node ./test/extension-update.test.js"
+        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/extension-version.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js && node ./test/extension-update.test.js && node ./test/aldc-config-path.test.js && node ./test/bcquality-resolve.test.js && node ./test/bcquality-junction.test.js && node ./test/bcquality-reconcile-toggle.test.js && node ./test/bcquality-containment.test.js && node ./test/bcquality-tool.test.js && node ./test/bcquality-self-heal.test.js"
     },
     "dependencies": {
         "jsonc-parser": "^3.3.1",

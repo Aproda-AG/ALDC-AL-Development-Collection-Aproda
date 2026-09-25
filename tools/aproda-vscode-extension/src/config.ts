@@ -10,6 +10,7 @@ export const globalSettingKeys = [
     "bcquality.path",
     "bcquality.setEnvInWorkspace",
     "bcquality.autoFixWorkspacePath",
+    "bcquality.autoReconcile",
     "gettingStartedUrl",
     "source.mode",
     "source.forkPath",
@@ -34,8 +35,14 @@ export function setBcqualityEnvInWorkspace(): boolean {
     return vscode.workspace.getConfiguration(section).get<boolean>("bcquality.setEnvInWorkspace", true);
 }
 
-export function autoFixBcqualityWorkspacePath(): boolean {
-    return vscode.workspace.getConfiguration(section).get<boolean>("bcquality.autoFixWorkspacePath", true);
+// "autoFixWorkspacePath" is deprecated (kept only so existing user settings do not silently change meaning):
+// honour it as a fallback when the new key was never explicitly set.
+export function autoReconcileBcquality(): boolean {
+    const configuration = vscode.workspace.getConfiguration(section);
+    if (!hasConfiguredValue("bcquality.autoReconcile") && hasConfiguredValue("bcquality.autoFixWorkspacePath")) {
+        return configuration.get<boolean>("bcquality.autoFixWorkspacePath", true);
+    }
+    return configuration.get<boolean>("bcquality.autoReconcile", true);
 }
 
 export function gettingStartedUrl(): string {

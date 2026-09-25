@@ -6,6 +6,7 @@ import { directoryExists } from "../env/devRoot";
 import { findGitRoot } from "../env/gitRoot";
 import { Logger } from "../log";
 import { run } from "../process";
+import { resolveBcquality } from "./resolve";
 
 const repository = "https://github.com/Aproda-AG/BCQuality-Aproda.git";
 
@@ -43,6 +44,10 @@ export async function installOrUpdateBcquality(logger: Logger): Promise<string |
 }
 
 export async function resolveBcqualityPath(): Promise<string | undefined> {
+    const resolution = await resolveBcquality();
+    if (resolution.verified && resolution.root) {
+        return resolution.root;
+    }
     const configured = bcqualityPath();
     if (configured) {
         return path.resolve(configured);

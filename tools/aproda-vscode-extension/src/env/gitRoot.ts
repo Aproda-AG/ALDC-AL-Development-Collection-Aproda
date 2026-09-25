@@ -67,25 +67,33 @@ export async function resolveAldcRepository(): Promise<AldcRepositoryResolution>
     }
 
     const repositoryRoots = [...roots.values()];
-    const configuredRepositories: string[] = [];
+    const configured: { repositoryRoot: string; configurationPath: string }[] = [];
     for (const repositoryRoot of repositoryRoots) {
-        if (await pathExists(path.join(repositoryRoot, "aldc.yaml"))) {
-            configuredRepositories.push(repositoryRoot);
+        const configurationPath = await resolveConfigurationPath(repositoryRoot);
+        if (configurationPath) {
+            configured.push({ repositoryRoot, configurationPath });
         }
     }
 
-    if (configuredRepositories.length === 1) {
-        const repositoryRoot = configuredRepositories[0];
-        return {
-            state: "configured",
-            repositoryRoot,
-            configurationPath: path.join(repositoryRoot, "aldc.yaml")
-        };
+    if (configured.length === 1) {
+        return { state: "configured", ...configured[0] };
     }
-    if (configuredRepositories.length > 1) {
-        return { state: "ambiguousRepository", repositoryRoots: configuredRepositories };
+    if (configured.length > 1) {
+        return { state: "ambiguousRepository", repositoryRoots: configured.map((entry) => entry.repositoryRoot) };
     }
     return { state: "notInstalled", repositoryRoots };
+}
+
+// aldc.yaml lives at <toolkitRoot>/aldc.yaml (T-33): .github/ in a consuming project,
+// the repo root in the fork. Probe .github first, then the root (pre-T-33 layout).
+export async function resolveConfigurationPath(repositoryRoot: string): Promise<string | undefined> {
+    for (const relative of [path.join(".github", "aldc.yaml"), "aldc.yaml"]) {
+        const candidate = path.join(repositoryRoot, relative);
+        if (await pathExists(candidate)) {
+            return candidate;
+        }
+    }
+    return undefined;
 }
 
 async function pathExists(candidate: string): Promise<boolean> {

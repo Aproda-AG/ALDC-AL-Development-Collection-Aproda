@@ -30,7 +30,8 @@ export async function validateInstallation(logger: Logger): Promise<void> {
                     }
                 }
                 progress.report({ message: "Running validation" });
-                return run("node", [validator, "--config", "aldc.yaml"], { cwd: repositoryRoot });
+                // No --config: the validator resolves <toolkitRoot>/aldc.yaml itself (two-rung default).
+                return run("node", [validator], { cwd: repositoryRoot });
             }
         );
         logResult(logger, result.stdout, result.stderr);

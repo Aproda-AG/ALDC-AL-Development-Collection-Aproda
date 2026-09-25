@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import YAML from "yaml";
 import { resolveAldcRepository } from "../env/gitRoot";
+import { resolveBcquality } from "../bcquality/resolve";
 
 const toolName = "aprodaAldc_readConfiguration";
 
@@ -40,6 +41,7 @@ class ReadAldcConfigurationTool implements vscode.LanguageModelTool<Record<strin
             const bcquality = external && isRecord(external.bcquality) ? external.bcquality : undefined;
             const plans = isRecord(document.plans) ? document.plans : undefined;
             const aproda = isRecord(document.aproda) ? document.aproda : undefined;
+            const bcqualityResolution = await resolveBcquality(resolution);
 
             return this.result({
                 state: "configured",
@@ -55,9 +57,13 @@ class ReadAldcConfigurationTool implements vscode.LanguageModelTool<Record<strin
                     entryPoint: stringValue(bcquality.entryPoint),
                     url: stringValue(bcquality.url),
                     pinnedCommit: stringValue(bcquality.pinnedCommit),
-                    pilotSkills: bcquality.pilotSkills
+                    pilotSkills: bcquality.pilotSkills,
+                    resolvedHome: bcqualityResolution.root,
+                    resolvedFrom: bcqualityResolution.resolvedFrom,
+                    verified: bcqualityResolution.verified,
+                    mounted: bcqualityResolution.candidates.some((candidate) => candidate.source === "workspaceFolder" && candidate.verdict === "verified")
                 } : undefined,
-                guidance: "This is the authoritative configuration for the current ALDC repository. Use these values; do not guess missing values."
+                guidance: "This is the authoritative configuration for the current ALDC repository. Use these values; do not guess missing values. For bcquality, `home` is only the static declared default: `resolvedHome`/`resolvedFrom`/`verified` come from the live resolver (user setting, mounted workspace folder, environment, devRoot, then this file) and are authoritative."
             });
         } catch (error) {
             return this.result({

@@ -6,7 +6,7 @@ import { runBootstrap } from "../ps/bridge";
 import { LayerSource } from "../source/layerSource";
 import { asMessage } from "../setup/doctor";
 import { resolveBcqualityPath } from "../bcquality/install";
-import { reconcileBcqualityWorkspace } from "../workspace/bcqualityRoot";
+import { reconcileBcquality } from "../workspace/bcqualityRoot";
 
 export async function initializeProject(source: LayerSource, logger: Logger, preview: boolean, targetRepositoryRoot?: string): Promise<void> {
     const repoRoot = targetRepositoryRoot ?? await resolveTargetRepo();
@@ -36,7 +36,7 @@ export async function initializeProject(source: LayerSource, logger: Logger, pre
         } else {
             const bcqualityRoot = await resolveBcqualityPath();
             if (bcqualityRoot) {
-                await reconcileBcqualityWorkspace(repoRoot, bcqualityRoot, logger);
+                await reconcileBcquality(repoRoot, bcqualityRoot, logger);
             }
             void vscode.window.showInformationMessage("Aproda ALDC initialization completed.");
         }
