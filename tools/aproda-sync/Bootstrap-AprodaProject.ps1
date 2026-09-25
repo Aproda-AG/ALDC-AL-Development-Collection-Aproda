@@ -135,7 +135,7 @@ if ($WhatIfPreference) {
 # .aproda. layer + tools arrive. A single extra pull, now that aldc.yaml is present,
 # settles the framework (skills/prompts/agents/docs templates incl. memory-template).
 # Overlay is idempotent, so this is safe and one-time (onboarding only).
-if (Test-Path -LiteralPath (Join-Path $ProjectRoot 'aldc.yaml')) {
+if (@('.github/aldc.yaml', 'aldc.yaml') | Where-Object { Test-Path -LiteralPath (Join-Path $ProjectRoot $_) }) {
     Write-Host "Bootstrap: settle pull (framework now resolvable via the freshly-written aldc.yaml)..."
     & $engineBlock -Direction pull -ForkPath $ForkPath -ProjectRoot $ProjectRoot
 }

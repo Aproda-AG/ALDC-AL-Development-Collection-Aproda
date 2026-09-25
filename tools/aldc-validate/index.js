@@ -14,6 +14,10 @@
  *
  * Usage:
  *   node tools/aldc-validate/index.js [--config aldc.yaml]
+ *
+ * Without --config the file is resolved two-rung (Aproda T-33): aldc.yaml lives at
+ * <toolkitRoot>/aldc.yaml, i.e. .github/ in a consuming project and the repo root
+ * in the fork/upstream layout.
  */
 
 const fs = require("fs");
@@ -21,9 +25,11 @@ const path = require("path");
 const yaml = require("js-yaml"); // npm i js-yaml
 
 const args = process.argv.slice(2);
-let configPath = "aldc.yaml";
 const idx = args.indexOf("--config");
-if (idx !== -1 && args[idx + 1]) configPath = args[idx + 1];
+let configPath =
+  idx !== -1 && args[idx + 1]
+    ? args[idx + 1]
+    : [".github/aldc.yaml", "aldc.yaml"].find((candidate) => fs.existsSync(candidate)) ?? "aldc.yaml";
 
 const S = { errors: [], warnings: [], info: [] };
 

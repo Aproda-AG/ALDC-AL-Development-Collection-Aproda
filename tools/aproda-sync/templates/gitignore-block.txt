@@ -6,7 +6,12 @@
 **/PowerShell/_runner/
 **/.aproda/translation/.cache/
 
+/.github/aldc.yaml
 /aldc.yaml
+/.external/bcquality/
+# Backup of a tracked *.code-workspace, written once by Migrate-AprodaProjectLayout.ps1
+# (T-35) before its first comment-stripping rewrite -- must never itself be tracked.
+*.code-workspace.bak
 .github/README.md
 .github/audits/
 .github/reports/

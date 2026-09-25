@@ -43,16 +43,22 @@
         }
     },
     // DUAL-VARIANT files (D-18, dual-variant rewrite — implemented): files that
-    // exist at the SAME physical path on BOTH sides but whose CONTENT must diverge
-    // on a few lines. They live at the repo ROOT (not under .github/), so they
+    // exist on BOTH sides but whose CONTENT must diverge on a few lines. They
     // bypass the logical-path machinery above and are handled by a dedicated copy
     // + per-side line-rewrite step. aldc.yaml is the sole case: everything is
     // copied verbatim EXCEPT the `toolkitRoot` line, which is rewritten to the
     // destination side's value (project => ".github", fork => "."). This is why
     // aldc.yaml is no longer manually maintained.
+    // `sidePaths` (T-33): aldc.yaml lives at <toolkitRoot>/aldc.yaml, so its
+    // PHYSICAL path also diverges — repo root in the fork, .github/ in a project.
+    // `path` stays as the fallback for entries whose location is side-independent.
     "dualVariant": [
         {
             "path": "aldc.yaml",
+            "sidePaths": {
+                "fork": "aldc.yaml",
+                "project": ".github/aldc.yaml"
+            },
             "rewrites": [
                 {
                     "match": "^toolkitRoot:\\s*\".*\"\\s*$",
@@ -76,11 +82,13 @@
         "tools/aproda-sync/aproda-sync.json",
         "tools/aproda-sync/Sync-AprodaLayer.ps1",
         "tools/aproda-sync/Initialize-AprodaProject.ps1",
+        "tools/aproda-sync/Migrate-AprodaProjectLayout.ps1",
         "tools/aproda-sync/Bootstrap-AprodaProject.ps1",
         "tools/aproda-sync/Start-Push.ps1.template",
         "tools/aproda-sync/Start-Pull.ps1.template",
         "tools/aproda-sync/templates/memory.seed.md",
         "tools/aproda-sync/templates/gitignore-block.txt",
+        "tools/aproda-sync/templates/external-readme.seed.md",
         "documentation/README.md"
     ],
     // 3) IN-PLACE Upstream edits — Upstream-owned files we modified (the D-7
@@ -115,6 +123,7 @@
     //    framework ships from the fork too). Set false to sync ONLY Aproda net-new
     //    + in-place edits (leaner; framework then comes via the AL-Go/ALDC route).
     "includeAldcFramework": true,
+    // Resolved two-rung (T-33): <root>/.github/<aldcYaml> first, then <root>/<aldcYaml>.
     "aldcYaml": "aldc.yaml",
     // 5) HARD DENY — belt-and-suspenders. Even if some glob above accidentally
     //    matched one of these, never touch them. The allowlist already protects
@@ -131,8 +140,9 @@
         "tools/aproda-ps-xliffsync/test/**", // layer-internal test suite; projects get the runtime only
         "skills/skill-aproda-aldc-release/**"
     ],
-    // Exceptions to neverTouch: Aproda-owned files that happen to live under a
-    // denied folder (e.g. our BCQuality evidence workflow under workflows/).
+    // Exceptions to neverTouch: files that happen to live under a denied folder but
+    // must still sync (e.g. the BCQuality evidence workflow under workflows/ — it's
+    // Upstream's, not Aproda's, introduced by fa37cf7; see E-006 §2/B-2).
     "neverTouchExceptions": [
         "workflows/bcquality-evidence.yaml",
         "documentation/README.md"

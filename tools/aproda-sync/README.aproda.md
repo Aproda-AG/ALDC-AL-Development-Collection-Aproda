@@ -67,7 +67,8 @@ self-locates. (See *Two ways `Start-Pull.ps1` comes to exist* below.)
 |------|------|
 | `Sync-AprodaLayer.ps1` | **The engine.** Resolves the allowlist, translates layouts, copies files OVERLAY-only (never deletes). `-Direction pull\|push`, `-ForkPath` (mandatory), `-ProjectRoot` (optional, `.git`-walk default), `-WhatIf`. |
 | `aproda-sync.json` | **The allowlist (D-18).** Default = SAFE: a path not matched here is invisible in **both** directions. Holds `layouts`, `dualVariant`, `includeGlobs`, `includeFiles`, `inPlaceEdits`, `includeAldcFramework`, `neverTouch`. |
-| `Initialize-AprodaProject.ps1` | **One-time project bootstrap.** Seeds `plans/memory.md`, maintains the `.gitignore` Aproda block, ensures the workspace roots + `chat.useCustomizationsInParentRepositories`. Idempotent. Anchors via `.git`-walk. |
+| `Initialize-AprodaProject.ps1` | **One-time project bootstrap.** Seeds `plans/memory.md`, maintains the `.gitignore` Aproda block, ensures the workspace roots + `chat.useCustomizationsInParentRepositories`. Idempotent. Anchors via `.git`-walk. Chains `Migrate-AprodaProjectLayout.ps1` as its last step. |
+| `Migrate-AprodaProjectLayout.ps1` | **Upgrade path from the pre-Block-4 layout (T-35).** Removes a stale root `aldc.yaml` once `.github/aldc.yaml` exists and looks like a real config; swaps a legacy sibling BCQuality workspace root for `.external` once it exists; drops `BCQUALITY_HOME` from the workspace file. Idempotent, no-op on an already-migrated project, `-WhatIf`-able, never touches an unparseable `*.code-workspace`. A workspace file that DOES parse (including one with `//` comments) is rewritten without them; the original is saved once to a sibling `.bak` before the first edit. See "Migrating a pre-Block-4 project" below. |
 | `Bootstrap-AprodaProject.ps1` | **Zero-seed onboarding** of a FRESH repo from a fork clone: pull → settle-pull (framework) → init → generate a filled `Start-Pull.ps1`. `-ProjectRoot` (mandatory), `-ForkPath` (optional), `-Force`, `-WhatIf`. |
 | `Start-Pull.ps1.template` | Recurring **pull** launcher. Self-locates `APRODA_SYNC_SCRIPTDIR`; only `APRODA_FORK_PATH` is filled. Copy → `Start-Pull.ps1` (git-ignored). |
 | `Start-Push.ps1.template` | Recurring **push** launcher (same self-location; one path to fill). Copy → `Start-Push.ps1` (git-ignored). |
@@ -76,6 +77,33 @@ self-locates. (See *Two ways `Start-Pull.ps1` comes to exist* below.)
 | `fleet/Get-AprodaFleetStatus.ps1` | **Fork-only fleet tool.** Scans sibling project repos; reports layer version and status (`OK` / `UPDATE` / `DRIFT` / `NONE`). With `-FullDiff` runs a full SHA-256 layer compare. Writes a JSON report to `fleet/_status-output/`. |
 | `fleet/Start-FleetUpdate.ps1` | **Fork-only fleet tool.** Updates all project repos whose layer version is older than the fork by running a pull via the engine. Supports `-WhatIf`. |
 | `fleet/Start-FleetGather.ps1` | **Fork-only fleet tool.** Brings in-place edits from selected project repos back into the fork (push direction). Conflict guard: aborts if the fork has uncommitted tracked changes. Interactive repo selection (Out-GridView / console fallback). Supports `-WhatIf`. |
+
+## Migrating a pre-Block-4 project (T-35)
+
+`Initialize-AprodaProject.ps1` chains `Migrate-AprodaProjectLayout.ps1` as its last
+step, so an existing project onboarded before Block 4 is migrated **automatically on
+its next pull, with no opt-out**:
+
+- The stale repo-root `aldc.yaml` is deleted once `.github/aldc.yaml` exists and looks
+  like a real config.
+- The legacy sibling BCQuality workspace root (`../BCQuality-Aproda`) is replaced with
+  the tracked `.external` root, and any `BCQUALITY_HOME` entry is dropped from the
+  workspace file — both are silent, irreversible rewrites of a tracked file.
+- If your `*.code-workspace` carries `//` comments or custom formatting, they are lost
+  in that rewrite (PowerShell's JSON parser tolerates comments on read but cannot
+  reproduce them on write). The original is saved once, before the first edit, next to
+  the workspace file as `<name>.code-workspace.bak` (git-ignored) — the migration
+  report names it explicitly. To restore your prior workspace file, copy the `.bak`
+  back over the `.code-workspace` file and re-apply your customizations by hand; there
+  is no automated undo.
+- This is a one-way migration by design (D-49) — it is not previewed without asking
+  first. To see what it would do before it runs, invoke it directly:
+  ```powershell
+  $src = Get-Content "$env:APRODA_SYNC_SCRIPTDIR\Migrate-AprodaProjectLayout.ps1" -Raw
+  & ([ScriptBlock]::Create($src)) -WhatIf
+  ```
+  (`Initialize-AprodaProject.ps1` itself does not support `-WhatIf` — its own Init
+  1-4 steps write unconditionally.)
 
 ## How to run it (SRP-safe)
 

@@ -70,10 +70,14 @@ if (-not $WhatIf) {
 }
 
 # ── Version helper ────────────────────────────────────────────────────────────
-# aldc.yaml always sits at the REPO ROOT on both fork and project side (dual-variant, D-18).
+# aldc.yaml lives at <toolkitRoot>/aldc.yaml (T-33): .github/ in a project, the repo
+# root in the fork. Probe .github first, then the root (pre-T-33 / fork layout).
 function Get-LayerVersion([string] $repoRoot) {
-    $yaml = Join-Path $repoRoot 'aldc.yaml'
-    if (-not (Test-Path -LiteralPath $yaml)) { return $null }
+    $yaml = @((Join-Path '.github' 'aldc.yaml'), 'aldc.yaml') |
+        ForEach-Object { Join-Path $repoRoot $_ } |
+        Where-Object { Test-Path -LiteralPath $_ } |
+        Select-Object -First 1
+    if (-not $yaml) { return $null }
     foreach ($line in (Get-Content -LiteralPath $yaml -ErrorAction SilentlyContinue)) {
         if ($line -match '^\s+layerVersion:\s*"([^"]+)"') { return $Matches[1] }
     }

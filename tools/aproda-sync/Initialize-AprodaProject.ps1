@@ -8,11 +8,19 @@
       2. .gitignore               — the Aproda machine-local patterns, kept inside a
                                      "# Aproda ALDC Tool - BEGIN/END" marker block so
                                      they are obvious and updated as one unit.
-      3. *.code-workspace          — the .github root (toolkit discovery) + the external
-                                     BCQuality knowledge root (consumed outside the build),
-                                     plus the chat.useCustomizationsInParentRepositories
-                                     setting so Copilot discovers the repo-root .github
-                                     customizations even when a single app folder is opened.
+      3. *.code-workspace          — the .github root (toolkit discovery) + the .external
+                                     wrapper root (BCQuality, consumed outside the build via a
+                                     junction/symlink so its example .al files never enter
+                                     compilation), plus chat.useCustomizationsInParentRepositories
+                                     and the search.exclude / files.watcherExclude rules that keep
+                                     the mounted junction out of project-wide search.
+      4. .external/README.md       — seeded once from the ALDC template; explains the junction
+                                     the Aproda VS Code extension creates inside .external/bcquality.
+      5. Legacy-layout migration   — chains Migrate-AprodaProjectLayout.ps1 (T-35) as the LAST
+                                     step, so a pre-Block-4 project (root aldc.yaml, sibling
+                                     BCQuality workspace root, BCQUALITY_HOME in the workspace
+                                     file) is migrated onto the current layout on every pull.
+                                     Idempotent; no-op on an already-migrated project.
 
     Split out of Start-Pull so the run script stays thin. SRP-safe: cmdlet-only, no
     path-based dot-sourcing — load its content and invoke:
@@ -22,6 +30,9 @@
 
 .NOTES
     Decision: D-19 (decisions.aproda.md). Sibling of Sync-AprodaLayer.ps1.
+    Deliberately does not support -WhatIf: Init 1-4 write unconditionally, so accepting
+    the switch without honouring it would be a lie. To preview, run
+    Migrate-AprodaProjectLayout.ps1 -WhatIf directly (Init 5 only).
 #>
 [CmdletBinding()]
 param()
@@ -113,18 +124,24 @@ else {
 # Two roots must be present for the toolkit to work when you open the workspace:
 #   1) the .github root — the toolkit (copilot-instructions, instructions/, prompts/,
 #      agents/) lives here; surfacing it as a folder keeps it editable/visible.
-#   2) the BCQuality knowledge base — consumed multi-root from OUTSIDE the project
-#      (../BCQuality-Aproda) so its example .al files never enter compilation.
+#   2) the .external wrapper root — BCQuality is reached through a junction/symlink at
+#      .external/bcquality, never mounted directly (a workspace root cannot exclude
+#      itself, so the clone's example .al files would otherwise leak into every search).
 # Both are added only when missing (idempotent). JSONC that does not parse is left
-# untouched with a manual hint.
+# untouched with a manual hint. Existing projects that still carry the legacy sibling
+# root (../BCQuality-Aproda) are left alone here — migrating them off it is T-35.
 $requiredRoots = @(
     @{ name = '.github'; path = '.github'; match = '^\.github$' },
-    @{ name = 'BCQuality (Aproda ALDC)'; path = '../BCQuality-Aproda'; match = 'bcquality-aproda' }
+    @{ name = 'BCQuality (Aproda ALDC)'; path = '.external'; match = '^\.external$' }
 )
 # Settings ALDC needs surfaced in every workspace. parentCustomizations lets Copilot
 # walk up to the .git root and pick up the repo-root .github customizations even when
 # only a single app folder is opened (VS Code: chat.useCustomizationsInParentRepositories).
 $parentCustomizationsKey = 'chat.useCustomizationsInParentRepositories'
+# Exclude globs that keep the .external/bcquality junction out of search/watcher without
+# hiding it from reads — files.exclude would also block the agents' read path (never use it).
+$bcqualityExcludeKeys = @('search.exclude', 'files.watcherExclude')
+$bcqualityExcludeGlob = 'bcquality/**'
 $wsFiles = Get-ChildItem -Path $projectRoot -Filter '*.code-workspace' -File -ErrorAction SilentlyContinue
 if (-not $wsFiles) {
     # No workspace file found — create one from the seed template.
@@ -137,17 +154,19 @@ if (-not $wsFiles) {
             [ordered]@{ name = '.github'; path = '.github' },
             [ordered]@{ name = 'App'; path = 'App' },
             [ordered]@{ name = 'Test'; path = 'Test' },
-            [ordered]@{ name = 'BCQuality (Aproda ALDC)'; path = '../BCQuality-Aproda' }
+            [ordered]@{ name = 'BCQuality (Aproda ALDC)'; path = '.external' }
         )
         settings = [ordered]@{
             $parentCustomizationsKey = $true
+            'search.exclude'         = [ordered]@{ $bcqualityExcludeGlob = $true }
+            'files.watcherExclude'   = [ordered]@{ $bcqualityExcludeGlob = $true }
         }
     }
     $target = Join-Path $projectRoot 'aldc.code-workspace'
-    $ws | ConvertTo-Json -Depth 10 | Set-Content -Path $target -Encoding UTF8
-    Write-Host "Init: aldc.code-workspace created from seed (.github + App + Test + BCQuality roots, parent customizations on)."
+    [System.IO.File]::WriteAllText($target, ($ws | ConvertTo-Json -Depth 10), [System.Text.UTF8Encoding]::new($false))
+    Write-Host "Init: aldc.code-workspace created from seed (.github + App + Test + .external roots, parent customizations + bcquality excludes on)."
     Write-Host "      -> Edit app folder names/paths to match your project layout before committing."
-    Write-Host "      -> Reference: tools/aproda-sync/templates/workspace.seed.jsonc"
+    Write-Host "      -> Reference (fork-side only, not shipped): tools/aproda-sync/templates/workspace.seed.jsonc"
 }
 else {
     foreach ($wsFile in $wsFiles) {
@@ -187,8 +206,24 @@ else {
             $json.settings | Add-Member -NotePropertyName $parentCustomizationsKey -NotePropertyValue $true -Force
             $settingChanged = $true
         }
+        # Ensure the bcquality/** excludes are present without clobbering any other globs
+        # the project already has under the same setting key (idempotent, additive-only).
+        foreach ($excludeKey in $bcqualityExcludeKeys) {
+            $existingProp = $json.settings.PSObject.Properties[$excludeKey]
+            if (-not $existingProp) {
+                $json.settings | Add-Member -NotePropertyName $excludeKey -NotePropertyValue ([pscustomobject]@{ $bcqualityExcludeGlob = $true }) -Force
+                $settingChanged = $true
+            }
+            else {
+                $globProp = $existingProp.Value.PSObject.Properties[$bcqualityExcludeGlob]
+                if (-not $globProp -or $globProp.Value -ne $true) {
+                    $existingProp.Value | Add-Member -NotePropertyName $bcqualityExcludeGlob -NotePropertyValue $true -Force
+                    $settingChanged = $true
+                }
+            }
+        }
         if ($added.Count -gt 0 -or $settingChanged) {
-            $json | ConvertTo-Json -Depth 10 | Set-Content -Path $wsFile.FullName -Encoding UTF8
+            [System.IO.File]::WriteAllText($wsFile.FullName, ($json | ConvertTo-Json -Depth 10), [System.Text.UTF8Encoding]::new($false))
             $changes = @()
             if ($added.Count -gt 0) { $changes += "root(s): $($added -join ', ')" }
             if ($settingChanged) { $changes += $parentCustomizationsKey }
@@ -199,3 +234,28 @@ else {
         }
     }
 }
+
+# ── Init 4: seed .external/README.md if not yet present ───────────────────────
+# The wrapper folder itself is tracked (unlike the junction inside it, which is
+# gitignored) so it exists in every fresh clone and explains itself. Never
+# overwritten once present — same "copy, never clobber" rule as Init 1's memory
+# seed: a developer may have annotated it, and there is nothing time-sensitive in
+# its content that would justify a forced refresh.
+$externalDir = Join-Path $projectRoot '.external'
+$externalReadmeTarget = Join-Path $externalDir 'README.md'
+if (-not (Test-Path $externalReadmeTarget)) {
+    New-Item -ItemType Directory -Force $externalDir | Out-Null
+    $externalReadmeStub = [System.IO.File]::ReadAllText((Join-Path $templatesDir 'external-readme.seed.md'))
+    [System.IO.File]::WriteAllText($externalReadmeTarget, $externalReadmeStub, [System.Text.UTF8Encoding]::new($false))
+    Write-Host "Init: .external/README.md created."
+}
+else {
+    Write-Host "Init: .external/README.md already exists — skipped."
+}
+
+# ── Init 5: migrate a pre-Block-4 project onto the current layout (T-35) ──────
+# Chained LAST so its preconditions (.github/aldc.yaml, .external/) are already
+# satisfied by Init 2/4 above. Own script (not inlined) so it can carry its own
+# -WhatIf support without touching the unconditional writes in Init 1-4.
+$migrateSrc = Get-Content -LiteralPath (Join-Path $scriptDir 'Migrate-AprodaProjectLayout.ps1') -Raw
+& ([ScriptBlock]::Create($migrateSrc))

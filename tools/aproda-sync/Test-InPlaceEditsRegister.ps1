@@ -116,8 +116,12 @@ function Test-PathAtRev([string] $rev, [string] $path) {
 }
 
 if ([string]::IsNullOrWhiteSpace($BasePin)) {
-    $aldcYamlPath = Join-Path $RepoRoot 'aldc.yaml'
-    if (-not (Test-Path $aldcYamlPath)) { throw "aldc.yaml not found: $aldcYamlPath" }
+    # aldc.yaml lives at <toolkitRoot>/aldc.yaml (T-33): .github/ in a project, the repo root in the fork.
+    $aldcYamlPath = @((Join-Path '.github' 'aldc.yaml'), 'aldc.yaml') |
+        ForEach-Object { Join-Path $RepoRoot $_ } |
+        Where-Object { Test-Path -LiteralPath $_ } |
+        Select-Object -First 1
+    if (-not $aldcYamlPath) { throw "aldc.yaml not found under $RepoRoot (.github/ or repo root)" }
     $inAproda = $false
     foreach ($line in (Get-Content -LiteralPath $aldcYamlPath)) {
         if ($line -match '^aproda:\s*$') { $inAproda = $true; continue }

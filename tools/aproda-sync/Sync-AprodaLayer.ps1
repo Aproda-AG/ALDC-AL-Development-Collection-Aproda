@@ -199,6 +199,17 @@ function Get-LogicalPath([string] $physical, [string] $side) {
 }
 
 # ── Build the allowlist set (toolkit-relative paths) ─────────────────────────
+# aldc.yaml lives at <toolkitRoot>/aldc.yaml (T-33): .github/ in a project, the repo
+# root in the fork. Probe .github first, then the root (pre-T-33 / fork layout).
+function Resolve-AldcYamlPath([string] $repoRoot, [string] $name) {
+    if ([string]::IsNullOrWhiteSpace($name)) { $name = 'aldc.yaml' }
+    foreach ($rel in @((Join-Path '.github' $name), $name)) {
+        $candidate = Join-Path $repoRoot $rel
+        if (Test-Path -LiteralPath $candidate) { return $candidate }
+    }
+    return $null
+}
+
 $includeGlobs = @($manifest.includeGlobs)
 $includeFiles = @($manifest.includeFiles)
 $inPlaceEdits = @($manifest.inPlaceEdits)
@@ -207,19 +218,25 @@ $neverTouchExceptions = @($manifest.neverTouchExceptions)
 
 $frameworkFiles = @()
 if ($manifest.includeAldcFramework) {
-    $aldcYamlPath = Join-Path $ProjectRoot ($manifest.aldcYaml)
-    if (Test-Path $aldcYamlPath) {
+    # Catalog MEMBERSHIP comes from the SOURCE's aldc.yaml; only the file CONTENT is
+    # copied. Reading the destination made every newly registered entry wait one pull,
+    # because aldc.yaml is itself written (dualVariant) at the END of the same run —
+    # and it kept REMOVED entries alive forever (E-006 B-13/T-36).
+    $aldcYamlPath = Resolve-AldcYamlPath $srcRepo ($manifest.aldcYaml)
+    if ($aldcYamlPath) {
         # Lightweight YAML scrape: collect quoted "path/like/this" list entries under
         # required:/optional:. We only need the file paths, not full YAML semantics.
+        # A trailing `# comment` is tolerated — anchoring on the closing quote silently
+        # dropped every annotated entry (E-006: agents/index.md, docs/copilot-reference.md).
         $yamlLines = Get-Content -LiteralPath $aldcYamlPath
         foreach ($line in $yamlLines) {
-            $m = [regex]::Match($line, '^\s*-\s*"([^"]+\.(md|py|sh|js|json))"\s*$')
+            $m = [regex]::Match($line, '^\s*-\s*"([^"]+\.(md|py|sh|js|json))"\s*(#.*)?$')
             if ($m.Success) { $frameworkFiles += $m.Groups[1].Value }
         }
         $frameworkFiles = $frameworkFiles | Sort-Object -Unique
     }
     else {
-        Write-Warning "includeAldcFramework=true but aldc.yaml not found at $aldcYamlPath — skipping framework files."
+        Write-Warning "includeAldcFramework=true but $($manifest.aldcYaml) not found under $srcRepo (.github/ or repo root) — skipping framework files."
     }
 }
 
@@ -298,20 +315,22 @@ foreach ($logical in $selected) {
 }
 
 # ── Dual-variant files (D-18 follow-up) ──────────────────────────────────────
-# Files at the repo ROOT (not under .github/) that exist on BOTH sides but whose
-# CONTENT must diverge on a few lines (currently only aldc.yaml's toolkitRoot).
-# Copy verbatim, then rewrite the matched line(s) to the DESTINATION side's value.
+# Files that exist on BOTH sides but whose CONTENT must diverge on a few lines
+# (currently only aldc.yaml's toolkitRoot). Copy verbatim, then rewrite the matched
+# line(s) to the DESTINATION side's value. Since T-33 the PHYSICAL path may diverge
+# too, so source and destination are resolved separately via `sidePaths`.
 # Encoding (UTF-8, no BOM) and the destination's native EOL are preserved to avoid
 # spurious diffs.
 $dualCount = 0
 foreach ($dv in @($manifest.dualVariant)) {
     if ([string]::IsNullOrWhiteSpace($dv.path)) { continue }
 
-    $relWin = $dv.path -replace '/', '\'
-    $dvSrc = Join-Path $srcRepo $relWin
-    $dvDst = Join-Path $dstRepo $relWin
+    $srcRelDv = if ($dv.sidePaths -and $dv.sidePaths.$srcSide) { $dv.sidePaths.$srcSide } else { $dv.path }
+    $dstRelDv = if ($dv.sidePaths -and $dv.sidePaths.$dstSide) { $dv.sidePaths.$dstSide } else { $dv.path }
+    $dvSrc = Join-Path $srcRepo ($srcRelDv -replace '/', '\')
+    $dvDst = Join-Path $dstRepo ($dstRelDv -replace '/', '\')
     if (-not (Test-Path $dvSrc)) {
-        Write-Warning "dualVariant source not found, skipping: $($dv.path)"
+        Write-Warning "dualVariant source not found, skipping: $srcRelDv"
         continue
     }
 
@@ -348,7 +367,7 @@ foreach ($dv in @($manifest.dualVariant)) {
         continue
     }
 
-    Write-Host "Dual-variant: $($dv.path)  (toolkitRoot -> $dstSide value)" -ForegroundColor Green
+    Write-Host "Dual-variant: $srcRelDv -> $dstRelDv  (toolkitRoot -> $dstSide value)" -ForegroundColor Green
     if ($PSCmdlet.ShouldProcess($dvDst, "Write dual-variant from $dvSrc")) {
         $dstDir = Split-Path $dvDst -Parent
         if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }

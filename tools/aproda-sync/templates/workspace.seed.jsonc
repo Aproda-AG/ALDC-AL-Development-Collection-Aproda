@@ -9,13 +9,19 @@
     //                       Rename / duplicate this entry for each app in your repo
     //                       (e.g. Base, App, Module, …). Paths are relative to the git root.
     //   3) <Test>         — Test AL extension (compiled separately; adjust name & path).
-    //   4) ../BCQuality-Aproda   — BCQuality knowledge base (NOT compiled; consumed by al-review-subagent
-    //                             and Dredd only). Cloned outside the AL project so its .al files
-    //                             never pollute the error list. Run: tools/bcquality/install.sh
+    //   4) .external       — Wrapper root for external knowledge (currently: BCQuality). The
+    //                       clone itself is NEVER mounted directly — a workspace root cannot
+    //                       exclude itself, so its example .al files would leak into every
+    //                       project-wide search. Instead `.external/bcquality` is a directory
+    //                       junction (Windows) / symlink (macOS, Linux) onto the real clone,
+    //                       which lives outside the repo; the junction is created by the Aproda
+    //                       VS Code extension (Apply Toolkit / Install-Update BCQuality) or by
+    //                       hand — see .external/README.md. Because the junction is a genuine
+    //                       SUBFOLDER of this root, `bcquality/**` excludes below actually match.
     //
     // Edit the placeholder entries (marked "TODO") to match your project layout, then
     // commit the file. The Init script will patch it on future pulls to keep .github and
-    // BCQuality present — your app roots are never touched.
+    // .external present — your app roots are never touched.
     "folders": [
         {
             "name": ".github",
@@ -33,12 +39,20 @@
         },
         {
             "name": "BCQuality (Aproda ALDC)",
-            "path": "../BCQuality-Aproda"
+            "path": ".external"
         }
     ],
     "settings": {
         // Let Copilot walk up to the git root to find .github customizations even when
         // only a single app folder (e.g. App/ or Test/) is opened directly.
-        "chat.useCustomizationsInParentRepositories": true
+        "chat.useCustomizationsInParentRepositories": true,
+        // Hide the BCQuality clone's ~200+ example .al files from search/watcher without
+        // hiding the folder itself — files.exclude would also block the agents' read path.
+        "search.exclude": {
+            "bcquality/**": true
+        },
+        "files.watcherExclude": {
+            "bcquality/**": true
+        }
     }
 }
