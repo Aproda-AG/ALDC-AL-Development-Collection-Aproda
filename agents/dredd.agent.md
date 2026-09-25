@@ -78,6 +78,7 @@ Aggregate everything into one **Audit-Report JSON** (a DO findings-report + an `
 2. **Report** in your reply, rendered from the JSON:
    - Verdict + counts; findings grouped **by module then domain**, each with `file:line` and its citation.
    - A didactic callout so the use of BCQuality is visible: *"🔎 BCQuality consultado (SHA `<sha>`) → entry.md despachó [performance, security, style] → N findings con cita"*.
+   - **State the BCQuality outcome in EVERY report, next to the verdict — never only inside the JSON.** When it was not consulted, say so in one line and why: *"⚪ BCQuality not consulted (`not-applicable` — no clone resolved) → audited natively against instructions + skills (full A–G)"*. A reader who skims the verdict must be able to tell whether the knowledge layer was used; burying that in `audit.bcquality`/`notes` makes a degraded audit indistinguishable from a full one.
    - The path of the persisted report, and the full `### Audit-Report (JSON)` block.
    - If anything is actionable, recommend handing off to `@al-developer` (you do not fix).
 3. **Close out the worklist**: once the report is persisted and rendered, mark the final task **completed** in your todo list. Do not leave "Persist and report" open after the file is written — the audit is not done until the todo reflects it.

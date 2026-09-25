@@ -194,7 +194,8 @@ rather than left unnoticed.*
 | **T-21** | Decide the CI question (ship or declare fork-only). **Precondition resolved 2026-09-24:** `BCQuality-Aproda` is **public** (unauthenticated `git ls-remote` succeeded) — the decision is about scope, not feasibility | The CI runs nowhere today (B-1). Deciding it changes nothing until something consumes it; T-24 records the *current* truth regardless of the outcome |
 | **T-26** | Agent-executed gate in `al-pr-prepare` — must evaluate `notes` not the exit code, and is a self-check, not independent verification | Depends on T-23. A gate over a validator that passes vacuously would be gate theatre |
 | **T-27** | Exercise audit evidence (`.github/audits/`) end-to-end — never done | Exploratory; nothing depends on it, and it needs a real Dredd run to produce input |
-| **T-39** | **Overlay → sync: carry removals through.** A file dropped from the layer lingers in every project forever — and a stale agent or catalog file is still *loaded by Copilot*, i.e. invisible drift, exactly E-006's subject | **Nothing breaks today** (maintainer, 2026-09-25) — but worth looking at. Must **not** be a list-diff: it abandons the deliberate *"copy only, never delete"* invariant; the synced layer is git-ignored, so a wrong deletion has no `git restore` and will not return on the next pull; "absent from the list" ≠ "ours" (projects may add their own skills alongside); and the config list does not know files delivered via `includeGlobs`/skill-folder expansion. The right shape is a **manifest of what was actually delivered** |
+| **T-39** | **Overlay → sync: carry removals through.** A file dropped from the layer lingers in every project forever — and a stale agent or catalog file is still *loaded by Copilot*, i.e. invisible drift | **Nothing breaks today** (maintainer, 2026-09-25) — but worth looking at. Must **not** be a list-diff: it abandons the deliberate *"copy only, never delete"* invariant; the synced layer is git-ignored, so a wrong deletion has no `git restore` and will not return on the next pull; "absent from the list" ≠ "ours" (projects may add their own skills alongside); and the config list does not know files delivered via `includeGlobs`/skill-folder expansion. The right shape is a **manifest of what was actually delivered** |
+| **T-40** | **minor — an existing project never gets a refreshed `Start-Pull.ps1`** (B-19). `Bootstrap-AprodaProject.ps1` leaves an existing starter untouched by design and the extension never passes `-Force`, so any future fix to the pull entry point is structurally undeliverable to existing projects | **Low impact** (maintainer, 2026-09-25): ~98% of updates run through *Apply Toolkit*, which bypasses `Start-Pull.ps1` entirely and executes the **fork's** engine. Same "stale forever" class as T-39 — look at both together |
 
 ---
 
@@ -230,7 +231,7 @@ Block 3  T-10, T-11, T-13, T-14, T-4                   -> commit + push      ✅
 Block 4  T-33, T-22, T-28, T-29, T-24, T-25 → T-35    ✅ implemented 2026-09-25, UNCOMMITTED
 Block 4  T-36 (scrape reads the source)                ✅ implemented 2026-09-25 — B-13 fixed
 Block 4b T-37, T-38                                    ❌ formally excluded (decided 2026-09-25)
-Block 5  T-23, T-21, T-26, T-27, T-34, T-39            BCQuality part 2 — deferred, latent / nothing depends on them
+Block 5  T-23, T-21, T-26, T-27, T-34, T-39, T-40     BCQuality part 2 — deferred, latent / nothing depends on them
 Block 6  T-15, T-16                                    upstream, parallel at any time
 ```
 

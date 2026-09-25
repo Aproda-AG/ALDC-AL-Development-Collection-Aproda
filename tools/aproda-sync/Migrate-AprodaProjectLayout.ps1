@@ -147,6 +147,20 @@ else {
                     }
                     $changed = $true
                     $migrated.Add("$($wsFile.Name): replaced the legacy '../BCQuality-Aproda' root with '.external'.")
+
+                    # The sibling root's exclude globs are meaningless once it is gone --
+                    # leaving them behind contradicts the new `bcquality/**` entry forever.
+                    if ($json.settings) {
+                        foreach ($excludeKey in @('search.exclude', 'files.watcherExclude')) {
+                            $excludeProp = $json.settings.PSObject.Properties[$excludeKey]
+                            if (-not $excludeProp) { continue }
+                            $staleGlobs = @($excludeProp.Value.PSObject.Properties | Where-Object { $_.Name -match 'BCQuality-Aproda' } | Select-Object -ExpandProperty Name)
+                            foreach ($glob in $staleGlobs) { $excludeProp.Value.PSObject.Properties.Remove($glob) }
+                            if ($staleGlobs.Count -gt 0) {
+                                $migrated.Add("$($wsFile.Name): removed $($staleGlobs.Count) stale '$excludeKey' glob(s) for the retired sibling root.")
+                            }
+                        }
+                    }
                 }
                 else {
                     $manual.Add("$($wsFile.Name) still has the legacy '../BCQuality-Aproda' root, but '.external/' does not exist in this repo yet -- run a pull first (it seeds .external/README.md), then re-run this migration.")

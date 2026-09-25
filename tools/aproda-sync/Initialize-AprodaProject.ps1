@@ -243,11 +243,20 @@ else {
 # its content that would justify a forced refresh.
 $externalDir = Join-Path $projectRoot '.external'
 $externalReadmeTarget = Join-Path $externalDir 'README.md'
+$externalReadmeStubPath = Join-Path $templatesDir 'external-readme.seed.md'
 if (-not (Test-Path $externalReadmeTarget)) {
-    New-Item -ItemType Directory -Force $externalDir | Out-Null
-    $externalReadmeStub = [System.IO.File]::ReadAllText((Join-Path $templatesDir 'external-readme.seed.md'))
-    [System.IO.File]::WriteAllText($externalReadmeTarget, $externalReadmeStub, [System.Text.UTF8Encoding]::new($false))
-    Write-Host "Init: .external/README.md created."
+    # A pull loads the PROJECT's syncer, but updates it in place: on the first pull
+    # that introduces this template the old engine ran and never copied it. Skip
+    # instead of throwing -- the next pull completes it.
+    if (-not (Test-Path -LiteralPath $externalReadmeStubPath)) {
+        Write-Host "Init: templates/external-readme.seed.md not in this project yet -- skipping .external/README.md. Run the pull once more to complete it." -ForegroundColor Yellow
+    }
+    else {
+        New-Item -ItemType Directory -Force $externalDir | Out-Null
+        $externalReadmeStub = [System.IO.File]::ReadAllText($externalReadmeStubPath)
+        [System.IO.File]::WriteAllText($externalReadmeTarget, $externalReadmeStub, [System.Text.UTF8Encoding]::new($false))
+        Write-Host "Init: .external/README.md created."
+    }
 }
 else {
     Write-Host "Init: .external/README.md already exists — skipped."
@@ -257,5 +266,11 @@ else {
 # Chained LAST so its preconditions (.github/aldc.yaml, .external/) are already
 # satisfied by Init 2/4 above. Own script (not inlined) so it can carry its own
 # -WhatIf support without touching the unconditional writes in Init 1-4.
-$migrateSrc = Get-Content -LiteralPath (Join-Path $scriptDir 'Migrate-AprodaProjectLayout.ps1') -Raw
-& ([ScriptBlock]::Create($migrateSrc))
+$migratePath = Join-Path $scriptDir 'Migrate-AprodaProjectLayout.ps1'
+if (-not (Test-Path -LiteralPath $migratePath)) {
+    Write-Host "Init 5: Migrate-AprodaProjectLayout.ps1 not in this project yet -- skipping the layout migration. Run the pull once more to complete it." -ForegroundColor Yellow
+}
+else {
+    $migrateSrc = Get-Content -LiteralPath $migratePath -Raw
+    & ([ScriptBlock]::Create($migrateSrc))
+}
