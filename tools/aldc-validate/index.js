@@ -328,6 +328,43 @@ function walkAllFiles(dir, acc) {
 }
 const repoFiles = walkAllFiles(".", []).map(f => f.replace(/\\/g, "/").replace(/^\.\//, ""));
 
+// B-36: fork-only artifacts (neverTouch, or matched by no allow rule at all in
+// aproda-sync.json) must not warn as "missing" in a project — they were never
+// meant to ship there. Derived from the manifest so no path list is hardcoded.
+const isProjectLayout = root !== "";
+const aprodaSyncManifest = (() => {
+  const p = root + "tools/aproda-sync/aproda-sync.json";
+  if (!fileExists(p)) return null;
+  try {
+    const raw = readFile(p).replace(/(^|[^:"])\/\/.*$/gm, "$1").replace(/,(\s*[\]}])/g, "$1");
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
+})();
+function globToRegex(glob) {
+  const esc = glob.replace(/\\/g, "/").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp("^" + esc
+    // "**/" spans zero or more directories: without this a leading "**/" would demand a slash and
+    // never match a root-level path such as readme.aproda.md.
+    .replace(/\\\*\\\*\//g, "(?:.*/)?")
+    .replace(/\/\\\*\\\*/g, "(/.*)?")
+    .replace(/\\\*\\\*/g, ".*")
+    .replace(/\\\*/g, "[^/]*")
+    .replace(/\\\?/g, "[^/]") + "$");
+}
+function isForkOnly(logicalPath) {
+  if (!aprodaSyncManifest) return false; // manifest unreadable -> don't suppress, stay honest
+  const l = logicalPath.replace(/\/$/, "");
+  const matchesAny = (globs) => (globs || []).some(g => globToRegex(g).test(l));
+  const allowed = matchesAny(aprodaSyncManifest.includeGlobs)
+    || (aprodaSyncManifest.includeFiles || []).includes(l)
+    || (aprodaSyncManifest.inPlaceEdits || []).includes(l);
+  const denied = matchesAny(aprodaSyncManifest.neverTouch)
+    && !(aprodaSyncManifest.neverTouchExceptions || []).includes(l);
+  return !allowed || denied;
+}
+
 // 9a. catalogCoherence — flat catalogs (agents/prompts/instructions) + the
 // nested skills catalog. A file on disk not linked by name in its catalog, or
 // a catalog link that resolves to nothing, is an issue either direction.
@@ -375,7 +412,9 @@ checkFlatCatalog("instruction", "instructions", "instructions.md", "instructions
       if (!linked.has(s)) issue("catalogCoherence", `Skill exists on disk but is not linked from skills/index.md: ${s}`);
     }
     for (const s of linked) {
-      if (!onDisk.has(s)) issue("catalogCoherence", `skills/index.md links a skill that does not exist on disk: ${s}`);
+      if (onDisk.has(s)) continue;
+      if (isProjectLayout && isForkOnly("skills/" + s)) continue;
+      issue("catalogCoherence", `skills/index.md links a skill that does not exist on disk: ${s}`);
     }
   }
 }
@@ -474,6 +513,8 @@ checkFlatCatalog("instruction", "instructions", "instructions.md", "instructions
       const candidates = [ref, root + ref];
       const resolved = candidates.some(c => fileExists(c) || fileExists(c + "/SKILL.md"));
       if (!resolved) {
+        const logical = ref.replace(/^\.github\//, "");
+        if (isProjectLayout && isForkOnly(logical)) continue;
         issue("aprodaInventoryCoherence", `readme.aproda.md's inventory references "${m[1]}" which does not resolve to an existing path (checked ${candidates.join(", ")})`);
       }
     }

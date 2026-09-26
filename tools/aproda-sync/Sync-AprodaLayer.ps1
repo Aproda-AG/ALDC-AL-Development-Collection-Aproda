@@ -148,7 +148,10 @@ Write-Host ""
 function Convert-GlobToRegex([string] $glob) {
     $g = $glob -replace '\\', '/'
     $re = [System.Text.RegularExpressions.Regex]::Escape($g)
-    # Restore glob tokens. Order matters: '**' before '*'.
+    # Restore glob tokens. Order matters: '**/' before '/**' before '**'.
+    # '**/' spans zero or more directories: without this a leading '**/' demands a slash, so a
+    # root-level path such as readme.aproda.md never matches and silently never ships.
+    $re = $re -replace '\\\*\\\*/', '(?:.*/)?'  # '**/' -> optional leading dirs
     $re = $re -replace '/\\\*\\\*', '(/.*)?'   # '/**' -> optional deep
     $re = $re -replace '\\\*\\\*', '.*'        # '**'  -> any
     $re = $re -replace '\\\*', '[^/]*'         # '*'   -> segment
