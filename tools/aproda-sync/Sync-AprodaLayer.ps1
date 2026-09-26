@@ -264,8 +264,10 @@ ForEach-Object { ($_.FullName.Substring($srcRepo.TrimEnd('\').Length + 1)) -repl
 $selected = New-Object System.Collections.Generic.List[string]
 foreach ($phys in $allSrc) {
 
-    # Skip VCS / noise early.
-    if ($phys -match '^(\.git/|node_modules/)') { continue }
+    # Skip VCS / noise early -- at ANY depth. Anchoring this to the repo root made a
+    # localFork source walk ~24k files instead of ~600 (nested tool node_modules), which
+    # reads as a hang: every one of them still ran the full glob/allowlist evaluation.
+    if ($phys -match '(^|/)(\.git|node_modules)/') { continue }
 
     $logical = Get-LogicalPath $phys $srcSide
     if ([string]::IsNullOrWhiteSpace($logical)) { continue }
