@@ -81,22 +81,30 @@ The Aproda-sanctioned route is the **VS Code extension**, not the shell/PowerShe
 scripts below:
 
 1. Run **`Aproda ALDC: Install / Update BCQuality`** (also offered from
-   `Show BCQuality Status` when nothing resolves). It clones/updates the
-   configured repository into `<developer root>/BCQuality-Aproda`.
-2. If `aprodaAldc.bcquality.autoReconcile` is enabled (default: on), the
+   `Show BCQuality Status` when nothing resolves). It prefers a clone the
+   resolver already verified and only falls back to
+   `<developer root>/BCQuality-Aproda` when nothing resolves.
+2. **A new clone is never created silently.** If the target does not exist yet,
+   the command asks first and names the exact path. An existing clone is
+   updated (`git pull --ff-only`) without a prompt. Cancel the prompt if you
+   already have a clone elsewhere and point `aprodaAldc.bcquality.path` at it
+   instead — accepting a wrongly derived path writes that path to your **Global**
+   settings, where it then outranks every other rung in *every* Aproda project
+   on the machine.
+3. If `aprodaAldc.bcquality.autoReconcile` is enabled (default: on), the
    extension also maintains the Global `BCQUALITY_HOME` setting and creates
    the `.external/bcquality` junction for you automatically once a clone is
    verified.
-3. **`autoReconcile` is deliberately asymmetric.** Turning it off only stops
+4. **`autoReconcile` is deliberately asymmetric.** Turning it off only stops
    the *additive* work — updating the Global setting and creating the
    junction. It does **not** stop *removal*: if BCQuality is disabled in
    `aldc.yaml` (`external.bcquality.enabled: false`), an existing junction is
    removed regardless of this setting, because a kill-switch must never leave
    a live BCQuality mount behind.
-4. Without the extension, create the junction by hand per
+5. Without the extension, create the junction by hand per
    `.external/README.md`: `New-Item -ItemType Junction -Path .external\bcquality -Target <clone>`
    (Windows, no elevation) / `ln -s <clone> .external/bcquality` (macOS, Linux).
-5. The upstream scripts `tools/bcquality/install.sh` / `install.ps1` still
+6. The upstream scripts `tools/bcquality/install.sh` / `install.ps1` still
    exist and read `url` / `ref` / `pinnedCommit` from `aldc.yaml`, but are not
    the path the extension uses (E-006 B-11) — they remain useful mainly for
    scripted / headless setups.

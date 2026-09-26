@@ -60,6 +60,32 @@ The junction is created by the **Aproda VS Code extension**. The layer content i
 | Installed extension | `aprodaag.aproda-aldc` **0.1.7** — this is the **old** build; the repo's `package.json` also says `0.1.7`, so a rebuild alone is **not** version-distinguishable |
 | Extension source | `<fork>\tools\aproda-vscode-extension`, `npm run package` → VSIX |
 
+### The layer source — check this before anything else
+
+The extension can apply the toolkit from two places, and **this is not visible anywhere in its output
+before the fix that added it**:
+
+| `aprodaAldc.source.mode` | What *Apply Toolkit* applies |
+|---|---|
+| `managed` | a cached clone of the **last released** layer version |
+| `localFork` | the working tree at `aprodaAldc.source.forkPath` |
+
+**This already invalidated one full run.** Run 2 was executed with `source.mode: "managed"`, so it
+applied the *released* layer while everyone believed it was testing the local fork. Every downstream
+symptom — no migration, no `.external/README.md`, no new catalog files, an untouched workspace file —
+was then misread as a product defect. It was not; the fork's changes were simply never applied.
+
+So: **verify both settings in Phase 0 and stop if they are wrong.**
+
+```powershell
+$s = "$env:APPDATA\Code\User\settings.json"
+((Get-Content $s -Raw) -replace '(?m)^\s*//.*$','' | ConvertFrom-Json).PSObject.Properties |
+    Where-Object { $_.Name -like 'aprodaAldc*' } | ForEach-Object { "{0} = {1}" -f $_.Name, $_.Value }
+```
+
+Required for these runs: `source.mode` = `localFork`, and `source.forkPath` pointing at the fork listed
+in the table above. Anything else — **stop and report**, do not "work around" it.
+
 **The project is backed up 1:1 by the maintainer.** Resetting it is cheap. Ask the maintainer to perform
 the reset between the two runs — do not attempt to locate or restore the backup yourself.
 

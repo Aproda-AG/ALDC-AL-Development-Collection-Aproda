@@ -22,41 +22,42 @@ the disable path, and a real review that cites BCQuality.
    `../BCQuality-Aproda` again.
 3. **Capture and hash `StraubMedicalAGBase.code-workspace`.** B11 compares the `.bak` against this
    baseline, so it must be recorded before anything touches the file.
+4. **Verify the layer source** — see the briefing's *"The layer source"* section. `aprodaAldc.source.mode`
+   must be `localFork` and `aprodaAldc.source.forkPath` must point at the fork. **If `source.mode` is
+   `managed`, stop immediately and report** — the run would apply the last *released* layer instead of
+   the work under test, which is exactly how the previous attempt was invalidated.
 
 | ID | Criterion |
 |---|---|
 | **B1** | Clean tree, correct branch, pre-Block-4 layout fully restored, workspace file hashed |
+| **B1b** | `aprodaAldc.source.mode` = `localFork`, `source.forkPath` = the fork under test |
 
 ---
 
-## Phase 1 — Build and install the new extension
+## Phase 1 — Confirm the new extension is active
 
-The installed build is `0.1.7` and the repo's `package.json` also says `0.1.7`, so a rebuild alone is
-**not** version-distinguishable — VS Code would not treat it as an update and you might silently test
-the old code. A temporary version bump solves that. It is reverted at the end of this run.
+**The VSIX has already been built and installed by the maintainer. You do not build or install
+anything.** Your job here is only to *verify* that the running extension is the new one.
 
-Work in `<fork>\tools\aproda-vscode-extension`.
+Background, so the version looks sane to you: the repository's `package.json` says `0.1.7`, which is
+also what was installed originally. A rebuild at the same version is not distinguishable to VS Code, so
+the build was made at a throwaway version `0.1.8-test.2` and the repository was reverted to `0.1.7`
+afterwards. **The mismatch is intentional** — do not report it as a defect, and do not "fix" it. An
+older throwaway build `0.1.8-test.1` also exists in `dist/`; it is superseded and must not be used.
 
-1. **Temporarily** set `version` in `package.json` to `0.1.8-test.1`. Change nothing else.
-2. `npm test` — all suites must pass before you package anything. If any fail, **stop and report**.
-3. `npm run package` → produces a `.vsix`. Record its exact filename.
-4. Install it:
-   `code --install-extension <path-to-vsix> --force`
-5. **Reload / restart VS Code**, then confirm the active version:
-   `Get-ChildItem "$env:USERPROFILE\.vscode\extensions" -Directory -Filter 'aprodaag.aproda-aldc*' | Select-Object -ExpandProperty Name`
-6. **Revert `package.json` to `0.1.7`** (`git checkout -- package.json` in the fork). The bump was only
-   to force the install; it must not survive in the repository. Verify the fork's `git status` is clean
-   afterwards.
+```powershell
+Get-ChildItem "$env:USERPROFILE\.vscode\extensions" -Directory -Filter 'aprodaag.aproda-aldc*' |
+    Select-Object -ExpandProperty Name
+```
 
 | ID | Criterion |
 |---|---|
-| **B2** | `npm test` passes all suites |
-| **B3** | The VSIX installs and VS Code reports `aprodaag.aproda-aldc-0.1.8-test.1` as active |
-| **B4** | The fork's `package.json` is back at `0.1.7` and the fork's working tree is clean |
+| **B2** | The active extension is `aprodaag.aproda-aldc-0.1.8-test.2` |
+| **B3** | The new commands exist: `Aproda ALDC: Show BCQuality Status` is offered in the Command Palette, and a `#bcquality` tool is reachable |
+| **B4** | The fork's working tree carries no leftover version bump — `package.json` still reads `0.1.7` — and no `.vsix` is tracked |
 
-> If the extension cannot be installed for policy reasons, fall back to launching an **Extension
-> Development Host** (F5) from the fork and opening the test project inside it — then say so in the
-> report, because it is a less faithful test.
+**If B2 shows anything other than `0.1.8-test.2`, stop and report.** Everything after this point would
+then be testing a different build and the whole run would be worthless.
 
 ---
 
@@ -91,6 +92,17 @@ not-yet-migrated project — the real state of every project at the moment the e
 Run **`Aproda ALDC: Apply Toolkit`** against the test project and capture the full output. Then reload
 the VS Code window.
 
+> **You cannot run this command yourself — hand it to the maintainer and wait.** It blocks on two
+> interactions an agent cannot answer: `resolveTargetRepo()` raises a **quick-pick** because this
+> workspace currently has two git roots (the project *and* the mounted `../../BCQuality-Aproda`), and
+> `confirmGitHubChanges` raises a **warning with buttons**. Capture the state *before*, ask the
+> maintainer to run the command, then capture the state *after*.
+>
+> **Do not improvise a substitute.** Running `Bootstrap-AprodaProject.ps1` directly would execute the
+> same engine, but it would skip the extension's own command path — which is part of what this phase
+> exists to test. If you end up doing it anyway for some reason, say so prominently in the report; a
+> disclosed deviation is fine, a silent one makes the run worthless.
+
 | ID | Criterion |
 |---|---|
 | **B9** | Apply Toolkit completes without an unhandled error |
@@ -102,8 +114,11 @@ the VS Code window.
 
 For **B11**, hash the `.bak` against the Phase-0 copy of the workspace file — do not compare by eye.
 
-Now trigger the extension's reconcile — via **`Aproda ALDC: Install / Update BCQuality`** or
-**Apply Toolkit**, whichever the extension offers. Record which you used.
+Now trigger the extension's junction reconcile with **`Aproda ALDC: Install / Update BCQuality`**.
+
+> **This one you CAN run yourself** — it has no blocking prompt, only a closing information message. Use
+> your VS Code command tool. If it fails or asks something you cannot answer, stop and hand it over
+> rather than working around it.
 
 | ID | Criterion |
 |---|---|
@@ -171,7 +186,8 @@ junction, not merely stop creating one. And that removal must never harm the rea
 
 ## Phase 6 — Idempotency and close-out
 
-1. Run **Apply Toolkit** a second time.
+1. Run **Apply Toolkit** a second time — again a **maintainer action** (same two prompts as in Phase 3).
+   Capture the state before and after yourself.
 
 | ID | Criterion |
 |---|---|
@@ -185,8 +201,8 @@ junction, not merely stop creating one. And that removal must never harm the rea
 |---|---|
 | **B30** | The fork's working tree is clean — no leftover version bump, no stray files, no `.vsix` committed |
 
-Optionally uninstall `0.1.8-test.1` and reinstall `0.1.7` if the maintainer wants the workstation back
-in its prior state — **ask first**, do not decide this yourself.
+The test build stays installed until the maintainer decides otherwise. **Do not uninstall it and do not
+reinstall `0.1.7`** — that is the maintainer's call, not yours.
 
 ---
 

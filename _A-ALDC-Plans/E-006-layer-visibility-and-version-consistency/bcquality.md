@@ -395,7 +395,10 @@ Two artifact families feed the validator — both count as "audit checking" in t
 
 ---
 
-## 4. Findings (all observed 2026-09-24, nothing fixed)
+## 4. Findings
+
+*B-1 … B-11 were observed 2026-09-24 by inspection, before any change. The three sections after them
+carry what the implementation and the two end-to-end runs added. Status is per row.*
 
 | # | Finding | Evidence |
 |---|---|---|
@@ -426,7 +429,35 @@ corrected two predictions, one of them mine.*
 | — | The migration left the retired sibling root's `search.exclude` / `files.watcherExclude` globs behind | ✅ fixed in the same pass |
 | **B-21** | **The `.bak` never held the original — and one writer never made one at all.** Run 1's repeat (after the B-18 guards) measured the backup as byte-*different* from the pre-Block-4 baseline. Root cause is older and wider than the migration: **`Initialize-AprodaProject.ps1`'s Init 3 rewrites the workspace file through `ConvertTo-Json` — stripping comments and formatting — with no backup whatsoever**, and has done so since long before Block 4. The migration's `.bak` covered only the *second* rewrite, so it captured already-modified content. The promise "your original is saved" was therefore never actually kept | ✅ **fixed**: the backup is taken before the **first** rewrite, by whichever writer gets there first, still write-once. Verified in a fixture: `.bak` byte-identical to the pristine file, comment intact, migration output unchanged |
 | **B-22** | **`Start-Pull.ps1` executed the project's own sync engine** — the direct cause of B-18's version skew, and the reason the first Block-4 adoption needs two pulls even after the guards. `Start-Pull.ps1.template` now takes the engine **and** the manifest from the **fork**, mirroring `Bootstrap-AprodaProject.ps1`; `Initialize-AprodaProject.ps1` deliberately stays project-side, because it anchors its `.git`-walk at its own location. **This does not help the current transition** — an existing project never receives a refreshed starter (**T-40**), so no code change can reach the projects adopting Block 4 now. **Accepted by the maintainer, 2026-09-25, with no mitigation:** ~98% of updates — today every developer except the maintainer — run through *Apply Toolkit*, which was never affected because it executes the fork's engine. The one exposed person knows | ✅ fixed for future projects; residual risk **accepted** |
-| **B-22** | **`Start-Pull.ps1` ran the project's own sync engine** — the direct cause of B-18's version skew. Fixed in `Start-Pull.ps1.template`: the engine and manifest now come from the **fork**, mirroring `Bootstrap-AprodaProject.ps1`; `Initialize-AprodaProject.ps1` stays project-side because it anchors its `.git`-walk at its own location. **Does not help the current transition** — an existing project never receives a refreshed starter (**T-40**). **Accepted by the maintainer 2026-09-25, no mitigation:** ~98% of updates (today: all developers except the maintainer) run through *Apply Toolkit*, which was never affected because it executes the fork's engine | ✅ fixed for future projects; residual risk accepted |
+
+### Findings from the end-to-end run 2 (2026-09-25/26) — the production order, measured
+
+*Run 2 delivered the layer in the intended order (Apply Toolkit, `localFork`) into a real project.
+**26 of 30 acceptance points passed cleanly**: the migration was flawless, the `.bak` was byte-identical
+to the baseline (**B-21** holds), the `#bcquality` containment boundary held against an adversarial
+probe, a real Dredd citation resolved to a genuine knowledge file, and the disable/re-enable cycle
+behaved. The four defects below are what the run bought.*
+
+| # | Finding | Status |
+|---|---|---|
+| **B-23** | **`Install / Update BCQuality` created a duplicate clone and leaked it machine-wide.** The command did not reuse the already-verified clone; it fell through to `<devRoot>/BCQuality-Aproda`, **silently `git clone`d a second copy**, junctioned `.external/bcquality` to *that*, and wrote Global `aprodaAldc.bcquality.path` at it — which then outranks every rung in **every** Aproda project on the machine (confirmed to propagate into `@Dredd`: `resolvedFrom: "setting"`). **The reported diagnosis — "read and write path disagree on precedence" — was wrong**; both use the same `resolveBcqualityPath()`. The real cause is **timing**: `initializeProject()` resolved BCQuality only *after* `runBootstrap`, and the migration removes the mounted BCQuality root and the workspace-level `BCQUALITY_HOME` **before** the replacement junction exists. In that window no rung verifies, so an existing clone is indistinguishable from a first-time install. A stale `devRoot` (missing one path segment) supplied the plausible-but-wrong target | ✅ **fixed**: the resolution is captured **before** the bootstrap; a clone into a not-yet-existing target now requires a confirmation naming the path. Deliberately **not** changed: the Global `bcquality.path` write after a successful install (maintainer decision) |
+| **B-24** | **Apply Toolkit appeared to hang on the `localFork` path.** Two causes, one of them not the suspected one: (a) `Sync-AprodaLayer.ps1`'s noise skip was anchored at the top level, so a nested `.git`/`node_modules` was walked — **24 018 files enumerated instead of 606**; (b) the actual hang: three advisory `showWarningMessage` calls in `ensureLocalFork()` were `await`ed, blocking the entire command until dismissed. Measured git time was 0.2 s, which is what ruled (a) out as *the* cause | ✅ **fixed**: depth-aware skip (dry-run 4.9 s) and the three advisories changed to fire-and-forget. **Not swept blanket-wise** — the other 17 `await`ed message sites include ones that legitimately gate control flow (`ensureGitRepository`, `confirmGitHubChanges`) |
+| **B-25** | **`BCQUALITY_HOME` was written for all three platforms and read from the wrong scope.** `reconcileBcquality` set `terminal.integrated.env.{windows,linux,osx}` regardless of the host, leaving two entries that can never be correct, and it read the existing value via `get()` — which collapses Workspace over Global — instead of `inspect()?.globalValue` | ✅ **fixed**: only the current platform's key is written, stale entries on the other two are pruned, and the scope is read explicitly |
+| **B-26** | **The repository quick-pick could silently select the BCQuality clone.** A reviewer **reproduced** it: a forged `entryPoint` in the clone's own `aldc.yaml` made it look like the project repo. Identity must never be taken from a candidate's own config | ✅ **fixed**: `isBcqualityClone()` probes only the fixed default marker path; a single-root or all-clones situation errors out instead of guessing, and the prompt appears only when genuinely ambiguous |
+| **B-27** | **Run 2's first attempt was confounded and had to be discarded.** `source.mode` was still `"managed"`, so the *released* layer was applied rather than the fork under test. My omission — the briefing never listed `source.mode` as a precondition | ✅ **fixed**: a hard Phase-0 check in the briefing |
+
+> **Why a 30-point acceptance list missed B-23.** The junction criteria asserted that a junction
+> **exists**, not what it **points at** — so a junction to the wrong clone passed. This is the same
+> weakness as the "declared capability not in effect" class the whole subsystem keeps producing, moved
+> into the test plan itself. Every criterion touching a resolved path must assert **identity**, not
+> existence. The regression tests written for the fix follow that rule.
+
+> **A defect the fix itself introduced, caught by re-review.** The first repair threaded a **single**
+> pre-bootstrap repository snapshot into both the pre- *and* post-bootstrap call sites. But the bootstrap
+> is what *writes* `aldc.yaml` — so on a first init the fallback would never have seen the declared
+> `home` and reconciliation would have been skipped silently. Found by an independent second review
+> round, reproduced as a failing test, then fixed by re-probing in the fallback branch.
+
 
 > **A verdict the run got wrong:** it marked **A14** FAIL ("the three catalog files are in no part of the
 > sync manifest"). They are not in `aproda-sync.json` — they are in `aldc.yaml → required.catalog`. Its own
@@ -510,3 +541,9 @@ above; T-30/T-31/T-32 remain closed as measurements rather than changes.*
   validator still passes vacuously (**B-6**) and does not ship (**B-3**); the CI does not run in a
   consuming project (**B-1/B-4**). Treat "BCQuality Evidence" blocks in phase reports as claims, not as
   proof — until Block 5 (**T-21, T-23, T-26**) says otherwise.
+
+**Measured end-to-end, 2026-09-25/26.** Two runs against a real project: run 1 in the deliberately
+wrong order, run 2 in the production order. Run 2 scored **26/30** clean. Everything the runs found
+(**B-18 … B-27**) is fixed except the two rows explicitly marked deferred (**T-40**) or accepted
+(**B-22** residual risk). What is *not* measured: macOS/Linux — every junction result rests on Windows
+reparse-point semantics (see T-31).
