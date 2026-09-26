@@ -38,7 +38,7 @@ The maintainer corrects it after Run 4, not before.
 | `aprodaAldc.bcquality.path` | **absent or empty** |
 | `terminal.integrated.env.*.BCQUALITY_HOME` (Global) | **absent on all three platforms** |
 | `aprodaAldc.devRoot` | `c:\_EphemeralWorkspace` — wrong on purpose, see above |
-| Installed extension | `aprodaag.aproda-aldc-0.1.8-test.5` |
+| Installed extension | `aprodaag.aproda-aldc-0.1.8-test.7` |
 
 Then capture the baseline — **record the numbers, later criteria compare against them**:
 
@@ -99,25 +99,36 @@ This is the heart of the run. Run **`Aproda ALDC: Install / Update BCQuality`**.
 | **C19** | No `ELOOP` anywhere. `Get-Item '<project>\.external\bcquality' -Force` must succeed and its `Target` must be the real clone, not itself (B-28) |
 | **C20** | **No "ALDC is not installed" prompt** on a fully migrated project — neither at startup nor on reopening the window. This fired on every window before (B-29) |
 | **C21** | `Aproda ALDC: Validate Installation` runs and produces a verdict — not `spawn npm ENOENT` (B-30) |
-| **C22** | The output log states what the BCQuality step decided. Quote the line. **Silence is a finding** (B-31) |
+| **C22** | The output log states what the BCQuality step decided. Quote the line. **Silence is a finding** (B-31). **Read the channel immediately after Apply Toolkit** — do not reload the window, install a VSIX, or let the extension host restart in between; any of those recreates the channel and destroys the evidence |
 
 ---
 
 ## Phase 4 — Negative test: the confirmation must actually fire
 
-Run 2 never exercised the clone path deliberately. Force it:
+**Run 3.2 found this phase could not fire its own dialog (B-33).** Once Phases 1–2 have run, the
+`.external/bcquality` junction resolves no matter what garbage `bcquality.path` holds, so the command
+never reaches the "nothing resolved, offer to clone" branch. **Remove the junction first** — link only,
+never recursive (briefing rule 5):
+
+```powershell
+(Get-Item '<project>\.external\bcquality' -Force).Delete()   # removes the link, NOT the clone
+```
+
+Then verify the real clone is still intact (`Test-Path` on it, file count unchanged) **before**
+continuing. If it is not, stop immediately.
 
 1. Set Global `aprodaAldc.bcquality.path` to a path that does **not** exist, e.g.
    `c:\_EphemeralWorkspace\__bcq-does-not-exist`.
 2. Run **`Install / Update BCQuality`**.
 3. **Cancel** the dialog (press Esc — not a button).
-4. Remove the setting again.
+4. Remove the setting again, then re-run `Install / Update BCQuality` to restore the junction.
 
 | ID | Criterion |
 |---|---|
 | **C14** | A modal confirmation appears and **names that exact path** in its detail text |
-| **C15** | After cancelling: the directory was **not** created, no `git clone` ran, and `bcquality.path` still holds the value you set (the command must not have overwritten it) |
+| **C15** | After cancelling: the directory was **not** created, no `git clone` ran, and `bcquality.path` still holds the value you set. **B-32:** even on a *successful* run against a different rung, a configured path that differs from the one actually used must be left untouched and the mismatch surfaced — never silently rewritten |
 | **C16** | Pressing **Esc** is treated as cancel, identically to the Cancel button |
+| **C23** | After step 4 the junction exists again and its `Target` is the real clone |
 
 > Do **not** confirm the dialog. Cloning into a bogus path is not part of this run.
 

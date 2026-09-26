@@ -63,7 +63,7 @@ some of them:
 | `terminal.integrated.env.*.BCQUALITY_HOME` | **cleared on all three platforms** |
 | `aprodaAldc.source.mode` / `source.forkPath` | `localFork` / the fork under test |
 | `aprodaAldc.devRoot` | `c:\_EphemeralWorkspace` — still deliberately wrong |
-| Installed extension | `aprodaag.aproda-aldc-0.1.8-test.5` |
+| Installed extension | `aprodaag.aproda-aldc-0.1.8-test.7` |
 
 | ID | Criterion |
 |---|---|
@@ -158,7 +158,7 @@ What must **not** have happened is a silent clone.
 | **D32** | `Get-Item '<repo>\.external\bcquality' -Force` succeeds — no `ELOOP` — and its `Target` is the real clone, not itself (B-28) |
 | **D33** | **Reopen the window.** No "ALDC is not installed" / "do you want to initialize" prompt appears on a project that was just initialized (B-29) |
 | **D34** | D30 produces an actual verdict, not `spawn npm ENOENT` (B-30) |
-| **D35** | The log states what the BCQuality step decided at every stage — including the legitimate "resolved nothing, no link" case in D18. **Silence is a finding** (B-31) |
+| **D35** | The log states what the BCQuality step decided at every stage — including the legitimate "resolved nothing, no link" case in D18. **Silence is a finding** (B-31). **Read the channel immediately after Apply Toolkit** — no window reload, no VSIX install, no extension-host restart in between; each of those recreates the channel and destroys the evidence. Run 4.2's silence is unexplained and may be exactly this |
 
 ---
 
