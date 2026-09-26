@@ -34,7 +34,7 @@ export async function installOrUpdateBcquality(logger: Logger): Promise<string |
                 await runGit(["pull", "--ff-only"], logger, target);
             }
         });
-        await updateGlobal("bcquality.path", target);
+        await recordBcqualityPath(target, logger);
         void vscode.window.showInformationMessage(`BCQuality is ready at ${target}.`);
         return target;
     } catch (error) {
@@ -62,6 +62,25 @@ export async function resolveBcqualityPath(repository?: AldcRepositoryResolution
         return undefined;
     }
     return path.join(devRoot(), "BCQuality-Aproda");
+}
+
+// A configured path is a deliberate user choice, including when it is wrong: silently replacing it
+// discards that choice and hides the misconfiguration behind a success message.
+async function recordBcqualityPath(target: string, logger: Logger): Promise<void> {
+    const configured = bcqualityPath();
+    if (configured && path.resolve(configured) !== path.resolve(target)) {
+        logger.info(`Leaving aprodaAldc.bcquality.path unchanged at ${configured}; it does not resolve, so ${target} was used instead.`);
+        void vscode.window.showWarningMessage(
+            `The configured BCQuality path does not resolve; ${target} was used instead.`,
+            "Show Log"
+        ).then((selection) => {
+            if (selection === "Show Log") {
+                logger.show();
+            }
+        });
+        return;
+    }
+    await updateGlobal("bcquality.path", target);
 }
 
 // Creating a clone is the one irreversible step here, and a convention-derived target is

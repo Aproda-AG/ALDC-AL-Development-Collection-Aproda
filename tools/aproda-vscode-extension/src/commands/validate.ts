@@ -5,10 +5,10 @@ import { resolveTargetRepo } from "../env/gitRoot";
 import { Logger } from "../log";
 import { run } from "../process";
 
-// npm has no .exe on Windows (only npm.cmd); spawn without shell:true needs the exact extension to find it.
-export function npmExecutable(platform: NodeJS.Platform): string {
-    return platform === "win32" ? "npm.cmd" : "npm";
-}
+// npm has no .exe on Windows, and since Node 18.20 spawning a .cmd shim without a shell fails outright
+// with EINVAL (CVE-2024-27980). Hence a shell -- safe here only because this string is a constant:
+// nothing user-influenced is ever concatenated into it, and no argument array is passed alongside.
+export const npmInstallCommand = "npm install --omit=dev --no-package-lock";
 
 export async function validateInstallation(logger: Logger): Promise<void> {
     const repositoryRoot = await resolveTargetRepo();
@@ -28,7 +28,7 @@ export async function validateInstallation(logger: Logger): Promise<void> {
             async (progress) => {
                 if (!await pathExists(path.join(validatorRoot, "node_modules", "js-yaml"))) {
                     progress.report({ message: "Installing validator dependencies" });
-                    const install = await run(npmExecutable(process.platform), ["install", "--omit=dev", "--no-package-lock"], { cwd: validatorRoot });
+                    const install = await run(npmInstallCommand, [], { cwd: validatorRoot, shell: true });
                     logResult(logger, install.stdout, install.stderr);
                     if (install.code !== 0) {
                         throw new Error("Could not install ALDC validator dependencies.");

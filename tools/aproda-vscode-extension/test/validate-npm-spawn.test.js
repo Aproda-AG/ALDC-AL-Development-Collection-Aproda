@@ -64,32 +64,34 @@ async function main() {
         // node_modules/js-yaml intentionally absent, forcing the npm install branch.
 
         const harness = makeHarness(repositoryRoot);
-        await withValidate(harness, async ({ validateInstallation, npmExecutable }) => {
-            // Asserted for both platforms explicitly: mirroring `process.platform` here would make the
-            // test agree with the code on a non-Windows runner without ever exercising the win32 branch.
-            assert.strictEqual(npmExecutable("win32"), "npm.cmd");
-            assert.strictEqual(npmExecutable("linux"), "npm");
-            assert.strictEqual(npmExecutable("darwin"), "npm");
+        await withValidate(harness, async ({ validateInstallation, npmInstallCommand }) => {
+            // The whole invocation must be one constant string: under a shell, anything concatenated
+            // into it would stop being an argument and start being shell syntax.
+            assert.strictEqual(npmInstallCommand, "npm install --omit=dev --no-package-lock");
             await validateInstallation(logger);
         });
 
         assert.strictEqual(harness.runCalls.length, 2, "expected an npm install call followed by a node validator call");
         const [installCall, validatorCall] = harness.runCalls;
 
-        const expectedNpmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
-        assert.strictEqual(installCall.command, expectedNpmCommand);
-        assert.deepStrictEqual(installCall.args, ["install", "--omit=dev", "--no-package-lock"]);
+        // Node >= 18.20 refuses to spawn a .cmd shim without a shell (EINVAL), and npm has no .exe on
+        // Windows -- so the shell is required here, and the argument array must stay empty.
+        assert.strictEqual(installCall.command, "npm install --omit=dev --no-package-lock");
+        assert.deepStrictEqual(installCall.args, []);
+        assert.strictEqual(installCall.options.shell, true);
         assert.strictEqual(installCall.options.cwd, validatorRoot);
 
-        // The node call must remain unshimmed: node ships an .exe on Windows, no rewrite is needed there.
+        // The node call must remain unshimmed and unshelled: node ships an .exe on Windows, and a shell
+        // would change how the validator path argument is quoted.
         assert.strictEqual(validatorCall.command, "node");
         assert.deepStrictEqual(validatorCall.args, [path.join(validatorRoot, "index.js")]);
         assert.strictEqual(validatorCall.options.cwd, repositoryRoot);
+        assert.notStrictEqual(validatorCall.options.shell, true, "the validator call must not run under a shell");
 
-        // The fix must be local to this call site: process.ts itself must not gain a shell option,
-        // which would change argument quoting for every other caller (e.g. git with repository URLs).
+        // The shell must stay opt-in per call: a default-on shell would silently change argument
+        // quoting for every caller, including git calls carrying repository URLs and paths.
         const processSource = await fs.readFile(path.join(__dirname, "..", "dist", "process.js"), "utf8");
-        assert.ok(!/shell/i.test(processSource), "run() must stay shell-free; the fix belongs at the npm call site only");
+        assert.ok(/shell:\s*options\.shell === true/.test(processSource), "run() must only enable a shell when the caller explicitly asks for it");
     } finally {
         await fs.rm(scratch, { recursive: true, force: true });
     }

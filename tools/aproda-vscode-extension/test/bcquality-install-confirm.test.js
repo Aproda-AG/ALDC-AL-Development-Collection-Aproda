@@ -8,13 +8,13 @@ const Module = require("module");
 // An existing clone the resolver temporarily lost track of looks exactly like a first-time install,
 // and cloning anyway leaves a duplicate behind plus a global setting pointing at it.
 
-function makeHarness({ devRoot = "", bcqualityPath = "", answer = undefined }) {
+function makeHarness({ devRoot = "", bcqualityPath = "", answer = undefined, workspaceFolders = [] }) {
     const prompts = [];
     const updates = [];
     const gitCalls = [];
     const vscodeMock = {
         workspace: {
-            workspaceFolders: [],
+            workspaceFolders,
             getConfiguration: () => ({
                 get: (key, defaultValue) => {
                     if (key === "devRoot") { return devRoot; }
@@ -102,6 +102,24 @@ async function run() {
         assert.strictEqual(existingResult, existingTarget);
         assert.strictEqual(existing.prompts.length, 0, "updating an existing clone must not prompt");
         assert.deepStrictEqual(existing.gitCalls[0][0], "pull");
+        assert.deepStrictEqual(existing.updates, [{ key: "bcquality.path", value: existingTarget }]);
+
+        // A configured path that does not resolve must survive: it is a deliberate user choice, and
+        // silently replacing it hides the misconfiguration behind a success message.
+        const mounted = path.join(scratch, "mounted-clone");
+        await fs.mkdir(path.join(mounted, "skills"), { recursive: true });
+        await fs.writeFile(path.join(mounted, "skills", "entry.md"), "# entry");
+        await fs.mkdir(path.join(mounted, ".git"), { recursive: true });
+        const configuredElsewhere = path.join(scratch, "user-chose-this");
+        const keep = makeHarness({
+            bcqualityPath: configuredElsewhere,
+            workspaceFolders: [{ uri: { fsPath: mounted } }],
+            answer: undefined
+        });
+        const keepResult = await withInstaller(keep, ({ installOrUpdateBcquality }) => installOrUpdateBcquality(logger));
+        assert.strictEqual(keepResult, mounted, "the verified rung wins when the configured path does not resolve");
+        assert.strictEqual(keep.prompts.length, 1, "the user must be told the configured path was not used");
+        assert.deepStrictEqual(keep.updates, [], "a differing configured path must never be silently overwritten");
     } finally {
         await fs.rm(scratch, { recursive: true, force: true });
     }

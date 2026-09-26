@@ -6,11 +6,14 @@ export interface ProcessResult {
     readonly stderr: string;
 }
 
-export function run(command: string, args: readonly string[], options: { cwd?: string; env?: NodeJS.ProcessEnv } = {}): Promise<ProcessResult> {
+export function run(command: string, args: readonly string[], options: { cwd?: string; env?: NodeJS.ProcessEnv; shell?: boolean } = {}): Promise<ProcessResult> {
     return new Promise((resolve, reject) => {
         const child = spawn(command, args, {
             cwd: options.cwd,
             env: { ...process.env, ...options.env },
+            // Opt-in per call, never the default: under a shell the arguments stop being quoted for the
+            // callee, so only a caller passing nothing user-influenced may ask for it.
+            shell: options.shell === true,
             windowsHide: true
         });
         let stdout = "";

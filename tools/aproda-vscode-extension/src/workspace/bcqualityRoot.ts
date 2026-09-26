@@ -78,7 +78,7 @@ export async function createBcqualityLink(linkPath: string, target: string, logg
         return;
     }
     const currentTarget = await readLinkTarget(linkPath);
-    if (currentTarget && path.resolve(currentTarget) === path.resolve(target)) {
+    if (currentTarget && samePath(currentTarget, target)) {
         logger.info(`BCQuality link already correct: ${linkPath} -> ${target}`);
         return;
     }
@@ -90,20 +90,30 @@ export async function createBcqualityLink(linkPath: string, target: string, logg
     logger.info(`Linked BCQuality: ${linkPath} -> ${target}`);
 }
 
+// Windows path comparison is case-insensitive: readlink() reports the drive letter as stored ("C:\"),
+// while a resolved candidate may carry it lower-cased, and treating those as different paths makes a
+// healthy link look wrong.
+function samePath(left: string, right: string): boolean {
+    const a = path.resolve(left);
+    const b = path.resolve(right);
+    return process.platform === "win32" ? a.toLocaleLowerCase() === b.toLocaleLowerCase() : a === b;
+}
+
 // Defence in depth for Fix A (resolve.ts already canonicalises verified candidates): even if a future
 // resolver change reintroduces a link-as-root, no self-referential junction can be created here.
-// Both sides are canonicalised (when possible) before comparing, because Windows can otherwise report
-// linkPath in its 8.3 short-name form (e.g. via os.tmpdir()) while realpath() on target expands it to the
-// long form, making an actual self-reference look like a difference. realpath() on linkPath is safe here:
-// if linkPath is currently a self-referential junction it throws ELOOP, which is caught and degrades to a
-// plain path.resolve() comparison rather than crashing.
+// The link's identity is its canonical PARENT plus its own name -- never realpath(linkPath), which for a
+// healthy junction returns the target and would condemn every correct link as a self-reference.
 async function targetResolvesToLink(target: string, linkPath: string): Promise<boolean> {
-    if (path.resolve(target) === path.resolve(linkPath)) {
+    if (samePath(target, linkPath)) {
         return true;
     }
-    const resolvedLinkPath = await canonicalOrResolved(linkPath);
-    const resolvedTarget = await canonicalOrResolved(target);
-    return resolvedTarget === resolvedLinkPath;
+    return samePath(await canonicalOrResolved(target), await canonicalLinkPath(linkPath));
+}
+
+// Canonicalising the parent normalises Windows 8.3 short names (os.tmpdir() can yield LOCAL_~1.KOE)
+// without following the link itself.
+async function canonicalLinkPath(linkPath: string): Promise<string> {
+    return path.join(await canonicalOrResolved(path.dirname(linkPath)), path.basename(linkPath));
 }
 
 async function canonicalOrResolved(candidatePath: string): Promise<string> {

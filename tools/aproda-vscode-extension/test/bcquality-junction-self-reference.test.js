@@ -52,7 +52,9 @@ async function testRefusesRealpathSelfReference(scratch) {
 }
 
 // Regression guard for the pre-existing early-return: an already-correct junction must not be
-// removed/recreated on a repeat call.
+// removed/recreated on a repeat call -- and must not be mistaken for a self-reference. A correct
+// junction resolves to exactly its target, so a guard that resolves BOTH sides condemns every healthy
+// link; this test's first version missed that by only counting "Linked" messages.
 async function testExistingCorrectJunctionLeftAlone(scratch) {
     const target = path.join(scratch, "real-clone-noop");
     await fs.mkdir(target, { recursive: true });
@@ -60,7 +62,8 @@ async function testExistingCorrectJunctionLeftAlone(scratch) {
     const linkPath = path.join(scratch, "noop-parent", "bcquality");
 
     const messages = [];
-    const logger = { info: (message) => messages.push(message), error: () => undefined };
+    const errors = [];
+    const logger = { info: (message) => messages.push(message), error: (message) => errors.push(message) };
 
     await createBcqualityLink(linkPath, target, logger);
     await createBcqualityLink(linkPath, target, logger);
@@ -69,6 +72,43 @@ async function testExistingCorrectJunctionLeftAlone(scratch) {
     const removedMessages = messages.filter((message) => message.includes("Removed BCQuality link"));
     assert.strictEqual(linkedMessages.length, 1, "junction must only be created once");
     assert.strictEqual(removedMessages.length, 0, "an unchanged target must never trigger a remove+recreate");
+    assert.deepStrictEqual(errors, [], "a correct junction must never be reported as a self-reference");
+    assert.ok(
+        messages.some((message) => message.includes("already correct")),
+        "the repeat call must take the already-correct path, not be refused by the self-reference guard"
+    );
+    assert.ok(await pathExists(path.join(linkPath, "marker.txt")), "the link must still reach the real target");
+}
+
+// The recorded link target keeps the drive letter as stored, while a resolved candidate can carry it
+// lower-cased. On Windows those are the same path, and treating them as different makes the extension
+// tear down and rebuild a healthy junction on every single run.
+async function testCaseOnlyDifferenceIsNotAChange(scratch) {
+    const target = path.join(scratch, "real-clone-case");
+    await fs.mkdir(target, { recursive: true });
+    const linkPath = path.join(scratch, "case-parent", "bcquality");
+
+    const messages = [];
+    const errors = [];
+    const logger = { info: (message) => messages.push(message), error: (message) => errors.push(message) };
+
+    await createBcqualityLink(linkPath, target, logger);
+    const differentlyCased = process.platform === "win32"
+        ? target.charAt(0).toLowerCase() + target.slice(1)
+        : target;
+    await createBcqualityLink(linkPath, differentlyCased, logger);
+
+    assert.strictEqual(messages.filter((m) => m.includes("Linked BCQuality")).length, 1, "a case-only difference is not a changed target");
+    assert.deepStrictEqual(errors, []);
+}
+
+async function pathExists(candidate) {
+    try {
+        await fs.access(candidate);
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 async function main() {
@@ -77,6 +117,7 @@ async function main() {
         await testRefusesLiteralSelfReference(scratch);
         await testRefusesRealpathSelfReference(scratch);
         await testExistingCorrectJunctionLeftAlone(scratch);
+        await testCaseOnlyDifferenceIsNotAChange(scratch);
     } finally {
         await fs.rm(scratch, { recursive: true, force: true });
     }
