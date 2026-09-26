@@ -17,6 +17,9 @@ export interface BcqualityCandidate {
     readonly source: BcqualitySource;
     readonly path?: string;
     readonly verdict: BcqualityVerdict;
+    // Only set when a verified candidate is reached through a link (e.g. the .external/bcquality junction)
+    // and its real location differs from the probed path -- that real location is what `root` resolves to.
+    readonly realPath?: string;
 }
 
 export interface BcqualityResolution {
@@ -53,7 +56,7 @@ export async function resolveBcquality(repository?: AldcRepositoryResolution): P
     const verified = candidates.find((candidate) => candidate.verdict === "verified");
 
     return {
-        root: verified?.path,
+        root: verified ? (verified.realPath ?? verified.path) : undefined,
         resolvedFrom: verified?.source,
         verified: verified !== undefined,
         enabled,
@@ -86,8 +89,36 @@ async function probe(source: BcqualitySource, candidatePath: string | undefined,
     if (!await directoryExists(candidatePath)) {
         return { source, path: candidatePath, verdict: "missing" };
     }
-    const verdict = await fileExists(path.join(candidatePath, entryPoint)) ? "verified" : "noEntryPoint";
-    return { source, path: candidatePath, verdict };
+    if (!await fileExists(path.join(candidatePath, entryPoint))) {
+        return { source, path: candidatePath, verdict: "noEntryPoint" };
+    }
+    const realPath = await canonicalize(candidatePath);
+    return { source, path: candidatePath, verdict: "verified", realPath };
+}
+
+// A verified candidate must canonicalise to its real filesystem location before it is trusted as `root`:
+// otherwise a link (e.g. the .external/bcquality junction) can be reported as the canonical clone, and later
+// get written back as a link's own target. Only resolved when the probed path is itself a link -- calling
+// realpath() on an ordinary directory can rewrite Windows 8.3 short-name segments (e.g. from os.tmpdir())
+// into their long form, turning an unrelated path into a false "difference". realpath() failing (broken
+// link, permissions) must never turn an otherwise-working candidate into a failure -- it just degrades to
+// reporting the probed path as-is.
+async function canonicalize(candidatePath: string): Promise<string | undefined> {
+    try {
+        if (!(await fs.lstat(candidatePath)).isSymbolicLink()) {
+            return undefined;
+        }
+        const real = await fs.realpath(candidatePath);
+        return stripLongPathPrefix(real);
+    } catch {
+        return undefined;
+    }
+}
+
+// Windows realpath() returns junction/symlink targets with the "\\?\" long-path prefix; strip it so the
+// result compares and joins like an ordinary path everywhere else in the extension.
+function stripLongPathPrefix(candidatePath: string): string {
+    return candidatePath.replace(/^\\\\\?\\/, "");
 }
 
 async function fileExists(candidate: string): Promise<boolean> {

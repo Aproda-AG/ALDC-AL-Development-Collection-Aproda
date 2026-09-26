@@ -5,6 +5,11 @@ import { resolveTargetRepo } from "../env/gitRoot";
 import { Logger } from "../log";
 import { run } from "../process";
 
+// npm has no .exe on Windows (only npm.cmd); spawn without shell:true needs the exact extension to find it.
+export function npmExecutable(platform: NodeJS.Platform): string {
+    return platform === "win32" ? "npm.cmd" : "npm";
+}
+
 export async function validateInstallation(logger: Logger): Promise<void> {
     const repositoryRoot = await resolveTargetRepo();
     if (!repositoryRoot) {
@@ -23,7 +28,7 @@ export async function validateInstallation(logger: Logger): Promise<void> {
             async (progress) => {
                 if (!await pathExists(path.join(validatorRoot, "node_modules", "js-yaml"))) {
                     progress.report({ message: "Installing validator dependencies" });
-                    const install = await run("npm", ["install", "--omit=dev", "--no-package-lock"], { cwd: validatorRoot });
+                    const install = await run(npmExecutable(process.platform), ["install", "--omit=dev", "--no-package-lock"], { cwd: validatorRoot });
                     logResult(logger, install.stdout, install.stderr);
                     if (install.code !== 0) {
                         throw new Error("Could not install ALDC validator dependencies.");

@@ -49,6 +49,8 @@ export async function initializeProject(source: LayerSource, logger: Logger, pre
                 : await resolveBcqualityPath(await resolveAldcRepositoryAt(repoRoot));
             if (bcqualityRoot) {
                 await reconcileBcquality(repoRoot, bcqualityRoot, logger);
+            } else {
+                logger.info("BCQuality did not resolve; skipping reconciliation.");
             }
             void vscode.window.showInformationMessage(`Aproda ALDC initialization completed using ${describeAppliedSource(layer!)}.`);
         }

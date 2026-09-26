@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { initializeProject } from "../commands/initProject";
-import { findGitRoot } from "../env/gitRoot";
+import { findGitRoot, resolveConfigurationPath } from "../env/gitRoot";
 import { Logger } from "../log";
 import { LayerSource } from "../source/layerSource";
 
@@ -35,12 +35,23 @@ export async function offerRepositoryInitialization(context: vscode.ExtensionCon
 
 export async function hasInitializedAlProject(): Promise<boolean> {
     const repositories = await findAlRepositories();
-    return repositories.some((repositoryRoot) => fs.existsSync(path.join(repositoryRoot, "aldc.yaml")));
+    for (const repositoryRoot of repositories) {
+        if (await resolveConfigurationPath(repositoryRoot)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 async function findUninitializedAlRepositories(): Promise<string[]> {
     const repositories = await findAlRepositories();
-    return repositories.filter((repositoryRoot) => !fs.existsSync(path.join(repositoryRoot, "aldc.yaml")));
+    const uninitialized: string[] = [];
+    for (const repositoryRoot of repositories) {
+        if (!await resolveConfigurationPath(repositoryRoot)) {
+            uninitialized.push(repositoryRoot);
+        }
+    }
+    return uninitialized;
 }
 
 async function findAlRepositories(): Promise<string[]> {

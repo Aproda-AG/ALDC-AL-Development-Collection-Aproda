@@ -1,7 +1,7 @@
 import * as fs from "fs/promises";
-import * as path from "path";
 import { parse } from "yaml";
 import { repositoryUrl } from "../config";
+import { resolveConfigurationPath } from "../env/gitRoot";
 import { Logger } from "../log";
 import { run } from "../process";
 import { compareLayerVersions, isLayerVersion, VersionComparison } from "./compare";
@@ -46,7 +46,11 @@ export class VersionService {
     }
 
     private async readInstalled(repoRoot: string): Promise<string | undefined> {
-        const configPath = path.join(repoRoot, "aldc.yaml");
+        const configPath = await resolveConfigurationPath(repoRoot);
+        if (!configPath) {
+            this.logger.info(`Could not find aldc.yaml under ${repoRoot} (checked .github/aldc.yaml and aldc.yaml).`);
+            return undefined;
+        }
         try {
             const document = parse(await fs.readFile(configPath, "utf8")) as { aproda?: { layerVersion?: unknown } } | null;
             const version = document?.aproda?.layerVersion;

@@ -89,7 +89,7 @@ function toCandidateItem(candidate: BcqualityCandidate): vscode.QuickPickItem {
     return {
         label: `${verdictIcon(candidate.verdict)} ${sourceLabel(candidate.source)}`,
         description: verdictLabel(candidate.verdict),
-        detail: candidate.path ?? "(not set)"
+        detail: candidate.realPath ? `${candidate.path} → ${candidate.realPath}` : candidate.path ?? "(not set)"
     };
 }
 
