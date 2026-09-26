@@ -139,6 +139,51 @@ End with:
    that *passed but felt wrong*.
 4. `## Open questions` — anything you could not decide.
 
+---
+
+## 5. Between runs: reset the user settings, not just the project
+
+*Added for Runs 3 and 4. Resetting the repository is not enough — the extension writes **Global** VS Code
+settings, and those survive every `git reset`. A leaked value silently short-circuits the exact rung the
+next run is meant to exercise, and the run then passes for the wrong reason.*
+
+**Clear before every run** (Settings UI → *Open User Settings (JSON)*, or the Settings editor):
+
+| Setting | Why |
+|---|---|
+| `aprodaAldc.bcquality.path` | Rung 1. If set, **every** other rung becomes unreachable — the run would test nothing |
+| `terminal.integrated.env.windows.BCQUALITY_HOME` | Rung 3. Written by the previous run's reconcile |
+| `terminal.integrated.env.linux.BCQUALITY_HOME` | Should never exist on this host — if present, that *is* a finding (B-25) |
+| `terminal.integrated.env.osx.BCQUALITY_HOME` | Same |
+
+**Keep as-is:**
+
+| Setting | Value | Why |
+|---|---|---|
+| `aprodaAldc.source.mode` | `localFork` | Otherwise the *released* layer is applied instead of the work under test — this already invalidated one full run |
+| `aprodaAldc.source.forkPath` | the fork | Same |
+| `aprodaAldc.devRoot` | `c:\_EphemeralWorkspace` | **Deliberately wrong** (the `Florian Köll` segment is missing). This is the misconfiguration that gave B-23 its plausible-but-wrong target; correcting it before the runs would make them prove nothing. **The maintainer fixes it after Run 4** |
+
+Verify the state before starting:
+
+```powershell
+$s = "$env:APPDATA\Code\User\settings.json"
+$j = ((Get-Content $s -Raw) -replace '(?m)^\s*//.*$','' | ConvertFrom-Json)
+$j.PSObject.Properties | Where-Object { $_.Name -like 'aprodaAldc*' -or $_.Name -like 'terminal.integrated.env*' } |
+    ForEach-Object { "{0} = {1}" -f $_.Name, ($_.Value | ConvertTo-Json -Compress) }
+```
+
+> **Do not edit `settings.json` with a script.** It is JSONC with comments; a `ConvertTo-Json`
+> round-trip destroys them — the same defect the toolkit itself was just fixed for (B-21). Remove the
+> entries by hand.
+
+### Order
+
+**Run 3 first, then Run 4.** Run 3 is the regression test for a shipped blocker on the known baseline;
+Run 4 is new territory. If Run 4 ran first and failed, you could not tell whether the fix is wrong or
+the new project is simply different.
+
+
 **Do not be agreeable.** This test exists to find defects before this reaches customer repositories.
 A report that confirms everything works is only useful if it is true. If a step is ambiguous, say so
 rather than guessing the intent.

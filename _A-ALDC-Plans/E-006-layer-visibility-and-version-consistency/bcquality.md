@@ -458,6 +458,30 @@ behaved. The four defects below are what the run bought.*
 > `home` and reconciliation would have been skipped silently. Found by an independent second review
 > round, reproduced as a failing test, then fixed by re-probing in the fallback branch.
 
+### Findings from the end-to-end runs 3 and 4 (2026-09-26)
+
+*Run 3 re-tested the run-2 blockers on Straub, deliberately keeping the wrong `devRoot` so the fix had to
+hold under the original conditions. Run 4 was the **first-init** path on `HEKS Base` — a repository that
+had never seen ALDC, whose repo root is not a workspace folder and whose `*.code-workspace` is not even
+strict JSON. B-23 … B-26 held in both. What the runs bought instead is the row below it.*
+
+| # | Finding | Status |
+|---|---|---|
+| **B-28** | **The resolver discovers the junction it manages itself, and links it to itself.** Rung 2 probes, for every mounted workspace folder, both the folder and `<folder>/bcquality` — and after the migration `.external` **is** a mounted folder. So `.external/bcquality` verifies and is returned as the canonical root. Three consequences, all observed live: **(a)** `Install / Update BCQuality` reported *"BCQuality is ready at `<project>\.external\bcquality`"* and wrote that **project-scoped** path into the **Global** `aprodaAldc.bcquality.path` and `BCQUALITY_HOME` — so every other Aproda project on the machine now resolves BCQuality through *this* project's junction (the same class as B-23, one step worse); **(b)** on the next reconcile the setting rung returns that same path, and `createBcqualityLink(linkPath, target)` is called with `target === linkPath` — there is no self-reference guard — producing a **junction pointing at itself** and `ELOOP: too many symbolic links encountered`; **(c)** the resolver still reports `verified: true` for it, because a probe only asks whether *something* answers at the path. **Structural, not incidental:** the resolver treats its own managed artifact as a discovery source | ✅ **fixed**: a verified candidate is canonicalised (`realpath`) before it becomes `root`, so the canonical root is always the real clone; `createBcqualityLink` refuses a target that resolves to the link itself. **Review follow-up:** `reconcileBcquality` wrote `BCQUALITY_HOME` from the *caller's* earlier resolution while linking from its own fresh one — two independently timed answers to the same question, which is what produced the two mutually inconsistent Global settings observed. Both now come from the fresh, canonical resolution. **Verified empirically, not assumed:** `fs.lstat().isSymbolicLink()` returns `true` for a Windows **junction** (checked with a real `mklink /J`) — the whole fix rests on that || **B-29** | **Every migrated project reports "ALDC is not installed" forever.** `VersionService.readInstalled()` reads `path.join(repoRoot, "aldc.yaml")` with **no two-rung lookup** — T-33 moved the file to `.github/aldc.yaml` and this reader was missed. The startup check therefore offers to *initialize* a project that is fully initialized, on every window. Same failure class as **B-10** and **B-12**: a reader still assuming the repo root, silently wrong rather than loudly broken. Observed in run 4 | ✅ **fixed**: both readers now use the exported two-rung `resolveConfigurationPath()`. **A second instance was found by the fix, not by the run:** `repositoryInitialization.ts` carried the same hardcoded check, so the startup prompt and the version service could disagree about what counts as installed |
+| **B-30** | **`Validate Installation` cannot run on Windows** — `spawn npm ENOENT`, while `npm` works fine in a terminal. `run("npm", …)` spawns without `shell`, and on Windows `npm` is a `.cmd` shim that `child_process.spawn` will not resolve without `shell: true` (or an explicit `npm.cmd`). A first init is the cleanest input this check will ever get, and it is exactly where it fails | ✅ **fixed**: `npmExecutable(platform)` — `npm.cmd` on win32 — at that call site only. **`shell: true` in `run()` was rejected**: it would change argument quoting for every caller, including `git` calls carrying repository URLs and paths. Confirmed the only `.cmd`-shim spawn in `src/` |
+| **B-31** | **The post-bootstrap BCQuality step logs nothing.** Run 4 (D18) found the *outcome* correct — junction created, pointing at the real clone — but the log goes silent after `Bootstrap: done.`. The run instructions had flagged silence explicitly as a failure shape, because **that is what the broken first repair of B-23 looked like**: correct-looking absence, indistinguishable from a step that never ran | ✅ **fixed** — and the first attempt was wrong in the same way: it logged *"reconciling"* from the caller, while `reconcileBcquality` could still return silently (opt-out, unverified, no-op link). Caught by review; the function now reports its own outcome and the caller claims nothing |
+
+> **A reported blocker that was not one — and why it looked like one.** Run 3's report marked **C14
+> FAIL** ("no modal confirmation appeared") and derived a blocker from it: a clone into a deliberately
+> bogus path, plus the junction repointed at it. The confirmation **did** appear, named the path
+> correctly, and was **confirmed by the operator** — the run's instruction was to cancel with Esc. The
+> B-23 gate works. The agent's command-execution harness cannot observe modal dialogs, and it inferred a
+> product defect from its own blindness. **Third wrong diagnosis in this subsystem to survive into a
+> written report**, after "non-deterministic resolution" (B-18) and "only the last rung reads `enabled`"
+> — in all three the *symptom* was real and the *mechanism* invented. Treat an agent-run verdict on a UI
+> criterion as `NOT-REACHED` unless a human saw the dialog. **Residual, genuine:** after a confirmed
+> clone an already-verified junction is repointed with no second confirmation.
+
 
 > **A verdict the run got wrong:** it marked **A14** FAIL ("the three catalog files are in no part of the
 > sync manifest"). They are not in `aproda-sync.json` — they are in `aldc.yaml → required.catalog`. Its own
