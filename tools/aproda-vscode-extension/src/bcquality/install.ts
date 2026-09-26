@@ -3,7 +3,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { bcqualityPath, devRoot, updateGlobal } from "../config";
 import { directoryExists } from "../env/devRoot";
-import { findGitRoot } from "../env/gitRoot";
+import { AldcRepositoryResolution, findGitRoot } from "../env/gitRoot";
 import { Logger } from "../log";
 import { run } from "../process";
 import { resolveBcquality } from "./resolve";
@@ -15,14 +15,19 @@ export async function installOrUpdateBcquality(logger: Logger): Promise<string |
     if (!target) {
         return undefined;
     }
-    if (!await isSafeTarget(target)) {
+    const exists = await directoryExists(target);
+    if (!await isSafeTarget(target, exists)) {
         void vscode.window.showErrorMessage("BCQuality must be a standalone repository outside other Git repositories.");
+        return undefined;
+    }
+    if (!exists && !await confirmClone(target)) {
+        logger.info(`BCQuality clone to ${target} cancelled by the user.`);
         return undefined;
     }
 
     try {
         await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: "Installing or updating BCQuality" }, async () => {
-            if (!await directoryExists(target)) {
+            if (!exists) {
                 await fs.mkdir(path.dirname(target), { recursive: true });
                 await runGit(["clone", repository, target], logger);
             } else {
@@ -43,8 +48,8 @@ export async function installOrUpdateBcquality(logger: Logger): Promise<string |
     }
 }
 
-export async function resolveBcqualityPath(): Promise<string | undefined> {
-    const resolution = await resolveBcquality();
+export async function resolveBcqualityPath(repository?: AldcRepositoryResolution): Promise<string | undefined> {
+    const resolution = await resolveBcquality(repository);
     if (resolution.verified && resolution.root) {
         return resolution.root;
     }
@@ -59,8 +64,23 @@ export async function resolveBcqualityPath(): Promise<string | undefined> {
     return path.join(devRoot(), "BCQuality-Aproda");
 }
 
-async function isSafeTarget(target: string): Promise<boolean> {
-    if (await directoryExists(target)) {
+// Creating a clone is the one irreversible step here, and a convention-derived target is
+// indistinguishable from an existing clone the resolver lost track of -- so it is never done silently.
+// Updating an existing clone stays unprompted: --ff-only cannot destroy local work.
+async function confirmClone(target: string): Promise<boolean> {
+    const choice = await vscode.window.showWarningMessage(
+        "No BCQuality clone was found.",
+        {
+            modal: true,
+            detail: `Clone it to ${target}?\n\nIf a clone already exists elsewhere, cancel and point the Aproda ALDC setting "bcquality.path" at it instead.`
+        },
+        "Clone"
+    );
+    return choice === "Clone";
+}
+
+async function isSafeTarget(target: string, exists: boolean): Promise<boolean> {
+    if (exists) {
         return (await findGitRoot(target)) === target;
     }
     return !await findGitRoot(path.dirname(target));

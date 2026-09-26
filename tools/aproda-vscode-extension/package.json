@@ -296,7 +296,7 @@
         "watch": "node ./node_modules/typescript/lib/tsc.js -p . --watch",
         "package": "npm run compile && node ./scripts/package.js",
         "lint": "node ./node_modules/typescript/lib/tsc.js --noEmit",
-        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/extension-version.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js && node ./test/extension-update.test.js && node ./test/aldc-config-path.test.js && node ./test/bcquality-resolve.test.js && node ./test/bcquality-junction.test.js && node ./test/bcquality-reconcile-toggle.test.js && node ./test/bcquality-containment.test.js && node ./test/bcquality-tool.test.js && node ./test/bcquality-self-heal.test.js"
+        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/extension-version.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js && node ./test/bcquality-terminal-env-platform.test.js && node ./test/extension-update.test.js && node ./test/aldc-config-path.test.js && node ./test/bcquality-resolve.test.js && node ./test/bcquality-junction.test.js && node ./test/bcquality-reconcile-toggle.test.js && node ./test/bcquality-containment.test.js && node ./test/bcquality-tool.test.js && node ./test/bcquality-self-heal.test.js && node ./test/git-root-resolution.test.js && node ./test/bcquality-install-confirm.test.js && node ./test/init-bcquality-preresolve.test.js"
     },
     "dependencies": {
         "jsonc-parser": "^3.3.1",

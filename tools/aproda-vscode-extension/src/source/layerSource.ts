@@ -139,9 +139,11 @@ export class LayerSource {
         }
 
         if (validate) {
+            // Advisory only -- never await these. An awaited notification stalls the whole command
+            // until it is dismissed, and one parked in the notification bell never resolves at all.
             const status = await this.git(["status", "--porcelain"], localPath, true);
             if (status.stdout.trim()) {
-                await vscode.window.showWarningMessage("The local Aproda fork has uncommitted changes.", "Show Log").then((selection) => {
+                void vscode.window.showWarningMessage("The local Aproda fork has uncommitted changes.", "Show Log").then((selection) => {
                     if (selection === "Show Log") {
                         this.logger.show();
                     }
@@ -149,11 +151,11 @@ export class LayerSource {
             }
             const branch = await this.git(["branch", "--show-current"], localPath, true);
             if (branch.stdout.trim() !== "aproda") {
-                await vscode.window.showWarningMessage(`The local Aproda fork is on "${branch.stdout.trim() || "detached HEAD"}", not "aproda".`);
+                void vscode.window.showWarningMessage(`The local Aproda fork is on "${branch.stdout.trim() || "detached HEAD"}", not "aproda".`);
             }
             const behind = await this.git(["rev-list", "--count", "HEAD..@{upstream}"], localPath, true);
             if (behind.code === 0 && Number(behind.stdout.trim()) > 0) {
-                await vscode.window.showWarningMessage(`The local Aproda fork is ${behind.stdout.trim()} commit(s) behind its upstream.`);
+                void vscode.window.showWarningMessage(`The local Aproda fork is ${behind.stdout.trim()} commit(s) behind its upstream.`);
             }
         }
 

@@ -30,14 +30,40 @@ export async function reconcileBcquality(repositoryRoot: string, bcqualityRoot: 
     await createBcqualityLink(linkPath, resolution.root, logger);
 }
 
+const terminalEnvPlatforms = ["windows", "linux", "osx"] as const;
+type TerminalEnvPlatform = typeof terminalEnvPlatforms[number];
+
+function currentTerminalEnvPlatform(): TerminalEnvPlatform {
+    if (process.platform === "win32") {
+        return "windows";
+    }
+    if (process.platform === "darwin") {
+        return "osx";
+    }
+    return "linux";
+}
+
+// The resolved clone path is machine-local: it must only ever land under the platform actually running,
+// never under terminal.integrated.env.linux/.osx on Windows (or vice versa).
 async function updateBcqualityHomeGlobalSetting(bcqualityRoot: string): Promise<void> {
     if (!setBcqualityEnvInWorkspace()) {
         return;
     }
     const configuration = vscode.workspace.getConfiguration("terminal.integrated.env");
-    for (const platform of ["windows", "linux", "osx"] as const) {
-        const existing = configuration.get<Record<string, string>>(platform) ?? {};
-        await configuration.update(platform, { ...existing, BCQUALITY_HOME: bcqualityRoot }, vscode.ConfigurationTarget.Global);
+    const activePlatform = currentTerminalEnvPlatform();
+    for (const platform of terminalEnvPlatforms) {
+        // Read the Global layer explicitly: the effective (workspace+global merged) value must never be
+        // written back to Global, or a workspace-scoped variable would be silently promoted to it.
+        const existingGlobal = configuration.inspect<Record<string, string>>(platform)?.globalValue ?? {};
+        if (platform === activePlatform) {
+            await configuration.update(platform, { ...existingGlobal, BCQUALITY_HOME: bcqualityRoot }, vscode.ConfigurationTarget.Global);
+            continue;
+        }
+        if (!("BCQUALITY_HOME" in existingGlobal)) {
+            continue;
+        }
+        const { BCQUALITY_HOME: _unused, ...rest } = existingGlobal;
+        await configuration.update(platform, Object.keys(rest).length > 0 ? rest : undefined, vscode.ConfigurationTarget.Global);
     }
 }
 

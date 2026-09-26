@@ -2,7 +2,7 @@ import * as fs from "fs/promises";
 import YAML from "yaml";
 import { AldcRepositoryResolution } from "../env/gitRoot";
 
-const defaultEntryPoint = "skills/entry.md";
+export const defaultEntryPoint = "skills/entry.md";
 
 export interface BcqualityAldcConfig {
     readonly enabled: "auto" | boolean;

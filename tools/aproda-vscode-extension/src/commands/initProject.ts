@@ -1,11 +1,12 @@
 import * as vscode from "vscode";
-import { findGitRoot, resolveTargetRepo } from "../env/gitRoot";
+import { findGitRoot, resolveAldcRepositoryAt, resolveTargetRepo } from "../env/gitRoot";
 import { Logger } from "../log";
 import { run } from "../process";
 import { runBootstrap } from "../ps/bridge";
-import { LayerSource } from "../source/layerSource";
+import { LayerSource, SourceStatus } from "../source/layerSource";
 import { asMessage } from "../setup/doctor";
 import { resolveBcqualityPath } from "../bcquality/install";
+import { resolveBcquality } from "../bcquality/resolve";
 import { reconcileBcquality } from "../workspace/bcqualityRoot";
 
 export async function initializeProject(source: LayerSource, logger: Logger, preview: boolean, targetRepositoryRoot?: string): Promise<void> {
@@ -20,25 +21,36 @@ export async function initializeProject(source: LayerSource, logger: Logger, pre
         return;
     }
 
+    let layer: SourceStatus | undefined;
     try {
+        // Captured before the bootstrap: it unmounts the pre-migration BCQuality root, after which an
+        // existing clone is momentarily unresolvable and would be mistaken for a first-time install.
+        // Trusted afterwards without re-probing because it was already verified, and no migration
+        // variant relocates an already-verified clone.
+        const knownBcquality = preview ? undefined : await resolveBcquality(await resolveAldcRepositoryAt(repoRoot));
         const result = await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: preview ? "Previewing Aproda ALDC changes" : "Initializing Aproda ALDC project",
             cancellable: false
         }, async (progress) => {
             progress.report({ message: "Preparing toolkit source" });
-            const layer = await source.ensure();
+            layer = await source.ensure();
+            logger.info(`Applying toolkit from ${describeAppliedSource(layer)}.`);
             progress.report({ message: preview ? "Calculating changes" : "Applying toolkit" });
             return runBootstrap(repoRoot, layer.path, preview, logger);
         });
         if (preview) {
             await showPreviewResult(result.changes, logger);
         } else {
-            const bcqualityRoot = await resolveBcqualityPath();
+            // The fallback must probe fresh: the bootstrap writes aldc.yaml itself, so a first init only
+            // has a declared BCQuality home once it has run.
+            const bcqualityRoot = knownBcquality?.verified && knownBcquality.root
+                ? knownBcquality.root
+                : await resolveBcqualityPath(await resolveAldcRepositoryAt(repoRoot));
             if (bcqualityRoot) {
                 await reconcileBcquality(repoRoot, bcqualityRoot, logger);
             }
-            void vscode.window.showInformationMessage("Aproda ALDC initialization completed.");
+            void vscode.window.showInformationMessage(`Aproda ALDC initialization completed using ${describeAppliedSource(layer!)}.`);
         }
     } catch (error) {
         const message = asMessage(error);
@@ -50,6 +62,15 @@ export async function initializeProject(source: LayerSource, logger: Logger, pre
         });
     }
 }
+
+// Surfaces which toolkit source was actually applied (managed cache vs. local fork): a mismatch here
+// between belief and reality is otherwise invisible until every downstream symptom is misdiagnosed.
+function describeAppliedSource(layer: SourceStatus): string {
+    return layer.mode === "managed"
+        ? `the managed toolkit cache${layer.reference ? ` (${layer.reference})` : ""}`
+        : `the local fork at ${layer.path}`;
+}
+
 
 async function showPreviewResult(changes: number | undefined, logger: Logger): Promise<void> {
     if (changes === 0) {

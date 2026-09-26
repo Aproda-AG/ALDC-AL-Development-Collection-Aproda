@@ -1,7 +1,7 @@
 import * as path from "path";
 import * as fs from "fs/promises";
 import * as vscode from "vscode";
-import { resolveBcquality, BcqualitySource, BcqualityVerdict } from "../bcquality/resolve";
+import { BcqualityCandidate, BcqualityResolution, resolveBcquality, BcqualitySource, BcqualityVerdict } from "../bcquality/resolve";
 import { readBcqualityAldcConfig } from "../bcquality/aldcConfig";
 import { resolveAldcRepository } from "../env/gitRoot";
 
@@ -24,17 +24,11 @@ export async function showBcqualityStatus(): Promise<void> {
         { label: ".external/bcquality junction", description: junctionExists ? "exists" : "does not exist" }
     ];
 
-    const candidateItems: vscode.QuickPickItem[] = resolution.candidates.map((candidate) => ({
-        label: `${verdictIcon(candidate.verdict)} ${sourceLabel(candidate.source)}`,
-        description: verdictLabel(candidate.verdict),
-        detail: candidate.path ?? "(not set)"
-    }));
-
     const items: vscode.QuickPickItem[] = [
         { label: "Summary", kind: vscode.QuickPickItemKind.Separator },
         ...summaryItems,
         { label: "Resolver chain (in precedence order)", kind: vscode.QuickPickItemKind.Separator },
-        ...candidateItems
+        ...buildResolverChainItems(resolution)
     ];
 
     if (!resolution.verified) {
@@ -57,6 +51,46 @@ export async function showBcqualityStatus(): Promise<void> {
     if (selected?.label.includes("Install / Update BCQuality")) {
         await vscode.commands.executeCommand("aprodaAldc.installBcQuality");
     }
+}
+
+// A workspaceFolder rung contributes two probes per mounted folder, so a normal multi-root project
+// produces a wall of unsuccessful "$(circle-slash) Mounted workspace folder" lines that bury the answer.
+// Collapse them into one summary line unless a workspaceFolder probe is the winner, in which case it is
+// shown explicitly and only the remaining, unsuccessful probes from that rung are collapsed.
+function buildResolverChainItems(resolution: BcqualityResolution): vscode.QuickPickItem[] {
+    const items: vscode.QuickPickItem[] = [];
+    let workspaceFolderRungHandled = false;
+    for (const candidate of resolution.candidates) {
+        if (candidate.source !== "workspaceFolder") {
+            items.push(toCandidateItem(candidate));
+            continue;
+        }
+        if (workspaceFolderRungHandled) {
+            continue;
+        }
+        workspaceFolderRungHandled = true;
+        const group = resolution.candidates.filter((entry) => entry.source === "workspaceFolder");
+        const winner = group.find((entry) => entry.verdict === "verified");
+        const unsuccessful = winner ? group.filter((entry) => entry !== winner) : group;
+        if (winner) {
+            items.push(toCandidateItem(winner));
+        }
+        if (unsuccessful.length > 0) {
+            items.push({
+                label: `$(circle-slash) ${sourceLabel("workspaceFolder")}s`,
+                description: `${unsuccessful.length} probed, none contained ${resolution.entryPoint}`
+            });
+        }
+    }
+    return items;
+}
+
+function toCandidateItem(candidate: BcqualityCandidate): vscode.QuickPickItem {
+    return {
+        label: `${verdictIcon(candidate.verdict)} ${sourceLabel(candidate.source)}`,
+        description: verdictLabel(candidate.verdict),
+        detail: candidate.path ?? "(not set)"
+    };
 }
 
 function sourceLabel(source: BcqualitySource): string {
