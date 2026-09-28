@@ -82,3 +82,4 @@ None of those is true yet.
   only thing preventing a prerelease reaching all 25 machines.
 - Does a promotion need a gate, or is a recorded decision enough? A gate over an unreliable signal is
   gate theatre — the same argument that deferred T-26 in E-006.
+
