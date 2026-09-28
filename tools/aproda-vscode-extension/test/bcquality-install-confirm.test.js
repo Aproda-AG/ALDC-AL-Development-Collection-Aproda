@@ -69,6 +69,10 @@ async function withInstaller(harness, fn) {
 const logger = { info: () => undefined, error: () => undefined, warn: () => undefined, show: () => undefined };
 
 async function run() {
+    // The extension writes BCQUALITY_HOME into terminal.integrated.env, so a developer's own shell
+    // carries it and the resolver's environment rung would answer with the real clone.
+    const previousBcqualityHome = process.env.BCQUALITY_HOME;
+    delete process.env.BCQUALITY_HOME;
     const scratch = await fs.mkdtemp(path.join(os.tmpdir(), "aproda-install-confirm-"));
     try {
         // Cancelling the prompt must leave nothing behind.
@@ -122,6 +126,11 @@ async function run() {
         assert.deepStrictEqual(keep.updates, [], "a differing configured path must never be silently overwritten");
     } finally {
         await fs.rm(scratch, { recursive: true, force: true });
+        if (previousBcqualityHome === undefined) {
+            delete process.env.BCQUALITY_HOME;
+        } else {
+            process.env.BCQUALITY_HOME = previousBcqualityHome;
+        }
     }
     console.log("BCQuality install confirmation tests passed.");
 }

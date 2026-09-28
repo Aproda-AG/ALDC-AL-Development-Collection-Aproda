@@ -3,6 +3,7 @@ import * as fs from "fs";
 import { extensionUpdateChecksEnabled, startupCheckIntervalHours, startupChecksEnabled } from "./config";
 import { resetLocalData } from "./commands/resetData";
 import { checkForLayerUpdates, markStartupCheckComplete, shouldRunStartupCheck } from "./startup/check";
+import { sequenceStartupChecks } from "./startup/sequence";
 import { Logger } from "./log";
 import { initializeProject } from "./commands/initProject";
 import { LayerSource } from "./source/layerSource";
@@ -91,10 +92,14 @@ export function activate(context: vscode.ExtensionContext): void {
   }));
 
   logger.info("Aproda ALDC extension activated.");
+  // Started here but awaited only by the layer check below: the status bar, self-heal and initial
+  // setup must not wait on a notification the user may leave open.
+  // The `.catch` is load-bearing, not decoration: a cancelled re-authentication inside
+  // checkForExtensionUpdates' own retry path rejects after its error UI has already run.
+  const extensionUpdateCheck = extensionUpdateChecksEnabled() && shouldRunExtensionUpdateCheck(context, startupCheckIntervalHours())
+    ? checkForExtensionUpdates(context, logger, false).catch(() => undefined)
+    : Promise.resolve();
   void startWorkspaceLifecycle();
-  if (extensionUpdateChecksEnabled() && shouldRunExtensionUpdateCheck(context, startupCheckIntervalHours())) {
-    void checkForExtensionUpdates(context, logger, false);
-  }
 
   async function startWorkspaceLifecycle(): Promise<void> {
     const isAlProject = isAlWorkspace();
@@ -113,9 +118,13 @@ export function activate(context: vscode.ExtensionContext): void {
       await offerRepositoryInitialization(context, logger, layerSource);
       return;
     }
-    if (isInitializedProject && startupChecksEnabled() && shouldRunStartupCheck(context, startupCheckIntervalHours())) {
-      startupCheck = checkForLayerUpdates(context, logger, false).finally(() => markStartupCheckComplete(context));
-    }
+    // Ordering, not a race: until now the correct order only held because the extension check happened
+    // to be the shorter path. See sequenceStartupChecks for why it must hold.
+    startupCheck = sequenceStartupChecks(
+      extensionUpdateCheck,
+      () => isInitializedProject && startupChecksEnabled() && shouldRunStartupCheck(context, startupCheckIntervalHours()),
+      () => checkForLayerUpdates(context, logger, false).finally(() => markStartupCheckComplete(context))
+    );
   }
 }
 
