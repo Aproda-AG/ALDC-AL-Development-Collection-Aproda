@@ -16,9 +16,7 @@
 .github/audits/
 .github/reports/
 .github/copilot-instructions.md
-.github/decisions.aproda.md
-.github/readme.aproda.md
-.github/site-profile.aproda.md
+.github/*.aproda.md
 .github/agents/
 .github/docs/
 .github/instructions/
