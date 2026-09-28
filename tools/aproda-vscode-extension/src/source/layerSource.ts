@@ -19,6 +19,11 @@ export class LayerSource {
         this.cachePath = path.join(context.globalStorageUri.fsPath, "layer-cache", "fork");
     }
 
+    // Exposed so diagnostics report the path actually in use instead of rebuilding it from the same parts.
+    get managedCachePath(): string {
+        return this.cachePath;
+    }
+
     async ensure(): Promise<SourceStatus> {
         if (sourceMode() === "localFork") {
             return this.ensureLocalFork();

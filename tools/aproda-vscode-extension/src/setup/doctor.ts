@@ -1,4 +1,3 @@
-import * as path from "path";
 import * as vscode from "vscode";
 import { channel, forkPath, repositoryUrl, sourceMode } from "../config";
 import { Logger } from "../log";
@@ -28,7 +27,7 @@ export async function runDoctor(context: vscode.ExtensionContext, logger: Logger
         logger.info(`Local fork path: ${forkPath() || "not configured"}`);
     }
     logger.info(`Extension global storage: ${context.globalStorageUri.fsPath}`);
-    logger.info(`Managed toolkit cache path: ${path.join(context.globalStorageUri.fsPath, "layer-cache", "fork")}`);
+    logger.info(`Managed toolkit cache path: ${source.managedCachePath}`);
     logger.info(`Channel: ${channel()}`);
 
     try {
