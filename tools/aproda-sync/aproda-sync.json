@@ -52,6 +52,18 @@
     // `sidePaths` (T-33): aldc.yaml lives at <toolkitRoot>/aldc.yaml, so its
     // PHYSICAL path also diverges — repo root in the fork, .github/ in a project.
     // `path` stays as the fallback for entries whose location is side-independent.
+    //
+    // `sideInjections` (D-50): unlike `rewrites` (a static literal per side, taken
+    // verbatim from this manifest), an entry here is a value COMPUTED at pull time
+    // and written to exactly one side (`onlyOnSide`) — the fork is not a consumer,
+    // so this never reaches it. `value` selects the computation ("sourceHeadSha" =
+    // `git rev-parse HEAD` in the source repo); `match` finds an existing line to
+    // replace; `insertAfter` anchors a deterministic insertion point when the field
+    // does not exist yet (first pull) — it is first-write-only: once the line exists
+    // anywhere in the file it is updated in place, never relocated. On every side other than `onlyOnSide` the
+    // matching line is stripped from the copy rather than left alone, so a value the
+    // SOURCE file already carries (e.g. pushing a project's aldc.yaml to the fork)
+    // does not propagate.
     "dualVariant": [
         {
             "path": "aldc.yaml",
@@ -64,6 +76,16 @@
                     "match": "^toolkitRoot:\\s*\".*\"\\s*$",
                     "project": "toolkitRoot: \".github\"",
                     "fork": "toolkitRoot: \".\""
+                }
+            ],
+            "sideInjections": [
+                {
+                    "key": "appliedRef",
+                    "value": "sourceHeadSha",
+                    "onlyOnSide": "project",
+                    "match": "^\\s*appliedRef:\\s*\".*\"\\s*(#.*)?$",
+                    "insertAfter": "^\\s*layerVersion:\\s*\".*\"\\s*(#.*)?$",
+                    "template": "  appliedRef: \"{value}\""
                 }
             ]
         },

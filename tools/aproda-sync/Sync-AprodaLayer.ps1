@@ -367,6 +367,74 @@ foreach ($dv in @($manifest.dualVariant)) {
         }
     }
 
+    # Side-scoped computed injections (D-50): unlike $rw above (a static literal per
+    # side), a value resolved at pull time (e.g. the source repo's HEAD commit) that
+    # belongs on exactly ONE destination side. On every other side the field is
+    # stripped rather than left alone, because the source file may already carry it
+    # (e.g. pushing a project's aldc.yaml back to the fork).
+    foreach ($inj in @($dv.sideInjections)) {
+        if ([string]::IsNullOrWhiteSpace($inj.onlyOnSide) -or [string]::IsNullOrWhiteSpace($inj.match)) { continue }
+        $injRe = [regex] $inj.match
+
+        if ($dstSide -ne $inj.onlyOnSide) {
+            $lines = @($lines | Where-Object { -not $injRe.IsMatch($_) })
+            continue
+        }
+
+        $value = $null
+        switch ($inj.value) {
+            'sourceHeadSha' {
+                try {
+                    $headOut = (& git -C $srcRepo rev-parse HEAD 2>$null)
+                    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($headOut)) { $value = $headOut.Trim() }
+                }
+                catch {
+                    $value = $null
+                }
+                # The value is spliced into YAML unquoted-by-template: anything that is not a bare hex
+                # commit id could break the file, so an unexpected shape is treated as "not resolved".
+                if ($value -and $value -notmatch '^[0-9a-f]{7,64}$') {
+                    Write-Warning "sideInjection '$($inj.key)': '$value' is not a commit id — ignoring."
+                    $value = $null
+                }
+                if (-not $value) {
+                    Write-Warning "sideInjection '$($inj.key)': could not resolve source HEAD commit ($srcRepo) — leaving field as-is."
+                }
+            }
+            default {
+                Write-Warning "sideInjection '$($inj.key)': unknown value type '$($inj.value)' — skipping."
+            }
+        }
+        if (-not $value) { continue }
+
+        $newLine = $inj.template.Replace('{value}', $value)
+        $hit = $false
+        $out2 = New-Object System.Collections.Generic.List[string]
+        foreach ($line in $lines) {
+            if (-not $hit -and $injRe.IsMatch($line)) { $out2.Add($newLine); $hit = $true }
+            else { $out2.Add($line) }
+        }
+        $lines = $out2.ToArray()
+
+        if (-not $hit) {
+            # Deterministic insertion point: right after the anchor line, so the same
+            # input always produces the same output position (never at end-of-file,
+            # which would depend on whatever else ran first).
+            $anchorRe = [regex] $inj.insertAfter
+            $inserted = $false
+            $out3 = New-Object System.Collections.Generic.List[string]
+            foreach ($line in $lines) {
+                $out3.Add($line)
+                if (-not $inserted -and $anchorRe.IsMatch($line)) { $out3.Add($newLine); $inserted = $true }
+            }
+            if (-not $inserted) {
+                Write-Warning "sideInjection '$($inj.key)': anchor /$($inj.insertAfter)/ not found in $($dv.path) — appending at end."
+                $out3.Add($newLine)
+            }
+            $lines = $out3.ToArray()
+        }
+    }
+
     $expected = ($lines -join $nl)
     if ($WhatIfPreference -and (Test-Path $dvDst) -and ([System.IO.File]::ReadAllText($dvDst) -eq $expected)) {
         continue
