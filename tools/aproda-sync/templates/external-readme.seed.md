@@ -60,6 +60,23 @@ cmd /c rmdir .external\bcquality
 the link and deletes *through* it — it will erase the real BCQuality clone outside the repository, not
 just the pointer to it.
 
+### Deleting the link does not switch BCQuality off
+
+The Aproda ALDC extension re-establishes the link whenever a window opens on an initialized project, so
+a link you delete by hand is simply back next time. That is deliberate: an init that rewrites the
+`*.code-workspace` makes VS Code reload the window, which kills the extension mid-run — without this,
+the link would silently never be created on a first init.
+
+There are two real off-switches, and they do different things:
+
+| Switch | Scope | Effect |
+| --- | --- | --- |
+| `external.bcquality.enabled: false` in `aldc.yaml` | project, versioned | The link is **removed** and stays removed. Applies even when the setting below is off. |
+| `aprodaAldc.bcquality.autoReconcile: false` | user, machine-local | Nothing additive happens: no link is created and `BCQUALITY_HOME` is not maintained. An existing link is left untouched. |
+
+To point at a *different* clone, do not re-target the link by hand — it is replaced on the next window.
+Set `aprodaAldc.bcquality.path` instead; it is the highest-precedence source the resolver consults.
+
 ## The exclude rule VS Code uses for this folder
 
 The workspace settings apply `search.exclude` and `files.watcherExclude` to `bcquality/**`, so its

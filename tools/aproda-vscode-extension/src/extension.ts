@@ -13,7 +13,7 @@ import { registerReadAldcConfigurationTool } from "./agent/readAldcConfiguration
 import { registerBcqualityTool } from "./agent/bcqualityTool";
 import { installOrUpdateBcquality } from "./bcquality/install";
 import { resolveTargetRepo } from "./env/gitRoot";
-import { reconcileBcquality } from "./workspace/bcqualityRoot";
+import { reconcileBcquality, reconcileBcqualityOnStartup } from "./workspace/bcqualityRoot";
 import { openGettingStarted, openWalkthrough } from "./commands/gettingStarted";
 import { validateInstallation } from "./commands/validate";
 import { showBcqualityStatus } from "./commands/bcqualityStatus";
@@ -121,6 +121,9 @@ export function activate(context: vscode.ExtensionContext): void {
     // Ordering, not a race: until now the correct order only held because the extension check happened
     // to be the shorter path. See sequenceStartupChecks for why it must hold.
     const repoRoot = isInitializedProject ? await resolveTargetRepo() : undefined;
+    if (repoRoot) {
+      await reconcileBcqualityOnStartup(repoRoot, logger);
+    }
     startupCheck = sequenceStartupChecks(
       extensionUpdateCheck,
       () => isInitializedProject && !!repoRoot && startupChecksEnabled() && shouldRunStartupCheck(context, repoRoot, startupCheckIntervalHours()),

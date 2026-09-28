@@ -3,7 +3,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { autoReconcileBcquality, setBcqualityEnvInWorkspace } from "../config";
 import { Logger } from "../log";
-import { resolveBcquality } from "../bcquality/resolve";
+import { BcqualityResolution, resolveBcquality } from "../bcquality/resolve";
 
 // Junction lives at <repositoryRoot>/.external/bcquality (T-29): the wrapper is tracked and seeded by the syncer,
 // the junction itself is git-ignored and extension-managed.
@@ -35,6 +35,28 @@ export async function reconcileBcquality(repositoryRoot: string, bcqualityRoot: 
     await createBcqualityLink(linkPath, resolution.root, logger);
 }
 
+// The junction used to be created only by a command. An init that writes the *.code-workspace makes
+// VS Code reload the window, killing the extension host mid-run -- so on a first init the link was
+// never reached (measured: HEKS Base, 2026-09-28). Ordering alone cannot fix that; the desired state
+// has to be re-established on activation instead of being tied to one run surviving.
+export async function reconcileBcqualityOnStartup(repositoryRoot: string, logger: Logger): Promise<void> {
+    const resolution = await resolveBcquality();
+    if (!shouldReconcileOnStartup(resolution)) {
+        return;
+    }
+    await reconcileBcquality(repositoryRoot, resolution.root ?? "", logger);
+}
+
+// Pure, so the gate is testable. Staying silent when nothing resolves is what keeps this off the log of
+// every project that has no clone -- and prevents an empty BCQUALITY_HOME from being written.
+export function shouldReconcileOnStartup(resolution: Pick<BcqualityResolution, "enabled" | "verified" | "root">): boolean {
+    if (resolution.enabled === false) {
+        // A disabled BCQuality must still have a stray link removed, even though nothing resolved.
+        return true;
+    }
+    return resolution.verified && !!resolution.root;
+}
+
 const terminalEnvPlatforms = ["windows", "linux", "osx"] as const;
 type TerminalEnvPlatform = typeof terminalEnvPlatforms[number];
 
@@ -50,7 +72,9 @@ function currentTerminalEnvPlatform(): TerminalEnvPlatform {
 
 // The resolved clone path is machine-local: it must only ever land under the platform actually running,
 // never under terminal.integrated.env.linux/.osx on Windows (or vice versa).
-async function updateBcqualityHomeGlobalSetting(bcqualityRoot: string): Promise<void> {
+// Exported for testing: since this now runs on every activation, "writes nothing when nothing changed"
+// is a property that has to be provable, not assumed.
+export async function updateBcqualityHomeGlobalSetting(bcqualityRoot: string): Promise<void> {
     if (!setBcqualityEnvInWorkspace()) {
         return;
     }
@@ -61,6 +85,11 @@ async function updateBcqualityHomeGlobalSetting(bcqualityRoot: string): Promise<
         // written back to Global, or a workspace-scoped variable would be silently promoted to it.
         const existingGlobal = configuration.inspect<Record<string, string>>(platform)?.globalValue ?? {};
         if (platform === activePlatform) {
+            // Now that this runs on every activation, an unconditional update would rewrite the Global
+            // settings file in every window -- and two projects resolving differently would flap it.
+            if (existingGlobal.BCQUALITY_HOME === bcqualityRoot) {
+                continue;
+            }
             await configuration.update(platform, { ...existingGlobal, BCQUALITY_HOME: bcqualityRoot }, vscode.ConfigurationTarget.Global);
             continue;
         }
