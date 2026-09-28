@@ -132,7 +132,7 @@ else {
 # root (../BCQuality-Aproda) are left alone here — migrating them off it is T-35.
 $requiredRoots = @(
     @{ name = '.github'; path = '.github'; match = '^\.github$' },
-    @{ name = 'BCQuality (Aproda ALDC)'; path = '.external'; match = '^\.external$' }
+    @{ name = '.external'; path = '.external'; match = '^\.external$' }
 )
 # Settings ALDC needs surfaced in every workspace. parentCustomizations lets Copilot
 # walk up to the .git root and pick up the repo-root .github customizations even when
@@ -154,7 +154,7 @@ if (-not $wsFiles) {
             [ordered]@{ name = '.github'; path = '.github' },
             [ordered]@{ name = 'App'; path = 'App' },
             [ordered]@{ name = 'Test'; path = 'Test' },
-            [ordered]@{ name = 'BCQuality (Aproda ALDC)'; path = '.external' }
+            [ordered]@{ name = '.external'; path = '.external' }
         )
         settings = [ordered]@{
             $parentCustomizationsKey = $true

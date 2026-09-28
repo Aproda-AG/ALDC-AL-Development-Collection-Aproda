@@ -143,7 +143,7 @@ else {
                     $json.folders = @($json.folders | Where-Object { "$($_.path)" -notmatch 'BCQuality-Aproda' })
                     $hasExternalRoot = @($json.folders | Where-Object { "$($_.path)" -match '^\.external$' }).Count -gt 0
                     if (-not $hasExternalRoot) {
-                        $json.folders = @($json.folders) + @([pscustomobject]@{ name = 'BCQuality (Aproda ALDC)'; path = '.external' })
+                        $json.folders = @($json.folders) + @([pscustomobject]@{ name = '.external'; path = '.external' })
                     }
                     $changed = $true
                     $migrated.Add("$($wsFile.Name): replaced the legacy '../BCQuality-Aproda' root with '.external'.")

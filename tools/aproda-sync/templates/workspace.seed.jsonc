@@ -38,7 +38,7 @@
             "path": "Test"
         },
         {
-            "name": "BCQuality (Aproda ALDC)",
+            "name": ".external",
             "path": ".external"
         }
     ],
