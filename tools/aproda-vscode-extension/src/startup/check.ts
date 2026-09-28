@@ -3,7 +3,7 @@ import { resolveTargetRepo } from "../env/gitRoot";
 import { Logger } from "../log";
 import { repositoryUrl } from "../config";
 import { openGitAuthenticationTerminal } from "../source/authenticate";
-import { VersionService } from "../version/service";
+import { LayerUpdateResult, VersionService } from "../version/service";
 
 const lastCheckKeyPrefix = "lastLayerUpdateCheck";
 const skipKey = "skippedLayerVersion";
@@ -24,7 +24,7 @@ export async function checkForLayerUpdates(context: vscode.ExtensionContext, log
             await showManualResult(result, logger);
             return;
         }
-        await showStartupResult(context, result, logger);
+        await showStartupResult(context, result);
     } catch (error) {
         logger.error(error instanceof Error ? error.message : String(error));
         if (manual) {
@@ -75,26 +75,43 @@ async function showManualResult(result: Awaited<ReturnType<VersionService["check
     }
 }
 
-async function showStartupResult(context: vscode.ExtensionContext, result: Awaited<ReturnType<VersionService["check"]>>, logger: Logger): Promise<void> {
+export interface StartupPrompt {
+    readonly kind: "install" | "apply" | "update";
+    readonly message: string;
+    readonly actions: readonly string[];
+}
+
+// Pure, so "which states speak up at startup" is testable without the window API. `unknown` must not
+// stay silent: on a moving channel it is only resolvable by a user action, and silence there is
+// indistinguishable from "up to date" (B-6 class). `unavailable`/`invalid`/`ahead` stay silent --
+// they are transient or informational, and a popup before every window would be noise.
+export function startupPrompt(result: LayerUpdateResult, skippedVersion: string | undefined): StartupPrompt | undefined {
     if (result.status === "notInstalled") {
-        const selection = await vscode.window.showInformationMessage(result.message, "Install", "Later", "Never for this project");
-        if (selection === "Install") {
-            void vscode.commands.executeCommand("aprodaAldc.initProject");
-        }
-        if (selection === "Never for this project") {
-            await context.workspaceState.update(disabledKey, true);
-        }
+        return { kind: "install", message: result.message, actions: ["Install", "Later", "Never for this project"] };
+    }
+    if (result.status === "unknown") {
+        return { kind: "apply", message: result.message, actions: ["Apply Toolkit", "Later", "Never for this project"] };
+    }
+    if (result.status === "outdated" && skippedVersion !== result.available) {
+        return { kind: "update", message: result.message, actions: ["Update", "Preview Changes", "Later", "Skip this version"] };
+    }
+    return undefined;
+}
+
+async function showStartupResult(context: vscode.ExtensionContext, result: LayerUpdateResult): Promise<void> {
+    const prompt = startupPrompt(result, context.workspaceState.get<string>(skipKey));
+    if (!prompt) {
         return;
     }
-    if (result.status !== "outdated" || context.workspaceState.get<string>(skipKey) === result.available) {
-        return;
-    }
-    const selection = await vscode.window.showInformationMessage(result.message, "Update", "Preview Changes", "Later", "Skip this version");
-    if (selection === "Update") {
+    const selection = await vscode.window.showInformationMessage(prompt.message, ...prompt.actions);
+    if (selection === "Install" || selection === "Apply Toolkit" || selection === "Update") {
         void vscode.commands.executeCommand("aprodaAldc.initProject");
     }
     if (selection === "Preview Changes") {
         void vscode.commands.executeCommand("aprodaAldc.previewChanges");
+    }
+    if (selection === "Never for this project") {
+        await context.workspaceState.update(disabledKey, true);
     }
     if (selection === "Skip this version" && result.available) {
         await context.workspaceState.update(skipKey, result.available);
