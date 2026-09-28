@@ -51,6 +51,9 @@ class ReadAldcConfigurationTool implements vscode.LanguageModelTool<Record<strin
                 copilotEntrypoint: stringValue(document.copilotEntrypoint),
                 plansRoot: plans ? stringValue(plans.root) : undefined,
                 layerVersion: aproda ? stringValue(aproda.layerVersion) : undefined,
+                // On the moving channels layerVersion is frozen and this is the identity of what was
+                // actually delivered (D-50); without it the tool answers "what is installed" with the wrong field.
+                appliedRef: aproda ? stringValue(aproda.appliedRef) : undefined,
                 bcquality: bcquality ? {
                     enabled: bcquality.enabled,
                     home: stringValue(bcquality.home),

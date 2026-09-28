@@ -342,17 +342,7 @@ const aprodaSyncManifest = (() => {
     return null;
   }
 })();
-function globToRegex(glob) {
-  const esc = glob.replace(/\\/g, "/").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp("^" + esc
-    // "**/" spans zero or more directories: without this a leading "**/" would demand a slash and
-    // never match a root-level path such as readme.aproda.md.
-    .replace(/\\\*\\\*\//g, "(?:.*/)?")
-    .replace(/\/\\\*\\\*/g, "(/.*)?")
-    .replace(/\\\*\\\*/g, ".*")
-    .replace(/\\\*/g, "[^/]*")
-    .replace(/\\\?/g, "[^/]") + "$");
-}
+const { globToRegex } = require("./globToRegex");
 function isForkOnly(logicalPath) {
   if (!aprodaSyncManifest) return false; // manifest unreadable -> don't suppress, stay honest
   const l = logicalPath.replace(/\/$/, "");

@@ -120,10 +120,11 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     // Ordering, not a race: until now the correct order only held because the extension check happened
     // to be the shorter path. See sequenceStartupChecks for why it must hold.
+    const repoRoot = isInitializedProject ? await resolveTargetRepo() : undefined;
     startupCheck = sequenceStartupChecks(
       extensionUpdateCheck,
-      () => isInitializedProject && startupChecksEnabled() && shouldRunStartupCheck(context, startupCheckIntervalHours()),
-      () => checkForLayerUpdates(context, logger, false).finally(() => markStartupCheckComplete(context))
+      () => isInitializedProject && !!repoRoot && startupChecksEnabled() && shouldRunStartupCheck(context, repoRoot, startupCheckIntervalHours()),
+      () => checkForLayerUpdates(context, logger, false).finally(() => markStartupCheckComplete(context, repoRoot!))
     );
   }
 }

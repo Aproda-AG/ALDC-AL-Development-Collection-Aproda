@@ -1,7 +1,7 @@
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as vscode from "vscode";
-import { channel, forkPath, pinnedVersion, repositoryUrl, sourceMode } from "../config";
+import { channel, forkPath, pinnedVersion, branchName, repositoryUrl, sourceMode } from "../config";
 import { Logger } from "../log";
 import { run } from "../process";
 
@@ -175,6 +175,13 @@ export class LayerSource {
     private async resolveReference(cwd: string): Promise<string> {
         if (channel() === "edge") {
             return "origin/aproda";
+        }
+        if (channel() === "branch") {
+            const branch = branchName();
+            if (!branch) {
+                throw new Error("Set Aproda ALDC: Branch Name before using the branch channel.");
+            }
+            return `origin/${branch}`;
         }
         if (channel() === "pinned") {
             const version = pinnedVersion();

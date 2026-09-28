@@ -57,7 +57,7 @@ export async function showBcqualityStatus(): Promise<void> {
 // produces a wall of unsuccessful "$(circle-slash) Mounted workspace folder" lines that bury the answer.
 // Collapse them into one summary line unless a workspaceFolder probe is the winner, in which case it is
 // shown explicitly and only the remaining, unsuccessful probes from that rung are collapsed.
-function buildResolverChainItems(resolution: BcqualityResolution): vscode.QuickPickItem[] {
+export function buildResolverChainItems(resolution: BcqualityResolution): vscode.QuickPickItem[] {
     const items: vscode.QuickPickItem[] = [];
     let workspaceFolderRungHandled = false;
     for (const candidate of resolution.candidates) {

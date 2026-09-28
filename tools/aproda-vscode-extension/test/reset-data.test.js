@@ -32,13 +32,17 @@ async function main() {
 
     const updates = [];
     const context = {
-        globalState: { update: async (key, value) => updates.push({ scope: "global", key, value }) },
+        globalState: {
+            keys: () => ["lastLayerUpdateCheck:c:\\repoa", "lastLayerUpdateCheck:c:\\repob", "unrelatedKey"],
+            update: async (key, value) => updates.push({ scope: "global", key, value })
+        },
         workspaceState: { update: async (key, value) => updates.push({ scope: "workspace", key, value }) }
     };
     await resetUpdateCheckState(context);
     await resetRepositoryInitializationState(context);
     assert.deepStrictEqual(updates, [
-        { scope: "global", key: "lastLayerUpdateCheck", value: undefined },
+        { scope: "global", key: "lastLayerUpdateCheck:c:\\repoa", value: undefined },
+        { scope: "global", key: "lastLayerUpdateCheck:c:\\repob", value: undefined },
         { scope: "workspace", key: "skippedLayerVersion", value: undefined },
         { scope: "workspace", key: "layerUpdateChecksDisabled", value: undefined },
         { scope: "global", key: "dismissedRepositoryInitialization", value: undefined }

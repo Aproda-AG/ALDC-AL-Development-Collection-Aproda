@@ -186,14 +186,20 @@
                     "enum": [
                         "release",
                         "edge",
-                        "pinned"
+                        "pinned",
+                        "branch"
                     ],
-                    "markdownDescription": "Toolkit release channel."
+                    "markdownDescription": "Toolkit release channel. `edge` tracks `origin/aproda` and `branch` tracks `aprodaAldc.branchName`, both by commit SHA and both bypassing the release CI gate -- use only for a pilot."
                 },
                 "aprodaAldc.pinnedVersion": {
                     "type": "string",
                     "default": "",
                     "markdownDescription": "Toolkit version to use when the channel is `pinned`, for example `1.2.0_aproda.9`."
+                },
+                "aprodaAldc.branchName": {
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "Branch to track when the channel is `branch`, for example `feature/pilot`. Not validated by the release CI gate."
                 },
                 "aprodaAldc.pwshPath": {
                     "type": "string",
@@ -296,7 +302,7 @@
         "watch": "node ./node_modules/typescript/lib/tsc.js -p . --watch",
         "package": "npm run compile && node ./scripts/package.js",
         "lint": "node ./node_modules/typescript/lib/tsc.js --noEmit",
-        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/extension-version.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js && node ./test/bcquality-terminal-env-platform.test.js && node ./test/extension-update.test.js && node ./test/aldc-config-path.test.js && node ./test/bcquality-resolve.test.js && node ./test/bcquality-resolve-canonicalize.test.js && node ./test/bcquality-junction.test.js && node ./test/bcquality-junction-self-reference.test.js && node ./test/bcquality-reconcile-toggle.test.js && node ./test/bcquality-containment.test.js && node ./test/bcquality-tool.test.js && node ./test/bcquality-self-heal.test.js && node ./test/git-root-resolution.test.js && node ./test/bcquality-install-confirm.test.js && node ./test/init-bcquality-preresolve.test.js && node ./test/version-service-config-path.test.js && node ./test/validate-npm-spawn.test.js && node ./test/process-tls-env.test.js && node ./test/startup-sequence.test.js"
+        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/extension-version.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js && node ./test/bcquality-terminal-env-platform.test.js && node ./test/extension-update.test.js && node ./test/aldc-config-path.test.js && node ./test/bcquality-resolve.test.js && node ./test/bcquality-resolve-canonicalize.test.js && node ./test/bcquality-junction.test.js && node ./test/bcquality-junction-self-reference.test.js && node ./test/bcquality-reconcile-toggle.test.js && node ./test/bcquality-containment.test.js && node ./test/bcquality-tool.test.js && node ./test/bcquality-self-heal.test.js && node ./test/git-root-resolution.test.js && node ./test/bcquality-install-confirm.test.js && node ./test/init-bcquality-preresolve.test.js && node ./test/version-service-config-path.test.js && node ./test/version-service-channels.test.js && node ./test/version-service-release-channel.test.js && node ./test/glob-to-regex-case-table.test.js && node ./test/startup-check-per-repo.test.js && node ./test/validate-npm-spawn.test.js && node ./test/process-tls-env.test.js && node ./test/startup-sequence.test.js && node ./test/bridge-dryrun-count.test.js && node ./test/bcquality-status-resolver-chain.test.js"
     },
     "dependencies": {
         "jsonc-parser": "^3.3.1",

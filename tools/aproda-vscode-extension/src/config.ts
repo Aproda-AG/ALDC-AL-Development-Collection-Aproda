@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 export type SourceMode = "managed" | "localFork";
-export type Channel = "release" | "edge" | "pinned";
+export type Channel = "release" | "edge" | "pinned" | "branch";
 
 const section = "aprodaAldc";
 
@@ -17,6 +17,7 @@ export const globalSettingKeys = [
     "source.repositoryUrl",
     "channel",
     "pinnedVersion",
+    "branchName",
     "pwshPath",
     "startupCheck.enabled",
     "startupCheck.intervalHours",
@@ -67,6 +68,10 @@ export function channel(): Channel {
 
 export function pinnedVersion(): string {
     return vscode.workspace.getConfiguration(section).get<string>("pinnedVersion", "").trim();
+}
+
+export function branchName(): string {
+    return vscode.workspace.getConfiguration(section).get<string>("branchName", "").trim();
 }
 
 export function pwshPath(): string {

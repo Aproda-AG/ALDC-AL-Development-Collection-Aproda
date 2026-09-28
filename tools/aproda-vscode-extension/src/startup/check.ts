@@ -5,7 +5,7 @@ import { repositoryUrl } from "../config";
 import { openGitAuthenticationTerminal } from "../source/authenticate";
 import { VersionService } from "../version/service";
 
-const lastCheckKey = "lastLayerUpdateCheck";
+const lastCheckKeyPrefix = "lastLayerUpdateCheck";
 const skipKey = "skippedLayerVersion";
 const disabledKey = "layerUpdateChecksDisabled";
 
@@ -40,21 +40,28 @@ export async function checkForLayerUpdates(context: vscode.ExtensionContext, log
     }
 }
 
-export function shouldRunStartupCheck(context: vscode.ExtensionContext, intervalHours: number): boolean {
-    const lastCheck = context.globalState.get<number>(lastCheckKey, 0);
+export function shouldRunStartupCheck(context: vscode.ExtensionContext, repoRoot: string, intervalHours: number): boolean {
+    const lastCheck = context.globalState.get<number>(lastCheckKey(repoRoot), 0);
     return Date.now() - lastCheck >= intervalHours * 60 * 60 * 1000;
 }
 
-export async function markStartupCheckComplete(context: vscode.ExtensionContext): Promise<void> {
-    await context.globalState.update(lastCheckKey, Date.now());
+export async function markStartupCheckComplete(context: vscode.ExtensionContext, repoRoot: string): Promise<void> {
+    await context.globalState.update(lastCheckKey(repoRoot), Date.now());
 }
 
 export async function resetUpdateCheckState(context: vscode.ExtensionContext): Promise<void> {
+    // Keyed per repository (D-50 §3.5): checking project A must not suppress project B's own interval.
+    const keys = context.globalState.keys();
+    const perRepositoryKeys = keys.filter((key) => key.startsWith(`${lastCheckKeyPrefix}:`));
     await Promise.all([
-        context.globalState.update(lastCheckKey, undefined),
+        ...perRepositoryKeys.map((key) => context.globalState.update(key, undefined)),
         context.workspaceState.update(skipKey, undefined),
         context.workspaceState.update(disabledKey, undefined)
     ]);
+}
+
+function lastCheckKey(repoRoot: string): string {
+    return `${lastCheckKeyPrefix}:${repoRoot.toLocaleLowerCase()}`;
 }
 
 async function showManualResult(result: Awaited<ReturnType<VersionService["check"]>>, logger: Logger): Promise<void> {
