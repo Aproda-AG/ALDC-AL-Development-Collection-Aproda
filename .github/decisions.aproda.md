@@ -853,5 +853,20 @@ Microsoft-enforced technical floor that a pure-CLI design cannot obtain for free
 
 **Touches (register rows follow at implementation).** `tools/aproda-sync/Sync-AprodaLayer.ps1`, `aproda-sync.json`, `Migrate-AprodaProjectLayout.ps1`; `tools/aproda-vscode-extension/**` (`version/service.ts`, `source/layerSource.ts`, `config.ts`, `startup/check.ts`, `package.json` settings contribution). All net-new Aproda files or the fork-only extension tree — **no `inPlaceEdits` entry needed**. The new branch-name key must be added to `globalSettingKeys` and `aprodaAldc.channel`'s enum, or it survives the settings reset and never appears in the setup walkthrough.
 
+### D-51 — A missing publish dependency is an HITL offer, never an auto-install; Aproda app sources are a fileshare, not a repo artifact
+
+**Context.** `skill-aproda-fkh`'s dependency sorter already fails loud on `UnknownDependencies`, and `skill-aproda-deploy-run-verify`'s deploy step fails loud on a not-installed target app — both correctly refuse to run tests against a half-deployed server, but neither told the agent what to do about the gap. Meanwhile Aproda's own AppSource apps (ASFL — Aproda Foundation Layer, the base other AppSource apps depend on), other Aproda modules, and third-party/"Fremd Module" apps are not published to any package registry or checked into a project repo; they exist only as signed `.app` files on a site fileshare (`\\APD-SVW-FS01.aproda.ch\...`), with older versions kept in a parallel `Archiv Signed` folder.
+
+**Decision.** Two rules, always paired.
+
+1. **Resolution is HITL, never automatic.** When a publish reports a missing dependency, the agent may match it against the known Aproda app sources (now documented in `site-profile.aproda.md` → *Aproda App Sources*), but must **stop and offer the matched file to the user** — name it, name its path — and wait for explicit confirmation before adding it to the publish set. A single unambiguous match is still not authorization to publish it unattended. If nothing matches, stop and ask; do not guess a substitute version.
+2. **Publish in tiers, not just per-app-set dependency order.** ASFL first (foundation layer), then other Aproda modules, then third-party modules, then the project's own apps — each tier still runs through the existing local dependency sort (`sortapps.ps1`) before publish.
+
+Placement follows the existing split: the fileshare locations are a site/environment fact → `site-profile.aproda.md`; the resolution mechanic (matching, tiering) is Fkh publish mechanics → `skill-aproda-fkh` (`references/dependency-resolution.md`); the HITL gate itself is named alongside the other Preflight HITL gates in `skill-aproda-deploy-run-verify`, which already owns the lifecycle's HITL surface.
+
+**Rejected alternative.** Auto-resolving and auto-publishing an unambiguous single match. Rejected because a fileshare `.app` is unversioned-by-convention relative to the target's actual need (which exact ASFL version a given target tenant should run is a judgment call, not a lookup) and because every other write in this lifecycle (environment selection, `ForceSync`, Global-scope migration) already requires a human decision before a shared OnPrem/Fkh target is touched — silently reaching further outside the project repo than any of those would be the one exception that breaks the pattern.
+
+**Touches.** `.github/site-profile.aproda.md` (new *Aproda App Sources* section), `skills/skill-aproda-fkh/SKILL.md` + new `skills/skill-aproda-fkh/references/dependency-resolution.md`, `skills/skill-aproda-deploy-run-verify/SKILL.md` (Preflight gate). No `inPlaceEdits` register entry — all Aproda-owned paths. No catalog update — no primitive added or removed (D-46 does not apply to a new `references/*.md` file or a content addition to an existing `SKILL.md`).
+
 
 

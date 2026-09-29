@@ -63,6 +63,20 @@ The Microsoft test-library `.app` packages needed to deploy a Test extension are
 | Application Test Library (**new in BC28**; the standard cross-app libs — Library - Inventory/Sales/Purchase/Manufacturing/Warehouse/ERM/Job/Random/Utility/Assert…) | `Application Test Library\Source\Microsoft_Application Test Library.app` |
 | Tests-TestLibraries (specialized: mocks, OnPrem-only libs `…OnPrem`, .NET-bound CRM/Graph/SMTP/Azure AD/XML, permissions, job-queue samples) | `BaseApp\Test\Microsoft_Tests-TestLibraries.app` |
 
+## Aproda App Sources (fileshare) — dependency resolution
+
+Compiled `.app` files for Aproda's own AppSource offerings and third-party modules live on the fileshare, not in any project repo. These are the candidate sources when a Deploy-Run-Verify publish reports a missing dependency (see `skill-aproda-fkh` → *Missing Dependencies*).
+
+| Tier | Location | Note |
+|---|---|---|
+| **ASFL** (Aproda Foundation Layer — base for the other AppSource apps) | `\\APD-SVW-FS01.aproda.ch\DevDaten\Daten\53 AL Development\Aproda AppSource Apps\ASFL (App Source)\Signed App\` | Current: `Aproda AG_Aproda Foundation Layer (ASFL)_22.0.0.22.app` |
+| **Other Aproda AppSource apps** | `\\APD-SVW-FS01.aproda.ch\DevDaten\Daten\53 AL Development\Aproda AppSource Apps\` | Same layout as ASFL: one subfolder per app, `Signed App\` holds the current version |
+| **Aproda modules (public Cloud)** | `\\APD-SVW-FS01.aproda.ch\DevDaten\Daten\53 AL Development\Aproda Module\public Cloud\` | |
+| **Third-party / foreign modules** | `\\APD-SVW-FS01.aproda.ch\DevDaten\Daten\53 AL Development\Fremd Module\` | |
+
+- **Older versions** of any app are kept in an `Archiv Signed` subfolder next to the current `Signed App` folder — check there when a target needs a version other than the latest.
+- **Install order**: ASFL first (it is the base other Aproda AppSource apps depend on), then other Aproda modules, then third-party modules, then the project apps being deployed. See `skill-aproda-fkh/references/dependency-resolution.md` for the resolution procedure — resolution is HITL (offer the match, never install automatically).
+
 ## BC web client (headless test runner)
 
 - The client-driven test runner connects to the **web client** URL on **port 80**: `http://<server>/<instance>/cs?tenant=<tenant>&company=<company>` — **not** the NetTcp port (8929) and **not** the DeveloperServices port (8930).

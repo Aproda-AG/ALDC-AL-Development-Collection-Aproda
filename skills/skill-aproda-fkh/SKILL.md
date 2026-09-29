@@ -93,6 +93,7 @@ try {
   $appFiles = @(Get-ChildItem '..\.installapps' -Filter '*.app' -File | Select-Object -ExpandProperty FullName)
   $sortResult = & ([scriptblock]::Create((Get-Content -LiteralPath $sortScript -Raw))) -appFiles $appFiles
   if ($sortResult.UnknownDependencies.Count -gt 0) {
+    # Do not resolve/publish these automatically — see references/dependency-resolution.md (HITL offer).
     throw ('Unresolved dependencies: ' + ($sortResult.UnknownDependencies -join '; '))
   }
 
@@ -105,6 +106,10 @@ finally {
   Remove-Item -LiteralPath $temporaryDirectory -Recurse -Force -ErrorAction SilentlyContinue
 }
 ```
+
+### Missing Dependencies
+
+When `UnknownDependencies` is non-empty, or `fkh getappinfo` shows a target dependency that is not installed, do not resolve it silently. Load [`references/dependency-resolution.md`](references/dependency-resolution.md): match the missing app against the known Aproda app sources (ASFL foundation layer, other Aproda modules, third-party/Fremd Module — see `site-profile.aproda.md`), **offer the match to the user and wait for confirmation** before adding it to the publish set, and publish tier-by-tier (foundation layer → other Aproda modules → third-party → project apps).
 
 ### FKH Deployment Scope
 
@@ -136,6 +141,7 @@ For a `UserPassword` BC target, `scripts/FkhCredentialStore.ps1` caches the cred
 |---|---|
 | Container discovery and launch-target verification | Validated |
 | Dependency sorting via Fkh AL-Go overrides and `al` | Validated |
+| Missing-dependency resolution (ASFL/other Aproda modules/third-party) | Documented — HITL offer only, never auto-install (see `references/dependency-resolution.md`) |
 | Publish, sync, install/upgrade, and state inspection | Validated |
 | Test execution inside an Fkh container | Validated, including through the DRV engine entry point (26/26, D-36) |
 | Test-result retrieval and parsing from an Fkh container | Validated, including through the DRV engine entry point |

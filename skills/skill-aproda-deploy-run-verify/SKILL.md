@@ -49,6 +49,8 @@ flowchart TD
 
   > Suggested wording: *"No BC service reachable. Quality is higher with a Cronus BC environment incl. Test Toolkit. Without a service only static validation (build + audit) is possible, no runtime verification. Proceed build-only?"*
 
+- **Missing dependency on the target** → the same HITL discipline applies as environment selection: never resolve or install a missing dependency silently. For an Fkh target, load [`skill-aproda-fkh`](../skill-aproda-fkh/SKILL.md) → *Missing Dependencies* (and its `references/dependency-resolution.md`) to match the app against the known Aproda sources, then offer it to the user and wait for confirmation before publishing it.
+
 ## Build route — order of preference
 
 The build step of this loop, and **every** build an agent triggers in this repository, follows this order. Take the first route that is available; fall through only when the one above is genuinely not applicable, and record which route actually ran.
