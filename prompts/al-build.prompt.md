@@ -2,7 +2,7 @@
 agent: agent
 model: GPT-5.6 Terra (copilot)
 description: 'Build, package, and deploy AL extensions to Business Central environments.'
-tools: [vscode, execute, read, agent, edit, search, web, ms-dynamics-smb.al/al_build, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_publish, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolrelations, todo]
+tools: [vscode, execute, read, agent, edit, search, web, ms-dynamics-smb.al/al_build, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_publish, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, todo]
 
 ---
 

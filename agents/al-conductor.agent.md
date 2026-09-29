@@ -1,7 +1,7 @@
 ---
 name: AL Development Conductor
 description: 'AL Conductor Agent - Orchestrates Planning → Implementation → Review → Commit cycle for AL Development. Enforces TDD and quality gates for Business Central extensions.'
-tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, agent, edit, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, todo, terminal, read, agent/runSubagent, vscode/runCommand, execute, ms-dynamics-smb.al/al_getdiagnostics, aprodaag.aproda-aldc/aldcConfiguration, aprodaag.aproda-aldc/bcquality, microsoft-learn/*]
+tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, agent, edit, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, todo, terminal, read, agent/runSubagent, vscode/runCommand, execute, ms-dynamics-smb.al/al_get_diagnostics, aprodaag.aproda-aldc/aldcConfiguration, aprodaag.aproda-aldc/bcquality, microsoft-learn/*, ado/wit_work_item, ado/repo_pull_request, ado/repo_pull_request_write, ado/wit_work_item_comment_write, ado/wit_work_item_write, ado/repo_file, ado/repo_branch]
 agents: ['AL Planning Subagent', 'AL Code Review Subagent', 'AL Implementation Subagent', 'AL Translation Subagent']
 model: Claude Sonnet 5 (copilot)
 argument-hint: 'Feature description or requirements for TDD orchestration (e.g., "Add customer loyalty points system")'
