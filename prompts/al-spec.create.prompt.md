@@ -1,6 +1,6 @@
 ---
 agent: agent
-model: GPT-5.3-Codex (copilot)
+model: Claude Sonnet 5 (copilot)
 description: 'Create a detailed technical specification (.spec.md) that serves as an implementable blueprint for Business Central features. Reads architecture.md if exists. Outputs to .github/plans/{req_name}/.'
 tools: [vscode, read, edit/editFiles, search, 'al-symbols-mcp/*', github/get_file_contents, github/search_code, 'markitdown/*', 'microsoft-learn/*', 'upstash/context7/*', ms-dynamics-smb.al/al_symbolsearch, ms-vscode.vscode-websearchforcopilot/websearch, SShadowSdk.al-lsp-for-agents/bclsp_goToDefinition, SShadowSdk.al-lsp-for-agents/bclsp_hover, SShadowSdk.al-lsp-for-agents/bclsp_findReferences, SShadowSdk.al-lsp-for-agents/bclsp_symbolRelations, SShadowSdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, SShadowSdk.al-lsp-for-agents/bclsp_incomingCalls, SShadowSdk.al-lsp-for-agents/bclsp_outgoingCalls, SShadowSdk.al-lsp-for-agents/bclsp_codeLens, SShadowSdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, SShadowSdk.al-lsp-for-agents/bclsp_documentSymbols, todo]
 ---
