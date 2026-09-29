@@ -153,10 +153,13 @@ Rules:
 
 ## AL-Specific Analysis Tools
 
-- **Dependency & Symbol Analysis**: `al-symbols-mcp/*` (`al_packages`, `al_search_objects`, `al_get_object_definition`) for extension dependencies and AL object relationships
+- **Semantic navigation**: `bclsp_goToDefinition`, `bclsp_findReferences`, `bclsp_hover`, `bclsp_documentSymbols`, `bclsp_prepareCallHierarchy`/`bclsp_incomingCalls`/`bclsp_outgoingCalls` — prefer these over text search; a regex matches characters, the language server resolves scopes and cross-project references
+- **Dependency & Symbol Analysis**: `al_symbolsearch` for compiled `.alpackages` (Base App, libraries); `al-symbols-mcp/*` when that server is actually registered
 - **Codebase Understanding**: `codebase`, `search`, `usages` for AL object relationships
 - **Problem Detection**: `problems` for architectural issues and anti-patterns
 - **Diagrams**: `renderMermaidDiagram` for information-flow and data-model diagrams
+
+> Before concluding that a tool does not exist, read [`../docs/copilot-reference.md`](../docs/copilot-reference.md) → *AL/BC Tools & MCP Servers*. "Not granted to this agent" and "does not exist" are different facts, and only that catalog is maintained for the second.
 
 ## Architectural Focus Areas
 

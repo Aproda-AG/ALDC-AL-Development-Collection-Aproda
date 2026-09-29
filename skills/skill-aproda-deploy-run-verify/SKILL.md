@@ -58,15 +58,17 @@ The build step of this loop, and **every** build an agent triggers in this repos
 | # | Route | Use when | Command / call |
 |---|---|---|---|
 | 1 | **DRV `buildonly`** | a `deploy-run-verify.config.jsonc` exists | `APRODA_DEPLOY_RUN_VERIFY_MODE='buildonly'` → [`Invoke-AprodaDeployRunVerify.ps1`](scripts/Invoke-AprodaDeployRunVerify.ps1) |
-| 2 | **`alc.exe /project:`** | exactly one known app folder, no DRV config | `alc.exe /project:"<App>" /packagecachepath:"<App>\.alpackages" /out:"<App>\<name>.app" /loglevel:Error` |
-| 3 | **`altool workspace compile`** | generic multi-app graph | check `altool workspace compile --help` first; unvalidated on this estate — record the result |
-| 4 | **`al_build`** | none of the above is reachable | `{"scope":"current"}` — verify the intended project is the active one; if the tool is not granted, request it as a manual step |
+| 2 | **`al_build {"scope":"all"}`** | a fast source-level check across all projects is enough, or no DRV config exists | `{"scope":"all"}` |
+| 3 | **`alc.exe /project:`** | the build must match what a publish would see, or there is exactly one known app folder | `alc.exe /project:"<App>" /packagecachepath:"<App>\.alpackages" /out:"<App>\<name>.app" /loglevel:Error` |
+| 4 | **`altool workspace compile`** | generic multi-app graph | documented for BC 2026 wave 1+ (`--packagecachepath`, `--analyzers`, `--maxcpucount`); **documented ≠ verified on this estate** — record the result |
+| 5 | **`al_build {"scope":"current"}`** | **only** in a workspace with exactly one AL project | `{"scope":"current"}` |
 
-Only route 1 refreshes the Base package in `Test/.alpackages` before building Test. Routes 2–4 build a single project against whatever is already in the cache — with `appsInOrder` apps, run Base first and refresh the cache yourself, or the Test build compiles against a stale Base.
+**Route 5 is unusable in a multi-root workspace.** `current` binds to the *active project*, which follows the focused editor; with a plan or spec file open under `.github` there is no active AL project at all (`.github` has no `app.json`). `scope:"all"` has no such dependency. Details and the measurement behind this: `docs/copilot-reference.md` → *AL/BC Tools & MCP Servers* (same relative path from this file in both the fork and a consuming project: [`../../docs/copilot-reference.md`](../../docs/copilot-reference.md)).
 
-`al_build` is active-project-bound (`scope: current|all`, no project path). In a multi-root workspace (`.github` + `Base` + `Test`) the active project depends on the open editor — confirm it before relying on the result.
+**What each route proves.** Only route 1 refreshes the Base package in `Test/.alpackages` before building Test — it builds against the state that is also deployed. **Route 2 does not touch the package cache** (measured 2026-09-29: the Base `.app` in `Test/.alpackages` stayed six days old while an `alc.exe` build of Test failed with `AL0132`), so a green route-2 result says nothing about what a publish will see. Route 3 is the exact opposite — cache-true, and therefore failing until the fresh Base has been copied in; with `appsInOrder` apps, build Base first and refresh the cache yourself.
 
-> **Build proof = exit code 0 + the path of the produced `.app`.** `al_getdiagnostics`, `read/problems` and `bclsp_codeQualityDiagnostics` report editor/language-server state, not a build. They do not surface a Test project compiled against a stale Base package.
+> **Build proof = exit code 0 + the path of the produced `.app`.** `al_getdiagnostics`, `read/problems` and `bclsp_codeQualityDiagnostics` report editor/language-server state, not a build. In a multi-root workspace the language server resolves across projects **from source**, so a clean Problems panel is not evidence that the build used the right Base.
+
 
 ## Target Adapter Selection
 

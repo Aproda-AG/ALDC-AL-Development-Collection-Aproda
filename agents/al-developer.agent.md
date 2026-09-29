@@ -31,11 +31,11 @@ You are a tactical implementation specialist for Microsoft Dynamics 365 Business
 #### AL symbols & metadata (`ms-dynamics-smb.al`)
 - **`al_downloadsymbols`**: Download dependent symbol packages before compiling.
 - **`al_symbolsearch`**: Search AL symbols (tables, codeunits, pages, fields) across the project and its dependencies.
-- **`al_symbolrelations`**: Inspect relationships between AL symbols.
 - **`al-symbols-mcp/*`**: Extended symbol operations.
 
 #### Semantic navigation — AL LSP (`bclsp_*`)
 - **`bclsp_goToDefinition`**, **`bclsp_findReferences`**, **`bclsp_hover`**, **`bclsp_documentSymbols`**, **`bclsp_codeLens`** — navigate code structurally (more reliable than text search for symbol resolution).
+- **`bclsp_symbolRelations`**: Inspect relationships between AL symbols.
 - **`bclsp_prepareCallHierarchy`**, **`bclsp_incomingCalls`**, **`bclsp_outgoingCalls`** — trace call flow.
 - **`bclsp_renameSymbol`** — safe rename across the workspace.
 - **`bclsp_codeQualityDiagnostics`** — read code-quality diagnostics.

@@ -88,6 +88,8 @@ When you complete your research, return findings by reading and filling `.github
 
 ## Research Guidelines
 
+> **Navigate semantically, not textually.** `bclsp_goToDefinition`, `bclsp_findReferences`, `bclsp_symbolRelations` and `search/usages` resolve scopes, types and cross-project references; a text search matches characters and cannot tell a declaration from a comment. Use `al_symbolsearch` for anything in compiled `.alpackages` (Base App, libraries) — `bclsp_*` only sees workspace source. Tool inventory and the "exists vs. granted" distinction: [`../docs/copilot-reference.md`](../docs/copilot-reference.md) → *AL/BC Tools & MCP Servers*.
+
 ### Work Autonomously
 - NO pausing for user feedback
 - NO asking clarifying questions (document uncertainties)

@@ -23,6 +23,8 @@ The Conductor gives you: the phase objective, the AL objects created/modified, t
 
 The Conductor passes **phase-relevant excerpts** of the architecture (patterns to follow), spec (object IDs/structure), plan (phase objectives), test-plan (expected coverage), and memory (cross-session decisions) inline — treat these as authoritative, validate against them, and reference them in findings. Read the full file under `.github/plans/` only if a needed detail is missing from the excerpt. (This does not affect Step 0 — BCQuality reads `app.json`, the changed objects, and the external BCQuality clone independently.)
 
+> **Verify claims semantically, not textually.** `bclsp_findReferences`, `bclsp_goToDefinition` and `bclsp_symbolRelations` resolve scopes and cross-project references; a text match cannot tell a declaration from a comment that names it — and a review finding built on a text match is a guess. Anything in compiled `.alpackages` (Base App, libraries) needs `al_symbolsearch`; `bclsp_*` only sees workspace source. Tool inventory and the "exists vs. granted" distinction: [`../docs/copilot-reference.md`](../docs/copilot-reference.md) → *AL/BC Tools & MCP Servers*.
+
 ## Review pipeline
 
 ### Step 0 — Consult BCQuality (external citable knowledge)

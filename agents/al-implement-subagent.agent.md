@@ -90,6 +90,8 @@ Follow the **build route order** in `skill-aproda-deploy-run-verify` → *Build 
 
 **Build proof = exit code 0 + the path of the produced `.app`.** `al_getdiagnostics`, `read/problems` and `bclsp_codeQualityDiagnostics` are editor/language-server state — use them to locate errors, never to claim a clean build.
 
+> **Locate code semantically.** `bclsp_goToDefinition`, `bclsp_findReferences` and `bclsp_symbolRelations` resolve scopes and cross-project references; use `al_symbolsearch` for anything in compiled `.alpackages` (Base App, libraries) — `bclsp_*` only sees workspace source. Tool inventory and the "exists vs. granted" distinction: [`../docs/copilot-reference.md`](../docs/copilot-reference.md) → *AL/BC Tools & MCP Servers*.
+
 ### Test Patterns (Given/When/Then)
 
 ```al

@@ -41,6 +41,15 @@ A layer release ships whatever is on disk in `agents/`, `skills/`, `prompts/`, `
 
 See `skill-aproda-aldc` → Step 2.5 for the per-change checklist this gate is backstopping.
 
+## Agent tool-publisher casing check (mandatory before a layer release)
+
+Agent tool references resolve by exact-case string match against the installed extension ID (verified
+2026-09-29, `docs/copilot-reference.md` → *Tool publisher casing*); a casing typo ships silently — no
+compile error, just a tool that never appears for the agent. `tools/aldc-validate`'s `agentToolCasing`
+rule scans every `agents/*.agent.md` for case-variants of the known publishers (`SShadowSdk.al-lsp-for-agents`,
+`aprodaag.aproda-aldc`, `ms-dynamics-smb.al`) and is currently `warn` — confirm it reports zero hits
+before bumping the layer version, and record the result alongside the catalog consistency check.
+
 ## Register verification (mandatory before a layer release)
 
 `aproda-sync.json → inPlaceEdits` mirrors the D-7 register in `decisions.aproda.md`: each listed path

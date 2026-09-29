@@ -90,6 +90,10 @@ Use the `readme.aproda.md` "Stacking vs. changing" table:
 - Net-new file → `.aproda.` infix / `skill-aproda-*` folder, type suffix intact.
 - In-place edit → keep it **additive and minimal** (smaller conflicts on the next pull).
 - Persisted artifacts under `.github/**` are **English** (copilot-instructions rule).
+- Editing any agent's `tools:` frontmatter → publisher casing is **exact-match, case-sensitive**
+  against the installed extension ID (verified 2026-09-29, see `docs/copilot-reference.md` → *Tool
+  publisher casing*) — a lowercase typo silently resolves to zero tools, no error. Backstopped by
+  `tools/aldc-validate`'s `agentToolCasing` rule; don't rely on the rule alone when hand-editing.
 
 ### Step 2.5 — Update the catalogs (D-46, mandatory)
 

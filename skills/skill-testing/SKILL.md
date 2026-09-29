@@ -43,7 +43,7 @@ Microsoft ships test libraries that create almost all master and document data. 
 Before writing a hand-built `CreateX`, confirm whether a library exists — resolve facts from symbols, not memory:
 
 - `al_symbolsearch` / `al-symbols-mcp` against `.alpackages/` for `"Library - "` → lists installed test libraries and their procedures (authoritative).
-- `al_symbolrelations` / `bclsp_findReferences` to see how a library procedure is used.
+- `bclsp_symbolRelations` / `bclsp_findReferences` to see how a library procedure is used.
 - Fallback: a `.app` is a ZIP — rename + extract to read its `.al`/symbol `.json` for procedure signatures when a symbol query is inconclusive.
 
 If no library covers the table, hand-build the record — and note it. Never guess a procedure signature; resolve it.
