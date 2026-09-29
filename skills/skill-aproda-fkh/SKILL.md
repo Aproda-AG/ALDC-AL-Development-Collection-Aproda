@@ -109,7 +109,7 @@ finally {
 
 ### Missing Dependencies
 
-When `UnknownDependencies` is non-empty, or `fkh getappinfo` shows a target dependency that is not installed, do not resolve it silently. Load [`references/dependency-resolution.md`](references/dependency-resolution.md): match the missing app against the known Aproda app sources (ASFL foundation layer, other Aproda modules, third-party/Fremd Module — see `site-profile.aproda.md`), **offer the match to the user and wait for confirmation** before adding it to the publish set, and publish tier-by-tier (foundation layer → other Aproda modules → third-party → project apps).
+When `UnknownDependencies` is non-empty, or `fkh getappinfo` shows a target dependency that is not installed, do not resolve it silently. Load [`../skill-aproda-deploy-run-verify/references/dependency-resolution.md`](../skill-aproda-deploy-run-verify/references/dependency-resolution.md) (owned by `skill-aproda-deploy-run-verify` — the same reference the DRV engine points to for both adapters): match the missing app against the known Aproda app sources (ASFL foundation layer, other Aproda modules, third-party/Fremd Module — see `site-profile.aproda.md`), **offer the match to the user and wait for confirmation** before adding it to the publish set, and publish tier-by-tier (foundation layer → other Aproda modules → third-party → project apps).
 
 ### FKH Deployment Scope
 
@@ -141,7 +141,7 @@ For a `UserPassword` BC target, `scripts/FkhCredentialStore.ps1` caches the cred
 |---|---|
 | Container discovery and launch-target verification | Validated |
 | Dependency sorting via Fkh AL-Go overrides and `al` | Validated |
-| Missing-dependency resolution (ASFL/other Aproda modules/third-party) | Documented — HITL offer only, never auto-install (see `references/dependency-resolution.md`) |
+| Missing-dependency resolution (ASFL/other Aproda modules/third-party) | Documented — HITL offer only, never auto-install (see `skill-aproda-deploy-run-verify/references/dependency-resolution.md`) |
 | Publish, sync, install/upgrade, and state inspection | Validated |
 | Test execution inside an Fkh container | Validated, including through the DRV engine entry point (26/26, D-36) |
 | Test-result retrieval and parsing from an Fkh container | Validated, including through the DRV engine entry point |

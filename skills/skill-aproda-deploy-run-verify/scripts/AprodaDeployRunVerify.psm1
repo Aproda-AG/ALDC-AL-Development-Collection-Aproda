@@ -465,6 +465,141 @@ function Invoke-DeployRunVerifyBuild {
 }
 
 # ---------------------------------------------------------------------------
+# Missing-dependency preflight (D-52): adapter-agnostic detection, run before any
+# publish attempt on either adapter. Detection only — resolution stays HITL (agent-
+# executed, see references/dependency-resolution.md); this engine never installs a
+# dependency it discovered itself.
+# ---------------------------------------------------------------------------
+function Get-DeployRunVerifyAppManifestDependencies {
+    param([Parameter(Mandatory)][string]$AppFile)
+    if (-not (Get-Command al -ErrorAction SilentlyContinue)) {
+        Write-Warning "The 'al' CLI is not on PATH — cannot inspect $AppFile for manifest dependencies. Missing-dependency preflight is skipped for this app."
+        return @()
+    }
+    # TODO (verify against a live app): al GetPackageManifest emits the package manifest as
+    # JSON on stdout, expected to carry a `dependencies` array of { id, name, publisher,
+    # version } — the same shape skill-aproda-fkh's bundled sortapps.ps1 already consumes.
+    $raw = & al GetPackageManifest --package $AppFile 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "al GetPackageManifest failed for $AppFile (exit $LASTEXITCODE) — missing-dependency preflight is skipped for this app."
+        return @()
+    }
+    try { return @(($raw | ConvertFrom-Json).dependencies) }
+    catch {
+        Write-Warning "Could not parse al GetPackageManifest output for $AppFile — missing-dependency preflight is skipped for this app."
+        return @()
+    }
+}
+
+function Get-DeployRunVerifyInstalledAppsFkh {
+    param([Parameter(Mandatory)][string]$BackendUrl, [Parameter(Mandatory)][string]$AppLabel)
+    $raw = & fkh getappinfo --name $AppLabel --appName '*' --asJson --backendUrl $BackendUrl
+    if ($LASTEXITCODE -ne 0) { throw "fkh getappinfo failed while checking target dependencies (exit code $LASTEXITCODE)." }
+    return @(($raw | ConvertFrom-Json).apps)
+}
+
+function Get-DeployRunVerifyInstalledAppsAsinst {
+    param([Parameter(Mandatory)]$Cfg)
+    $session = New-PSSession -ComputerName $Cfg.server
+    try {
+        return Invoke-Command -Session $session -ScriptBlock {
+            param($si, $tenant, $mgmt)
+            Import-Module $mgmt -ErrorAction Stop
+            Get-NAVAppInfo -ServerInstance $si -Tenant $tenant -TenantSpecificProperties |
+            Select-Object Name, Publisher, Version, IsInstalled
+        } -ArgumentList $Cfg.serverInstance, $Cfg.tenant, $Cfg.mgmtDllPath
+    }
+    finally { Remove-PSSession $session }
+}
+
+function Test-DeployRunVerifyTargetDependencies {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)]$Cfg)
+
+    $configuredNames = @($Cfg.apps | ForEach-Object { $_.Name })
+    $required = @{}
+    foreach ($app in $Cfg.apps) {
+        foreach ($dep in (Get-DeployRunVerifyAppManifestDependencies -AppFile $app.AppFile)) {
+            if ($configuredNames -contains $dep.name) { continue }  # already covered by this project's own app set
+            $key = "$($dep.name)|$($dep.version)"
+            if (-not $required.ContainsKey($key)) { $required[$key] = [pscustomobject]@{ RequiredBy = $app.Name; Name = $dep.name; Version = $dep.version } }
+        }
+    }
+    if ($required.Count -eq 0) { return }
+
+    $installed = switch ($Cfg.adapter) {
+        'Fkh' {
+            $backendUrl = Get-DeployRunVerifyFkhBackendUrl
+            $container = Resolve-DeployRunVerifyFkhContainer -Cfg $Cfg -BackendUrl $backendUrl
+            Get-DeployRunVerifyInstalledAppsFkh -BackendUrl $backendUrl -AppLabel ([string]$container.appLabel)
+        }
+        default { Get-DeployRunVerifyInstalledAppsAsinst -Cfg $Cfg }
+    }
+
+    $missing = foreach ($req in $required.Values) {
+        $found = @($installed) | Where-Object { $_.Name -eq $req.Name -and [bool]$_.IsInstalled }
+        if (-not $found) { "$($req.Name) $($req.Version) (required by $($req.RequiredBy))" }
+    }
+    if ($missing) {
+        throw ("MISSING TARGET DEPENDENCY on $($Cfg.server): " + ($missing -join '; ') +
+            '. Resolution is HITL — do not auto-install. See skill-aproda-deploy-run-verify/references/dependency-resolution.md.')
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Confirmed-file install of a single resolved dependency (D-52). The caller (agent) must
+# already have matched the file against the known Aproda app sources and obtained the
+# user's explicit confirmation — this function only executes the mechanics, adapter-
+# dispatched, for exactly the file path it is given. It never discovers or picks a file.
+# ---------------------------------------------------------------------------
+function Install-DeployRunVerifyResolvedDependency {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]$Cfg,
+        [Parameter(Mandatory)][string]$AppFile,
+        [Parameter(Mandatory)][string]$Name,
+        [Parameter(Mandatory)][string]$Version
+    )
+    if (-not (Test-Path -LiteralPath $AppFile)) { throw "Resolved dependency file not found: $AppFile" }
+
+    switch ($Cfg.adapter) {
+        'Fkh' {
+            $backendUrl = Get-DeployRunVerifyFkhBackendUrl
+            $container = Resolve-DeployRunVerifyFkhContainer -Cfg $Cfg -BackendUrl $backendUrl
+            $appLabel = [string]$container.appLabel
+            & fkh publishapp --name $appLabel --appFile $AppFile --devScope --syncMode Add --sync --install --backendUrl $backendUrl
+            if ($LASTEXITCODE -ne 0) { throw "Fkh publish of resolved dependency failed: $Name $Version (exit code $LASTEXITCODE)." }
+        }
+        default {
+            if ([string]::IsNullOrWhiteSpace($Cfg.mgmtDllPath)) { throw "mgmtDllPath is required for the ASINST adapter." }
+            $session = New-PSSession -ComputerName $Cfg.server
+            try {
+                $tempDir = "C:\Temp\AprodaDeployRunVerify_dep_$(Get-Random)"
+                Invoke-Command -Session $session -ScriptBlock { param($d) New-Item -ItemType Directory $d -Force | Out-Null } -ArgumentList $tempDir
+                Copy-Item $AppFile -Destination $tempDir -ToSession $session -Force
+                Invoke-Command -Session $session -ScriptBlock {
+                    param($d, $si, $tenant, $mgmt, $name, $ver)
+                    Import-Module $mgmt -ErrorAction Stop
+                    $path = (Get-ChildItem "$d\*.app" | Select-Object -First 1).FullName
+                    Publish-NAVApp -ServerInstance $si -Path $path -SkipVerification -Scope Tenant -Tenant $tenant
+                    Sync-NAVApp -ServerInstance $si -Name $name -Version $ver -Tenant $tenant -Mode Add -ErrorAction SilentlyContinue
+                    try { Install-NAVApp -ServerInstance $si -Name $name -Version $ver -Tenant $tenant -ErrorAction Stop }
+                    catch {
+                        Sync-NAVApp -ServerInstance $si -Name $name -Version $ver -Tenant $tenant -Mode ForceSync -Force -ErrorAction Stop
+                        try { Install-NAVApp -ServerInstance $si -Name $name -Version $ver -Tenant $tenant -ErrorAction Stop }
+                        catch { Start-NAVAppDataUpgrade -ServerInstance $si -Name $name -Version $ver -Tenant $tenant }
+                    }
+                    $Error.Clear()
+                    Remove-Item $d -Recurse -Force -ErrorAction SilentlyContinue
+                } -ArgumentList $tempDir, $Cfg.serverInstance, $Cfg.tenant, $Cfg.mgmtDllPath, $Name, $Version
+            }
+            finally { Remove-PSSession $session }
+        }
+    }
+    Write-Host "Resolved dependency installed: $Name $Version"
+}
+
+# ---------------------------------------------------------------------------
 # Deploy dispatcher (D-26): routes to the adapter resolved by Get-DeployRunVerifyAdapter.
 # Both branches converge back into the shared Build -> Run -> Parse stages.
 # ---------------------------------------------------------------------------
@@ -885,6 +1020,8 @@ function Invoke-AprodaDeployRunVerify {
         return [pscustomobject]@{ BuildOnly = $true; Timings = [pscustomobject]$timings; TotalDuration = $totalTimer.Elapsed }
     }
 
+    Test-DeployRunVerifyTargetDependencies -Cfg $cfg
+
     $stageTimer = [System.Diagnostics.Stopwatch]::StartNew()
     Invoke-DeployRunVerifyDeploy -Cfg $cfg | Out-Null
     $stageTimer.Stop()
@@ -911,4 +1048,6 @@ Invoke-DeployRunVerifyRunOnce, Get-DeployRunVerifySummary, Invoke-AprodaDeployRu
 Get-DeployRunVerifyFkhBackendUrl, Resolve-DeployRunVerifyFkhContainer, Get-DeployRunVerifyCredential,
 Reset-DeployRunVerifyCredential,
 Resolve-DeployRunVerifyRunner, New-DeployRunVerifyRunner, Initialize-DeployRunVerifyRunner, Copy-DeployRunVerifyRunnerFromServer,
-Resolve-DeployRunVerifyClientSource, Get-DeployRunVerifyServerVersion, Get-DeployRunVerifyRunnerVersion
+Resolve-DeployRunVerifyClientSource, Get-DeployRunVerifyServerVersion, Get-DeployRunVerifyRunnerVersion,
+Test-DeployRunVerifyTargetDependencies, Install-DeployRunVerifyResolvedDependency, Get-DeployRunVerifyAppManifestDependencies,
+Get-DeployRunVerifyInstalledAppsFkh, Get-DeployRunVerifyInstalledAppsAsinst

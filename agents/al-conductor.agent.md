@@ -249,6 +249,8 @@ After the review verdict allows proceeding (APPROVED / APPROVED_WITH_RECOMMENDAT
 4. **Loop discipline**: fix → deploy → run → review until all tests pass **or** a genuine blocker (service down, spec contradiction). Do **not** brute-force the same fix; on a real blocker, stop and consult the user. Failures route back to **2A** (author the fix task for the implement-subagent).
 5. **Surface one line** in the checkpoint evidence row: `🧪 {X/X ✅ | build-only — no service}`.
 
+> **A `MISSING TARGET DEPENDENCY` error is not a generic deploy failure and does not route to 2A.** It means the engine's preflight found something the target needs (e.g. ASFL, another Aproda module, a third-party app) that this project's own apps cannot supply. Follow `skill-aproda-deploy-run-verify` → `references/dependency-resolution.md`: HITL-match and confirm with the user, install via `Install-DeployRunVerifyResolvedDependency`, re-verify, then resume the loop. Never let the implement-subagent try to "fix" this in AL source.
+
 > **You don't build yourself.** You hold `execute`, but every build belongs to the implement-subagent or to this 2B-bis gate — running `alc.exe`/DRV directly bypasses the gate. When you need build evidence, require it from the implementer: exit code 0 plus the path of the produced `.app`. `al_getdiagnostics` and `read/problems` are editor state, not a build proof — never accept them as one. The binding route order lives in `skill-aproda-deploy-run-verify` → *Build route — order of preference*.
 
 #### 2C. Phase Completion & Commit

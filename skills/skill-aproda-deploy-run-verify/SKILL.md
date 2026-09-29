@@ -49,7 +49,7 @@ flowchart TD
 
   > Suggested wording: *"No BC service reachable. Quality is higher with a Cronus BC environment incl. Test Toolkit. Without a service only static validation (build + audit) is possible, no runtime verification. Proceed build-only?"*
 
-- **Missing dependency on the target** → the same HITL discipline applies as environment selection: never resolve or install a missing dependency silently. For an Fkh target, load [`skill-aproda-fkh`](../skill-aproda-fkh/SKILL.md) → *Missing Dependencies* (and its `references/dependency-resolution.md`) to match the app against the known Aproda sources, then offer it to the user and wait for confirmation before publishing it.
+- **Missing dependency on the target** → `Invoke-AprodaDeployRunVerify` runs `Test-DeployRunVerifyTargetDependencies` before any publish attempt, for both adapters, and throws a named `MISSING TARGET DEPENDENCY` error if the target is missing something the configured apps need. Treat that error as the trigger for [`references/dependency-resolution.md`](references/dependency-resolution.md) — the full closed loop: match against the known Aproda app sources, offer to the user, install only the confirmed file via `Install-DeployRunVerifyResolvedDependency`, then re-verify before letting the normal publish proceed. The engine never resolves or installs a missing dependency by itself.
 
 ## Build route — order of preference
 
@@ -92,6 +92,7 @@ Run the loop at **each phase boundary** as the quality gate. The conductor alrea
 - [`skill-aproda-fkh`](../skill-aproda-fkh/SKILL.md) — Fkh target resolution, dependency sorting, publish, and state inspection.
 - [`references/build-deploy.md`](references/build-deploy.md) — version-dynamic build, Base→Test symbol copy, deploy order, install-or-upgrade fallback.
 - [`references/redeploy-recovery.md`](references/redeploy-recovery.md) — same-version and schema-change recovery for ASINST and explicitly requested FKH Global-scope deployments.
+- [`references/dependency-resolution.md`](references/dependency-resolution.md) — the full closed loop for a missing target dependency (ASINST + FKH): engine detection, HITL match against the known Aproda app sources, confirmed-file install, re-verification.
 - [`references/runner.md`](references/runner.md) — web-client ServiceUrl, runner DLLs materialized from the K: BC DVD, central version-agnostic glue, **SRP content-based script loading**, result parsing.
 - [`references/triage-patterns.md`](references/triage-patterns.md) — the falsifiable failure→cause→fix patterns (the gold).
 

@@ -9,6 +9,12 @@ When a test fails, match the symptom below → apply the fix → re-deploy → r
 
 ## Patterns
 
+### T-0 — `MISSING TARGET DEPENDENCY` at deploy ✅
+- **Symptom:** the DRV run stops before any publish attempt with `MISSING TARGET DEPENDENCY on <server>: ...`.
+- **Cause:** a configured app's manifest declares a dependency (typically ASFL, another Aproda module, or a third-party app) that is neither in the local app set nor already installed on the target — the preflight check (`Test-DeployRunVerifyTargetDependencies`) catches this before the fkh/NAV error would otherwise be opaque.
+- **Fix:** this is **not** a code bug — do not touch AL source. Follow [`dependency-resolution.md`](dependency-resolution.md): match the named app against the known Aproda app sources, get the user's confirmation, install via `Install-DeployRunVerifyResolvedDependency`, re-verify, then re-run the loop.
+- **Proven by:** D-52 (engine preflight added after a live gap surfaced on `flobi-wan-kenobi-gustavgerig-dev-deployment`, 2026-09-29).
+
 ### T-1 — Unhandled `Message` in the runner ✅
 - **Symptom:** test fails on an unexpected UI `Message`, even though the code wraps it in `if GuiAllowed() then`.
 - **Cause:** the client-driven runner has `GuiAllowed()=true`, so the guard does not suppress it (see `runner.md`).

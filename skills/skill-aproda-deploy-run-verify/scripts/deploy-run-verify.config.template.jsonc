@@ -16,7 +16,11 @@
     // set them here. The adapter (ASINST vs Fkh) follows from scheme + hostname, see
     // skill-aproda-fkh and decisions.aproda.md D-26.
     // --- Apps in DEPENDENCY ORDER (REQUIRED) ---
-    // Project directories (relative to this config file), upstream first, TEST app LAST.
+    // Project directories (relative to this config file) ONLY — this project's own apps,
+    // upstream first, TEST app LAST. Do NOT list Aproda foundation/third-party dependencies
+    // (ASFL, other Aproda modules, Fremd Module) here — they are not project-repo artifacts.
+    // A missing one is caught by the engine's preflight and resolved HITL; see
+    // references/dependency-resolution.md.
     // name/version/publisher/id are read from each app.json.
     "appsInOrder": [
         // "..\\Base",

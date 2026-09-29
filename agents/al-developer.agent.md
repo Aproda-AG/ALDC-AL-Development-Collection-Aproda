@@ -86,7 +86,7 @@ Load on demand from `.github/skills/<name>/SKILL.md` (or invoke explicitly: `/sk
 | `skill-translate` | labels, captions, tooltips, XLIFF files, or AI-assisted localization |
 | `skill-aproda-deploy-run-verify` 🟦 | end-to-end runtime Deploy-Run-Verify Cycle against a live BC service: build → deploy → run → review, looped until green or a real blocker |
 
-> 🟦 Aproda custom layer. **Apply it once, after implementation, before handing off for PR** — provided a BC service is reachable (the skill's preflight gate handles the launch.json environment selection + the build-only fallback when no service/Test Toolkit is available). This is the LOW-complexity trigger; MEDIUM/HIGH runs are gated per phase by `@al-conductor`.
+> � Aproda custom layer. **Apply it once, after implementation, before handing off for PR** — provided a BC service is reachable (the skill's preflight gate handles the launch.json environment selection + the build-only fallback when no service/Test Toolkit is available). This is the LOW-complexity trigger; MEDIUM/HIGH runs are gated per phase by `@al-conductor`. A `MISSING TARGET DEPENDENCY` error is not a code bug — follow `references/dependency-resolution.md` (HITL match + confirm + install + re-verify) instead of touching AL source.
 
 **Skills evidencing (MANDATORY when you load any skill).** Start the response with a blockquote naming each skill and the specific pattern applied:
 

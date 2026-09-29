@@ -67,7 +67,7 @@ That is the whole per-project surface. The 3 glue scripts, the engine, and the D
 
 ## Non-derivable (must be in config)
 
-- **`appsInOrder`** — project dirs in **dependency order** (last = the test app).
+- **`appsInOrder`** — project dirs in **dependency order** (last = the test app). Scope is **this project's own apps only** — Aproda foundation/third-party dependencies (ASFL, other Aproda modules, Fremd Module) are not project-repo artifacts and are never listed here; a missing one is caught by the engine's preflight (`Test-DeployRunVerifyTargetDependencies`) and resolved HITL (see [`../references/dependency-resolution.md`](../references/dependency-resolution.md)).
 - **`runnerDir`** — project-local BASE folder for the AL test-runner DLLs. The engine uses a **version subfolder** `<runnerDir>/<major.minor>` matched to the BC server and validates the client DLL version (see [`../references/runner.md`](../references/runner.md)). The whole `_runner/` folder is git-ignored — the 4 DLLs are **materialized on demand**.
 - **Runner DLL source** — where the 4 version-pinned client DLLs come from:
   - `bcDvdRoot` + `bcCountry` *(preferred)* — the K: BC product DVD; the engine globs the highest minor at `<bcDvdRoot>\<major>\<bcCountry>.<major>.<minor>\Applications\TestFramework\TestRunner\Internal`.

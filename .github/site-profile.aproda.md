@@ -75,7 +75,7 @@ Compiled `.app` files for Aproda's own AppSource offerings and third-party modul
 | **Third-party / foreign modules** | `\\APD-SVW-FS01.aproda.ch\DevDaten\Daten\53 AL Development\Fremd Module\` | |
 
 - **Older versions** of any app are kept in an `Archiv Signed` subfolder next to the current `Signed App` folder — check there when a target needs a version other than the latest.
-- **Install order**: ASFL first (it is the base other Aproda AppSource apps depend on), then other Aproda modules, then third-party modules, then the project apps being deployed. See `skill-aproda-fkh/references/dependency-resolution.md` for the resolution procedure — resolution is HITL (offer the match, never install automatically).
+- **Install order**: ASFL first (it is the base other Aproda AppSource apps depend on), then other Aproda modules, then third-party modules, then the project apps being deployed. See `skill-aproda-deploy-run-verify/references/dependency-resolution.md` for the resolution procedure — resolution is HITL (offer the match, never install automatically).
 
 ## BC web client (headless test runner)
 
