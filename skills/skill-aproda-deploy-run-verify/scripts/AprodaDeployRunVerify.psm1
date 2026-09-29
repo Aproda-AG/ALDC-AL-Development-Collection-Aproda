@@ -435,7 +435,8 @@ function Test-DeployRunVerifyPreflight {
         $reachable = $true
     }
     catch {
-        if ($_.Exception.Response) { $reachable = $true }
+        # StrictMode-safe: not every transport failure (timeout/DNS/TLS) exposes .Response
+        if ($_.Exception.PSObject.Properties.Match('Response').Count -gt 0 -and $_.Exception.Response) { $reachable = $true }
     }
     [pscustomobject]@{ Reachable = [bool]$reachable; ServiceUrl = $Cfg.serviceUrl }
 }
