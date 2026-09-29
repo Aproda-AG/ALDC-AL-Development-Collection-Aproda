@@ -50,7 +50,12 @@
     migration runs automatically on every pull.
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
-param()
+param(
+    # Optional: lets a caller that is NOT inside the project (the VS Code extension runs this
+    # from the managed fork cache) target the project explicitly. Without it the .git-walk below
+    # would resolve to the cache repository instead.
+    [string]$ProjectRoot
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -63,17 +68,25 @@ if ([string]::IsNullOrWhiteSpace($scriptDir)) {
     throw "Cannot resolve script directory. Set `$env:APRODA_SYNC_SCRIPTDIR when loading content-based."
 }
 
-$gitRoot = $null
-$dir = Get-Item -LiteralPath $scriptDir
-while ($null -ne $dir) {
-    if (Test-Path -LiteralPath (Join-Path $dir.FullName '.git')) { $gitRoot = $dir.FullName; break }
-    $dir = $dir.Parent
-}
-if ($gitRoot) {
-    $projectRoot = $gitRoot
+if (-not [string]::IsNullOrWhiteSpace($ProjectRoot)) {
+    if (-not (Test-Path -LiteralPath $ProjectRoot)) {
+        throw "ProjectRoot does not exist: $ProjectRoot"
+    }
+    $projectRoot = (Resolve-Path -LiteralPath $ProjectRoot).Path
 }
 else {
-    $projectRoot = (Resolve-Path (Join-Path $scriptDir '..\..\..')).Path
+    $gitRoot = $null
+    $dir = Get-Item -LiteralPath $scriptDir
+    while ($null -ne $dir) {
+        if (Test-Path -LiteralPath (Join-Path $dir.FullName '.git')) { $gitRoot = $dir.FullName; break }
+        $dir = $dir.Parent
+    }
+    if ($gitRoot) {
+        $projectRoot = $gitRoot
+    }
+    else {
+        $projectRoot = (Resolve-Path (Join-Path $scriptDir '..\..\..')).Path
+    }
 }
 
 $rootAldcYaml = Join-Path $projectRoot 'aldc.yaml'

@@ -36,7 +36,8 @@ async function run() {
             },
             window: {
                 showInformationMessage: async () => undefined,
-                showWarningMessage: async () => undefined,
+                // The init asks for confirmation with the dry-run's change count before applying.
+                showWarningMessage: async () => "Continue",
                 showErrorMessage: async () => undefined,
                 withProgress: async (_options, task) => task({ report: () => undefined }),
                 createOutputChannel: () => ({ appendLine: () => undefined, show: () => undefined, dispose: () => undefined })
@@ -47,6 +48,8 @@ async function run() {
             Uri: { file: (value) => ({ fsPath: value }) }
         };
         const bridgeMock = {
+            // Nothing to migrate: the init must then run without interrupting.
+            runMigrationPreflight: async () => ({ status: "current", actions: [] }),
             runBootstrap: async () => {
                 // What the real migration does: the sibling BCQuality root stops being a workspace folder.
                 vscodeMock.workspace.workspaceFolders = [{ uri: { fsPath: repoRoot } }];
@@ -114,7 +117,7 @@ async function firstInitUsesPostBootstrapConfig(scratch) {
         },
         window: {
             showInformationMessage: async () => undefined,
-            showWarningMessage: async () => undefined,
+            showWarningMessage: async () => "Continue",
             showErrorMessage: async () => undefined,
             withProgress: async (_options, task) => task({ report: () => undefined }),
             createOutputChannel: () => ({ appendLine: () => undefined, show: () => undefined, dispose: () => undefined })
@@ -125,6 +128,7 @@ async function firstInitUsesPostBootstrapConfig(scratch) {
         Uri: { file: (value) => ({ fsPath: value }) }
     };
     const bridgeMock = {
+        runMigrationPreflight: async () => ({ status: "current", actions: [] }),
         runBootstrap: async () => {
             await fs.mkdir(path.join(repoRoot, ".github"), { recursive: true });
             await fs.writeFile(path.join(repoRoot, ".github", "aldc.yaml"), "external:\n  bcquality:\n    home: .external/bcquality\n");
