@@ -511,6 +511,39 @@ checkFlatCatalog("instruction", "instructions", "instructions.md", "instructions
   }
 }
 
+// 9d. agentToolCasing — chat-agent tool references in `tools:` frontmatter are
+// resolved by exact-case string match against installed extension IDs
+// (verified 2026-09-29): a publisher segment that differs only in case from
+// the real extension ID silently resolves to zero tools — no error, the
+// tool just never appears in the available/deferred list. catalogCoherence
+// cannot catch this — the filename is fine, only the frontmatter string is
+// wrong — so this needs its own check.
+{
+  const CANONICAL_TOOL_PUBLISHERS = [
+    "SShadowSdk.al-lsp-for-agents",
+    "aprodaag.aproda-aldc",
+    "ms-dynamics-smb.al",
+  ];
+  const agentsDir = root + "agents";
+  if (fileExists(agentsDir)) {
+    const agentFiles = fs.readdirSync(agentsDir).filter(f => f.endsWith(".agent.md"));
+    for (const f of agentFiles) {
+      const fp = path.join(agentsDir, f);
+      const text = readFile(fp);
+      for (const canonical of CANONICAL_TOOL_PUBLISHERS) {
+        const re = new RegExp(canonical.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+        let m;
+        while ((m = re.exec(text))) {
+          if (m[0] !== canonical) {
+            issue("agentToolCasing",
+              `${fp} references "${m[0]}" — publisher casing must match "${canonical}" exactly, or the tool silently fails to resolve`);
+          }
+        }
+      }
+    }
+  }
+}
+
 // ─── Report ──────────────────────────────────────────────────────
 function report() {
   console.log("\n╔══════════════════════════════════════════╗");

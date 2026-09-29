@@ -228,3 +228,7 @@ validation:
     catalogCoherence: "warn"
     versionCoherence: "warn"
     aprodaInventoryCoherence: "warn"
+    # Case-sensitive publisher match against installed extension IDs (verified
+    # 2026-09-29) — a casing typo in an agent's tools: frontmatter silently
+    # resolves to zero tools, no error. Start at warn until swept fork-wide.
+    agentToolCasing: "warn"
