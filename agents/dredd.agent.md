@@ -4,7 +4,7 @@ description: 'Independent, on-demand AL codebase auditor for Business Central. J
 user-invocable: true
 argument-hint: 'Optional: a module/folder to focus on, or "todo" for a full-codebase audit (default = changes vs main)'
 tools: [changes, read/readFile, read/problems, search, edit, todo, 'al-symbols-mcp/*', ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolsearch, aprodaag.aproda-aldc/aldcConfiguration, aprodaag.aproda-aldc/bcquality, SShadowSdk.al-lsp-for-agents/bclsp_findReferences, SShadowSdk.al-lsp-for-agents/bclsp_goToDefinition, SShadowSdk.al-lsp-for-agents/bclsp_hover, SShadowSdk.al-lsp-for-agents/bclsp_documentSymbols, SShadowSdk.al-lsp-for-agents/bclsp_symbolRelations, SShadowSdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, SShadowSdk.al-lsp-for-agents/bclsp_incomingCalls, SShadowSdk.al-lsp-for-agents/bclsp_outgoingCalls, SShadowSdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics]
-model: Claude Sonnet 5 (copilot)
+model: Claude Sonnet 5.5 (copilot)
 handoffs:
   - label: Hand findings to implementer
     agent: AL Implementation Specialist

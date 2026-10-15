@@ -4,7 +4,7 @@ description: 'Reactive support for EXISTING Business Central AL code — reprodu
 user-invocable: true
 argument-hint: 'The symptom / error / bug report (+ reproduction steps or environment, if known). E.g., "posting throws Conflict for customer X intermittently"'
 tools: [changes, read/problems, read/readFile, search, edit, execute, todo, 'al-symbols-mcp/*', ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, SShadowSdk.al-lsp-for-agents/bclsp_symbolRelations, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_debug, ms-dynamics-smb.al/al_setbreakpoint, ms-dynamics-smb.al/al_snapshotdebugging, SShadowSdk.al-lsp-for-agents/bclsp_goToDefinition, SShadowSdk.al-lsp-for-agents/bclsp_hover, SShadowSdk.al-lsp-for-agents/bclsp_findReferences, SShadowSdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, SShadowSdk.al-lsp-for-agents/bclsp_incomingCalls, SShadowSdk.al-lsp-for-agents/bclsp_outgoingCalls, SShadowSdk.al-lsp-for-agents/bclsp_codeLens, SShadowSdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, SShadowSdk.al-lsp-for-agents/bclsp_documentSymbols, aprodaag.aproda-aldc/aldcConfiguration, aprodaag.aproda-aldc/bcquality, ado/wit_work_item, ado/repo_search_commits, ado/repo_file]
-model: Claude Sonnet 5 (copilot)
+model: Claude Sonnet 5.5 (copilot)
 handoffs:
   - label: Hand the fix to the implementer
     agent: AL Implementation Specialist
