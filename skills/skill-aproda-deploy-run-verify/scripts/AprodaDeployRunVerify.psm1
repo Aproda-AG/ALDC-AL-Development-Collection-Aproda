@@ -68,12 +68,12 @@ function Resolve-DeployRunVerifyConfig {
     $cfg = $raw | ConvertFrom-Json
 
     # --- launch.json (server/instance/tenant) ---
+    $pick = $null
     if ([string]::IsNullOrWhiteSpace($cfg.server)) {
         $launchPath = Join-Path $cfgDir '.vscode\launch.json'
         if (Test-Path $launchPath) {
             $lj = (Get-Content $launchPath -Raw) -replace '(?m)(?<!:)//.*?$', '' | ConvertFrom-Json
             $configs = @($lj.configurations | Where-Object { $_.server })
-            $pick = $null
             if ($cfg.launchConfig) { $pick = $configs | Where-Object { $_.name -eq $cfg.launchConfig } | Select-Object -First 1 }
             elseif ($configs.Count -eq 1) { $pick = $configs[0] }
             if ($pick) {
@@ -83,17 +83,30 @@ function Resolve-DeployRunVerifyConfig {
                 if (-not ($cfg.PSObject.Properties.Name -contains 'scheme')) { $cfg | Add-Member scheme '' -Force }
                 if ([string]::IsNullOrWhiteSpace($cfg.scheme)) { $cfg.scheme = if ($pick.server -match '^https:') { 'https' } else { 'http' } }
                 if (-not ($cfg.PSObject.Properties.Name -contains 'authentication')) { $cfg | Add-Member authentication '' -Force }
-                if ([string]::IsNullOrWhiteSpace($cfg.authentication) -and $pick.authentication) { $cfg.authentication = [string]$pick.authentication }
+                if ([string]::IsNullOrWhiteSpace($cfg.authentication) -and ($pick.PSObject.Properties.Name -contains 'authentication')) { $cfg.authentication = [string]$pick.authentication }
             }
         }
     }
     if ([string]::IsNullOrWhiteSpace($cfg.server)) { throw "server/serverInstance unresolved — set them in config or provide a launch.json 'server' configuration." }
     if ([string]::IsNullOrWhiteSpace($cfg.tenant)) { $cfg.tenant = 'default' }
-    # Adapter classification is mechanical and hostname-based (D-26): scheme and authentication
-    # default here when neither the config nor a launch.json pick supplied them (e.g. an
-    # explicit server override without a launchConfig).
+    # Adapter classification is mechanical and hostname-based (D-26): scheme defaults here when
+    # neither the config nor a launch.json pick supplied it (e.g. an explicit server override
+    # without a launchConfig).
     if (-not ($cfg.PSObject.Properties.Name -contains 'scheme') -or [string]::IsNullOrWhiteSpace($cfg.scheme)) { $cfg | Add-Member scheme 'http' -Force }
-    if (-not ($cfg.PSObject.Properties.Name -contains 'authentication') -or [string]::IsNullOrWhiteSpace($cfg.authentication)) { $cfg | Add-Member authentication 'Windows' -Force }
+    # Authentication is never defaulted: the AL extension treats a missing value as
+    # MicrosoftEntraID, so a silent 'Windows' would aim two tools at one file differently (E-010 B-2).
+    if (-not ($cfg.PSObject.Properties.Name -contains 'authentication')) { $cfg | Add-Member authentication '' -Force }
+    $authSource = if ($pick) { "launch.json configuration '$($pick.name)' or $ConfigPath" } else { $ConfigPath }
+    if ([string]::IsNullOrWhiteSpace($cfg.authentication)) {
+        throw "authentication is not set — set it explicitly in $authSource. Supported: Windows, UserPassword."
+    }
+    if ($cfg.authentication -in @('AAD', 'MicrosoftEntraID')) {
+        throw "authentication '$($cfg.authentication)' (from $authSource) is not supported by Deploy-Run-Verify yet. Supported: Windows, UserPassword."
+    }
+    if ($cfg.authentication -notin @('Windows', 'UserPassword')) {
+        throw "authentication '$($cfg.authentication)' (from $authSource) is unknown. Supported: Windows, UserPassword."
+    }
+    $cfg.authentication = if ($cfg.authentication -eq 'Windows') { 'Windows' } else { 'UserPassword' }
     $cfg | Add-Member adapter (Get-DeployRunVerifyAdapter -Cfg $cfg) -Force
 
     # --- Glue dir (central, ships with the skill): <engine module dir>\runner-glue ---
@@ -203,6 +216,13 @@ function ConvertTo-DeployRunVerifyMajorMinor {
     return $null
 }
 
+function ConvertTo-DeployRunVerifyMajor {
+    param([string]$Version)
+    if ([string]::IsNullOrWhiteSpace($Version)) { return $null }
+    if ($Version -match '^(\d+)(\.|$)') { return $Matches[1] }
+    return $null
+}
+
 function Get-DeployRunVerifyRunnerVersion {
     # Reads the BC client DLL ProductVersion present in a runner dir (or $null).
     param([Parameter(Mandatory)][string]$Dir)
@@ -233,13 +253,18 @@ function Get-DeployRunVerifyServerVersion {
 }
 
 function Resolve-DeployRunVerifyRunner {
-    # Returns the runner dir to use; validates client DLL major.minor == target BC version.
+    # Returns the runner dir to use; validates client DLL major == target BC major. The client DLL
+    # keeps minor 0 for a whole major while the server reports the CU minor (E-010 B-1).
     param([Parameter(Mandatory)]$Cfg)
     $base = $Cfg.runnerDirFull
 
     # Target BC version: explicit config override > live server > (none = trust whatever DLL is present).
-    $target = ConvertTo-DeployRunVerifyMajorMinor $Cfg.bcVersion
-    if (-not $target) { $target = ConvertTo-DeployRunVerifyMajorMinor (Get-DeployRunVerifyServerVersion -Cfg $Cfg) }
+    $targetFull = $Cfg.bcVersion
+    $target = ConvertTo-DeployRunVerifyMajorMinor $targetFull
+    if (-not $target) {
+        $targetFull = Get-DeployRunVerifyServerVersion -Cfg $Cfg
+        $target = ConvertTo-DeployRunVerifyMajorMinor $targetFull
+    }
 
     # Candidates: versioned subfolder first, then flat base (legacy).
     $candidates = @()
@@ -247,13 +272,15 @@ function Resolve-DeployRunVerifyRunner {
     $candidates += $base
 
     foreach ($dir in $candidates) {
-        $rv = ConvertTo-DeployRunVerifyMajorMinor (Get-DeployRunVerifyRunnerVersion -Dir $dir)
+        $dllVersion = Get-DeployRunVerifyRunnerVersion -Dir $dir
+        $rv = ConvertTo-DeployRunVerifyMajorMinor $dllVersion
         if (-not $rv) { continue }
-        if ($target -and $rv -ne $target) {
-            throw ("Runner version mismatch: '$dir' carries BC $rv but the target environment is BC $target. " +
+        if ($target -and (ConvertTo-DeployRunVerifyMajor $rv) -ne (ConvertTo-DeployRunVerifyMajor $target)) {
+            throw ("Runner version mismatch: '$dir' carries BC client $dllVersion but the target environment is BC $targetFull (major must match). " +
                 "Create a matching runner with: New-DeployRunVerifyRunner -RunnerBase '$base' -TargetVersion $target " +
-                "-ClientFrom '<BC Service or client install folder>' -GlueFrom '$dir'.")
+                "-ClientFrom '<BC Service or client install folder>'.")
         }
+        if ($target) { Write-Host "Runner client DLL $dllVersion accepted for target BC $targetFull (major match): $dir" }
         if ($dir -eq $base -and $target) {
             Write-Warning "Using legacy flat runner '$base' (BC $rv). Recommended: move its files to versioned subfolder '$base\$target'."
         }

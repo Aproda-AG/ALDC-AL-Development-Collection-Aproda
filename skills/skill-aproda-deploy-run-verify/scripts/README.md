@@ -68,13 +68,14 @@ That is the whole per-project surface. The 3 glue scripts, the engine, and the D
 ## Non-derivable (must be in config)
 
 - **`appsInOrder`** — project dirs in **dependency order** (last = the test app). Scope is **this project's own apps only** — Aproda foundation/third-party dependencies (ASFL, other Aproda modules, Fremd Module) are not project-repo artifacts and are never listed here; a missing one is caught by the engine's preflight (`Test-DeployRunVerifyTargetDependencies`) and resolved HITL (see [`../references/dependency-resolution.md`](../references/dependency-resolution.md)).
-- **`runnerDir`** — project-local BASE folder for the AL test-runner DLLs. The engine uses a **version subfolder** `<runnerDir>/<major.minor>` matched to the BC server and validates the client DLL version (see [`../references/runner.md`](../references/runner.md)). The whole `_runner/` folder is git-ignored — the 4 DLLs are **materialized on demand**.
+- **`runnerDir`** — project-local BASE folder for the AL test-runner DLLs. The engine uses a **version subfolder** `<runnerDir>/<major.minor>` matched to the BC server and validates that the client DLL **major** matches the target (see [`../references/runner.md`](../references/runner.md)). The whole `_runner/` folder is git-ignored — the 4 DLLs are **materialized on demand**.
 - **Runner DLL source** — where the 4 version-pinned client DLLs come from:
   - `bcDvdRoot` + `bcCountry` *(preferred)* — the K: BC product DVD; the engine globs the highest minor at `<bcDvdRoot>\<major>\<bcCountry>.<major>.<minor>\Applications\TestFramework\TestRunner\Internal`.
   - `runnerClientSource` *(alternative, wins)* — explicit folder, searched recursively.
   - `runnerClientFromServer=true` *(fallback)* — pull from a remote BC Service folder via remote PowerShell.
 - **`companyName`** — pinned into the serviceUrl (`/cs?tenant=<t>&company=<c>`) so the headless runner doesn't prompt for a company. Empty → `/cs/`.
-- **`bcVersion`** *(optional)* — pin the target BC platform `major.minor`; empty = derive from the live server.
+- **`bcVersion`** *(optional)* — pin the target BC platform `major.minor` (selects the runner subfolder; the client DLL must match the **major**); empty = derive from the live server.
+- **`authentication`** — taken from the selected `launch.json` configuration (or this config when `server` is set explicitly). **Required, no default**: `Windows` or `UserPassword`; missing, `AAD`/`MicrosoftEntraID` or unknown values stop before any connection.
 - **`mgmtDllPath`** — server-side path to `Microsoft.Dynamics.Nav.Management.dll` (used inside the remote session).
 
 > The 3 glue scripts are **not** project config — they ship centrally in `scripts/runner-glue/` and are loaded content-based (SRP-safe) at run time.

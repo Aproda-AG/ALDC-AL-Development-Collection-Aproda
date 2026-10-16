@@ -17,7 +17,7 @@ What the Aproda layer adds on top of upstream ALDC:
 |---------|-------------|
 | **ADO work item integration** | `skill-aproda-ado` — maps ADO work items to `req_name`, plans folder, and document headers; controlled Azure CLI operations fetch work item/PR context and create a PR / update a work item after HITL approval |
 | **Deploy-Run-Verify Cycle** | `skill-aproda-deploy-run-verify` — publish → sync → deploy → run → review cycle for on-premises BC instances (VALIDATED, 27/27 green) |
-| **Fkh transport** | `skill-aproda-fkh` \u2014 verified Fkh target resolution, dependency-ordered publish/sync/install, and test execution/result parsing, including through the DRV engine's `Invoke-DeployRunVerifyDeployFkh` adapter (D-36, 26/26 live) |
+| **Fkh transport** | `skill-aproda-fkh` — verified Fkh target resolution, dependency-ordered publish/sync/install, and test execution/result parsing, including through the DRV engine's `Invoke-DeployRunVerifyDeployFkh` adapter (D-36, 26/26 live) |
 | **AI translation workflow (XLIFF)** | `skill-translate` + `tools/aproda-ps-xliffsync/` — tiered Adaptive Waterfall for XLIFF translation (Stage 0 delegated batch translation with a PoEdit approval gate; Stage 1 deterministic invariant/memory resolution); Stage 0/1 VALIDATED against a real BC app |
 | **HITL Validation instruction** | Auto-applied guardrail that wires the Deploy-Run-Verify Cycle into the HITL Validation phase |
 | **Layer meta-skill** | `skill-aproda-aldc` — explains and extends the Aproda customization layer itself; entry to `site-profile.aproda.md` |

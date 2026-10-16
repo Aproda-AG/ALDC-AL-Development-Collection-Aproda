@@ -31,7 +31,7 @@ The client-driven runner has `GuiAllowed() = true`. Therefore:
 
 - **Convention**: `<runnerDir>/<major.minor>/` — e.g. `Test/PowerShell/_runner/28.0/`. Multiple BC versions coexist side by side.
 - `Resolve-DeployRunVerifyRunner` resolves the **target** version from (in order): config `bcVersion` override → live server (`Get-NAVServerInstance … .Version`) → whatever DLL is already present.
-- It then **validates**: the runner client DLL `major.minor` MUST equal the target. On mismatch it **throws** (never silently drives the wrong client).
+- It then **validates**: the runner client DLL **major** MUST equal the target major. On mismatch it **throws** (never silently drives the wrong client). The minor is not compared: the client DLL keeps minor `0` for a whole major (e.g. `28.0.53322.0` in a BC 28.3 container), so a `28.3` folder legitimately holds `28.0.*` DLLs. Both full versions are logged (D-15 addendum).
 
 ## Runner DLLs — materialized from the BC product DVD (K:) ✅
 

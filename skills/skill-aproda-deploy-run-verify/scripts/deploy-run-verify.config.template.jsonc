@@ -11,10 +11,11 @@
     "server": "",
     "serverInstance": "",
     "tenant": "default",
-    // scheme (http/https) and authentication (Windows/UserPassword/...) are ALSO derived
-    // from the launch.json configuration's "server" URL and "authentication" field — do not
-    // set them here. The adapter (ASINST vs Fkh) follows from scheme + hostname, see
-    // skill-aproda-fkh and decisions.aproda.md D-26.
+    // scheme (http/https) and authentication are ALSO derived from the launch.json
+    // configuration's "server" URL and "authentication" field — do not set them here.
+    // authentication is REQUIRED there (no default): Windows or UserPassword; a missing,
+    // AAD/MicrosoftEntraID or unknown value stops the run. The adapter (ASINST vs Fkh)
+    // follows from scheme + hostname, see skill-aproda-fkh and decisions.aproda.md D-26.
     // --- Apps in DEPENDENCY ORDER (REQUIRED) ---
     // Project directories (relative to this config file) ONLY — this project's own apps,
     // upstream first, TEST app LAST. Do NOT list Aproda foundation/third-party dependencies
@@ -33,7 +34,8 @@
     // migrate-warning. Generate a new version with New-DeployRunVerifyRunner. REQUIRED.
     "runnerDir": ".\\PowerShell\\_runner",
     // Optional: pin the target BC platform version (e.g. "28.0"). Empty = derive from
-    // the live server (Get-NAVServerInstance). Used to pick/validate the runner subfolder.
+    // the live server (Get-NAVServerInstance). Selects the runner subfolder; the client
+    // DLL must match the target MAJOR (DLLs keep minor 0 for a whole major).
     "bcVersion": "",
     // --- Runner client DLLs (the 4 version-pinned BC test-client DLLs) ---
     // The runner needs: Microsoft.Dynamics.Framework.UI.Client, Microsoft.Internal.AntiSSRF,

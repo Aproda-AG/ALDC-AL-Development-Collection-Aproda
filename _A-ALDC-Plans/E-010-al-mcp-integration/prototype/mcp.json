@@ -1,0 +1,19 @@
+{
+    // Workspace-level MCP Server Configuration (repo-specific)
+    // Docs: https://code.visualstudio.com/docs/agents/reference/mcp-configuration
+    "servers": {
+        // al-mcp: Official AL MCP Server (bundled with ms-dynamics-smb.al extension, ships altool.exe)
+        // Project paths use ${workspaceFolder:<name>} so this file stays portable across machines/clones.
+        // The starter resolves the newest installed AL extension and supports both known bin layouts.
+        "al-mcp": {
+            "type": "stdio",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                "& ([ScriptBlock]::Create((Get-Content -LiteralPath '${workspaceFolder:Base}\\.vscode\\Start-AlMcpWithFkhCredential.ps1' -Raw))) -BaseProjectPath '${workspaceFolder:Base}' -TestProjectPath '${workspaceFolder:Test}'"
+            ]
+        }
+    }
+}

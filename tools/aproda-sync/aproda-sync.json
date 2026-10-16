@@ -139,7 +139,12 @@
         "prompts/al-memory.create.prompt.md",
         "skills/skill-testing/SKILL.md",
         "skills/skill-translate/SKILL.md",
-        "tools/aldc-validate/index.js"
+        "tools/aldc-validate/index.js",
+        "prompts/al-spec.create.prompt.md", // E-010 Wave A (2026-10-15)
+        "prompts/al-agent.create.prompt.md", // E-010 Wave A
+        "prompts/al-agent.task.prompt.md", // E-010 Wave A
+        "prompts/al-agent.test.prompt.md", // E-010 Wave A
+        "docs/copilot-reference.md" // T-14 + E-010 Wave A; ships via aldc.yaml required.catalog
     ],
     // 4) ALDC framework files. When true, the syncer additionally treats the
     //    required/optional entries from aldc.yaml as part of the layer (the base

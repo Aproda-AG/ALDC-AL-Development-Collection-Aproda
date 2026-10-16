@@ -26,6 +26,7 @@
 | E-004 | Next AL object ID suggestion via a rule-based system + global per-repo assignment | Session note (Aproda) | Medium | Proposed |
 | E-005 | Tiered AI translation workflow for XLIFF (Adaptive Waterfall) | Session note (Aproda) | High | In Progress |
 | E-008 | Use BCQuality for **implementation**, not only for review (shift-left) | Session note (Aproda), 2026-09-25 | High | Proposed |
+| E-010 | AL MCP integration (`altool launchmcpserver`) as a reusable skill | Prototype in Gustav Gerig AG Base, 2026-10-15 | High | Approved |
 
 ## Status Values
 
@@ -115,3 +116,14 @@
   - Measurable effect: fewer BCQuality findings at review time for comparable phases.
   - Works through `entry.md`; no direct knowledge-file globbing.
 - **Approval Gate:** Approve a dedicated plan before any change. Depends on E-006 Block 4 (`#bcquality` tool / resolver) being in place, since the authoring path needs the same access channel.
+
+## E-010 - AL MCP Integration as a Reusable Skill
+
+- **Status:** Approved (2026-10-15, Florian; decision record D-53, D-16 confirmed)
+- **Source:** Validated prototype in *Gustav Gerig AG Base* (`Base/.vscode/mcp.json` + `Start-AlMcpWithFkhCredential.ps1`), 2026-10-15
+- **Plans folder:** `_A-ALDC-Plans/E-010-al-mcp-integration/` — `E-010-plan.md` (architecture + review), `E-010.spec.md`, `E-010.test-plan.md`, `E-010.rollout.md`
+- **Problem:** Agents cannot build a specific project in a multi-root workspace (`al_build scope:current` follows the focused editor), cannot compile without producing an `.app`, and cannot publish or run a single test codeunit. The prototype solves this for one repo with hardcoded target and project paths.
+- **Proposal:** New `skill-aproda-al-mcp` (SRP-safe starter + shared target/`altool` library), registered by the Aproda extension; one git-ignored target selection (`aldc.local.json`) for extension, starter and DRV; DRV engine prefers the `altool` CLI per step; every publish through the Dev Endpoint; credentials from the existing Fkh DPAPI store; DRV stays the lifecycle and phase-gate owner.
+- **Constraints:** Target is a per-call parameter of MCP `al_publish` — every call carries the complete target bundle; Tier-2/3 tool calls need HITL. No secret in any file or global environment. Missing credential must degrade to build-only, never remove the whole tool set.
+- **Acceptance Criteria:** See `E-010-plan.md` (*Acceptance criteria*) and `E-010.test-plan.md`.
+- **Approval Gate:** Passed 2026-10-15 (Phase-0 measurements complete, D-53 recorded). Each phase is gated as listed in `E-010-plan.md` → *Phases*.
