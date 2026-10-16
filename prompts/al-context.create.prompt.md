@@ -289,17 +289,16 @@ src/
 ## 15. Useful Commands
 
 ```powershell
-# Build project
-al_build
+# Build: follow skill-aproda-deploy-run-verify → Build route (DRV buildonly preferred)
+# Chat tools: al_build, al_getdiagnostics
 
 # Download symbols
 al_downloadsymbols
 
-# Run tests
-@workspace /al-test
+# Next free object ID
+al_getnextobjectid
 
-# Generate permissions
-al_generatepermissionset
+# Generate permissions: VS Code command "AL: Generate permission set as AL object containing current extension objects" (no agent tool)
 ```
 
 ## 16. References

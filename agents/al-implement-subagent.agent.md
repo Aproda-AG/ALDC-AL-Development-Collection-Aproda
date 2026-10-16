@@ -3,7 +3,7 @@ name: AL Implementation Subagent
 description: 'TDD Implementation Subagent — Creates AL objects following strict RED→GREEN→REFACTOR cycle. Only invokable by al-conductor via runSubagent.'
 user-invocable: false
 disable-model-invocation: true
-tools: [vscode/memory, execute/runInTerminal, read/problems, read/readFile, edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, edit/rename, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, 'al-symbols-mcp/*', 'microsoft-learn/*', ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, SShadowSdk.al-lsp-for-agents/bclsp_symbolRelations, SShadowSdk.al-lsp-for-agents/bclsp_goToDefinition, SShadowSdk.al-lsp-for-agents/bclsp_hover, SShadowSdk.al-lsp-for-agents/bclsp_findReferences, SShadowSdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, SShadowSdk.al-lsp-for-agents/bclsp_incomingCalls, SShadowSdk.al-lsp-for-agents/bclsp_outgoingCalls, SShadowSdk.al-lsp-for-agents/bclsp_codeLens, SShadowSdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, SShadowSdk.al-lsp-for-agents/bclsp_documentSymbols, SShadowSdk.al-lsp-for-agents/bclsp_renameSymbol, todo]
+tools: [vscode/memory, execute/runInTerminal, read/problems, read/readFile, edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, edit/rename, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, 'al-symbols-mcp/*', 'microsoft-learn/*', ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolrelations, ms-dynamics-smb.al/al_getnextobjectid, SShadowSdk.al-lsp-for-agents/bclsp_symbolRelations, SShadowSdk.al-lsp-for-agents/bclsp_goToDefinition, SShadowSdk.al-lsp-for-agents/bclsp_hover, SShadowSdk.al-lsp-for-agents/bclsp_findReferences, SShadowSdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, SShadowSdk.al-lsp-for-agents/bclsp_incomingCalls, SShadowSdk.al-lsp-for-agents/bclsp_outgoingCalls, SShadowSdk.al-lsp-for-agents/bclsp_codeLens, SShadowSdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, SShadowSdk.al-lsp-for-agents/bclsp_documentSymbols, SShadowSdk.al-lsp-for-agents/bclsp_renameSymbol, todo]
 model: Claude Sonnet 5.5 (copilot)
 ---
 
@@ -316,7 +316,8 @@ search. Omit the section if no subscribers were added this phase.)*
 - Edit existing AL files
 - Create directories for AL-Go structure
 - Run terminal commands (build, test)
-- Download symbols, search symbols
+- Download symbols, search symbols, query symbol relations (`al_symbolrelations`)
+- Allocate object IDs with `al_getnextobjectid` (with `projectPath`) — only for objects the spec did not number; spec IDs win
 - Load domain skills for specialized patterns
 
 **CANNOT:**

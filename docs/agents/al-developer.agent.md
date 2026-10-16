@@ -33,7 +33,7 @@ Tactical implementation specialist that **executes and codes** Business Central 
 | **Create / edit AL objects** | Tables, pages, codeunits, reports, queries, enums |
 | **Extensions** | TableExtension, PageExtension, EnumExtension |
 | **Events** | Event subscribers and publishers |
-| **Build & test** | `al_build`, `al_package`, `al_publish`, run tests |
+| **Build & test** | *Build route* (DRV `buildonly` / terminal), `al_getdiagnostics`, run tests via DRV |
 | **Skill loading** | `skill-debug`, `skill-api`, `skill-copilot`, `skill-performance`, `skill-testing` on demand |
 
 ## Stopping rules

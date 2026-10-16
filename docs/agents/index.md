@@ -206,12 +206,10 @@ Should work across companies, support delegation, send emails.
 - Fixing bugs
 - Building and publishing extensions
 
-**Full AL MCP Tool Access**:
-- `al_build`, `al_buildall`, `al_package`, `al_publish`
-- `al_incrementalpublish` (fast iteration)
-- `al_downloadsymbols`, `al_downloadsource`
-- `al_generatepermissionset`, `al_generatemanifest`
-- Debugging and performance tools
+**AL tool access** (authoritative list: `agents/al-developer.agent.md` `tools:` + `docs/copilot-reference.md`):
+- `al_symbolsearch`, `al_symbolrelations`, `al_getnextobjectid`, `al_downloadsymbols`, `al_getdiagnostics`
+- `al_debug`, `al_setbreakpoint`, `al_snapshotdebugging`
+- Build via `skill-aproda-deploy-run-verify` → *Build route*; publishing and permission-set generation are VS Code commands / human steps
 
 **Auto-loads Instructions**:
 - `al-code-style.instructions.md`

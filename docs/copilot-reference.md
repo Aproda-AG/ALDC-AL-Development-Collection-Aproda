@@ -136,7 +136,8 @@ Reference for developers configuring agents/tools — which tool comes from whic
 before claiming a tool does not exist, before adding a tool name to an agent's `tools:` frontmatter, and
 before choosing between a native chat tool and a terminal command. Agent files link here on purpose and
 deliberately do **not** restate its contents — a tool fact restated per agent is a tool fact that will
-drift (that is exactly how the `al_build` and `al_symbolrelations` errors below survived).
+drift (that is exactly how the `al_build` error and the `al_symbolrelations` / `al_get_diagnostics` confusions
+below survived).
 
 > **"Exists on the platform" is not "granted to this agent".** These are different facts and they drift
 > apart when each agent file restates them in prose. This section is the single source for *what exists*;
@@ -154,8 +155,10 @@ drift (that is exactly how the `al_build` and `al_symbolrelations` errors below 
 | Tool | When |
 |------|------|
 | `al_symbolsearch` | Fields, events, methods from `.alpackages` (Base App, libraries) — no source needed |
-| `bclsp_symbolRelations` | Dependencies between objects. **Not** `al_symbolrelations` — that name never existed (corrected 2026-09-29, see below) |
-| `al_getdiagnostics` | Compilation errors/diagnostics — note the exact name (no `_` between `get` and `diagnostics`; a typo variant `al_get_diagnostics` has previously crept into agent frontmatter and silently resolves to nothing) |
+| `al_symbolrelations` | Relations in the **symbol model**, incl. `.alpackages`: SourceTable, TableRelation, Implements, Extends/ExtensionOf and the reverse (ExtendedBy, ImplementedBy, UsedAsSourceTable). Takes a `symbolId` from `al_symbolsearch`; `projectId` in a multi-root workspace. AL Language extension **18.1+** |
+| `bclsp_symbolRelations` | Relations from the **workspace source** via the community LSP extension — complements `al_symbolrelations`, does not replace it |
+| `al_getdiagnostics` | Compilation errors/diagnostics (Problems panel). **Two names:** the model calls `al_getdiagnostics`; `tools:` frontmatter references `ms-dynamics-smb.al/al_get_diagnostics` — see *Call name vs. reference name* below |
+| `al_getnextobjectid` | Next free object ID(s) from `app.json` `idRanges` — call before creating an object; pass `projectPath` in a multi-root workspace. AL Language extension **18.1+** |
 | `al_downloadsymbols` | Refresh symbols after a dependency version bump |
 | `bclsp_goToDefinition` / `bclsp_findReferences` | Semantic navigation across workspace source (requires `SShadowSdk.al-lsp-for-agents`, a separate community extension not bundled with the AL Language extension) |
 
@@ -167,20 +170,36 @@ drift (that is exactly how the `al_build` and `al_symbolrelations` errors below 
 
 ### The official tool set — what the AL Language extension actually ships
 
-Per [AI agent tools overview](https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/al-agent-tools/al-agent-tools-overview) (AL Language extension 17.0+). Verified against this list on 2026-09-29.
+Per [AI agent tools overview](https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/al-agent-tools/al-agent-tools-overview) (AL Language extension 17.0+), cross-checked on 2026-10-15 against the installed AL Language extension **18.1.2842859** (`package.json` → `contributes.languageModelTools` / `mcpServerDefinitionProviders`) and the AL MCP server's `tools/list` (`altool` 18.1.43). Where MS Learn and the shipped package disagree, the package wins for the installed version.
 
 | Surface | Tools | Callable from VS Code Copilot Chat |
 |---|---|---|
-| **VS Code Language Model Tools** | `al_build`, `al_publish`, `al_downloadsymbols`, `al_symbolsearch`, `al_getdiagnostics`, `al_debug`, `al_setbreakpoint`, `al_snapshotdebugging` | ✅ yes |
-| **AL MCP Server** (`altool launchmcpserver`) | the same set plus `al_compile` (validate without producing an `.app`), `al_getpackagedependencies`, `al_addproject`, `al_auth_login`/`al_auth_logout` — and `al_build` there takes an explicit **`projectPath`** | ❌ no — a standalone process for external agent hosts (CI, Copilot CLI, Claude Code) |
+| **VS Code Language Model Tools** | `al_build`, `al_publish`, `al_downloadsymbols`, `al_symbolsearch`, `al_symbolrelations` (18.1), `al_getnextobjectid` (18.1), `al_getdiagnostics`, `al_debug`, `al_setbreakpoint`, `al_snapshotdebugging` | ✅ yes |
+| **AL MCP Server** (`altool launchmcpserver`) | measured `tools/list`: `al_build`, `al_compile` (validate without an `.app`), `al_publish`, `al_run_tests` (one codeunit per call), `al_downloadsymbols`, `al_symbolsearch`, `al_symbolrelations`, `al_getdiagnostics`, `al_getnextobjectid`, `al_getpackagedependencies`, `al_inspectpage`, `al_searchtranslations`, `al_writetranslation`, `al_addproject`, `al_auth_login`/`al_auth_logout`. Target per call (`projectPath`; `serverUrl`, `serverInstance`, `port`, `authentication`, `tenant`) | ✅ when registered as an MCP server in VS Code (`mcp.json`; later the Aproda extension, E-010). The qualified name for agent `tools:` frontmatter is **not yet measured** — never add a guessed one |
+| **MCP servers registered by the AL extension** | *Business Central Troubleshooting* (only while debugging), *Profiling*, *Snapshot* (`mcpServerDefinitionProviders`) | ✅ appear automatically; profiling/snapshot are preview (BC 2026 wave 2), not mandated |
 | **AL LSP Server** (`altool launchlspserver`) | hover, definitions, cross-project references, rename, formatting … over stdio JSON-RPC | ❌ no named chat tool — this is *not* what `bclsp_*` is; the community extension is what fills that gap in this surface |
-| **`altool workspace compile/create/map`** | dependency-ordered multi-project build, scaffolding, Mermaid dependency graph | terminal route (see the principle above) |
-| **Profiling / snapshot MCP proxies** | CPU profiling and snapshot debugging against a live BC session | preview (BC 2026 wave 2), not mandated |
+| **`altool` CLI** | `compile`, `workspace compile/create/map`, `publishapp`, `runtests [--testgroups]` (18.1), `GetPackageManifest`, `graph` | terminal route for scripts and the DRV engine (see the principle above); target operations need credentials, which belong in a child process only, never in a shared terminal session |
 
-**`al_symbolrelations` does not exist.** It appears in neither the official list above nor the live tool
-registry of a running session; the real capability is `bclsp_symbolRelations` from the community LSP
-extension. The wrong name sat in the `tools:` frontmatter of six agents and seven prompts and resolved
-silently to nothing — the same failure class as the `al_get_diagnostics` typo. Corrected 2026-09-29.
+**Tool existence is per extension version — check, don't remember.** `al_symbolrelations` did not exist when it was
+removed from agent frontmatter on 2026-09-29 (correct then); AL Language **18.1** ships it, both as a VS Code
+Language Model Tool and as an AL MCP tool, and the same holds for `al_getnextobjectid`. Authoritative sources, in
+this order: the installed extension's `package.json` (`contributes.languageModelTools`), the *Configure Tools*
+picker, an MCP server's `tools/list`. MS Learn lags behind (as of 2026-10-15 it does not document `al_run_tests`,
+`al_symbolrelations` or `al_inspectpage`).
+
+### Call name vs. reference name (`al_getdiagnostics` / `al_get_diagnostics`)
+
+A VS Code Language Model Tool has a `name` (what the model calls) and a `toolReferenceName` (what `#…` references
+and `tools:` frontmatter resolve against). In AL Language 18.1 they differ for exactly one tool:
+`name: al_getdiagnostics`, `toolReferenceName: al_get_diagnostics`. Hence:
+
+- **Frontmatter:** `ms-dynamics-smb.al/al_get_diagnostics` — this is also what the *Configure Tools* picker wrote
+  into all agents and prompts on 2026-09-29.
+- **Prose and tool calls:** `al_getdiagnostics`.
+
+MS Learn shows `#al_getdiagnostics`, which disagrees with the shipped package. Earlier wording in this file called
+`al_get_diagnostics` a typo that "resolves to nothing" — that was wrong for frontmatter. After every AL extension
+update, re-check the two names in `package.json` or with the picker.
 
 ### `al_build` scope — why a project path matters
 
@@ -201,9 +220,14 @@ Two measured consequences (2026-09-29, Straub Medical AG Base):
 So a green `al_build scope:"all"` proves the sources compile; it proves nothing about what a later
 publish or cache-based build will see.
 
+The AL MCP variant `al_build {projectPath}` removes the focused-editor ambiguity, but **not** the cache problem:
+neither it nor `alc.exe /project:"Test"` refreshed `Test/.alpackages` (measured 2026-10-15, Gustav Gerig AG
+Base — both built green against a 15-day-old Base). Refreshing the Base package in the Test cache is always a
+separate step; `skill-aproda-deploy-run-verify` → *Build route* owns it.
+
 ### `al-symbols-mcp` — optional community MCP server
 
-A third-party Rust MCP server (B0tis, MIT, small/lightly-maintained project) exposing 8 tools: `al_search_objects`, `al_get_object_definition`, `al_find_references`, `al_search_object_members`, `al_get_object_summary`, `al_get_free_id`, `al_packages`, `al_cli_status`. Its unique value over the Tier 1/2 tools above is `al_get_free_id` (next free object ID from `app.json` `idRanges`) and `al_cli_status`/`al_packages` for runtime packages (e.g. Base Application) that lack an embedded `SymbolReference.json`.
+A third-party Rust MCP server (B0tis, MIT, small/lightly-maintained project) exposing 8 tools: `al_search_objects`, `al_get_object_definition`, `al_find_references`, `al_search_object_members`, `al_get_object_summary`, `al_get_free_id`, `al_packages`, `al_cli_status`. `al_get_free_id` is now covered by the official `al_getnextobjectid` (AL Language 18.1, with `projectPath`); its remaining unique value is `al_cli_status`/`al_packages` for runtime packages (e.g. Base Application) that lack an embedded `SymbolReference.json`.
 
 - **Not bundled** — requires manual install + `mcp.json` config per machine; the binary can be blocked by AppLocker/SRP policies.
 - **Not guaranteed available** — several agent files reference `'al-symbols-mcp/*'` in their `tools:` frontmatter, but the server may not be registered in a given session/workspace. When absent, the wildcard silently resolves to zero tools — no error, just missing capability. Verify it actually shows up in the available/deferred tools list before relying on it in a new environment.
@@ -218,7 +242,8 @@ Marketplace publisher's exact casing) worked, and only after a VS Code reload re
 frontmatter. Same failure class as the wildcard case above: no error, just a missing tool. Canonical
 casing for this repo's publishers: `SShadowSdk.al-lsp-for-agents`, `aprodaag.aproda-aldc`,
 `ms-dynamics-smb.al`. `tools/aldc-validate`'s `agentToolCasing` rule is the automated backstop — it
-flags any case-variant of these publishers found in `agents/*.agent.md`.
+flags any case-variant of these publishers found in `agents/*.agent.md`. The segment after the `/` is the
+tool's `toolReferenceName`, which is not always its call name (see *Call name vs. reference name*).
 
 ### Zero-install MCP servers (URL only in `mcp.json`)
 

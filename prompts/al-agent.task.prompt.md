@@ -1,6 +1,6 @@
 ---
 agent: agent
-tools: [vscode/askQuestions, vscode/toolSearch, read/readFile, edit/editFiles, search/codebase, 'microsoft-docs/*', 'upstash/context7/*', 'al-symbols-mcp/*', ms-dynamics-smb.al/al_symbolsearch]
+tools: [vscode/askQuestions, vscode/toolSearch, read/readFile, edit/editFiles, search/codebase, 'microsoft-docs/*', 'upstash/context7/*', 'al-symbols-mcp/*', ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations]
 description: "Generate AL code for Business Central Agent SDK task integration. Applies the patterns from skill-agent-task-patterns to produce production-ready codeunits, page extensions, and event subscribers — verified against the runtime API availability matrix."
 ---
 

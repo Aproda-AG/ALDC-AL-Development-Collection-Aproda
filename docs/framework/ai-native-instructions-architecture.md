@@ -72,7 +72,7 @@ Example:
 ```yaml
 ---
 description: 'AL Architecture specialist'
-tools: ['codebase', 'search', 'usages', 'al_get_package_dependencies']
+tools: ['search/codebase', 'search/usages', 'ms-dynamics-smb.al/al_symbolsearch', 'ms-dynamics-smb.al/al_symbolrelations']
 model: Claude Sonnet 4.5
 ---
 
@@ -102,7 +102,7 @@ Example:
 ---
 mode: 'agent'
 description: 'Complete end-to-end AL development workflow'
-tools: ['al_build', 'al_package', 'al_publish']
+tools: ['ms-dynamics-smb.al/al_build', 'ms-dynamics-smb.al/al_publish', 'ms-dynamics-smb.al/al_get_diagnostics']
 model: gpt-4
 ---
 

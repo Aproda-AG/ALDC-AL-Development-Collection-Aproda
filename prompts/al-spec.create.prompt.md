@@ -2,7 +2,7 @@
 agent: agent
 model: Claude Sonnet 5.5 (copilot)
 description: 'Create a detailed technical specification (.spec.md) that serves as an implementable blueprint for Business Central features. Reads architecture.md if exists. Outputs to .github/plans/{req_name}/.'
-tools: [vscode, read, edit/editFiles, search, 'al-symbols-mcp/*', github/get_file_contents, github/search_code, 'markitdown/*', 'microsoft-learn/*', 'upstash/context7/*', ms-dynamics-smb.al/al_symbolsearch, ms-vscode.vscode-websearchforcopilot/websearch, SShadowSdk.al-lsp-for-agents/bclsp_goToDefinition, SShadowSdk.al-lsp-for-agents/bclsp_hover, SShadowSdk.al-lsp-for-agents/bclsp_findReferences, SShadowSdk.al-lsp-for-agents/bclsp_symbolRelations, SShadowSdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, SShadowSdk.al-lsp-for-agents/bclsp_incomingCalls, SShadowSdk.al-lsp-for-agents/bclsp_outgoingCalls, SShadowSdk.al-lsp-for-agents/bclsp_codeLens, SShadowSdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, SShadowSdk.al-lsp-for-agents/bclsp_documentSymbols, todo]
+tools: [vscode, read, edit/editFiles, search, 'al-symbols-mcp/*', github/get_file_contents, github/search_code, 'markitdown/*', 'microsoft-learn/*', 'upstash/context7/*', ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, ms-dynamics-smb.al/al_getnextobjectid, ms-vscode.vscode-websearchforcopilot/websearch, SShadowSdk.al-lsp-for-agents/bclsp_goToDefinition, SShadowSdk.al-lsp-for-agents/bclsp_hover, SShadowSdk.al-lsp-for-agents/bclsp_findReferences, SShadowSdk.al-lsp-for-agents/bclsp_symbolRelations, SShadowSdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, SShadowSdk.al-lsp-for-agents/bclsp_incomingCalls, SShadowSdk.al-lsp-for-agents/bclsp_outgoingCalls, SShadowSdk.al-lsp-for-agents/bclsp_codeLens, SShadowSdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, SShadowSdk.al-lsp-for-agents/bclsp_documentSymbols, todo]
 ---
 
 # AL Technical Specification Workflow
@@ -96,7 +96,7 @@ Create `.github/plans/${input:req_name}/${input:req_name}.spec.md` with the foll
 | Codeunit       | {ID} | {Prefix} {Name} Mgt | — | {Core business logic} |
 | Codeunit       | {ID} | {Prefix} {Name} Subscriber | — | {Event subscriptions} |
 
-> Object IDs MUST be within the app.json `idRanges`. Verify with codebase search before assigning.
+> Object IDs MUST be within the app.json `idRanges`. Allocate them with `al_getnextobjectid` (`objectType`, `count`, `projectPath` in a multi-root workspace) instead of searching the codebase by hand.
 
 ---
 

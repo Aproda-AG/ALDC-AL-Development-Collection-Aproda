@@ -2,7 +2,7 @@
 name: AL Implementation Specialist
 description: 'AL Developer - Tactical implementation specialist for Business Central extensions. Edits AL, builds via the terminal, and validates with tests. Implements features following specifications without making architectural decisions.'
 argument-hint: 'Implementation task, bug fix, or feature to code (e.g., "Add email validation field to Customer table")'
-tools: [vscode/memory, vscode/newWorkspace, vscode/resolveMemoryFileUri, vscode/switchAgent, vscode/askQuestions, vscode/toolSearch, execute, read/problems, read/readFile, read/viewImage, read/getTaskOutput, agent, edit, search, web/githubTextSearch, 'al-symbols-mcp/*', 'microsoft-learn/*', 'context7/*', github/get_file_contents, github/search_code, github/search_repositories, github/search_issues, github/pull_request_read, github/issue_read, github/list_commits, azure-mcp/search, ms-dynamics-smb.al/al_debug, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_setbreakpoint, ms-dynamics-smb.al/al_snapshotdebugging, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, SShadowSdk.al-lsp-for-agents/bclsp_symbolRelations, SShadowSdk.al-lsp-for-agents/bclsp_goToDefinition, SShadowSdk.al-lsp-for-agents/bclsp_hover, SShadowSdk.al-lsp-for-agents/bclsp_findReferences, SShadowSdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, SShadowSdk.al-lsp-for-agents/bclsp_incomingCalls, SShadowSdk.al-lsp-for-agents/bclsp_outgoingCalls, SShadowSdk.al-lsp-for-agents/bclsp_codeLens, SShadowSdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, SShadowSdk.al-lsp-for-agents/bclsp_documentSymbols, SShadowSdk.al-lsp-for-agents/bclsp_renameSymbol, todo]
+tools: [vscode/memory, vscode/newWorkspace, vscode/resolveMemoryFileUri, vscode/switchAgent, vscode/askQuestions, vscode/toolSearch, execute, read/problems, read/readFile, read/viewImage, read/getTaskOutput, agent, edit, search, web/githubTextSearch, 'al-symbols-mcp/*', 'microsoft-learn/*', 'context7/*', github/get_file_contents, github/search_code, github/search_repositories, github/search_issues, github/pull_request_read, github/issue_read, github/list_commits, azure-mcp/search, ms-dynamics-smb.al/al_debug, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_setbreakpoint, ms-dynamics-smb.al/al_snapshotdebugging, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolrelations, ms-dynamics-smb.al/al_getnextobjectid, SShadowSdk.al-lsp-for-agents/bclsp_symbolRelations, SShadowSdk.al-lsp-for-agents/bclsp_goToDefinition, SShadowSdk.al-lsp-for-agents/bclsp_hover, SShadowSdk.al-lsp-for-agents/bclsp_findReferences, SShadowSdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, SShadowSdk.al-lsp-for-agents/bclsp_incomingCalls, SShadowSdk.al-lsp-for-agents/bclsp_outgoingCalls, SShadowSdk.al-lsp-for-agents/bclsp_codeLens, SShadowSdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, SShadowSdk.al-lsp-for-agents/bclsp_documentSymbols, SShadowSdk.al-lsp-for-agents/bclsp_renameSymbol, todo]
 model: Claude Sonnet 5.5 (copilot)
 handoffs:
   - label: Request Architecture Design
@@ -31,6 +31,8 @@ You are a tactical implementation specialist for Microsoft Dynamics 365 Business
 #### AL symbols & metadata (`ms-dynamics-smb.al`)
 - **`al_downloadsymbols`**: Download dependent symbol packages before compiling.
 - **`al_symbolsearch`**: Search AL symbols (tables, codeunits, pages, fields) across the project and its dependencies.
+- **`al_symbolrelations`**: Relations in the symbol model, incl. `.alpackages` (SourceTable, TableRelation, Extends, Implements and reverse) — feed it the `symbolId` from `al_symbolsearch`; complements `bclsp_symbolRelations` (workspace source).
+- **`al_getnextobjectid`**: Next free object ID(s) from `app.json` `idRanges` — call before creating an object the spec did not number; pass `projectPath` in a multi-root workspace.
 - **`al-symbols-mcp/*`**: Extended symbol operations.
 
 #### Semantic navigation — AL LSP (`bclsp_*`)
@@ -41,7 +43,7 @@ You are a tactical implementation specialist for Microsoft Dynamics 365 Business
 - **`bclsp_codeQualityDiagnostics`** — read code-quality diagnostics.
 
 #### Build, diagnose & debug
-- **Build**: run the AL build task / ALTool in the terminal via **`execute`** (`runInTerminal`) — there is no `al_build` agent tool on this surface; publishing is a VS Code command / human step.
+- **Build**: follow `skill-aproda-deploy-run-verify` → *Build route* (DRV `buildonly` or the terminal via **`execute`**). `al_build` / `al_publish` exist but are **not granted here** — the VS Code variants have no project path, and `scope:"current"` follows the focused editor; publishing is a VS Code command / human step.
 - **Diagnostics**: **`al_getdiagnostics`** (filtered Problems) + **`bclsp_codeQualityDiagnostics`**.
 - **Debug**: **`al_debug`** (debug without republish), **`al_setbreakpoint`**, **`al_snapshotdebugging`** (initialize / finish / view) — for runtime/intermittent issues; load `skill-debug` for the method.
 
