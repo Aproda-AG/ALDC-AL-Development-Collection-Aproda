@@ -36,10 +36,9 @@ Resolve and install in **tiers**, foundation-most first — apps within a tier s
 3. **Third-party / Fremd Module** apps.
 4. **Project apps** (the normal DRV publish that follows once this loop closes).
 
-Use `Install-DeployRunVerifyResolvedDependency -Cfg $cfg -AppFile <confirmed path> -Name <name> -Version <version>` for each confirmed file — it dispatches to the right adapter mechanics:
+Use `Install-DeployRunVerifyResolvedDependency -Cfg $cfg -AppFile <confirmed path> -Name <name> -Version <version>` for each confirmed file — it publishes through the same chain on either adapter:
 
-- **FKH** — `fkh publishapp --devScope --syncMode Add --sync --install`, the same Dev Endpoint path the normal loop uses.
-- **ASINST** — `Publish-NAVApp -SkipVerification -Scope Tenant` → `Sync-NAVApp -Mode Add` → `Install-NAVApp`, with the same ForceSync/DataUpgrade escalation used elsewhere in the engine (see [`build-deploy.md`](build-deploy.md) → *Install-or-upgrade fallback*).
+- **Both adapters** — the same publish chain as the project's own apps: `altool publishapp` with the complete target bundle (schema mode from `fkhSyncMode`), falling back to the direct Dev Endpoint POST only on an invocation failure, then a state check (`IsInstalled`, `SyncState = Synced`). Fkh additionally verifies the container first and reads the state with `fkh getappinfo`; ASINST reads the state through the Management DLL (read only). The engine does not call `fkh publishapp`, `Publish-NAVApp` or `Install-NAVApp` for this.
 
 Do not hand-type these commands ad hoc — the function exists precisely so the mechanics stay tested and consistent across projects; only the file path and the decision to run it are human-supplied.
 

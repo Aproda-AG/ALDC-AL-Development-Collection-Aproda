@@ -1,0 +1,2 @@
+# Fixture marker for the AL target tests (E-010); valid YAML because the extension parses it.
+toolkitRoot: ".github"

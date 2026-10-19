@@ -1,0 +1,8 @@
+{
+  "succeeded": false,
+  "errorDetails": {
+    "code": "UnknownError",
+    "message": "Microsoft.Dynamics.Nav.Types.Exceptions.UserNotAuthenticatedException: The credentials were not accepted by the server.",
+    "retryable": false
+  }
+}

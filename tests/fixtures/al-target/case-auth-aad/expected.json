@@ -1,0 +1,20 @@
+{
+  "state": "configured",
+  "resolvedLaunch": {
+    "name": "dev-entra",
+    "server": "https://entra.example.com",
+    "scheme": "https",
+    "host": "entra.example.com",
+    "serverInstance": "BC",
+    "port": 7049,
+    "portSource": "launch",
+    "tenant": "default",
+    "environmentType": "OnPrem",
+    "authentication": "AAD",
+    "dependencyPublishingOption": "Default",
+    "credentialKey": "entra.example.com"
+  },
+  "issues": [
+    "AUTH_UNSUPPORTED"
+  ]
+}

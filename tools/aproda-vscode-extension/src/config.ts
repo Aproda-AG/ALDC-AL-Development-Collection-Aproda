@@ -19,6 +19,7 @@ export const globalSettingKeys = [
     "pinnedVersion",
     "branchName",
     "pwshPath",
+    "alMcp.start",
     "startupCheck.enabled",
     "startupCheck.intervalHours",
     "extensionUpdate.enabled"
@@ -76,6 +77,12 @@ export function branchName(): string {
 
 export function pwshPath(): string {
     return vscode.workspace.getConfiguration(section).get<string>("pwshPath", "pwsh").trim() || "pwsh";
+}
+
+export type AlMcpStartMode = "auto" | "manual";
+
+export function alMcpStartMode(): AlMcpStartMode {
+    return vscode.workspace.getConfiguration(section).get<string>("alMcp.start", "auto") === "manual" ? "manual" : "auto";
 }
 
 export function startupChecksEnabled(): boolean {

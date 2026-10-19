@@ -1,0 +1,30 @@
+{
+  "succeeded": false,
+  "errorDetails": {
+    "code": "TestRunFailed",
+    "message": "One or more tests failed.",
+    "retryable": false
+  },
+  "data": {
+    "success": false,
+    "total": 13,
+    "passed": 11,
+    "failed": 2,
+    "skipped": 0,
+    "results": [
+      { "codeunitId": 59020, "methodName": "TestCaseB01", "status": "Failed", "output": "Injected error for the diagnostic comparison.\nAL call stack:\n  \"Fixture Base Test\"(CodeUnit 59020).TestCaseB01 line 7 - Fixture Base Test by Aproda AG v1.0.0.0\n  \"Test Runner - Isol. Disabled\"(CodeUnit 130450).Run line 12 - Test Runner by Microsoft v28.0.0.0", "durationMs": 44 },
+      { "codeunitId": 59020, "methodName": "TestCaseB02", "status": "Passed", "output": "", "durationMs": 12 },
+      { "codeunitId": 59020, "methodName": "TestCaseB03", "status": "Passed", "output": "", "durationMs": 9 },
+      { "codeunitId": 59020, "methodName": "TestCaseB04", "status": "Passed", "output": "", "durationMs": 11 },
+      { "codeunitId": 59020, "methodName": "TestCaseB05", "status": "Passed", "output": "", "durationMs": 10 },
+      { "codeunitId": 59020, "methodName": "TestCaseB06", "status": "Passed", "output": "", "durationMs": 14 },
+      { "codeunitId": 59020, "methodName": "TestCaseB07", "status": "Passed", "output": "", "durationMs": 8 },
+      { "codeunitId": 59020, "methodName": "TestCaseB08", "status": "Passed", "output": "", "durationMs": 9 },
+      { "codeunitId": 59020, "methodName": "TestCaseB09", "status": "Passed", "output": "", "durationMs": 13 },
+      { "codeunitId": 59020, "methodName": "TestCaseB10", "status": "Passed", "output": "", "durationMs": 12 },
+      { "codeunitId": 59020, "methodName": "TestCaseB11", "status": "Passed", "output": "", "durationMs": 10 },
+      { "codeunitId": 59020, "methodName": "TestCaseB12", "status": "Passed", "output": "", "durationMs": 9 },
+      { "codeunitId": 59020, "methodName": "", "status": "Failed", "output": "Injected error for the diagnostic comparison.\nAL call stack:\n  \"Fixture Base Test\"(CodeUnit 59020).TestCaseB01 line 7 - Fixture Base Test by Aproda AG v1.0.0.0", "durationMs": 0 }
+    ]
+  }
+}

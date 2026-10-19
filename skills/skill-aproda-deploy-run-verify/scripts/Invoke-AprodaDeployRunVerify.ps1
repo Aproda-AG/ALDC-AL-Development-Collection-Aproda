@@ -8,7 +8,11 @@
   APRODA_DEPLOY_RUN_VERIFY_CONFIG  Path to the project's deploy-run-verify.config.jsonc (required).
   APRODA_DEPLOY_RUN_VERIFY_MODULE  Path to AprodaDeployRunVerify.psm1 (required when dot-loaded via iex,
                           because $PSCommandPath is empty in that case).
-  APRODA_DEPLOY_RUN_VERIFY_MODE    'full' (default) | 'buildonly' | 'skipbuild'
+  APRODA_DEPLOY_RUN_VERIFY_MODE    'full' (default) | 'buildonly' | 'skipbuild' | 'runonly' (tests only)
+  APRODA_DEPLOY_RUN_VERIFY_FORCE_UPGRADE  empty | '1' - pass --forceupgrade to altool publishapp (Tier 3, per explicit request)
+  APRODA_DEPLOY_RUN_VERIFY_TEST_ROUTE     'auto' (default) | 'altool' | 'webClient'
+  APRODA_DEPLOY_RUN_VERIFY_DEPLOY_ROUTE   'auto' (default) | 'altool' | 'devEndpoint'
+                          A forced route that is unavailable stops with ROUTE_UNAVAILABLE.
 .EXAMPLE
   $env:APRODA_DEPLOY_RUN_VERIFY_CONFIG = 'C:\proj\Test\deploy-run-verify.config.jsonc'
   $env:APRODA_DEPLOY_RUN_VERIFY_MODULE = '<skill>\scripts\AprodaDeployRunVerify.psm1'
@@ -36,8 +40,27 @@ $engineSrc = Get-Content $modulePath -Raw
 $engineSrc = [regex]::Replace($engineSrc, '(?s)Export-ModuleMember.*$', '')
 . ([ScriptBlock]::Create($engineSrc))
 
+# Per-run switches from the environment (E-010 spec 6.8). Unknown values stop the run instead of being ignored.
+$routeArguments = @{}
+$forceUpgradeValue = $env:APRODA_DEPLOY_RUN_VERIFY_FORCE_UPGRADE
+if (-not [string]::IsNullOrWhiteSpace($forceUpgradeValue)) {
+    if ($forceUpgradeValue -ne '1') { throw "APRODA_DEPLOY_RUN_VERIFY_FORCE_UPGRADE must be empty or '1' (got '$forceUpgradeValue')." }
+    $routeArguments.ForceUpgrade = $true
+}
+$testRouteValue = $env:APRODA_DEPLOY_RUN_VERIFY_TEST_ROUTE
+if (-not [string]::IsNullOrWhiteSpace($testRouteValue)) {
+    if ($testRouteValue -cnotin @('auto', 'altool', 'webClient')) { throw "APRODA_DEPLOY_RUN_VERIFY_TEST_ROUTE must be auto, altool or webClient (got '$testRouteValue')." }
+    $routeArguments.TestRoute = $testRouteValue
+}
+$deployRouteValue = $env:APRODA_DEPLOY_RUN_VERIFY_DEPLOY_ROUTE
+if (-not [string]::IsNullOrWhiteSpace($deployRouteValue)) {
+    if ($deployRouteValue -cnotin @('auto', 'altool', 'devEndpoint')) { throw "APRODA_DEPLOY_RUN_VERIFY_DEPLOY_ROUTE must be auto, altool or devEndpoint (got '$deployRouteValue')." }
+    $routeArguments.DeployRoute = $deployRouteValue
+}
+
 switch ($env:APRODA_DEPLOY_RUN_VERIFY_MODE) {
-    'buildonly' { Invoke-AprodaDeployRunVerify -ConfigPath $cfgPath -BuildOnly }
-    'skipbuild' { Invoke-AprodaDeployRunVerify -ConfigPath $cfgPath -SkipBuild }
-    default     { Invoke-AprodaDeployRunVerify -ConfigPath $cfgPath }
+    'buildonly' { Invoke-AprodaDeployRunVerify @routeArguments -ConfigPath $cfgPath -BuildOnly }
+    'skipbuild' { Invoke-AprodaDeployRunVerify @routeArguments -ConfigPath $cfgPath -SkipBuild }
+    'runonly' { Invoke-AprodaDeployRunVerify @routeArguments -ConfigPath $cfgPath -RunOnly }
+    default { Invoke-AprodaDeployRunVerify @routeArguments -ConfigPath $cfgPath }
 }

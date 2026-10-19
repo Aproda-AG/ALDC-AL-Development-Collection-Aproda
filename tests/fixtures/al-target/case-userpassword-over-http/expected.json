@@ -1,0 +1,20 @@
+{
+  "state": "configured",
+  "resolvedLaunch": {
+    "name": "dev-insecure",
+    "server": "http://insecure.example.com",
+    "scheme": "http",
+    "host": "insecure.example.com",
+    "serverInstance": "BC",
+    "port": 7049,
+    "portSource": "launch",
+    "tenant": "default",
+    "environmentType": "OnPrem",
+    "authentication": "UserPassword",
+    "dependencyPublishingOption": "Default",
+    "credentialKey": "insecure.example.com"
+  },
+  "issues": [
+    "USERPASSWORD_OVER_HTTP"
+  ]
+}

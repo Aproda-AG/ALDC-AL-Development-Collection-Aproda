@@ -92,3 +92,6 @@ PUSH.ps1
 
 # Fork comparison clones (local only; manifests and analysis reports are tracked)
 _ALDC-Fork-Vergleich/*
+
+# Per-developer AL target selection (E-010); the fork root is an aldc.yaml location
+/aldc.local.json

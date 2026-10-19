@@ -4,6 +4,8 @@
 
 ## Standard path: the Aproda engine ✅
 
+> **Legacy test route (E-010, D-53).** The web-client runner described in this file is the **second** test route. The engine runs **`altool runtests --testgroups`** first (see [`../SKILL.md`](../SKILL.md) → *Test route*) and uses this runner when `altool` has no `runtests --testgroups`, when the range, suite or company rule requires it, or after an `InvocationFailure` / `Incomplete` result (never after a red result). The runner DLLs, K: DVD source and the `ServiceUrl` below are therefore needed only when this route is reached. `APRODA_DEPLOY_RUN_VERIFY_TEST_ROUTE=webClient` forces it for a comparison run.
+
 The test-loop runs on the **own engine** — `scripts/AprodaDeployRunVerify.psm1`, driven by `scripts/Invoke-AprodaDeployRunVerify.ps1`. It is self-contained: build → deploy → **materialize runner** → run → parse. The `jamespearson/al-test-runner` VS Code extension is a **fallback only** (see "Fallback" below).
 
 Validated end-to-end against `STRAUB_MEDICAL_AG_28_CH_FKO` (BC 28, web client port 80): **27/27 green** via this engine.

@@ -17,7 +17,8 @@ What the Aproda layer adds on top of upstream ALDC:
 |---------|-------------|
 | **ADO work item integration** | `skill-aproda-ado` — maps ADO work items to `req_name`, plans folder, and document headers; controlled Azure CLI operations fetch work item/PR context and create a PR / update a work item after HITL approval |
 | **Deploy-Run-Verify Cycle** | `skill-aproda-deploy-run-verify` — publish → sync → deploy → run → review cycle for on-premises BC instances (VALIDATED, 27/27 green) |
-| **Fkh transport** | `skill-aproda-fkh` — verified Fkh target resolution, dependency-ordered publish/sync/install, and test execution/result parsing, including through the DRV engine's `Invoke-DeployRunVerifyDeployFkh` adapter (D-36, 26/26 live) |
+| **AL MCP integration** | `skill-aproda-al-mcp` — level-1 AL MCP access (`altool launchmcpserver`): `aldc.local.json` target selection, shared library, starter, tool tiers; E-010 phase 2, D-53, synthetic tests only so far |
+| **Fkh transport** | `skill-aproda-fkh` — verified Fkh target resolution (`fkh listcontainers`), app-state inspection (`fkh getappinfo`), recovery and the credential store; since E-010 the DRV engine publishes to Fkh through the same Dev Endpoint chain as ASINST (`altool publishapp` → direct POST, D-53), no longer through `fkh publishapp` (D-36 path 26/26 live, historical) |
 | **AI translation workflow (XLIFF)** | `skill-translate` + `tools/aproda-ps-xliffsync/` — tiered Adaptive Waterfall for XLIFF translation (Stage 0 delegated batch translation with a PoEdit approval gate; Stage 1 deterministic invariant/memory resolution); Stage 0/1 VALIDATED against a real BC app |
 | **HITL Validation instruction** | Auto-applied guardrail that wires the Deploy-Run-Verify Cycle into the HITL Validation phase |
 | **Layer meta-skill** | `skill-aproda-aldc` — explains and extends the Aproda customization layer itself; entry to `site-profile.aproda.md` |
@@ -212,7 +213,7 @@ The Deploy-Run-Verify Cycle (`skill-aproda-deploy-run-verify`) is the technical 
 
 This loop is wired into both `al-developer` and `al-conductor` as a pre-PR gate.
 
-For a selected `OnPrem` launch configuration with an HTTPS `.cloudapp.azure.com` server, the lifecycle loads `skill-aproda-fkh` and the engine's `Invoke-DeployRunVerifyDeployFkh` adapter (D-36). This path is live-validated end-to-end (2026-09-12): container verification, dependency-ordered publish, same-version-conflict resolution, and a credentialed web-client test run all passed for real, producing a genuine 26/26 green result.
+For a selected `OnPrem` launch configuration with an HTTPS `.cloudapp.azure.com` server, the lifecycle loads `skill-aproda-fkh` for target verification against `fkh listcontainers` and state reads via `fkh getappinfo` (D-26). Since E-010 (D-53) the engine publishes through `Invoke-DeployRunVerifyPublish` — `altool publishapp`, fallback direct Dev Endpoint POST — on both adapters; the former `Invoke-DeployRunVerifyDeployFkh` adapter (D-36, live-validated 26/26 on 2026-09-12) is removed. The new chain is synthetically tested; its live validation is E-010 test `L-4b.2`.
 
 ---
 
@@ -312,6 +313,7 @@ This table **is** the Aproda index (D-17) — the one place to answer "what has 
 | Meta-skill (explain + extend the layer) | `skills/skill-aproda-aldc/` | D-16 | live |
 | ADO work-item integration skill | `skills/skill-aproda-ado/` | D-4 | live |
 | Fkh transport skill | `skills/skill-aproda-fkh/` | D-26, D-36 | **VALIDATED** (26/26 live) |
+| AL MCP integration skill (level 1, E-010 phase 2) | `skills/skill-aproda-al-mcp/` | D-53 | synthetic tests green; live validation pending |
 | AL Translation Subagent | `agents/al-translate-subagent.aproda.agent.md` | D-32 | live |
 | Steward guardrail (HITL on layer edits) | `instructions/aproda-aldc-steward.aproda.instructions.md` | D-16 | live |
 | HITL Validation instruction | `instructions/hitl-validation.aproda.instructions.md` | D-11 | live |

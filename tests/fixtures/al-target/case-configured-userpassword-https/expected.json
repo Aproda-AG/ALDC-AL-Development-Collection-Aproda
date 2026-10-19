@@ -1,0 +1,18 @@
+{
+  "state": "configured",
+  "resolvedLaunch": {
+    "name": "dev-https",
+    "server": "https://Dev.Example.COM",
+    "scheme": "https",
+    "host": "Dev.Example.COM",
+    "serverInstance": "BC",
+    "port": 7050,
+    "portSource": "launch",
+    "tenant": "t1",
+    "environmentType": "OnPrem",
+    "authentication": "UserPassword",
+    "dependencyPublishingOption": "Strict",
+    "credentialKey": "Dev.Example.COM"
+  },
+  "issues": []
+}

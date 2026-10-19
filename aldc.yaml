@@ -38,6 +38,7 @@ aproda:
       - "skills/skill-aproda-ado/SKILL.md"
       - "skills/skill-aproda-deploy-run-verify/SKILL.md"
       - "skills/skill-aproda-fkh/SKILL.md"
+      - "skills/skill-aproda-al-mcp/SKILL.md"
     workflows:
       - "prompts/al-doc-update.aproda.prompt.md"
     instructions:

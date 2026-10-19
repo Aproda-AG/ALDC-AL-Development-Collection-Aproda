@@ -1,0 +1,17 @@
+Beschreibung:
+  AL-Befehlszeilentool
+
+Nutzung:
+  altool [Befehl] [Optionen]
+
+Optionen:
+  --version       Versionsinformationen anzeigen
+  -?, -h, --help  Hilfe- und Nutzungsinformationen anzeigen
+
+Befehle:
+  compile          AL-Projekt kompilieren
+  workspace        Arbeitsbereichsoperationen
+  publishapp       App auf einem Server veröffentlichen
+  runtests         Tests auf einem Server ausführen
+  auth             Authentifizierung
+  launchmcpserver  MCP-Server starten

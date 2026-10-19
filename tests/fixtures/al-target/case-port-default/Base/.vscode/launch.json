@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // No port, tenant or environmentType: AL defaults apply (7049, default, OnPrem).
+      "name": "dev-minimal",
+      "type": "al",
+      "request": "launch",
+      "server": "http://nst-test.example.com",
+      "serverInstance": "BC",
+      "authentication": "Windows"
+    }
+  ]
+}

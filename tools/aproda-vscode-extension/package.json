@@ -2,7 +2,7 @@
     "name": "aproda-aldc",
     "displayName": "Aproda ALDC",
     "description": "Aproda ALDC toolkit for Visual Studio Code projects.",
-    "version": "0.1.7",
+    "version": "0.2.0",
     "publisher": "aprodaag",
     "license": "MIT",
     "repository": {
@@ -21,6 +21,12 @@
         "onStartupFinished"
     ],
     "contributes": {
+        "mcpServerDefinitionProviders": [
+            {
+                "id": "aprodaAldc.alMcp",
+                "label": "AL MCP (Aproda)"
+            }
+        ],
         "languageModelTools": [
             {
                 "name": "aprodaAldc_readConfiguration",
@@ -57,6 +63,30 @@
                     },
                     "required": [
                         "operation"
+                    ]
+                }
+            },
+            {
+                "name": "aprodaAldc_startAlMcp",
+                "toolReferenceName": "startAlMcp",
+                "displayName": "Start AL MCP Server",
+                "userDescription": "Start or restart the AL MCP server of this repository",
+                "modelDescription": "Starts or restarts only the AL MCP server (al-mcp) that the Aproda ALDC extension registers for the current repository. Use it when the al-mcp tools are missing and the user agreed to start the server, or after the AL target or its credential changed. It cannot start any other MCP server and never changes the selected target. Returns whether the server was started.",
+                "canBeReferencedInPrompt": true,
+                "when": "aprodaAldc.isAlProject",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "action": {
+                            "type": "string",
+                            "enum": [
+                                "start",
+                                "restart"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "action"
                     ]
                 }
             }
@@ -125,6 +155,22 @@
             {
                 "command": "aprodaAldc.resetData",
                 "title": "Aproda ALDC: Reset Toolkit Cache and Settings"
+            },
+            {
+                "command": "aprodaAldc.selectAlTarget",
+                "title": "Aproda ALDC: Select AL Target"
+            },
+            {
+                "command": "aprodaAldc.startAlMcp",
+                "title": "Aproda ALDC: Start AL MCP Server"
+            },
+            {
+                "command": "aprodaAldc.restartAlMcp",
+                "title": "Aproda ALDC: Restart AL MCP Server"
+            },
+            {
+                "command": "aprodaAldc.storeAlCredential",
+                "title": "Aproda ALDC: Store Credential for AL Target"
             }
         ],
         "configuration": {
@@ -205,6 +251,20 @@
                     "type": "string",
                     "default": "pwsh",
                     "markdownDescription": "PowerShell executable used by later project commands."
+                },
+                "aprodaAldc.alMcp.start": {
+                    "type": "string",
+                    "enum": [
+                        "auto",
+                        "manual"
+                    ],
+                    "default": "auto",
+                    "scope": "application",
+                    "enumDescriptions": [
+                        "Start the AL MCP server automatically when an AL project or AL workspace is open.",
+                        "Start the AL MCP server only on request (command or chat tool)."
+                    ],
+                    "description": "When the AL MCP server (altool launchmcpserver) of the current repository starts."
                 },
                 "aprodaAldc.startupCheck.enabled": {
                     "type": "boolean",
@@ -302,7 +362,7 @@
         "watch": "node ./node_modules/typescript/lib/tsc.js -p . --watch",
         "package": "npm run compile && node ./scripts/package.js",
         "lint": "node ./node_modules/typescript/lib/tsc.js --noEmit",
-        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/extension-version.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js && node ./test/bcquality-terminal-env-platform.test.js && node ./test/extension-update.test.js && node ./test/aldc-config-path.test.js && node ./test/bcquality-resolve.test.js && node ./test/bcquality-resolve-canonicalize.test.js && node ./test/bcquality-junction.test.js && node ./test/bcquality-junction-self-reference.test.js && node ./test/bcquality-reconcile-toggle.test.js && node ./test/bcquality-containment.test.js && node ./test/bcquality-tool.test.js && node ./test/bcquality-self-heal.test.js && node ./test/git-root-resolution.test.js && node ./test/bcquality-install-confirm.test.js && node ./test/init-bcquality-preresolve.test.js && node ./test/version-service-config-path.test.js && node ./test/version-service-channels.test.js && node ./test/version-service-release-channel.test.js && node ./test/glob-to-regex-case-table.test.js && node ./test/startup-check-per-repo.test.js && node ./test/startup-prompt-states.test.js && node ./test/bcquality-startup-reconcile.test.js && node ./test/init-migration-preflight.test.js && node ./test/validate-npm-spawn.test.js && node ./test/process-tls-env.test.js && node ./test/startup-sequence.test.js && node ./test/bridge-dryrun-count.test.js && node ./test/bcquality-status-resolver-chain.test.js"
+        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/extension-version.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js && node ./test/bcquality-terminal-env-platform.test.js && node ./test/extension-update.test.js && node ./test/aldc-config-path.test.js && node ./test/bcquality-resolve.test.js && node ./test/bcquality-resolve-canonicalize.test.js && node ./test/bcquality-junction.test.js && node ./test/bcquality-junction-self-reference.test.js && node ./test/bcquality-reconcile-toggle.test.js && node ./test/bcquality-containment.test.js && node ./test/bcquality-tool.test.js && node ./test/bcquality-self-heal.test.js && node ./test/git-root-resolution.test.js && node ./test/bcquality-install-confirm.test.js && node ./test/init-bcquality-preresolve.test.js && node ./test/version-service-config-path.test.js && node ./test/version-service-channels.test.js && node ./test/version-service-release-channel.test.js && node ./test/glob-to-regex-case-table.test.js && node ./test/startup-check-per-repo.test.js && node ./test/startup-prompt-states.test.js && node ./test/bcquality-startup-reconcile.test.js && node ./test/init-migration-preflight.test.js && node ./test/validate-npm-spawn.test.js && node ./test/process-tls-env.test.js && node ./test/startup-sequence.test.js && node ./test/bridge-dryrun-count.test.js && node ./test/bcquality-status-resolver-chain.test.js && node ./test/al-mcp-local-selection.test.js && node ./test/al-mcp-provider.test.js && node ./test/al-mcp-start-tool.test.js && node ./test/read-configuration-local.test.js"
     },
     "dependencies": {
         "jsonc-parser": "^3.3.1",

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0
+
+- Registers the AL MCP server (`al-mcp`, `altool launchmcpserver`) as an extension-provided MCP server for the repository's AL projects. The provider starts the toolkit's `Start-AprodaAlMcp.ps1` content-based (SRP-safe), passes no target or credential values itself, and restarts the server when the selected target, its `launch.json` configuration, the stored credential, the AL extension or the layer version changes.
+- Adds the setting `aprodaAldc.alMcp.start` (`auto` | `manual`, user scope, default `auto`): `auto` starts the server once in an AL workspace, `manual` only on request.
+- Adds the commands *Select AL Target*, *Start AL MCP Server*, *Restart AL MCP Server* and *Store Credential for AL Target*. The credential is typed into a terminal prompt only; the extension never sees the password.
+- Adds the confirmed chat tool `startAlMcp` (`aprodaAldc_startAlMcp`), which can start or restart only this extension's AL MCP server.
+- `#aldcConfiguration` now returns a separate `local` block with the git-ignored target selection (`aldc.local.json`): state, resolved launch values, issue codes and the target bundle. No credential state is reported.
+- Environment diagnostics report the active `altool`, the start mode, duplicate `launchmcpserver` registrations in workspace `mcp.json` or the workspace file, and `auto` combined with `chat.mcp.autostart = never`.
+- Offers to switch the ALDC target when an AL debug session starts with another `launch.json` configuration; it never switches silently.
+
 ## 0.1.7
 
 - Adds a scope suffix to each Get Started walkthrough step title ("one-time setup" vs. "per repository") so users can tell workstation-level setup apart from per-project actions at a glance.

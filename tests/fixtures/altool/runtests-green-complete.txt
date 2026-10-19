@@ -1,0 +1,38 @@
+A task was canceled.
+{
+  "succeeded": true,
+  "data": {
+    "success": true,
+    "total": 25,
+    "passed": 25,
+    "failed": 0,
+    "skipped": 0,
+    "results": [
+      { "codeunitId": 59010, "methodName": "TestCaseA01", "status": "Passed", "output": "", "durationMs": 31 },
+      { "codeunitId": 59010, "methodName": "TestCaseA02", "status": "Passed", "output": "", "durationMs": 12 },
+      { "codeunitId": 59010, "methodName": "TestCaseA03", "status": "Passed", "output": "", "durationMs": 9 },
+      { "codeunitId": 59010, "methodName": "TestCaseA04", "status": "Passed", "output": "", "durationMs": 11 },
+      { "codeunitId": 59010, "methodName": "TestCaseA05", "status": "Passed", "output": "", "durationMs": 10 },
+      { "codeunitId": 59010, "methodName": "TestCaseA06", "status": "Passed", "output": "", "durationMs": 14 },
+      { "codeunitId": 59010, "methodName": "TestCaseA07", "status": "Passed", "output": "", "durationMs": 8 },
+      { "codeunitId": 59010, "methodName": "TestCaseA08", "status": "Passed", "output": "", "durationMs": 9 },
+      { "codeunitId": 59010, "methodName": "TestCaseA09", "status": "Passed", "output": "", "durationMs": 13 },
+      { "codeunitId": 59010, "methodName": "TestCaseA10", "status": "Passed", "output": "", "durationMs": 12 },
+      { "codeunitId": 59010, "methodName": "TestCaseA11", "status": "Passed", "output": "", "durationMs": 10 },
+      { "codeunitId": 59010, "methodName": "TestCaseA12", "status": "Passed", "output": "", "durationMs": 9 },
+      { "codeunitId": 59010, "methodName": "TestCaseA13", "status": "Passed", "output": "", "durationMs": 15 },
+      { "codeunitId": 59010, "methodName": "", "status": "Passed", "output": "", "durationMs": 0 },
+      { "codeunitId": 59013, "methodName": "TestCaseD01", "status": "Passed", "output": "", "durationMs": 22 },
+      { "codeunitId": 59013, "methodName": "TestCaseD02", "status": "Passed", "output": "", "durationMs": 11 },
+      { "codeunitId": 59013, "methodName": "TestCaseD03", "status": "Passed", "output": "", "durationMs": 12 },
+      { "codeunitId": 59013, "methodName": "TestCaseD04", "status": "Passed", "output": "", "durationMs": 10 },
+      { "codeunitId": 59013, "methodName": "TestCaseD05", "status": "Passed", "output": "", "durationMs": 9 },
+      { "codeunitId": 59013, "methodName": "TestCaseD06", "status": "Passed", "output": "", "durationMs": 13 },
+      { "codeunitId": 59013, "methodName": "TestCaseD07", "status": "Passed", "output": "", "durationMs": 11 },
+      { "codeunitId": 59013, "methodName": "TestCaseD08", "status": "Passed", "output": "", "durationMs": 10 },
+      { "codeunitId": 59013, "methodName": "TestCaseD09", "status": "Passed", "output": "", "durationMs": 12 },
+      { "codeunitId": 59013, "methodName": "TestCaseD10", "status": "Passed", "output": "", "durationMs": 14 },
+      { "codeunitId": 59013, "methodName": "", "status": "Passed", "output": "", "durationMs": 0 }
+    ]
+  }
+}

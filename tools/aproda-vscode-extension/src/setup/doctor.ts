@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { collectAlMcpFindings } from "../alMcp/doctorChecks";
 import { channel, forkPath, repositoryUrl, sourceMode } from "../config";
 import { Logger } from "../log";
 import { run } from "../process";
@@ -35,6 +36,10 @@ export async function runDoctor(context: vscode.ExtensionContext, logger: Logger
         logger.info(`Toolkit source: ${status.message}`);
     } catch (error) {
         logger.error(`Toolkit source: ${asMessage(error)}`);
+    }
+
+    for (const finding of collectAlMcpFindings()) {
+        logger.info(finding.level === "warning" ? `WARNING: ${finding.message}` : finding.message);
     }
 
     logger.show();

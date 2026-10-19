@@ -7,7 +7,7 @@
 
 | File | Role | Edit? |
 |------|------|-------|
-| `AprodaDeployRunVerify.psm1` | Engine: Resolve-Config, Build, Deploy, materialize Runner, Run, full Loop | ❌ never |
+| `AprodaDeployRunVerify.psm1` | Engine: Resolve-Config, Build (altool → alc), Publish (altool → Dev Endpoint POST), Tests (altool → web-client runner), one-time ASINST cleanup, full Loop | ❌ never |
 | `Invoke-AprodaDeployRunVerify.ps1` | Thin entry point (run via `Get-Content … -Raw \| iex`) | ❌ never |
 | `runner-glue/` | The 3 version-agnostic glue scripts (central, shared by all projects/versions) | ❌ never |
 | `deploy-run-verify.config.template.jsonc` | Per-project config — **copy** to the project, fill a few values | ✅ the copy only |
@@ -22,11 +22,40 @@
 # Set the three env hints, then dot-load the entry via iex (SRP-safe; no Import-Module).
 $env:APRODA_DEPLOY_RUN_VERIFY_CONFIG = '<project>/Test/deploy-run-verify.config.jsonc'
 $env:APRODA_DEPLOY_RUN_VERIFY_MODULE = '<skillpath>/scripts/AprodaDeployRunVerify.psm1'
-$env:APRODA_DEPLOY_RUN_VERIFY_MODE   = 'full'   # 'full' (default) | 'buildonly' | 'skipbuild'
+$env:APRODA_DEPLOY_RUN_VERIFY_MODE   = 'full'   # 'full' (default) | 'buildonly' | 'skipbuild' | 'runonly'
 Get-Content '<skillpath>/scripts/Invoke-AprodaDeployRunVerify.ps1' -Raw | Invoke-Expression
 ```
 
-For FKH targets, the engine publishes through the Business Central Dev Endpoint (`--devScope`) by default. This supports same-version development redeploys without removing dependent apps. Global-scope publishing is allowed only when explicitly requested by the user. `fkhSyncMode` defaults to `Add` (`synchronize`); set it to `ForceSync` only for a destructive schema change and inform the user briefly when doing so.
+| `APRODA_DEPLOY_RUN_VERIFY_MODE` | Steps |
+|---|---|
+| `full` (default) | build → dependency preflight → publish → test |
+| `buildonly` | build |
+| `skipbuild` | dependency preflight → publish → test |
+| `runonly` | test only (service preflight; no dependency check, no publish) |
+
+Optional per-run environment variables:
+
+| Variable | Values | Purpose |
+|---|---|---|
+| `APRODA_DEPLOY_RUN_VERIFY_FORCE_UPGRADE` | empty / `1` | per-run `altool publishapp --forceupgrade` (Tier 3: only on an explicit request; not available on the direct POST) |
+| `APRODA_DEPLOY_RUN_VERIFY_TEST_ROUTE` | `auto` (default) / `altool` / `webClient` | force a test route, e.g. for a route comparison |
+| `APRODA_DEPLOY_RUN_VERIFY_DEPLOY_ROUTE` | `auto` (default) / `altool` / `devEndpoint` | force a publish route, e.g. to validate the fallback |
+
+A forced route that is unavailable stops with `ROUTE_UNAVAILABLE: <step>=<route>` instead of falling back. Invalid values stop the run before the engine starts.
+
+**Routes (E-010).** Every step tries `altool` first and a legacy route second, and falls back **only** on an invocation failure (`altool` missing / cannot start / no HTTP answer / no parseable test result / incomplete test result) — never on a red test, a compiler error, a sync/schema message, or HTTP 401/415/422:
+
+| Step | First | Fallback |
+|---|---|---|
+| Build | `altool compile` | `alc.exe` |
+| Publish (both adapters) | `altool publishapp` | direct multipart POST to the Dev Endpoint |
+| Tests | `altool runtests --testgroups` | web-client runner (needs the runner DLLs below) |
+
+The run ends with the existing `TIMING:` line, then `ROUTE: build=<r> · deploy=<r> · tests=<r>` and one `ROUTE-FALLBACK: <step> → <route> (<reason>)` line per fallback; the summary object carries the same data as `Routes` and `AlTool = { Path, Version, Source }`.
+
+**Schema mode (D-39), both adapters.** `fkhSyncMode` (`Add` default | `ForceSync`) applies to **both** adapters and both publish routes: `Add` → `Synchronize` / `synchronize`, `ForceSync` → `ForceSync` / `forcesync` (the run prints `SCHEMA MODE: ForceSync (fkhSyncMode)`). Set `ForceSync` only for a destructive schema change and inform the user briefly. `Recreate` is never used. The DependencyPublishingOption is taken from the selected `launch.json` configuration (default `Default`).
+
+Publishing goes through the Business Central Dev Endpoint for ASINST and Fkh alike; the Management DLL is used on ASINST only to read the app state and for the one-time cleanup (`Get-DeployRunVerifyCleanupCandidates` / `Remove-DeployRunVerifyAppVersion`, HITL per package — see `../SKILL.md`). Global-scope publishing is outside the engine and only on explicit user request.
 
 Each completed run reports `TIMING: build=… · deploy=… · tests=… · total=…`. The `tests` duration includes runner initialization, connection, and test execution; skipped stages are shown as `skipped` or `n/a`. Use comparable runs against the same target to evaluate deployment changes such as the FKH Dev Endpoint default.
 
@@ -41,7 +70,7 @@ Each completed run reports `TIMING: build=… · deploy=… · tests=… · tota
 
 A brand-new project needs **exactly one** project-local file — the config copy. Everything else is central (glue), generated (results), or materialized on demand (the 4 client DLLs). Steps:
 
-1. **Prerequisite — `launch.json`**: the test project has `.vscode/launch.json` with a `server`-type configuration (server/instance/tenant). The engine derives the ServiceUrl from it. If several exist, set `launchConfig` to the one to use.
+1. **Prerequisite — target selection**: the project has `.vscode/launch.json` with a `server`-type configuration (server/instance/tenant/authentication), and that configuration is selected in `.github/aldc.local.json` (*Select AL Target* in the Aproda extension, or `Set-AprodaAlLocalSelection`). The engine derives the ServiceUrl from it. Without a usable selection a full run stops with `TARGET_SELECTION_<STATE>` and lists the available configurations (build-only continues without a target).
 2. **Prerequisite — runner DLL source reachable**: either the K: BC DVD share (`bcDvdRoot` + `bcCountry`) **or** an explicit `runnerClientSource`. No DLLs are committed.
 3. **Copy** `deploy-run-verify.config.template.jsonc` → `<project>/deploy-run-verify.config.jsonc`; fill `appsInOrder`, `runnerDir`, `companyName`, `mgmtDllPath`, and the runner-DLL source.
 4. **`.gitignore`** (git root): ignore the generated runner + scratch dirs — nothing under them is committed:
@@ -58,7 +87,7 @@ That is the whole per-project surface. The 3 glue scripts, the engine, and the D
 
 | Value | Source |
 |-------|--------|
-| `server`, `serverInstance`, `tenant` | selected `launch.json` configuration |
+| target (`server` host, `scheme`, `serverInstance`, `tenant`, `port`, `authentication`, `dependencyPublishingOption`) | the configuration selected in `.github/aldc.local.json` (git-ignored; *Select AL Target* in the Aproda extension or `Set-AprodaAlLocalSelection`), resolved from that project's `.vscode/launch.json` |
 | `serviceUrl` | `http://{server}/{serverInstance}/cs?tenant={tenant}&company={companyName}` (web client, port 80) |
 | app `name`, `version`, `publisher`, `id` | each app's `app.json` |
 | `testExtensionId` | the test app's `app.json → id` |
@@ -75,8 +104,21 @@ That is the whole per-project surface. The 3 glue scripts, the engine, and the D
   - `runnerClientFromServer=true` *(fallback)* — pull from a remote BC Service folder via remote PowerShell.
 - **`companyName`** — pinned into the serviceUrl (`/cs?tenant=<t>&company=<c>`) so the headless runner doesn't prompt for a company. Empty → `/cs/`.
 - **`bcVersion`** *(optional)* — pin the target BC platform `major.minor` (selects the runner subfolder; the client DLL must match the **major**); empty = derive from the live server.
-- **`authentication`** — taken from the selected `launch.json` configuration (or this config when `server` is set explicitly). **Required, no default**: `Windows` or `UserPassword`; missing, `AAD`/`MicrosoftEntraID` or unknown values stop before any connection.
+- **`authentication`** — not a config key any more: set it in the selected `launch.json` configuration. **Required, no default**: `Windows` or `UserPassword`; missing (`AUTH_MISSING`), `AAD`/`MicrosoftEntraID` (`AUTH_UNSUPPORTED`), unknown (`AUTH_UNKNOWN`) values and `UserPassword` over `http` (`USERPASSWORD_OVER_HTTP`) stop with `TARGET_BLOCKED: <codes>` before any connection.
 - **`mgmtDllPath`** — server-side path to `Microsoft.Dynamics.Nav.Management.dll` (used inside the remote session).
+
+## Target errors and migration (E-010)
+
+The engine reads the target only from `aldc.local.json` + `launch.json` (library `skill-aproda-al-mcp/scripts/AprodaAlTarget.ps1`, loaded from the sibling skill; missing → `AL_MCP_SKILL_MISSING`).
+
+| Message | Meaning / action |
+|---|---|
+| `CONFIG_MIGRATION_REQUIRED: <keys>` | The DRV config still carries a non-empty `launchConfig`, `server`, `serverInstance`, `tenant`, `scheme` or `authentication`. Move the choice into `aldc.local.json` (`Set-AprodaAlLocalSelection`) and delete those lines from the config. `fkhSyncMode` is a normal key and stays. |
+| `CONFIG_OBSOLETE_KEY: <keys>` (warning) | The same keys with an empty value (`""`/`false`): harmless, delete them in the next commit. |
+| `TARGET_SELECTION_<STATE>` (`ABSENT`, `INVALID`, `STALE`, `NOTOOLKIT`) | No usable selection; the message lists all `server` configurations so the user can choose. |
+| `TARGET_BLOCKED: <codes>` | The selected `launch.json` configuration is not usable for a target run (`AUTH_MISSING`, `AUTH_UNSUPPORTED`, `AUTH_UNKNOWN`, `USERPASSWORD_OVER_HTTP`, `SERVER_INVALID`, `INSTANCE_MISSING`, `PORT_INVALID`, `NOT_ONPREM`, `DEPENDENCY_OPTION_INVALID`), followed by one message per issue. |
+
+**Build-only** (`APRODA_DEPLOY_RUN_VERIFY_MODE='buildonly'`) needs no target: without a usable selection it continues with `TARGET: none (build-only)` and skips the preflight.
 
 > The 3 glue scripts are **not** project config — they ship centrally in `scripts/runner-glue/` and are loaded content-based (SRP-safe) at run time.
 
@@ -84,6 +126,8 @@ That is the whole per-project surface. The 3 glue scripts, the engine, and the D
 
 The engine calls a preflight before the first publish: it pings the service and (if reachable) checks for the Test Toolkit. On failure it **warns and offers build-only** — it does not hard-block. Per the skill's operational-safety rule, deploying to a **shared OnPrem server** requires the launch.json environment selection to be acknowledged once per spec.
 
+> **Historical status (before E-010).** The block below describes the live verification of the former Management-DLL deploy (uninstall → unpublish → publish → sync → install). That deploy route is gone: publishing is now the Dev Endpoint chain described above. Items 1, 2 and 6 still apply.
+>
 > **Status:** Engine **fully live-verified** end-to-end against Straub Medical AG Base + Test (BC 28, server `apd-svw-nst05`): config resolution, preflight, server/runner-version validation, build of both apps, **deploy** (uninstall → unpublish → publish → sync → install), **runner materialization from the K: BC DVD**, and the **test run → 27/27 passed** — all via the entry point. Issues found and fixed during verification:
 > 1. JSONC comment stripper destroyed `http://` URLs in `launch.json` → `(?<!:)` lookbehind.
 > 2. Entry point used `Import-Module`, blocked by SRP on the target machine → SRP-safe dot-sourcing (needs `$env:APRODA_DEPLOY_RUN_VERIFY_MODULE`).

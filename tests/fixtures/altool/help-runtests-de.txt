@@ -1,0 +1,17 @@
+Beschreibung:
+  Tests auf einem Server ausführen
+
+Nutzung:
+  altool runtests [Optionen]
+
+Optionen:
+  --testgroups <testgroups>            JSON-Datei mit den auszuführenden Testgruppen
+  --project <project>                  Projektordner
+  --company <company>                  Firmenname
+  --server <server>                    Server-URL
+  --serverinstance <serverinstance>    Serverinstanz
+  --port <port>                        Port
+  --authentication <authentication>    Authentifizierungstyp
+  --tenant <tenant>                    Mandant
+  --environmenttype <environmenttype>  Umgebungstyp
+  -?, -h, --help                       Hilfe- und Nutzungsinformationen anzeigen

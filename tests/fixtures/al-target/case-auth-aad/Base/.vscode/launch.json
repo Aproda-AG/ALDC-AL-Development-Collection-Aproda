@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "dev-entra",
+      "type": "al",
+      "request": "launch",
+      "environmentType": "OnPrem",
+      "server": "https://entra.example.com",
+      "serverInstance": "BC",
+      "port": 7049,
+      "authentication": "AAD"
+    }
+  ]
+}

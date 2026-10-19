@@ -1,0 +1,18 @@
+{
+  // Mixed-case host and authentication value: host case is kept, authentication is normalized.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "dev-https",
+      "type": "al",
+      "request": "launch",
+      "environmentType": "OnPrem",
+      "server": "https://Dev.Example.COM",
+      "serverInstance": "BC",
+      "port": 7050,
+      "authentication": "userpassword",
+      "tenant": "t1",
+      "dependencyPublishingOption": "Strict"
+    }
+  ]
+}

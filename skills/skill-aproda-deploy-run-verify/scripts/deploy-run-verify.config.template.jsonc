@@ -3,19 +3,14 @@
 // Empty / omitted values are AUTO-DERIVED from launch.json + each app.json.
 // JSONC: // comments are stripped by the engine before parsing.
 {
-    // --- Environment (auto-derived from launch.json if launchConfig is set) ---
-    // Name of the launch.json configuration to use. If empty, the engine picks the
-    // single "server"-type config, or asks (HITL) when several exist.
-    "launchConfig": "",
-    // Optional explicit overrides (leave empty to derive from launchConfig):
-    "server": "",
-    "serverInstance": "",
-    "tenant": "default",
-    // scheme (http/https) and authentication are ALSO derived from the launch.json
-    // configuration's "server" URL and "authentication" field — do not set them here.
-    // authentication is REQUIRED there (no default): Windows or UserPassword; a missing,
-    // AAD/MicrosoftEntraID or unknown value stops the run. The adapter (ASINST vs Fkh)
-    // follows from scheme + hostname, see skill-aproda-fkh and decisions.aproda.md D-26.
+    // --- Target environment ---
+    // NOT configured here. The target is selected in .github/aldc.local.json (git-ignored; written
+    // by the Aproda extension command "Select AL Target" or by Set-AprodaAlLocalSelection) and
+    // resolved from the selected launch.json configuration. `authentication` (Windows or
+    // UserPassword) must be set in that launch.json configuration - there is no default.
+    // The adapter (ASINST vs Fkh) follows from scheme + hostname, see skill-aproda-fkh and
+    // decisions.aproda.md D-26. Old target keys left in this file stop the run with
+    // CONFIG_MIGRATION_REQUIRED (empty ones only warn).
     // --- Apps in DEPENDENCY ORDER (REQUIRED) ---
     // Project directories (relative to this config file) ONLY — this project's own apps,
     // upstream first, TEST app LAST. Do NOT list Aproda foundation/third-party dependencies
@@ -38,6 +33,8 @@
     // DLL must match the target MAJOR (DLLs keep minor 0 for a whole major).
     "bcVersion": "",
     // --- Runner client DLLs (the 4 version-pinned BC test-client DLLs) ---
+    // Needed ONLY when the web-client runner (the legacy test route, used when altool runtests
+    // is unavailable or fails on invocation) is reached; the altool route does not use them.
     // The runner needs: Microsoft.Dynamics.Framework.UI.Client, Microsoft.Internal.AntiSSRF,
     // Newtonsoft.Json, System.ServiceModel.Primitives. Initialize-DeployRunVerifyRunner materializes
     // them into <runnerDir>/<major.minor> on demand (idempotent; survives a wiped runner).
@@ -56,23 +53,34 @@
     // PS (admin shares blocked) — DLLs are pulled with Copy-Item -FromSession. Default false.
     "runnerClientFromServer": false,
     // Company used for the headless run (REQUIRED for a deterministic run; pinned into the
-    // web-client URL as /cs?tenant=<t>&company=<c>). e.g. "CRONUS (Schweiz) AG".
+    // web-client URL as /cs?tenant=<t>&company=<c> and passed to altool runtests --company).
+    // Empty forces the web-client route. e.g. "CRONUS (Schweiz) AG".
     "companyName": "",
     // Leave empty to derive from the test app's idRanges; or pin explicitly e.g. "59000..59003".
+    // The altool route understands a..b, a|b, a and combinations with | (test codeunits are
+    // read from source: Subtype = Test); any other syntax uses the web-client runner.
     "testCodeunitRange": "",
     "testSuite": "DEFAULT",
     // --- Tool paths (machine/server specific) ---
     // alc.exe: leave empty to auto-detect the latest ms-dynamics-smb.al extension.
     "alcPath": "",
-    // Server-side Management DLL, used INSIDE the remote session. REQUIRED only for the
-    // ASINST adapter (OnPrem NST server); irrelevant and safely left empty for the Fkh
-    // adapter (AKS container, deployed via the fkh CLI instead of Remote PowerShell).
+    // Server-side Management DLL, used INSIDE the remote session to READ the app state (state
+    // verification, dependency check) and for the one-time cleanup. REQUIRED only for the ASINST
+    // adapter (OnPrem NST server); publishing does not use it (Dev Endpoint). Irrelevant and safely
+    // left empty for the Fkh adapter (state is read with the fkh CLI).
     // e.g. "D:\\28\\STRAUB_MEDICAL_AG_28_CH_FKO\\Management\\Microsoft.Dynamics.Nav.Management.dll"
     "mgmtDllPath": "",
     // --- Behaviour ---
-    // FKH only: Add maps to the non-destructive Dev Endpoint synchronize mode. Use
-    // ForceSync for a destructive schema change.
+    // Schema mode of the Dev Endpoint publish, for BOTH adapters (ASINST and Fkh) and both routes
+    // (altool publishapp and the direct POST), D-39: "Add" (default) = Synchronize / synchronize;
+    // "ForceSync" = ForceSync / forcesync for a destructive schema change (inform the user briefly).
+    // The key keeps its historical name. "Recreate" and forceUpgrade are never implied.
     "fkhSyncMode": "Add",
+    // Per-run mode and route switches are environment variables, not config keys:
+    // APRODA_DEPLOY_RUN_VERIFY_MODE = full | buildonly | skipbuild | runonly,
+    // APRODA_DEPLOY_RUN_VERIFY_TEST_ROUTE = auto | altool | webClient,
+    // APRODA_DEPLOY_RUN_VERIFY_DEPLOY_ROUTE = auto | altool | devEndpoint,
+    // APRODA_DEPLOY_RUN_VERIFY_FORCE_UPGRADE = 1 (explicit request only). See README.md.
     "runTimeoutMs": 360000,
     // If the BC service is unreachable: "warn-buildonly" (default) | "abort".
     "onServiceUnavailable": "warn-buildonly"

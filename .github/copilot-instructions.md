@@ -4,7 +4,7 @@
 
 ## Overview
 
-This workspace contains AL (Application Language) code for Microsoft Dynamics 365 Business Central. It uses the **ALDC Core v1.2** skills-based architecture, extended by the Aproda `.aproda.` layer (rows marked 🟦 below): **11 agents (7 user-facing + 4 internal subagents) + 21 skills + 12 workflows + 10 instructions**.
+This workspace contains AL (Application Language) code for Microsoft Dynamics 365 Business Central. It uses the **ALDC Core v1.2** skills-based architecture, extended by the Aproda `.aproda.` layer (rows marked 🟦 below): **11 agents (7 user-facing + 4 internal subagents) + 22 skills + 12 workflows + 10 instructions**.
 
 ## Core Principles
 
@@ -93,9 +93,10 @@ Build a BC agent (SDK/Designer)? → @AL Agent Builder
 | `skill-aproda-aldc` 🟦 | Explain & extend the Aproda ALDC layer itself; entry to `site-profile.aproda.md` (infra) | any (meta) |
 | `skill-aproda-ado` 🟦 | ADO work-item conventions, `req_name` derivation, controlled `az` CLI ops (PR/work-item create) | al-conductor, al-architect, al-triage |
 | `skill-aproda-fkh` 🟦 | Fkh transport/target resolution for OnPrem BC containers | skill-aproda-deploy-run-verify |
+| `skill-aproda-al-mcp` 🟦 | Level-1 AL MCP access (`altool launchmcpserver`): target selection, starter, tool tiers (E-010 phase 2) | al-developer |
 | `skill-aproda-aldc-release` 🟦 | Prepare/release the Aproda ALDC layer or VS Code extension | fork maintainer only — never syncs to consumer projects |
 
-> 🟦 = Aproda custom layer (`.aproda.` convention, 5 skills total). See [`readme.aproda.md`](readme.aproda.md) + [`decisions.aproda.md`](decisions.aproda.md). Remaining 4 skills (`skill-agent-instructions`, `skill-agent-task-patterns`, `skill-agent-toolkit`, `skill-contribution-assistant`) are BC Agents Pack / meta skills — see `docs/copilot-reference.md` → BC Agents Pack.
+> 🟦 = Aproda custom layer (`.aproda.` convention, 6 skills total). See [`readme.aproda.md`](readme.aproda.md) + [`decisions.aproda.md`](decisions.aproda.md). Remaining 4 skills (`skill-agent-instructions`, `skill-agent-task-patterns`, `skill-agent-toolkit`, `skill-contribution-assistant`) are BC Agents Pack / meta skills — see `docs/copilot-reference.md` → BC Agents Pack.
 
 ## External Knowledge: BCQuality
 
@@ -217,4 +218,4 @@ fork (`docs/` at repo root), `./docs/copilot-reference.md` in a consuming projec
 **Version**: 1.1.0
 **Last Updated**: 2026-09-22
 **Workspace**: AL Development for Business Central
-**Primitives**: 11 agents (7 user-facing + 4 internal subagents) + 21 skills (5 🟦 Aproda) + 12 workflows (1 🟦 Aproda) + 10 instructions (2 🟦 Aproda)
+**Primitives**: 11 agents (7 user-facing + 4 internal subagents) + 22 skills (6 🟦 Aproda) + 12 workflows (1 🟦 Aproda) + 10 instructions (2 🟦 Aproda)

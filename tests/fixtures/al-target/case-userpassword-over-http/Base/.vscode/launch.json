@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "dev-insecure",
+      "type": "al",
+      "request": "launch",
+      "environmentType": "OnPrem",
+      "server": "http://insecure.example.com",
+      "serverInstance": "BC",
+      "port": 7049,
+      "authentication": "UserPassword"
+    }
+  ]
+}

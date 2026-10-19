@@ -47,10 +47,36 @@ When a test fails, match the symptom below → apply the fix → re-deploy → r
 - **Fix:** `SKU.Get(LocationCode, ItemNo, VariantCode)`.
 - **Proven by:** `SkuSystemWritePasses`, `SkuDeleteBlocked`.
 
-### T-6 — Install fails on retained tenant data ✅ (deploy-side)
+### T-6 — Install fails on retained tenant data ✅ (deploy-side, former Management-DLL route)
 - **Symptom:** `Install-NAVApp` errors that an earlier version is already installed.
-- **Cause:** prior-version tenant data retained.
-- **Fix:** fall back to `Start-NAVAppDataUpgrade` (see `build-deploy.md`).
+- **Cause:** prior-version tenant data retained. Only seen on the former Management-DLL publish route, which the engine no longer uses; on the Dev Endpoint the equivalent is a `PUBLISH_REJECTED` sync/schema message (T-9).
+- **Fix:** set `fkhSyncMode = ForceSync` for the run (D-39) or, for retained data from a version bump, follow `build-deploy.md`.
+
+### T-7 — `PUBLISH_DUPLICATE` (HTTP 422) ✅ (measured on both adapters)
+- **Symptom:** the publish stops with `PUBLISH_DUPLICATE`; `altool publishapp` exit 1 with `422 UnprocessableEntity`, *duplicate package ID*.
+- **Cause:** the exact same package file (same package ID) is already published. A rebuild produces a new package ID even with an unchanged version.
+- **Fix:** **inspect the state, never repeat the publish.** Rebuild (new package ID) and run again, or continue if the version is already installed and `Synced`. A `NotSynced` leftover is removed only after confirmation (`redeploy-recovery.md`).
+
+### T-8 — `ROUTE-FALLBACK` lines and what triggers them ✅
+- **Symptom:** the report shows `ROUTE-FALLBACK: <step> → <route> (<reason>)`.
+- **Cause:** `altool` was missing, lacked the command, could not be started, got no HTTP answer, or (tests) returned no parseable result / an incomplete result. These are the **only** fallback triggers.
+- **Not a fallback trigger:** red tests (`TestRunFailed`), compiler errors, sync/schema messages, HTTP 401/415/422. If a run shows a fallback after one of those, that is an engine defect — report it.
+- **Action:** record the line in the phase report; a recurring `altool unavailable` or `could not be started` reason means the AL extension on the workstation needs attention (`Find-AprodaAlTool`).
+
+### T-9 — `PUBLISH_REJECTED` with a schema message ✅
+- **Symptom:** `PUBLISH_REJECTED` quoting a table-set / schema synchronization error.
+- **Cause:** the changed schema cannot be applied with `Synchronize`.
+- **Fix:** `fkhSyncMode = ForceSync` for the run (D-39: tell the user briefly; it can drop data of changed tables). Not `Recreate`; `forceUpgrade` only on an explicit request.
+
+### T-10 — `Incomplete` altool test run ✅ (Q-13a, measured)
+- **Symptom:** `ROUTE-FALLBACK: tests → webClient (Incomplete: requested codeunit(s) missing …)`, or `no test results (empty run)`.
+- **Cause:** a non-test codeunit in the group stopped the run after the first group (`A task was canceled.`) while `succeeded` and `data.success` stayed `true`; or the group contained only a non-test codeunit (`total: 0`). `succeeded: true` alone does not prove a complete run.
+- **Fix:** none needed — the web-client runner takes over for that run. Check that the test app's `Subtype = Test;` codeunits are the only ones in `testCodeunitRange`.
+
+### T-11 — Red altool result ✅ (Q-9, measured)
+- **Symptom:** `succeeded: false`, `errorDetails.code = TestRunFailed`; failing method with error text and AL call stack in `FailureDetails`.
+- **Cause:** tests ran and failed. A blank-method completion record repeats the failure and is **not** counted (11 passed / 1 failed for one failing method, not 2).
+- **Fix:** triage with T-1…T-5; the result is final for the run — it is never re-run on the web-client runner.
 
 ## Regression checklist after a shared-code fix
 

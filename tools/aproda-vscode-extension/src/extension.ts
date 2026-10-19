@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import * as fs from "fs";
 import { extensionUpdateChecksEnabled, startupCheckIntervalHours, startupChecksEnabled } from "./config";
 import { resetLocalData } from "./commands/resetData";
 import { checkForLayerUpdates, markStartupCheckComplete, shouldRunStartupCheck } from "./startup/check";
@@ -23,6 +22,8 @@ import { checkBcqualitySelfHeal } from "./startup/bcqualityHealth";
 import { copyAdoCliSetupCommand } from "./commands/copyAdoCliSetupCommand";
 import { copyRecommendedMcpServers } from "./commands/copyRecommendedMcpServers";
 import { BcqualityStatusBar } from "./status/bcqualityStatusBar";
+import { registerAlMcp } from "./alMcp/register";
+import { isAlWorkspace } from "./workspace/alWorkspace";
 
 export function activate(context: vscode.ExtensionContext): void {
   const logger = new Logger();
@@ -31,6 +32,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(logger);
   registerReadAldcConfigurationTool(context);
   registerBcqualityTool(context);
+  const alMcpProvider = registerAlMcp(context, logger);
 
   const bcqualityStatusBar = new BcqualityStatusBar();
   context.subscriptions.push(bcqualityStatusBar);
@@ -48,7 +50,11 @@ export function activate(context: vscode.ExtensionContext): void {
       await offerRepositoryInitialization(context, logger, layerSource);
     }
   }));
-  context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.initProject", () => initializeProject(layerSource, logger, false)));
+  context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.initProject", async () => {
+    await initializeProject(layerSource, logger, false);
+    // The toolkit (aldc.yaml, the AL MCP starter) may have appeared: let VS Code re-ask for the server definition.
+    alMcpProvider.scheduleRefresh();
+  }));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.previewChanges", () => initializeProject(layerSource, logger, true)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.checkForUpdates", () => checkForLayerUpdates(context, logger, true)));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.checkExtensionUpdates", () => checkForExtensionUpdates(context, logger, true)));
@@ -130,10 +136,6 @@ export function activate(context: vscode.ExtensionContext): void {
       () => checkForLayerUpdates(context, logger, false).finally(() => markStartupCheckComplete(context, repoRoot!))
     );
   }
-}
-
-function isAlWorkspace(): boolean {
-  return vscode.workspace.workspaceFolders?.some((folder) => fs.existsSync(vscode.Uri.joinPath(folder.uri, "app.json").fsPath)) ?? false;
 }
 
 export function deactivate(): void {

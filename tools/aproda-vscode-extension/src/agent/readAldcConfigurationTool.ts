@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import YAML from "yaml";
 import { resolveAldcRepository } from "../env/gitRoot";
 import { resolveBcquality } from "../bcquality/resolve";
+import { getLocalSelection, toLocalBlock } from "../alMcp/localSelection";
 
 const toolName = "aprodaAldc_readConfiguration";
 
@@ -66,7 +67,9 @@ class ReadAldcConfigurationTool implements vscode.LanguageModelTool<Record<strin
                     verified: bcqualityResolution.verified,
                     mounted: bcqualityResolution.candidates.some((candidate) => candidate.source === "workspaceFolder" && candidate.verdict === "verified")
                 } : undefined,
-                guidance: "This is the authoritative configuration for the current ALDC repository. Use these values; do not guess missing values. For bcquality, `home` is only the static declared default: `resolvedHome`/`resolvedFrom`/`verified` come from the live resolver (user setting, mounted workspace folder, environment, devRoot, then this file) and are authoritative."
+                // Never merged with aldc.yaml values: the git-ignored per-developer AL target selection.
+                local: toLocalBlock(getLocalSelection(resolution.repositoryRoot)),
+                guidance: "This is the authoritative configuration for the current ALDC repository. Use these values; do not guess missing values. For bcquality, `home` is only the static declared default: `resolvedHome`/`resolvedFrom`/`verified` come from the live resolver (user setting, mounted workspace folder, environment, devRoot, then this file) and are authoritative. `local` is a selection only, not an environment acknowledgement. `absent`, `invalid` or `stale` means: ask the user, never infer a target. Pass `targetBundle` unchanged to every `al_publish`/`al_run_tests` call."
             });
         } catch (error) {
             return this.result({

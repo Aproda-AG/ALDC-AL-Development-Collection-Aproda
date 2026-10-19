@@ -106,13 +106,13 @@ ALDC-Core/ (Aproda-extended)
 │   ├── al-triage.agent.md / dredd.agent.md / al-agent-builder.agent.md          # user-facing
 │   ├── al-planning-subagent.agent.md / al-implement-subagent.agent.md / al-review-subagent.agent.md   # internal (user-invocable: false)
 │   └── al-translate-subagent.aproda.agent.md                                                       🟦  # internal
-├── skills/                                # 21 composable knowledge modules
+├── skills/                                # 22 composable knowledge modules
 │   ├── skill-api / skill-copilot / skill-debug / skill-events / skill-estimation / skill-migrate /
 │   │   skill-pages / skill-performance / skill-permissions / skill-testing / skill-translate / skill-manifest   # 12 core, loaded on demand
 │   ├── skill-agent-instructions / skill-agent-task-patterns / skill-agent-toolkit                                # 3 BC Agents Pack
 │   ├── skill-contribution-assistant                                                                              # 1 meta (skill authoring)
 │   └── skill-aproda-ado / skill-aproda-aldc / skill-aproda-aldc-release /
-│       skill-aproda-deploy-run-verify / skill-aproda-fkh                                                     🟦  # 5 Aproda
+│       skill-aproda-deploy-run-verify / skill-aproda-fkh / skill-aproda-al-mcp                               🟦  # 6 Aproda
 ├── prompts/                               # 12 workflows
 │   ├── al-spec.create / al-build / al-pr-prepare / al-memory.create / al-context.create / al-initialize   # 6 core
 │   ├── al-agent.create / al-agent.task / al-agent.instructions / al-agent.test / al-agent.build-instructions  # 5 BC Agents Pack

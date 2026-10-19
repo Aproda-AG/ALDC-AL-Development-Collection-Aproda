@@ -74,6 +74,8 @@ The script returns the resolved `al` command path. It does not modify project fi
 
 ## Publish a Dependency-Ordered App Set
 
+> **DRV does not publish with `fkh` any more (E-010, D-53; D-26 addendum, Q-18).** The `skill-aproda-deploy-run-verify` engine publishes every app — on Fkh and ASINST alike — with `altool publishapp`, falling back to the direct Dev Endpoint POST, and uses Fkh only for **target verification** (`listcontainers`), **state inspection** (`getappinfo`) and **recovery**. The `fkh publishapp` procedure below is for standalone, manual Fkh use outside a DRV run (e.g. a one-off dependency set); it is not what DRV executes. See [`../skill-aproda-deploy-run-verify/SKILL.md`](../skill-aproda-deploy-run-verify/SKILL.md) → *Target Adapter Selection*.
+
 `fkh publishapp` accepts one `.app` file. Resolve order locally, then publish sequentially and stop at the first error. Fkh's bundled AL-Go override supplies the canonical sorter, which uses `al GetPackageManifest`; therefore the official `al` CLI must be available in `PATH`.
 
 ```powershell
@@ -113,7 +115,7 @@ When `UnknownDependencies` is non-empty, or `fkh getappinfo` shows a target depe
 
 ### FKH Deployment Scope
 
-**FKH deployments use the Business Central Dev Endpoint (`--devScope`) by default, without scope confirmation. Use `fkh publishapp --devScope`.** Global-scope publishing is allowed only when explicitly requested by the user.
+**In a standalone Fkh publish, use the Business Central Dev Endpoint (`--devScope`) by default, without scope confirmation: `fkh publishapp --devScope`. DRV runs publish through `altool`/the direct Dev Endpoint POST instead (same DEV scope).** Global-scope publishing is allowed only when explicitly requested by the user.
 
 The default Dev Endpoint schema mode is `synchronize` (`--syncMode Add`). Use `--syncMode ForceSync` only when a destructive schema change requires it. Inform the user briefly when using `ForceSync`; explicit confirmation is not required. Do not hide errors with a bulk parallel publish: dependency order and fail-fast behavior are required.
 

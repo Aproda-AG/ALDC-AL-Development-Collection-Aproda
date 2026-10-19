@@ -1,0 +1,3 @@
+Publishing 'Aproda AG_Fixture Base_1.0.0.0.app' to http://nst-test.example.com:7049/BC ...
+Error: the server rejected the request with HTTP 422 UnprocessableEntity.
+  InvalidOperation: duplicate package ID 3f1c2a9e-0000-0000-0000-000000000001

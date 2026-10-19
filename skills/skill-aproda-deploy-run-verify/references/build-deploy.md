@@ -22,20 +22,27 @@
 2. Remove the **old Base symbol** from `Test\.alpackages`, copy the **new** Base `.app` in.
 3. Build **Test** against the refreshed Base symbol.
 
+**Engine route (E-010).** Each app is built with `altool compile /project:<dir> /packagecachepath:<pkg> /out:<app> /loglevel:Error` (the verb passes the arguments to `alc`), falling back to `alc.exe` with the same arguments when `altool` is unavailable, has no `compile` command, cannot be started, or exits non-zero without an `error AL\d{4}` diagnostic. A compiler error fails the build and never triggers the fallback. The package-cache refresh in step 2 happens on every route.
+
 ✅ `alc.exe` **exit code 0 = success** (warnings tolerated). Pre-existing warnings (AA0074, AA0210, Text→Code overflow, AL1025 from the `_runner` `TestResults.xml`) do **not** block.
 
 ## Deploy (dependency order: Base before Test)
 
-For FKH development containers, publish through the Business Central Dev Endpoint with `fkh publishapp --devScope`. This is the default path and permits same-version redeployment without removing dependent apps. The default schema mode is `Add` (`synchronize`); use `ForceSync`  when a destructive schema synchronization is required and inform the user briefly. Global-scope publishing is only allowed when explicitly requested by the user.
+**One publish chain for both adapters (E-010, D-53).** Per app, in dependency order:
 
-✅ **Proven sequence** (`_Cycle.ps1` / `_Deploy.ps1`):
-uninstall Test → uninstall Base → unpublish both → publish/sync/install **Base** → publish/sync/install **Test**.
+1. **`altool publishapp <app> --server <ServerUrl> --serverinstance <inst> --port <port> --authentication <auth> --tenant <tenant> --environmenttype OnPrem --schemaupdatemode <Synchronize|ForceSync> [--forceupgrade]`** — the complete bundle from the selected `launch.json` configuration; **no `--project`** (nothing may merge from `launch.json`, whose first configuration would otherwise fill gaps). `UserPassword` credentials reach the child process only through its environment (`BC_SERVER_USERNAME` / `BC_SERVER_PASSWORD`), never the command line.
+2. **Direct Dev Endpoint POST** — only when step 1 is unavailable or fails on invocation: `POST {ServerUrl}:{Port}/{ServerInstance}/dev/apps?SchemaUpdateMode=<synchronize|forcesync>&DependencyPublishingOption=<Default|Ignore|Strict>&tenant=<tenant>`, multipart as specified in the E-010 *dev-endpoint-publish-protocol* (`Windows` → default credentials; `UserPassword` → in-memory Basic header, HTTPS and ASCII credentials only). Never retried.
+3. **Verify the state** of the exact version: `IsInstalled = True` and `SyncState = Synced` (ASINST via the Management DLL, Fkh via `fkh getappinfo`), else `DEPLOY INCOMPLETE`.
+
+Both publishes are **DEV-scope** (Dev Endpoint). The Management DLL (`Publish-NAVApp`, Global/Tenant scope) is not used to publish: it cannot publish a DEV app and would mix scopes on the NST. The default schema mode is `Add` (`Synchronize`/`synchronize`); `ForceSync` when a destructive schema change requires it (inform the user briefly, D-39); `Recreate` is never used. Global-scope publishing is outside the engine and only on explicit user request.
+
+**Classification and what to do.** `Duplicate` (HTTP 422, *duplicate package ID*) → stop and inspect the state; a rebuilt package with a new package ID publishes again under the same version. `AuthFailure` → one re-prompt for `UserPassword`, then blocker. `ProtocolError` (415) / `Rejected` (other 4xx/5xx, sync or schema message) → stop with the redacted server text. `InvocationFailure` → fall back from `altool` to the POST; from the POST → stop. Details: [`SKILL.md`](../SKILL.md) → *Target Adapter Selection*, [`redeploy-recovery.md`](redeploy-recovery.md).
 
 ### MS test-library prerequisite chain ✅ (live-verified 2026-06-29)
 
 A Test app that depends on `Tests-TestLibraries` / `Application Test Library` will **not deploy** unless the full MS test-library chain is installed on the tenant first, in dependency order:
 
-`Test Runner` → `Any` → `Library Assert` → `Library Variable Storage` → `System Application Test Library` → `Business Foundation Test Libraries` → `Application Test Library` (**new in BC28**) → `Tests-TestLibraries`.
+`Test Runner` → `Any` → , observed 2026-06-29 with the former Management-DLL publish):** the publish **blocks silently** (no PS error, no timeout) when a dependency is missing. The real cause appears **only in the Windows Event Log** (source `MicrosoftDynamicsNavServer$<instance>`, event 701): `error AL1024: …'Application Test Library'… could not be loaded` / `…'Business Foundation Test Libraries'… could not be found in the database`. The engine's dependency preflight (D-52) now catches a missing dependency before any publish; record what the Dev Endpoint reports if one slips through
 
 **Hang symptom (no error):** `Publish-/Sync-NAVApp` **blocks silently** (no PS error, no timeout) when a dependency is missing. The real cause appears **only in the Windows Event Log** (source `MicrosoftDynamicsNavServer$<instance>`, event 701): `error AL1024: …'Application Test Library'… could not be loaded` / `…'Business Foundation Test Libraries'… could not be found in the database`.
 
@@ -43,42 +50,17 @@ A Test app that depends on `Tests-TestLibraries` / `Application Test Library` wi
 
 > `Application Test Library` (BC28, 42 CUs) holds the standard cross-app libs — `Library - Inventory/Sales/Purchase/Manufacturing/Warehouse/ERM/Job/Random/Utility/Assert`. `Tests-TestLibraries` (128 CUs) is specialized: mocks, `…OnPrem` libs, .NET-bound CRM/Graph/SMTP/Azure AD/XML, permissions, job-queue samples — only needed if your tests touch those.
 
-Key cmdlet flags (✅ verified):
-- `Publish-NAVApp -SkipVerification -Scope Tenant -Tenant default`
-- `Sync-NAVApp -Mode Add`
-- `Get-NAVAppInfo -Tenant default -TenantSpecificProperties` for **installed-state** queries (omit `-Tenant` for published-version queries; `-Tenant` **requires** `-TenantSpecificProperties` or it prompts).
-- Copy the `.app` to a server temp dir via `Copy-Item -ToSession`.
+Cmdlet notes that still apply (the Management DLL is used to **read** state on ASINST):
+- `Get-NAVAppInfo -Tenant default -TenantSpecificProperties` for **installed-state** queries (omit `-Tenant` for published-version queries; `-Tenant` **requires** `-TenantSpecificProperties` or it prompts). `PublishedAs` is absent on BC 28; a DEV package also reports `Scope=Tenant`, so provenance cannot be read from the NST.
 
-### Install-or-upgrade fallback ✅
-`Install-NAVApp` fails when prior-version tenant data is retained ("…bereits eine frühere Version installiert ist… Start-NAVAppDataUpgrade…"). Pattern:
+> **Historical (replaced by E-010, D-53).** The former ASINST route copied the `.app` to a server temp dir and ran uninstall → unpublish → `Publish-NAVApp -Scope Tenant` → `Sync-NAVApp` → `Install-NAVApp` with an automatic ForceSync/data-upgrade escalation. It is gone from the engine: a schema failure is now a `Rejected` outcome and the agent decides on `fkhSyncMode = ForceSync` per D-39. Versions that route left on an NST are removed once, with HITL, through the cleanup procedure in [`../SKILL.md`](../SKILL.md) → *One-time ASINST cleanup*.
 
-```powershell
-try   { Install-NAVApp -ServerInstance $si -Name $name -Version $ver -Tenant $tenant -ErrorAction Stop }
-catch { Start-NAVAppDataUpgrade -ServerInstance $si -Name $name -Version $ver -Tenant $tenant }
-```
+### Same-version redeploy ✅
+A rebuilt package with the same app version but a new package ID publishes through the Dev Endpoint without removing dependent apps (validated on both adapters). The exact same package file is refused with HTTP 422 (`duplicate package ID`) — never repeat it. A changed table set under `Synchronize` is a `Rejected` outcome; re-run with `fkhSyncMode = ForceSync` (it can drop data of changed tables — acceptable in a development environment, not in production: bump the version there).
 
-### Same-version redeploy → ForceSync ✅ (ASINST only, live-verified 2026-06-24)
+- **Fail-loud**: after every publish the engine verifies `IsInstalled` and `SyncState = Synced` for the exact version and throws `DEPLOY INCOMPLETE` otherwise — never run tests against a half-deployed server.
 
-A test-loop redeploys the **same version** (e.g. `28.0.0.7`) repeatedly while the schema changes. After uninstall + republish, `Sync -Mode Add` leaves the **stale** synced schema, so `Install-NAVApp` refuses:
-
-> *"…weist einen anderen Satz von Tabellen und Tabellenerweiterungen auf als das zuvor synchronisierte Erweiterungspaket… die Synchronisierung des aktuellen Erweiterungspakets erzwingen."*
-
-The engine's `InstallOrUpgrade` escalates (no localized-message parsing):
-
-```powershell
-try { Install-NAVApp … -ErrorAction Stop; return }            # 1) plain install
-catch {                                                        # 2) ForceSync then install
-  Sync-NAVApp … -Mode ForceSync -Force -ErrorAction Stop
-  try { Install-NAVApp … -ErrorAction Stop; return }
-  catch { Start-NAVAppDataUpgrade … }                          # 3) retained-data upgrade
-}
-```
-
-- `-Mode ForceSync` **drops data for changed tables** — acceptable/expected inside a dev test-loop, *not* for production (there, bump the version instead).
-- `Sync -Mode Add` can emit a **benign non-terminating error** on redeploy; silence it (`-ErrorAction SilentlyContinue`) and `$Error.Clear()` before returning, or it leaks to an `ErrorAction=Stop` caller and aborts the run.
-- **Fail-loud**: after deploy, verify `IsInstalled` for every target app and `throw` (`DEPLOY INCOMPLETE`) otherwise — never run tests against a half-deployed server.
-
-For the complete same-version recovery order, including reverse dependency removal and normal dependency publish/ForceSync/install, see [`redeploy-recovery.md`](redeploy-recovery.md). The same reference distinguishes this ASINST recovery from the default FKH Dev Endpoint path.
+For the recovery order, including duplicate packages, `NotSynced` leftovers and the explicitly requested Global-scope recovery, see [`redeploy-recovery.md`](redeploy-recovery.md).
 
 ## PowerShell execution rules ✅
 

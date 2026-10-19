@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "dev-sandbox",
+      "type": "al",
+      "request": "launch",
+      "environmentType": "Sandbox",
+      "server": "http://nst-test.example.com",
+      "serverInstance": "BC",
+      "port": 7049,
+      "authentication": "Windows"
+    }
+  ]
+}

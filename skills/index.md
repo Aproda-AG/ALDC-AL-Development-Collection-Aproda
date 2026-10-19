@@ -39,7 +39,7 @@ For building Business Central agents (Agent SDK / Designer), not the extension i
 | [skill-agent-instructions](skill-agent-instructions/SKILL.md) | Authoring/reviewing agent instructions (Responsibilities-Guidelines-Instructions framework) | al-agent-builder |
 | [skill-contribution-assistant](skill-contribution-assistant/SKILL.md) | Guides contributors designing/polishing/submitting new community skills for the AL Copilot Skill Collection | any (meta) |
 
-## Aproda Layer Skills 🟦 (5)
+## Aproda Layer Skills 🟦 (6)
 
 The `.aproda.` fork customization on top of ALDC Core. See [`../readme.aproda.md`](../readme.aproda.md) + [`../decisions.aproda.md`](../decisions.aproda.md). **Adding/removing one of these is itself an ALDC-layer extension** — see [skill-aproda-aldc](skill-aproda-aldc/SKILL.md) → Step 2.5 before you touch this table.
 
@@ -50,6 +50,7 @@ The `.aproda.` fork customization on top of ALDC Core. See [`../readme.aproda.md
 | [skill-aproda-deploy-run-verify](skill-aproda-deploy-run-verify/SKILL.md) | OnPrem Deploy-Run-Verify Cycle (build→deploy→run→review) | developer, conductor |
 | [skill-aproda-ado](skill-aproda-ado/SKILL.md) | ADO work-item conventions, `req_name` derivation, controlled `az` CLI ops | conductor, architect, triage |
 | [skill-aproda-fkh](skill-aproda-fkh/SKILL.md) | Fkh transport/target resolution for OnPrem BC containers | skill-aproda-deploy-run-verify |
+| [skill-aproda-al-mcp](skill-aproda-al-mcp/SKILL.md) | Level-1 AL MCP access (`altool launchmcpserver`): target selection (`aldc.local.json`), starter, tool tiers — E-010 phase 2 | al-developer |
 
 
 ## Creating New Skills

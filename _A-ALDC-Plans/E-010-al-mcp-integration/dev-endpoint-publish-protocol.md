@@ -12,6 +12,8 @@
 | Scope | Publishes DEV extensions — the same scope as `al_publish`, `altool publishapp` and `fkh --devScope`, so no scope mix (Q-6). |
 | Authentication | Validated for `Windows` (ASINST NST, HTTP) and `UserPassword` (Fkh, HTTPS port `7049`, HTTP Basic header built in memory from the Fkh DPAPI store, see §4) — Q-17. `AAD`/`MicrosoftEntraID`: not supported. |
 | Fallback trigger | `415`, `422`, sync or schema errors are **real failures**, never a reason to try another route or to repeat the POST (see §5). |
+| Implementation (phase 4b, X-47) | The §2–§5 rules are implemented by `Publish-DeployRunVerifyDevEndpoint` in the DRV engine (multipart shape, `ExpectContinue = false`, infinite timeout, `Windows` default credentials, `UserPassword` in-memory Basic header via `New-DeployRunVerifyBasicAuthorization`, HTTPS-only, ASCII-only credentials per Q-19, never retried), classified by `Get-DeployRunVerifyPublishOutcome` (`200` Published, `401` AuthFailure, `415` ProtocolError, `422` Duplicate, no response InvocationFailure, other Rejected). `forceUpgrade` is not supported on this route (`FORCEUPGRADE_REQUIRES_ALTOOL`). |
+| `DependencyPublishingOption` | The value of the selected `launch.json` configuration (`Default`, `Ignore`, `Strict`), default `Default`; it is always sent on this route. Phase 0 used `ignore` on ASINST and `Default` on Fkh; whether `Default` suffices on ASINST stays open (OS-2, `L-4b.3`). |
 
 ## 1. Purpose and boundary
 

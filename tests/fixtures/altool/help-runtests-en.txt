@@ -1,0 +1,17 @@
+Description:
+  Run tests on a server
+
+Usage:
+  altool runtests [options]
+
+Options:
+  --testgroups <testgroups>            JSON file with the test groups to run
+  --project <project>                  Project folder
+  --company <company>                  Company name
+  --server <server>                    Server URL
+  --serverinstance <serverinstance>    Server instance
+  --port <port>                        Port
+  --authentication <authentication>    Authentication type
+  --tenant <tenant>                    Tenant
+  --environmenttype <environmenttype>  Environment type
+  -?, -h, --help                       Show help and usage information

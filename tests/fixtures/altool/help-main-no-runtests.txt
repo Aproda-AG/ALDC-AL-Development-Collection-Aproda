@@ -1,0 +1,15 @@
+Description:
+  AL command line tool
+
+Usage:
+  altool [command] [options]
+
+Options:
+  --version       Show version information
+  -?, -h, --help  Show help and usage information
+
+Commands:
+  compile     Compile an AL project
+  workspace   Workspace operations
+  publishapp  Publish an app to a server
+  auth        Authentication

@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "dev-windows",
+      "type": "al",
+      "request": "launch",
+      "environmentType": "OnPrem",
+      "server": "http://nst-test.example.com",
+      "serverInstance": "BC",
+      "authentication": "Windows"
+    }
+  ]
+}

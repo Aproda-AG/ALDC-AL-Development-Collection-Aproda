@@ -14,6 +14,17 @@ Internal Visual Studio Code toolkit for Aproda ALDC projects. The extension guid
 
 Use **Open Onboarding Guide** for the external documentation or **Open Get Started** for the native VS Code walkthrough.
 
+## AL MCP server
+
+In an AL workspace the extension provides the `al-mcp` MCP server (`altool launchmcpserver`) for the repository's AL projects. The target environment comes from the git-ignored `aldc.local.json` next to `aldc.yaml`.
+
+- **Start mode** (`aprodaAldc.alMcp.start`, user settings only): `auto` (default) starts the server once when an AL workspace is open; `manual` starts it only through **Start AL MCP Server** or the confirmed `startAlMcp` chat tool.
+- **Select AL Target** lists every `launch.json` configuration with a `server` and writes `aldc.local.json`. Configurations with blocking issues are shown with their issue codes and cannot be picked. Selecting a target is not an environment acknowledgement; deploying still needs the confirmation in chat.
+- **Store Credential for AL Target** (for `UserPassword` targets) opens a terminal that runs `Get-Credential` and saves the result in the Fkh credential store (`%LOCALAPPDATA%\AprodaFkh\credentials`). The password is typed into that terminal prompt only; the extension never reads, passes or logs it. The server restarts when the credential file appears.
+- **One-time trust dialog**: the first start of an extension-provided MCP server shows VS Code's own MCP trust dialog. It is VS Code's and is not suppressed.
+
+Without a valid target or credential the server still starts build-only (build, compile, diagnostics and symbol tools work; publish and test calls fail at call time).
+
 ## Development
 
 Run `npm test` to compile and run focused tests. Run `npm run package` to produce `dist/aproda-aldc-<version>.vsix`.

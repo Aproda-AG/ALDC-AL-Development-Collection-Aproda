@@ -8,6 +8,8 @@
 
 /.github/aldc.yaml
 /aldc.yaml
+/.github/aldc.local.json
+/aldc.local.json
 /.external/*
 !/.external/README.md
 # Backup of a tracked *.code-workspace, written once by Migrate-AprodaProjectLayout.ps1
@@ -29,6 +31,7 @@
 .github/skills/skill-agent-task-patterns/
 .github/skills/skill-agent-toolkit/
 .github/skills/skill-api/
+.github/skills/skill-aproda-al-mcp/
 .github/skills/skill-aproda-aldc/
 .github/skills/skill-aproda-ado/
 .github/skills/skill-aproda-deploy-run-verify/

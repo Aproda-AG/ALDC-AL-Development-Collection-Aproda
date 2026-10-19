@@ -1,0 +1,12 @@
+Description:
+  Run tests on a server
+
+Usage:
+  altool runtests [options]
+
+Options:
+  --project <project>                  Project folder
+  --company <company>                  Company name
+  --server <server>                    Server URL
+  --serverinstance <serverinstance>    Server instance
+  -?, -h, --help                       Show help and usage information

@@ -1,0 +1,9 @@
+Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'chunkLength')
+{
+  "succeeded": false,
+  "errorDetails": {
+    "code": "UnknownError",
+    "message": "Metadata discovery failed: no connection could be made because the target machine actively refused it.",
+    "retryable": true
+  }
+}

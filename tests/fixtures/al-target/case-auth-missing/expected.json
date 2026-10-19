@@ -1,0 +1,20 @@
+{
+  "state": "configured",
+  "resolvedLaunch": {
+    "name": "dev-noauth",
+    "server": "http://nst-test.example.com",
+    "scheme": "http",
+    "host": "nst-test.example.com",
+    "serverInstance": "BC",
+    "port": 7049,
+    "portSource": "launch",
+    "tenant": "default",
+    "environmentType": "OnPrem",
+    "authentication": null,
+    "dependencyPublishingOption": "Default",
+    "credentialKey": "nst-test.example.com"
+  },
+  "issues": [
+    "AUTH_MISSING"
+  ]
+}

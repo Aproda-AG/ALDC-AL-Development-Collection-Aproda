@@ -1,0 +1,18 @@
+{
+  "state": "configured",
+  "resolvedLaunch": {
+    "name": "dev-minimal",
+    "server": "http://nst-test.example.com",
+    "scheme": "http",
+    "host": "nst-test.example.com",
+    "serverInstance": "BC",
+    "port": 7049,
+    "portSource": "default",
+    "tenant": "default",
+    "environmentType": "OnPrem",
+    "authentication": "Windows",
+    "dependencyPublishingOption": "Default",
+    "credentialKey": "nst-test.example.com"
+  },
+  "issues": []
+}
