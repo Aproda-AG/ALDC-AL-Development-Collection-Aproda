@@ -34,6 +34,7 @@ the file: `translated N/N items`. Do not return the JSON payload in the result m
 
 - Translate to the target language specified in the batch.
 - For Swiss German, never use `ß`; use `ss`.
+- For German targets, write umlauts directly (`ä`, `ö`, `ü`, `Ä`, `Ö`, `Ü`); never transliterate them as `ae`, `oe`, `ue` (`Grösse`, not `Groesse`).
 - Preserve placeholders such as `%1`, `%2`, `#1###`, and `@1@@@` exactly and in the same order.
 - Respect `m` when it is present.
 - Use `c` and optional `d` as translation context.
