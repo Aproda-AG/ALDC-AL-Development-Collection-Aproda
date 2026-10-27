@@ -52,7 +52,7 @@ flowchart TD
 
   > Suggested wording: *"No BC service reachable. Quality is higher with a Cronus BC environment incl. Test Toolkit. Without a service only static validation (build + audit) is possible, no runtime verification. Proceed build-only?"*
 
-- **Missing dependency on the target** → `Invoke-AprodaDeployRunVerify` runs `Test-DeployRunVerifyTargetDependencies` before any publish attempt, for both adapters, and throws a named `MISSING TARGET DEPENDENCY` error if the target is missing something the configured apps need. Treat that error as the trigger for [`references/dependency-resolution.md`](references/dependency-resolution.md) — the full closed loop: match against the known Aproda app sources, offer to the user, install only the confirmed file via `Install-DeployRunVerifyResolvedDependency`, then re-verify before letting the normal publish proceed. The engine never resolves or installs a missing dependency by itself.
+- **Missing dependency on the target** → `Invoke-AprodaDeployRunVerify` runs `Test-DeployRunVerifyTargetDependencies` before any publish attempt, for both adapters, and throws a named `MISSING TARGET DEPENDENCY` error if the target is missing something the configured apps need. Treat that error as the trigger for [`references/dependency-resolution.md`](references/dependency-resolution.md) — the full closed loop: match against the known Aproda app sources, offer to the user, install only the confirmed file via `Install-DeployRunVerifyResolvedDependency`, then re-verify before letting the normal publish proceed. The engine never resolves or installs a missing dependency by itself, with one exception: missing **Microsoft test libraries** (allowlist) are installed automatically from the K: DVD, only the missing links, before the first publish (`autoInstallMsTestLibraries`, default `true`; D-52 addendum — see [`references/dependency-resolution.md`](references/dependency-resolution.md)).
 
 ## Build route — order of preference
 
@@ -92,9 +92,9 @@ This initial classifier is intentionally conservative and mechanical. A target t
 |---|---|
 | `Published` | verify state |
 | `AuthFailure` (`UserNotAuthenticated`, HTTP 401) | `UserPassword`: re-prompt **once** (stored credential skipped, D-43), then blocker; `Windows`: blocker. No route change. |
-| `Duplicate` (HTTP 422, *duplicate package ID*) | stop; inspect the state ([`redeploy-recovery.md`](references/redeploy-recovery.md)); **never repeat** the publish |
+| `Duplicate` (HTTP 422 **and** *duplicate package ID* text) | stop; inspect the state ([`redeploy-recovery.md`](references/redeploy-recovery.md)); **never repeat** the publish |
 | `ProtocolError` (HTTP 415) | stop (engine defect) |
-| `Rejected` (other HTTP 4xx/5xx, sync/schema message, unrecognized failure) | stop with the redacted server text; no fallback |
+| `Rejected` (other HTTP 4xx/5xx incl. a 422 without *duplicate package* such as a compile error `AL1024`, sync/schema message, unrecognized failure) | stop with the redacted server text; no fallback |
 | `InvocationFailure` | `altool` → direct POST (pinned for the rest of the run); direct POST → stop |
 
 **Schema mode (D-39), both adapters and both routes.** The DRV config key `fkhSyncMode` (`Add` default | `ForceSync`) drives the publish: `Add` → `--schemaupdatemode Synchronize` / `SchemaUpdateMode=synchronize`; `ForceSync` → `ForceSync` / `forcesync`. Set `ForceSync` when a destructive schema change requires it and inform the user briefly — no separate confirmation (D-39); the run prints `SCHEMA MODE: ForceSync (fkhSyncMode)`. `Recreate` is never used. `forceUpgrade` (`--forceupgrade`) is a Tier-3 action: only after an explicit request for that run, via `APRODA_DEPLOY_RUN_VERIFY_FORCE_UPGRADE=1`; it is not available on the direct POST (`FORCEUPGRADE_REQUIRES_ALTOOL`). `DependencyPublishingOption` comes from the selected `launch.json` configuration (default `Default`).

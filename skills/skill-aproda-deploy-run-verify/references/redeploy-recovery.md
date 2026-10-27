@@ -8,7 +8,7 @@ ASINST and Fkh publish the same way (`altool publishapp`, fallback direct POST t
 
 | Result | Meaning | What to do |
 |---|---|---|
-| `PUBLISH_DUPLICATE` (HTTP 422, *duplicate package ID*) | The exact same package file is already published. | **Inspect the state** (`fkh getappinfo` / `Get-NAVAppInfo -Tenant <t> -TenantSpecificProperties`). **Never re-POST** the same file. Rebuild (new package ID, same version is fine) and run again, or accept the state if it is already installed and `Synced`. |
+| `PUBLISH_DUPLICATE` (HTTP 422 with *duplicate package ID*; a 422 without it is `PUBLISH_REJECTED`) | The exact same package file is already published. | **Inspect the state** (`fkh getappinfo` / `Get-NAVAppInfo -Tenant <t> -TenantSpecificProperties`). **Never re-POST** the same file. Rebuild (new package ID, same version is fine) and run again, or accept the state if it is already installed and `Synced`. |
 | `PUBLISH_REJECTED` with a sync/schema message | The table set changed and `Synchronize` cannot apply it. | Set `fkhSyncMode = ForceSync` in the DRV config (D-39: inform the user briefly, no separate confirmation) and run again. It can drop data of changed tables. `Recreate` and `forceUpgrade` are not part of this — `forceUpgrade` only on an explicit request for that run. |
 | `PUBLISH_PROTOCOL_ERROR` (HTTP 415) | The multipart shape is wrong. | Engine defect; report it, do not work around it. |
 | `DEPLOY INCOMPLETE` | Published but not `IsInstalled` / `Synced`. | Inspect the state; a `NotSynced` package is a failed leftover. |

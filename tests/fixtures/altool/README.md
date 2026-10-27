@@ -12,6 +12,7 @@ counters, wording of the publish messages, the help layout) is an assumption unt
 | `help-main-*.txt`, `help-runtests-*.txt` | command and option names `compile`, `publishapp`, `runtests`, `--testgroups`; German help text ("Nutzung", "Optionen") | layout, descriptions, German wording of the other lines |
 | `publish-success.txt` | exit 0 | the message |
 | `publish-duplicate.txt` | exit 1, HTTP `422 UnprocessableEntity`, `duplicate package ID` (Q-13c) | surrounding wording |
+| `publish-rejected-compile-422.txt` | HTTP `422 UnprocessableEntity`, `Extension compilation failed`, `AL1024` missing dependency (live finding 2026-10-23) | surrounding wording |
 | `publish-auth.txt` | `UserNotAuthenticatedException` (Q-1, Q-10) | surrounding wording, exit 1 |
 | `publish-rejected-sync.txt` | the engine rule *sync / schema message = Rejected* | the message |
 | `publish-connection-refused.txt` | `ConnectionFailed` code name (Q-20) | the message |

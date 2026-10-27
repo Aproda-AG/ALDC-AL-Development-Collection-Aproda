@@ -46,6 +46,9 @@
     // Set bcDvdRoot + bcCountry once; the engine globs the HIGHEST minor for <major>.
     "bcDvdRoot": "", // e.g. "K:\\59 Environments\\_ms"
     "bcCountry": "", // e.g. "CH"
+    // Install missing Microsoft test libraries (Test Runner … System Application Test Library …) from
+    // the DVD above before the first publish. Only the missing links; false = stop with the HITL message.
+    "autoInstallMsTestLibraries": true,
     // ALTERNATIVE: pin the source folder explicitly (wins over the DVD derivation). Use the
     // DVD's ...\\TestRunner\\Internal, or the BC Service folder (next to the Server .exe).
     "runnerClientSource": "",

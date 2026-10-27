@@ -12,7 +12,7 @@ When a test fails, match the symptom below → apply the fix → re-deploy → r
 ### T-0 — `MISSING TARGET DEPENDENCY` at deploy ✅
 - **Symptom:** the DRV run stops before any publish attempt with `MISSING TARGET DEPENDENCY on <server>: ...`.
 - **Cause:** a configured app's manifest declares a dependency (typically ASFL, another Aproda module, or a third-party app) that is neither in the local app set nor already installed on the target — the preflight check (`Test-DeployRunVerifyTargetDependencies`) catches this before the fkh/NAV error would otherwise be opaque.
-- **Fix:** this is **not** a code bug — do not touch AL source. Follow [`dependency-resolution.md`](dependency-resolution.md): match the named app against the known Aproda app sources, get the user's confirmation, install via `Install-DeployRunVerifyResolvedDependency`, re-verify, then re-run the loop.
+- **Fix:** this is **not** a code bug — do not touch AL source. Missing Microsoft test libraries are installed automatically (see T-12); if the message names `MS test library auto-install not possible`, fix the reason it states (usually `bcDvdRoot` + `bcCountry`). For everything else follow [`dependency-resolution.md`](dependency-resolution.md): match the named app against the known Aproda app sources, get the user's confirmation, install via `Install-DeployRunVerifyResolvedDependency`, re-verify, then re-run the loop.
 - **Proven by:** D-52 (engine preflight added after a live gap surfaced on `flobi-wan-kenobi-gustavgerig-dev-deployment`, 2026-09-29).
 
 ### T-1 — Unhandled `Message` in the runner ✅
@@ -53,7 +53,7 @@ When a test fails, match the symptom below → apply the fix → re-deploy → r
 - **Fix:** set `fkhSyncMode = ForceSync` for the run (D-39) or, for retained data from a version bump, follow `build-deploy.md`.
 
 ### T-7 — `PUBLISH_DUPLICATE` (HTTP 422) ✅ (measured on both adapters)
-- **Symptom:** the publish stops with `PUBLISH_DUPLICATE`; `altool publishapp` exit 1 with `422 UnprocessableEntity`, *duplicate package ID*.
+- **Symptom:** the publish stops with `PUBLISH_DUPLICATE`; `altool publishapp` exit 1 with `422 UnprocessableEntity`, *duplicate package ID*. A 422 without *duplicate package* is `PUBLISH_REJECTED` (T-12).
 - **Cause:** the exact same package file (same package ID) is already published. A rebuild produces a new package ID even with an unchanged version.
 - **Fix:** **inspect the state, never repeat the publish.** Rebuild (new package ID) and run again, or continue if the version is already installed and `Synced`. A `NotSynced` leftover is removed only after confirmation (`redeploy-recovery.md`).
 
@@ -77,6 +77,11 @@ When a test fails, match the symptom below → apply the fix → re-deploy → r
 - **Symptom:** `succeeded: false`, `errorDetails.code = TestRunFailed`; failing method with error text and AL call stack in `FailureDetails`.
 - **Cause:** tests ran and failed. A blank-method completion record repeats the failure and is **not** counted (11 passed / 1 failed for one failing method, not 2).
 - **Fix:** triage with T-1…T-5; the result is final for the run — it is never re-run on the web-client runner.
+
+### T-12 — `PUBLISH_REJECTED` with HTTP 422 and `AL1024` (missing dependency)
+- **Symptom:** `PUBLISH_REJECTED` quoting `HTTP 422 UnprocessableEntity … Extension compilation failed … AL1024 … could not be found`.
+- **Cause:** the server compiles the package on publish and a dependency (for example a Microsoft test library) is not published on the target. 422 is not specific to duplicates; only the text *duplicate package* is.
+- **Fix:** not a code bug. The preflight normally installs missing Microsoft test libraries itself (`autoInstallMsTestLibraries`, K: DVD), so this only appears when the preflight was skipped (`al` CLI missing) or the switch is off. Install the missing chain (Test Runner → Any → Library Assert → Library Variable Storage → System Application Test Library → …; see [`dependency-resolution.md`](dependency-resolution.md)), then re-run.
 
 ## Regression checklist after a shared-code fix
 

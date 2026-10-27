@@ -479,14 +479,17 @@ try { Resolve-DeployRunVerifyConfig -ConfigPath $env:DRV_TEST_CONFIG | Out-Null;
     Invoke-TestCase 'S-4b.4 publish outcome classification' {
         $cases = @(
             @('publish-success.txt', 0, 'Published'), @('publish-duplicate.txt', 1, 'Duplicate'), @('publish-auth.txt', 1, 'AuthFailure'),
-            @('publish-rejected-sync.txt', 1, 'Rejected'), @('publish-connection-refused.txt', 1, 'InvocationFailure'))
+            @('publish-rejected-sync.txt', 1, 'Rejected'), @('publish-rejected-compile-422.txt', 1, 'Rejected'), @('publish-connection-refused.txt', 1, 'InvocationFailure'))
         foreach ($case in $cases) {
             $outcome = Get-DeployRunVerifyPublishOutcome -ExitCode $case[1] -Output (Get-AlToolFixture $case[0])
             Assert-Equal $outcome.Outcome $case[2] "Fixture $($case[0])."
         }
-        foreach ($http in @(@(200, 'Published'), @(204, 'Published'), @(401, 'AuthFailure'), @(415, 'ProtocolError'), @(422, 'Duplicate'), @(500, 'Rejected'), @(400, 'Rejected'))) {
+        foreach ($http in @(@(200, 'Published'), @(204, 'Published'), @(401, 'AuthFailure'), @(415, 'ProtocolError'), @(500, 'Rejected'), @(400, 'Rejected'))) {
             Assert-Equal (Get-DeployRunVerifyPublishOutcome -HttpStatus $http[0] -Output 'body').Outcome $http[1] "HTTP $($http[0])."
         }
+        Assert-Equal (Get-DeployRunVerifyPublishOutcome -HttpStatus 422 -Output 'InvalidOperation: duplicate package ID 3f1c').Outcome 'Duplicate' 'HTTP 422 duplicate package.'
+        Assert-Equal (Get-DeployRunVerifyPublishOutcome -HttpStatus 422 -Output 'Extension compilation failed: AL1024 could not be found').Outcome 'Rejected' 'HTTP 422 compile error is not a duplicate.'
+        Assert-Equal (Get-DeployRunVerifyPublishOutcome -HttpStatus 422 -Output 'body').Outcome 'Rejected' 'HTTP 422 without duplicate text stops as Rejected.'
         Assert-Equal (Get-DeployRunVerifyPublishOutcome -HttpStatus $null -Output 'connection refused').Outcome 'InvocationFailure' 'No HTTP response.'
         Assert-Equal (Get-DeployRunVerifyPublishOutcome -ExitCode 1 -Output 'x' -TimedOut).Outcome 'InvocationFailure' 'Timeout.'
         Assert-Equal (Get-DeployRunVerifyPublishOutcome -ExitCode -1 -LaunchError 'cannot start').Outcome 'InvocationFailure' 'Launch error.'
@@ -1100,6 +1103,62 @@ try { Resolve-DeployRunVerifyConfig -ConfigPath $env:DRV_TEST_CONFIG | Out-Null;
         Assert-Throws { Get-DeployRunVerifyPublishContext -Cfg $cfg } 'mgmtDllPath is required for the ASINST adapter' 'No mgmtDllPath.' | Out-Null
         $cfg | Add-Member mgmtDllPath 'D:\x\Microsoft.Dynamics.Nav.Management.dll' -Force
         Assert-Null (Get-DeployRunVerifyPublishContext -Cfg $cfg) 'ASINST needs no context object.'
+    }
+
+    Invoke-TestCase 'S-4b.20 missing MS test libraries are installed from the DVD, only the missing links, in chain order' {
+        $dvd = Join-Path $drvTempRoot 'dvd'
+        foreach ($minor in 1, 2) {
+            foreach ($rel in $Script:DeployRunVerifyMsTestLibraries.Values) {
+                $file = Join-Path $dvd "28\CH.28.$minor\Applications\$rel"
+                New-Item -ItemType File -Path $file -Force | Out-Null
+            }
+        }
+        $script:installedNames = @('System Application', 'Base Application')
+        $script:installs = @()
+        $script:projectDeps = @([pscustomobject]@{ name = 'System Application Test Library'; publisher = 'Microsoft'; version = '28.0.0.0' })
+        function Get-DeployRunVerifyAppManifestDependencies { param($AppFile) $script:projectDeps }
+        function Get-DeployRunVerifyAppManifest {
+            param($AppFile)
+            $deps = if ($AppFile -like '*System Application Test Library*') {
+                @([pscustomobject]@{ name = 'Any'; publisher = 'Microsoft'; version = '28.0.0.0' }, [pscustomobject]@{ name = 'Library Assert'; publisher = 'Microsoft'; version = '28.0.0.0' },
+                    [pscustomobject]@{ name = 'System Application'; publisher = 'Microsoft'; version = '28.0.0.0' })
+            }
+            else { @() }
+            [pscustomobject]@{ version = '28.0.0.9'; dependencies = $deps }
+        }
+        function Get-DeployRunVerifyInstalledAppsAsinst { param($Cfg) $script:installedNames | ForEach-Object { [pscustomobject]@{ Name = $_; IsInstalled = $true } } }
+        function Install-DeployRunVerifyResolvedDependency {
+            param($Cfg, $AppFile, $Name, $Version)
+            $script:installs += "$Name|$Version|$AppFile"
+            $script:installedNames += $Name
+        }
+        $cfg = [pscustomobject]@{
+            adapter = 'Asinst'; server = 'nst-test.example.com'; apps = @([pscustomobject]@{ Name = 'Test'; AppFile = 'Test.app' })
+            bcDvdRoot = $dvd; bcCountry = 'CH'
+        }
+
+        Invoke-Captured { Test-DeployRunVerifyTargetDependencies -Cfg $cfg } | Out-Null
+        Assert-Equal (($script:installs | ForEach-Object { ($_ -split '\|')[0] }) -join ';') 'Any;Library Assert;System Application Test Library' 'Missing links in chain order, installed apps untouched.'
+        Assert-True ($script:installs[2] -like '*CH.28.2*') 'The highest minor on the DVD wins.'
+        Assert-Equal (($script:installs[2] -split '\|')[1]) '28.0.0.9' 'The version comes from the DVD package manifest.'
+
+        $script:installs = @()
+        Invoke-Captured { Test-DeployRunVerifyTargetDependencies -Cfg $cfg } | Out-Null
+        Assert-Equal $script:installs.Count 0 'A second run finds nothing missing (idempotent).'
+
+        $script:installedNames = @('System Application')
+        $off = $cfg.PSObject.Copy(); $off | Add-Member autoInstallMsTestLibraries $false -Force
+        $message = Assert-Throws { Test-DeployRunVerifyTargetDependencies -Cfg $off } 'MISSING TARGET DEPENDENCY' 'Switch off keeps the HITL stop.'
+        Assert-Equal $script:installs.Count 0 'Switch off installs nothing.'
+
+        $noDvd = $cfg.PSObject.Copy(); $noDvd.bcDvdRoot = Join-Path $drvTempRoot 'no-dvd'
+        $message = Assert-Throws { Test-DeployRunVerifyTargetDependencies -Cfg $noDvd } 'MISSING TARGET DEPENDENCY' 'Missing DVD stops.'
+        Assert-True ($message -match 'auto-install not possible') 'The stop names why the auto-install is not possible.'
+        Assert-Equal $script:installs.Count 0 'An incomplete plan installs nothing.'
+
+        $script:projectDeps = @([pscustomobject]@{ name = 'Aproda Foundation'; publisher = 'Aproda'; version = '1.0.0.0' })
+        Assert-Throws { Test-DeployRunVerifyTargetDependencies -Cfg $cfg } 'MISSING TARGET DEPENDENCY' 'Non-Microsoft dependencies stay HITL.' | Out-Null
+        Assert-Equal $script:installs.Count 0 'Aproda dependencies are never auto-installed.'
     }
 
     Write-Host "PASS: $script:passed offline Deploy-Run-Verify test case(s)."

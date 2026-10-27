@@ -277,6 +277,8 @@ function Resolve-DeployRunVerifyConfig {
     # An explicit runnerClientSource always wins over this derivation.
     if (-not ($cfg.PSObject.Properties.Name -contains 'bcDvdRoot')) { $cfg | Add-Member bcDvdRoot '' -Force }
     if (-not ($cfg.PSObject.Properties.Name -contains 'bcCountry')) { $cfg | Add-Member bcCountry '' -Force }
+    # Missing Microsoft test libraries are installed from the same DVD before the first publish (D-52 addendum).
+    if (-not ($cfg.PSObject.Properties.Name -contains 'autoInstallMsTestLibraries')) { $cfg | Add-Member autoInstallMsTestLibraries $true -Force }
     # runnerDirFull is the BASE folder; the actual runner is a version subfolder (see Resolve-DeployRunVerifyRunner).
     $runnerBase = Join-Path $cfgDir $cfg.runnerDir
     if (-not (Test-Path $runnerBase)) { New-Item -ItemType Directory $runnerBase -Force | Out-Null }
@@ -781,29 +783,110 @@ function Invoke-DeployRunVerifyBuild {
 
 # ---------------------------------------------------------------------------
 # Missing-dependency preflight (D-52): adapter-agnostic detection, run before any
-# publish attempt on either adapter. Detection only — resolution stays HITL (agent-
-# executed, see references/dependency-resolution.md); this engine never installs a
-# dependency it discovered itself.
+# publish attempt on either adapter. Resolution stays HITL (agent-executed, see
+# references/dependency-resolution.md) with ONE exception: Microsoft test libraries from the
+# K: DVD (allowlist below) are installed automatically when missing.
 # ---------------------------------------------------------------------------
-function Get-DeployRunVerifyAppManifestDependencies {
+# Install order of the MS test-library chain; value = path below <DVD>\Applications\ (site-profile.aproda.md).
+$Script:DeployRunVerifyMsTestLibraries = [ordered]@{
+    'Test Runner'                        = 'TestFramework\TestRunner\Microsoft_Test Runner.app'
+    'Any'                                = 'TestFramework\TestLibraries\Any\Microsoft_Any.app'
+    'Library Assert'                     = 'TestFramework\TestLibraries\Assert\Microsoft_Library Assert.app'
+    'Library Variable Storage'           = 'TestFramework\TestLibraries\Variable Storage\Microsoft_Library Variable Storage.app'
+    'System Application Test Library'    = 'System Application\Test\Microsoft_System Application Test Library.app'
+    'Business Foundation Test Libraries' = 'BusinessFoundation\Test\Microsoft_Business Foundation Test Libraries.app'
+    'Application Test Library'           = 'Application Test Library\Source\Microsoft_Application Test Library.app'
+    'Tests-TestLibraries'                = 'BaseApp\Test\Microsoft_Tests-TestLibraries.app'
+}
+
+function Get-DeployRunVerifyAppManifest {
     param([Parameter(Mandatory)][string]$AppFile)
     if (-not (Get-Command al -ErrorAction SilentlyContinue)) {
-        Write-Warning "The 'al' CLI is not on PATH — cannot inspect $AppFile for manifest dependencies. Missing-dependency preflight is skipped for this app."
-        return @()
+        Write-Warning "The 'al' CLI is not on PATH — cannot inspect the manifest of $AppFile."
+        return $null
     }
     # TODO (verify against a live app): al GetPackageManifest emits the package manifest as
-    # JSON on stdout, expected to carry a `dependencies` array of { id, name, publisher,
-    # version } — the same shape skill-aproda-fkh's bundled sortapps.ps1 already consumes.
+    # JSON on stdout, expected to carry name, version and a `dependencies` array of { id, name,
+    # publisher, version } — the same shape skill-aproda-fkh's bundled sortapps.ps1 already consumes.
     $raw = & al GetPackageManifest --package $AppFile 2>&1
     if ($LASTEXITCODE -ne 0) {
-        Write-Warning "al GetPackageManifest failed for $AppFile (exit $LASTEXITCODE) — missing-dependency preflight is skipped for this app."
-        return @()
+        Write-Warning "al GetPackageManifest failed for $AppFile (exit $LASTEXITCODE)."
+        return $null
     }
-    try { return @(($raw | ConvertFrom-Json).dependencies) }
+    try { return ($raw | ConvertFrom-Json) }
     catch {
-        Write-Warning "Could not parse al GetPackageManifest output for $AppFile — missing-dependency preflight is skipped for this app."
+        Write-Warning "Could not parse al GetPackageManifest output for $AppFile."
+        return $null
+    }
+}
+
+function Get-DeployRunVerifyAppManifestDependencies {
+    param([Parameter(Mandatory)][string]$AppFile)
+    $manifest = Get-DeployRunVerifyAppManifest -AppFile $AppFile
+    if ($null -eq $manifest) {
+        Write-Warning "Missing-dependency preflight is skipped for $AppFile."
         return @()
     }
+    return @(Get-DeployRunVerifyProperty -Object $manifest -Name 'dependencies' -Default @())
+}
+
+function Find-DeployRunVerifyMsTestLibraryFile {
+    # Highest <bcCountry>.<major>.<minor> DVD folder that carries the library; $null when none does.
+    param([Parameter(Mandatory)]$Cfg, [Parameter(Mandatory)][string]$Name, [Parameter(Mandatory)][string]$Major)
+    $root = [string](Get-DeployRunVerifyProperty -Object $Cfg -Name 'bcDvdRoot' -Default '')
+    $country = [string](Get-DeployRunVerifyProperty -Object $Cfg -Name 'bcCountry' -Default '')
+    $majorRoot = Join-Path $root $Major
+    if (-not (Test-Path -LiteralPath $majorRoot)) { return $null }
+    $prefix = '{0}.{1}.' -f $country, $Major
+    $dirs = Get-ChildItem -LiteralPath $majorRoot -Directory -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -like ($prefix + '*') } |
+    Sort-Object @{ Expression = { [int]($_.Name.Substring($prefix.Length) -replace '\D.*$', '') } } -Descending
+    foreach ($dir in $dirs) {
+        $file = Join-Path $dir.FullName (Join-Path 'Applications' $Script:DeployRunVerifyMsTestLibraries[$Name])
+        if (Test-Path -LiteralPath $file -PathType Leaf) { return $file }
+    }
+    return $null
+}
+
+function Get-DeployRunVerifyMsTestLibraryPlan {
+    # Which missing MS test libraries (incl. their own missing dependencies) to install, in chain order.
+    # Install is empty and Problems filled when the plan is incomplete: nothing is installed then.
+    param([Parameter(Mandatory)]$Cfg, [Parameter(Mandatory)][object[]]$Missing, [Parameter(Mandatory)][scriptblock]$IsInstalled)
+    $known = $Script:DeployRunVerifyMsTestLibraries
+    $found = @{}
+    $problems = [System.Collections.Generic.List[string]]::new()
+    $queue = [System.Collections.Generic.Queue[object]]::new()
+    $dvdConfigured = -not ([string]::IsNullOrWhiteSpace([string](Get-DeployRunVerifyProperty -Object $Cfg -Name 'bcDvdRoot' -Default '')) -or
+        [string]::IsNullOrWhiteSpace([string](Get-DeployRunVerifyProperty -Object $Cfg -Name 'bcCountry' -Default '')))
+    foreach ($m in $Missing) {
+        $major = ([string]$m.Version -split '\.')[0]
+        if ($major -notmatch '^\d+$') { $major = ([string](Get-DeployRunVerifyProperty -Object $Cfg -Name 'bcVersion' -Default '') -split '\.')[0] }
+        $queue.Enqueue([pscustomobject]@{ Name = [string]$m.Name; Publisher = [string]$m.Publisher; Major = $major; RequiredBy = [string]$m.RequiredBy; FromDvd = $false })
+    }
+    while ($queue.Count -gt 0) {
+        $dep = $queue.Dequeue()
+        if ($found.ContainsKey($dep.Name)) { continue }
+        $isMsLibrary = $known.Contains($dep.Name) -and ([string]::IsNullOrWhiteSpace($dep.Publisher) -or $dep.Publisher -eq 'Microsoft')
+        if (-not $isMsLibrary) {
+            if ($dep.FromDvd) { $problems.Add("$($dep.Name) (required by $($dep.RequiredBy)) is not a known Microsoft test library") }
+            continue
+        }
+        if (-not $dvdConfigured) { $problems.Add("$($dep.Name): bcDvdRoot / bcCountry are not configured"); continue }
+        if ($dep.Major -notmatch '^\d+$') { $problems.Add("$($dep.Name): BC major version unknown (no dependency version, bcVersion empty)"); continue }
+        $file = Find-DeployRunVerifyMsTestLibraryFile -Cfg $Cfg -Name $dep.Name -Major $dep.Major
+        if (-not $file) { $problems.Add("$($dep.Name): not found on the BC DVD for major $($dep.Major)"); continue }
+        $manifest = Get-DeployRunVerifyAppManifest -AppFile $file
+        $version = if ($null -ne $manifest) { [string](Get-DeployRunVerifyProperty -Object $manifest -Name 'version' -Default '') } else { '' }
+        if ([string]::IsNullOrWhiteSpace($version)) { $problems.Add("$($dep.Name): version of '$file' could not be read"); continue }
+        $found[$dep.Name] = [pscustomobject]@{ Name = $dep.Name; Version = $version; AppFile = $file }
+        foreach ($sub in @(Get-DeployRunVerifyProperty -Object $manifest -Name 'dependencies' -Default @())) {
+            if (& $IsInstalled ([string]$sub.name)) { continue }
+            $queue.Enqueue([pscustomobject]@{ Name = [string]$sub.name; Publisher = [string]$sub.publisher; Major = $dep.Major; RequiredBy = $dep.Name; FromDvd = $true })
+        }
+    }
+    $order = @($known.Keys)
+    $install = @(if ($problems.Count -eq 0) { $found.Values | Sort-Object { $order.IndexOf($_.Name) } })
+    return [pscustomobject]@{ Install = $install; Problems = @($problems) }
 }
 
 function Get-DeployRunVerifyInstalledAppsFkh {
@@ -829,7 +912,7 @@ function Get-DeployRunVerifyInstalledAppsAsinst {
 
 function Test-DeployRunVerifyTargetDependencies {
     [CmdletBinding()]
-    param([Parameter(Mandatory)]$Cfg)
+    param([Parameter(Mandatory)]$Cfg, [switch]$NoAutoInstall)
 
     $configuredNames = @($Cfg.apps | ForEach-Object { $_.Name })
     $required = @{}
@@ -837,7 +920,9 @@ function Test-DeployRunVerifyTargetDependencies {
         foreach ($dep in (Get-DeployRunVerifyAppManifestDependencies -AppFile $app.AppFile)) {
             if ($configuredNames -contains $dep.name) { continue }  # already covered by this project's own app set
             $key = "$($dep.name)|$($dep.version)"
-            if (-not $required.ContainsKey($key)) { $required[$key] = [pscustomobject]@{ RequiredBy = $app.Name; Name = $dep.name; Version = $dep.version } }
+            if (-not $required.ContainsKey($key)) {
+                $required[$key] = [pscustomobject]@{ RequiredBy = $app.Name; Name = $dep.name; Version = $dep.version; Publisher = [string](Get-DeployRunVerifyProperty -Object $dep -Name 'publisher' -Default '') }
+            }
         }
     }
     if ($required.Count -eq 0) { return }
@@ -851,14 +936,29 @@ function Test-DeployRunVerifyTargetDependencies {
         default { Get-DeployRunVerifyInstalledAppsAsinst -Cfg $Cfg }
     }
 
-    $missing = foreach ($req in $required.Values) {
-        $found = @($installed) | Where-Object { $_.Name -eq $req.Name -and [bool]$_.IsInstalled }
-        if (-not $found) { "$($req.Name) $($req.Version) (required by $($req.RequiredBy))" }
+    $isInstalled = { param([string]$AppName) [bool](@($installed) | Where-Object { $_.Name -eq $AppName -and [bool]$_.IsInstalled }) }
+    $missingApps = @($required.Values | Where-Object { -not (& $isInstalled $_.Name) })
+    if ($missingApps.Count -eq 0) { return }
+
+    # Microsoft test libraries only (D-52 addendum): install the missing links from the K: DVD, then re-verify once.
+    $problems = @()
+    if ([bool](Get-DeployRunVerifyProperty -Object $Cfg -Name 'autoInstallMsTestLibraries' -Default $true) -and -not $NoAutoInstall) {
+        $plan = Get-DeployRunVerifyMsTestLibraryPlan -Cfg $Cfg -Missing $missingApps -IsInstalled $isInstalled
+        if ($plan.Install.Count -gt 0) {
+            foreach ($item in $plan.Install) {
+                Write-Host "AUTO-INSTALL (MS test library): $($item.Name) $($item.Version) from DVD"
+                Install-DeployRunVerifyResolvedDependency -Cfg $Cfg -AppFile $item.AppFile -Name $item.Name -Version $item.Version
+            }
+            Test-DeployRunVerifyTargetDependencies -Cfg $Cfg -NoAutoInstall
+            return
+        }
+        $problems = @($plan.Problems)
     }
-    if ($missing) {
-        throw ("MISSING TARGET DEPENDENCY on $($Cfg.server): " + ($missing -join '; ') +
-            '. Resolution is HITL — do not auto-install. See skill-aproda-deploy-run-verify/references/dependency-resolution.md.')
-    }
+
+    $missing = $missingApps | ForEach-Object { "$($_.Name) $($_.Version) (required by $($_.RequiredBy))" }
+    $detail = if ($problems.Count -gt 0) { ' MS test library auto-install not possible: ' + ($problems -join '; ') + '.' } else { '' }
+    throw ("MISSING TARGET DEPENDENCY on $($Cfg.server): " + ($missing -join '; ') + '.' + $detail +
+        ' Other dependencies are resolved HITL — do not auto-install. See skill-aproda-deploy-run-verify/references/dependency-resolution.md.')
 }
 
 # ---------------------------------------------------------------------------
@@ -969,7 +1069,8 @@ function Get-DeployRunVerifyPublishOutcome {
             { $_ -ge 200 -and $_ -lt 300 } { return (& $result 'Published' '') }
             401 { return (& $result 'AuthFailure' ("HTTP 401 $reasonText".Trim())) }
             415 { return (& $result 'ProtocolError' ("HTTP 415 $reasonText".Trim())) }
-            422 { return (& $result 'Duplicate' ("HTTP 422 $reasonText".Trim())) }
+            # 422 is also the status of a failed server-side compilation (ALxxxx, e.g. missing dependency); only the duplicate-package text is a Duplicate.
+            422 { return (& $result $(if ($Output -match '(?i)duplicate\s+package') { 'Duplicate' } else { 'Rejected' }) ("HTTP 422 $reasonText".Trim())) }
             default { return (& $result 'Rejected' ("HTTP $HttpStatus $reasonText".Trim())) }
         }
     }
@@ -979,7 +1080,7 @@ function Get-DeployRunVerifyPublishOutcome {
     if ($ExitCode -eq 0) { return (& $result 'Published' '') }
     if ($Output -match '(?i)UserNotAuthenticated|\bUnauthorized\b|HTTP\D{0,20}\b401\b') { return (& $result 'AuthFailure' $reasonText) }
     if ($Output -match '(?i)UnsupportedMediaType|HTTP\D{0,20}\b415\b') { return (& $result 'ProtocolError' $reasonText) }
-    if ($Output -match '(?i)UnprocessableEntity|duplicate\s+package|HTTP\D{0,20}\b422\b') { return (& $result 'Duplicate' $reasonText) }
+    if ($Output -match '(?i)duplicate\s+package') { return (& $result 'Duplicate' $reasonText) }
     if ($Output -match '(?i)HTTP\D{0,20}\b[45]\d\d\b|\b(BadRequest|Forbidden|NotFound|InternalServerError|BadGateway|ServiceUnavailable|GatewayTimeout)\b|\bschema\b|\bsynchroni[sz]\w*\b|\b(AL|PTE)\d{4}\b') {
         return (& $result 'Rejected' $reasonText)
     }
@@ -1161,7 +1262,10 @@ function Assert-DeployRunVerifyPublishResult {
                 'A rebuilt package with a new package ID publishes again; a NotSynced leftover is removed only after confirmation.')
         }
         'ProtocolError' { throw "PUBLISH_PROTOCOL_ERROR: $Name $Version - HTTP 415 on route $Route is an engine defect (multipart shape), not a target problem. $($Result.Reason)" }
-        'Rejected' { throw "PUBLISH_REJECTED: $Name $Version was rejected by the target (route $Route). $($Result.Reason)" }
+        'Rejected' {
+            $hint = if ($Result.Reason -match '\bAL1024\b') { ' AL1024 = a dependency is missing on the target: publish the dependency chain first (references/triage-patterns.md T-12).' } else { '' }
+            throw "PUBLISH_REJECTED: $Name $Version was rejected by the target (route $Route). $($Result.Reason)$hint"
+        }
         'InvocationFailure' {
             if ($Policy -eq 'devEndpoint') { throw "ROUTE_UNAVAILABLE: deploy=devEndpoint ($($Result.Reason))" }
             throw "PUBLISH_FAILED: $Name $Version - route $Route could not reach the target. $($Result.Reason)"

@@ -1,0 +1,3 @@
+Publishing 'Aproda AG_Fixture Test_1.0.0.0.app' to http://nst-test.example.com:7049/BC ...
+Error: the server rejected the request with HTTP 422 UnprocessableEntity.
+  Extension compilation failed: AL1024 Could not be loaded: the application 'System Application Test Library' by 'Microsoft' version '28.0.0.0' could not be found.

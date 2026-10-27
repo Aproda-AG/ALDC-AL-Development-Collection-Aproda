@@ -6,6 +6,15 @@
 
 `Invoke-AprodaDeployRunVerify` runs `Test-DeployRunVerifyTargetDependencies` before any publish attempt, for both adapters. If a configured app's manifest declares a dependency that is neither in the local app set nor already installed on the target, the engine throws `MISSING TARGET DEPENDENCY: ...` and stops — it never publishes anything in that state. Treat this error as the trigger for the procedure below, not as a generic deploy failure.
 
+## Exception: Microsoft test libraries are installed automatically (D-52 addendum)
+
+Before the HITL loop applies, the preflight installs missing **Microsoft test libraries** itself: `Test Runner`, `Any`, `Library Assert`, `Library Variable Storage`, `System Application Test Library`, `Business Foundation Test Libraries`, `Application Test Library`, `Tests-TestLibraries`. A container created with *include Test Toolkit* does not carry `System Application Test Library`, so this is normally a one-time step per new container.
+
+- Only the **missing** links are installed, transitively through the DVD package manifests, in chain order, from `<bcDvdRoot>\<major>\<bcCountry>.<major>.<minor>\Applications\…` (highest minor; `<major>` from the dependency version). Each file logs `AUTO-INSTALL (MS test library): <name> <version> from DVD`; the preflight then re-verifies once.
+- All-or-nothing: no `bcDvdRoot` / `bcCountry`, DVD unreachable, library or manifest unreadable, or an unknown transitive dependency → nothing is installed and `MISSING TARGET DEPENDENCY` names the reason.
+- Switch: DRV config `autoInstallMsTestLibraries` (default `true`); `false` keeps the HITL stop.
+- Everything else (Aproda, third-party) follows the loop below.
+
 ## The full closed loop
 
 ```
