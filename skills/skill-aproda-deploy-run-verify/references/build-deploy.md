@@ -22,7 +22,7 @@
 2. Remove the **old Base symbol** from `Test\.alpackages`, copy the **new** Base `.app` in.
 3. Build **Test** against the refreshed Base symbol.
 
-**Engine route (E-010).** Each app is built with `altool compile /project:<dir> /packagecachepath:<pkg> /out:<app> /loglevel:Error` (the verb passes the arguments to `alc`), falling back to `alc.exe` with the same arguments when `altool` is unavailable, has no `compile` command, cannot be started, or exits non-zero without an `error AL\d{4}` diagnostic. A compiler error fails the build and never triggers the fallback. The package-cache refresh in step 2 happens on every route.
+**Engine route (E-010).** Each app is built with `altool compile /project:<dir> /packagecachepath:<pkg> /out:<app> /loglevel:Error` (the verb passes the arguments to `alc`), falling back to `alc.exe` with the same arguments when `altool` is unavailable, has no `compile` command, cannot be started, or exits non-zero without an `error AL\d{4}` diagnostic. A compiler error fails the build and never triggers the fallback. `alc.exe` is located only when the fallback runs (config `alcPath`, then next to `altool.exe`, then the highest installed AL extension; `bin\alc.exe` and `bin\win32\alc.exe` layouts) — a missing `alc.exe` never blocks the config load. The package-cache refresh in step 2 happens on every route.
 
 ✅ `alc.exe` **exit code 0 = success** (warnings tolerated). Pre-existing warnings (AA0074, AA0210, Text→Code overflow, AL1025 from the `_runner` `TestResults.xml`) do **not** block.
 

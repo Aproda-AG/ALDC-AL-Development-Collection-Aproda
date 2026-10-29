@@ -684,6 +684,36 @@ try { Resolve-DeployRunVerifyConfig -ConfigPath $env:DRV_TEST_CONFIG | Out-Null;
         Assert-Throws { Invoke-DeployRunVerifyPublishApp -Cfg $cfg -AppFile 'x.app' -Name 'AppA' -Version '1.0.0.0' -ForceUpgrade } 'FORCEUPGRADE_REQUIRES_ALTOOL' 'Chain: altool failed, forceUpgrade requested.' | Out-Null
     }
 
+    Invoke-TestCase 'alc.exe is resolved lazily: config, altool neighbour, both extension layouts, semver order' {
+        $extRoot = Join-Path $drvTempRoot ('alc-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+        $new = Join-Path $extRoot 'ms-dynamics-smb.al-18.1.2842859\bin'
+        $old = Join-Path $extRoot 'ms-dynamics-smb.al-9.0.1234567\bin\win32'
+        foreach ($dir in $new, $old) { New-Item -ItemType Directory -Path $dir -Force | Out-Null; Set-Content -LiteralPath (Join-Path $dir 'alc.exe') -Value 'x' }
+        function Get-DeployRunVerifyAlTool { [pscustomobject]@{ Path = $null; Version = $null; Source = 'none'; Error = 'none' } }
+        $noAlc = [pscustomobject]@{ alcPath = '' }
+
+        # Suffix compare: the temp root can be an 8.3 short path while enumeration returns the long form.
+        Assert-True ((Resolve-DeployRunVerifyAlcPath -Cfg $noAlc -ExtensionsRoot $extRoot).EndsWith('ms-dynamics-smb.al-18.1.2842859\bin\alc.exe')) '18.x (bin) must win over 9.x (bin\win32); string order would pick 9.x.'
+        Remove-Item -LiteralPath (Join-Path $new 'alc.exe')
+        Assert-True ((Resolve-DeployRunVerifyAlcPath -Cfg $noAlc -ExtensionsRoot $extRoot).EndsWith('ms-dynamics-smb.al-9.0.1234567\bin\win32\alc.exe')) 'bin\win32 layout is found.'
+        Assert-Equal (Resolve-DeployRunVerifyAlcPath -Cfg ([pscustomobject]@{ alcPath = 'C:\cfg\alc.exe' }) -ExtensionsRoot $extRoot) 'C:\cfg\alc.exe' 'Configured alcPath wins.'
+
+        $neighbour = Join-Path $drvTempRoot ('alc-nb-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+        $neighbourBin = Join-Path $neighbour 'ms-dynamics-smb.al-18.1.1\bin\win32'
+        New-Item -ItemType Directory -Path $neighbourBin -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $neighbourBin 'alc.exe') -Value 'x'
+        function Get-DeployRunVerifyAlTool { [pscustomobject]@{ Path = (Join-Path $neighbourBin 'altool.exe'); Version = '18.1.1'; Source = 'extension'; Error = $null } }
+        Assert-Equal (Resolve-DeployRunVerifyAlcPath -Cfg $noAlc -ExtensionsRoot $extRoot) (Join-Path $neighbourBin 'alc.exe') 'alc.exe next to altool is preferred.'
+
+        $empty = Join-Path $drvTempRoot ('alc-none-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+        New-Item -ItemType Directory -Path $empty -Force | Out-Null
+        function Get-DeployRunVerifyAlTool { [pscustomobject]@{ Path = $null; Version = $null; Source = 'none'; Error = 'none' } }
+        Assert-Throws { Resolve-DeployRunVerifyAlcPath -Cfg $noAlc -ExtensionsRoot $empty } 'ALC_NOT_FOUND' 'No alc.exe anywhere.' | Out-Null
+
+        $resolved = Resolve-DrvTarget -Fixture 'case-configured-windows' -ConfigExtra @{ alcPath = '' } -BuildOnly
+        Assert-Equal @($resolved.Result).Count 1 'Config resolve must not require alc.exe.'
+    }
+
     Invoke-TestCase 'S-4b.9 build route: compiler errors never fall back; launch failures do and are recorded' {
         $buildRoot = Join-Path $drvTempRoot ('build-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
         $apps = foreach ($name in 'AppA', 'AppB') {

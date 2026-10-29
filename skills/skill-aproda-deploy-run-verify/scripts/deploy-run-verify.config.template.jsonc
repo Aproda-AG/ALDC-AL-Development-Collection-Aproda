@@ -65,7 +65,7 @@
     "testCodeunitRange": "",
     "testSuite": "DEFAULT",
     // --- Tool paths (machine/server specific) ---
-    // alc.exe: leave empty to auto-detect the latest ms-dynamics-smb.al extension.
+    // alc.exe (fallback build route only): leave empty to auto-detect next to altool / in the highest ms-dynamics-smb.al extension.
     "alcPath": "",
     // Server-side Management DLL, used INSIDE the remote session to READ the app state (state
     // verification, dependency check) and for the one-time cleanup. REQUIRED only for the ASINST

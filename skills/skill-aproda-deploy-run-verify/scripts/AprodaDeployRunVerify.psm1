@@ -213,16 +213,7 @@ function Resolve-DeployRunVerifyConfig {
         $cfg | Add-Member serviceUrl ("{0}://{1}/{2}/cs/" -f $cfg.scheme, $cfg.server, $cfg.serverInstance) -Force
     }
 
-    # --- alc.exe auto-detect ---
-    if ([string]::IsNullOrWhiteSpace($cfg.alcPath)) {
-        $extRoot = Join-Path $env:USERPROFILE '.vscode\extensions'
-        $alc = Get-ChildItem $extRoot -Directory -Filter 'ms-dynamics-smb.al-*' -ErrorAction SilentlyContinue |
-        Sort-Object Name -Descending |
-        ForEach-Object { Join-Path $_.FullName 'bin\win32\alc.exe' } |
-        Where-Object { Test-Path $_ } | Select-Object -First 1
-        if (-not $alc) { throw "alc.exe not found — set alcPath in config." }
-        $cfg.alcPath = $alc
-    }
+    # alc.exe is resolved lazily by Resolve-DeployRunVerifyAlcPath (legacy build route only).
 
     # --- Resolve apps in dependency order ---
     if (-not $cfg.appsInOrder -or @($cfg.appsInOrder).Count -eq 0) { throw "appsInOrder is required (project dirs, dependency order, test app last)." }
@@ -730,9 +721,40 @@ function Invoke-DeployRunVerifyAlTool {
 # the upstream .app is copied into every downstream .alpackages (Q-2). Compiler errors are real
 # failures and never a fallback trigger.
 # ---------------------------------------------------------------------------
+function Resolve-DeployRunVerifyAlcPath {
+    # alc.exe is only the legacy build route, so it is resolved when that route runs, never at config load.
+    # Order: config alcPath, next to altool, then the highest installed AL extension (bin\alc.exe, bin\win32\alc.exe).
+    param([Parameter(Mandatory)]$Cfg, [string]$ExtensionsRoot)
+    $configured = [string](Get-DeployRunVerifyProperty -Object $Cfg -Name 'alcPath' -Default '')
+    if (-not [string]::IsNullOrWhiteSpace($configured)) { return $configured }
+
+    $candidates = [System.Collections.Generic.List[string]]::new()
+    $alTool = Get-DeployRunVerifyAlTool
+    if ($alTool.Path -and $alTool.Source -ne 'dotnetTool') {
+        $binDir = Split-Path -Parent ([string]$alTool.Path)
+        $extDir = if ((Split-Path -Leaf $binDir) -eq 'win32') { Split-Path -Parent (Split-Path -Parent $binDir) } else { Split-Path -Parent $binDir }
+        $candidates.Add((Join-Path $binDir 'alc.exe'))
+        $candidates.Add((Join-Path $extDir 'bin\alc.exe'))
+        $candidates.Add((Join-Path $extDir 'bin\win32\alc.exe'))
+    }
+    if ([string]::IsNullOrWhiteSpace($ExtensionsRoot)) { $ExtensionsRoot = Join-Path $env:USERPROFILE '.vscode\extensions' }
+    $extensions = foreach ($dir in @(Get-ChildItem -LiteralPath $ExtensionsRoot -Directory -Filter 'ms-dynamics-smb.al-*' -ErrorAction SilentlyContinue)) {
+        if ($dir.Name -match '^ms-dynamics-smb\.al-(?<v>\d+\.\d+\.\d+)') { [pscustomobject]@{ Dir = $dir.FullName; Version = [version]$Matches['v'] } }
+    }
+    foreach ($extension in @($extensions | Sort-Object -Property Version -Descending)) {
+        $candidates.Add((Join-Path $extension.Dir 'bin\alc.exe'))
+        $candidates.Add((Join-Path $extension.Dir 'bin\win32\alc.exe'))
+    }
+    foreach ($candidate in $candidates) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) { return $candidate }
+    }
+    throw "ALC_NOT_FOUND: alc.exe not found - set alcPath in the config. Tried: $((@($candidates | Select-Object -Unique) -join '; '))"
+}
+
 function Invoke-DeployRunVerifyAlc {
     param([Parameter(Mandatory)]$Cfg, [Parameter(Mandatory)]$App, [Parameter(Mandatory)][string]$PackageDir)
-    & $Cfg.alcPath /project:"$($App.ProjectDir)" /packagecachepath:"$PackageDir" /out:"$($App.AppFile)" /loglevel:Error
+    $alc = Resolve-DeployRunVerifyAlcPath -Cfg $Cfg
+    & $alc /project:"$($App.ProjectDir)" /packagecachepath:"$PackageDir" /out:"$($App.AppFile)" /loglevel:Error
 }
 
 function Invoke-DeployRunVerifyBuild {

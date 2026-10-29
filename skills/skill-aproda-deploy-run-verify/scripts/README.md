@@ -92,7 +92,7 @@ That is the whole per-project surface. The 3 glue scripts, the engine, and the D
 | app `name`, `version`, `publisher`, `id` | each app's `app.json` |
 | `testExtensionId` | the test app's `app.json → id` |
 | `testCodeunitRange` | the test app's `idRanges` (or config override) |
-| `alcPath` | latest `ms-dynamics-smb.al-*` VS Code extension |
+| `alcPath` | resolved only when the `alc.exe` fallback runs: folder of `altool.exe`, then the highest `ms-dynamics-smb.al-*` extension (`bin\alc.exe`, `bin\win32\alc.exe`) |
 
 ## Non-derivable (must be in config)
 
