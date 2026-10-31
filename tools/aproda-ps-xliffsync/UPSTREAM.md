@@ -38,3 +38,8 @@ upstream commit.
    20 units that actually changed.
 
 All three patches are guarded by tests; re-vendoring without re-applying them fails the suite.
+
+`vendor/XliffSync/Public/Test-XliffTranslations.ps1` carries one local patch (D-41): `IsConsecutiveSpacesMismatch`
+wraps the results of `GetConsecutiveSpacesInText` in `@(...)`. An empty `MatchCollection` is unrolled to `$null`
+by the pipeline, and `$null.Count` fails under `Set-StrictMode`; because `ConsecutiveSpacesConsistent` is always
+enabled, every `Validate` and `Sync` failed in a strict caller session. Guarded by Stage 0 test T31.

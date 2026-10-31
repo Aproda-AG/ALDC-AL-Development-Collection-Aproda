@@ -349,8 +349,8 @@ function IsConsecutiveSpacesMismatch {
         [string] $translText
     )
 
-    $sourceTextConsecutiveSpaces = GetConsecutiveSpacesInText -textToCheck $sourceText;
-    $translTextConsecutiveSpaces = GetConsecutiveSpacesInText -textToCheck $translText;
+    $sourceTextConsecutiveSpaces = @(GetConsecutiveSpacesInText -textToCheck $sourceText);
+    $translTextConsecutiveSpaces = @(GetConsecutiveSpacesInText -textToCheck $translText);
     if ($sourceTextConsecutiveSpaces.Count -ne $translTextConsecutiveSpaces.Count) {
         return $true;
     }

@@ -314,6 +314,31 @@ try {
         Assert-Stage0 (@($warnings | Where-Object { $_.Message -match 'System\.Xml\.XmlElement' }).Count -eq 0) "Test-XliffTranslations returns raw XmlNode units for missing/need-work findings; Write-Warning must format them, not stringify them to 'System.Xml.XmlElement'."
         Assert-Stage0 (@($warnings | Where-Object { $_.Message -match "^Translation issue: unit '" }).Count -gt 0) 'Missing-translation findings from Test-XliffTranslations were not surfaced as a readable warning.'
     }
+    Invoke-Stage0Case 'T31' {
+        # D-41: the vendored code must work in a caller session that is in StrictMode (e.g. a loaded DRV engine).
+        $project = New-Stage0Project; [xml]$xml = Get-Content -LiteralPath (Join-Path $project 'Stage0.de-CH.xlf')
+        foreach ($unit in $xml.SelectNodes("//*[local-name()='trans-unit']")) { $unit.SelectSingleNode("./*[local-name()='target']").InnerText = $unit.SelectSingleNode("./*[local-name()='source']").InnerText }
+        $xml.Save((Join-Path $project 'Stage0.de-CH.xlf'))
+        $strictRun = {
+            param($Parameters)
+            Set-StrictMode -Version Latest
+            Invoke-Stage0Tool $Parameters
+        }
+        $validation = & $strictRun @{ AppPath = $project; Action = 'Validate'; FailOnIssues = $true }
+        Assert-Stage0 ($validation.IssueCount -eq 0) 'Validate under a strict caller session did not complete cleanly.'
+        [void](& $strictRun @{ AppPath = $project; Action = 'Sync'; SkipBuild = $true; FailOnIssues = $true })
+    }
+    Invoke-Stage0Case 'T32' {
+        $toolPath = Join-Path $toolDirectory 'Invoke-AprodaBuildXliffSync.ps1'; $ast = [System.Management.Automation.Language.Parser]::ParseFile($toolPath, [ref]$null, [ref]$null); $definition = @($ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $args[0].Name -eq 'Find-AprodaAlCompiler' }, $true))[0]
+        Assert-Stage0 ($null -ne $definition) 'Find-AprodaAlCompiler is missing.'; . ([scriptblock]::Create($definition.Extent.Text))
+        $extensionRoot = Join-Path $workRoot ('ext-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+        foreach ($relative in 'ms-dynamics-smb.al-9.0.1234567\bin\win32', 'ms-dynamics-smb.al-18.1.2842859\bin') { New-Item -ItemType Directory -Path (Join-Path $extensionRoot $relative) -Force | Out-Null; Set-Content -LiteralPath (Join-Path (Join-Path $extensionRoot $relative) 'alc.exe') -Value 'x' }
+        Assert-Stage0 ((Find-AprodaAlCompiler -ExtensionRoot $extensionRoot).EndsWith('ms-dynamics-smb.al-18.1.2842859\bin\alc.exe')) 'AL 18.x (bin\alc.exe) must win over 9.x (bin\win32\alc.exe); string or write-time order picks the wrong one.'
+        Remove-Item -LiteralPath (Join-Path $extensionRoot 'ms-dynamics-smb.al-18.1.2842859\bin\alc.exe')
+        Assert-Stage0 ((Find-AprodaAlCompiler -ExtensionRoot $extensionRoot).EndsWith('ms-dynamics-smb.al-9.0.1234567\bin\win32\alc.exe')) 'The bin\win32 layout is not found.'
+        $missingMessage = $null; try { [void](Find-AprodaAlCompiler -ExtensionRoot (Join-Path $workRoot 'no-extensions')) } catch { $missingMessage = $_.Exception.Message }
+        Assert-Stage0 ($missingMessage -match 'AL compiler not found') 'A missing compiler did not produce the explicit error.'
+    }
 }
 finally {
     Remove-Item -LiteralPath $workRoot -Recurse -Force -ErrorAction SilentlyContinue

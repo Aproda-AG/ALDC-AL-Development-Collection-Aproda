@@ -57,18 +57,22 @@ function Get-AprodaXliffSyncSource {
 }
 
 function Find-AprodaAlCompiler {
-    $extensionRoot = Join-Path $env:USERPROFILE '.vscode\extensions'
-    $compiler = Get-ChildItem -LiteralPath $extensionRoot -Directory -Filter 'ms-dynamics-smb.al-*' -ErrorAction SilentlyContinue |
-    Sort-Object LastWriteTimeUtc -Descending |
-    ForEach-Object { Join-Path $_.FullName 'bin\win32\alc.exe' } |
-    Where-Object { Test-Path -LiteralPath $_ } |
-    Select-Object -First 1
+    param([string]$ExtensionRoot = (Join-Path $env:USERPROFILE '.vscode\extensions'))
 
-    if (-not $compiler) {
-        throw 'AL compiler not found. Install the AL Language extension, run the build manually, then rerun with -SkipBuild.'
+    # Highest parsed version first; AL 18.x ships bin\alc.exe, older versions bin\win32\alc.exe.
+    $extensions = foreach ($directory in @(Get-ChildItem -LiteralPath $ExtensionRoot -Directory -Filter 'ms-dynamics-smb.al-*' -ErrorAction SilentlyContinue)) {
+        if ($directory.Name -match '^ms-dynamics-smb\.al-(?<v>\d+\.\d+\.\d+)') {
+            [pscustomobject]@{ Path = $directory.FullName; Version = [version]$Matches['v'] }
+        }
+    }
+    foreach ($extension in @($extensions | Sort-Object -Property Version -Descending)) {
+        foreach ($relative in 'bin\alc.exe', 'bin\win32\alc.exe') {
+            $candidate = Join-Path $extension.Path $relative
+            if (Test-Path -LiteralPath $candidate -PathType Leaf) { return $candidate }
+        }
     }
 
-    return $compiler
+    throw 'AL compiler not found. Install the AL Language extension, run the build manually, then rerun with -SkipBuild.'
 }
 
 function Get-AprodaAlBuildArguments {
