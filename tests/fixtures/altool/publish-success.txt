@@ -1,2 +1,14 @@
-Publishing 'Aproda AG_Fixture Base_1.0.0.0.app' to http://nst-test.example.com:7049/BC ...
-Published successfully.
+# exit code: 0; timedOut: False; durationMs: 17891
+--- stdout ---
+Publishing AL package...
+MergeFromLaunchJson: No project path specified, skipping launch.json lookup
+Publishing <repo>\Base\Aproda AG_Gustav Gerig AG Base_25.0.0.182.app (auth=Windows)
+Publishing package to tenant 'default'
+Targeting server 'http://<host>', server instance '<instance>' and tenant 'default'.
+Using Windows authentication.
+Sending request to http://<host>:9540/<instance>/dev/apps?tenant=default&SchemaUpdateMode=forcesync&DependencyPublishingOption=ignore
+Success: The package 'Aproda AG_Gustav Gerig AG Base_25.0.0.182.app' has been published to the server.
+Package published: <repo>\Base\Aproda AG_Gustav Gerig AG Base_25.0.0.182.app (1779043 bytes)
+
+--- stderr ---
+

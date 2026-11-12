@@ -1,30 +1,2384 @@
+# exit code: 1; timedOut: False; durationMs: 215374
+--- stdout ---
 {
   "succeeded": false,
-  "errorDetails": {
-    "code": "TestRunFailed",
-    "message": "One or more tests failed.",
-    "retryable": false
-  },
+  "message": "===== Codeunit 59010 =====\r\nTest run completed: 20 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS SetupSmoke_EDIAgreementActive_InvoiceHas2ILEs (114ms)\r\n  PASS EDICustomer_1LineSplit2ILEs_CorrectInvoice_Succeeds (788ms)\r\n  PASS EDICustomer_3Lines_Line2Split2ILEs_CorrectInvoice_Succeeds (527ms)\r\n  PASS EDICustomer_1Line_Split3ILEs_CorrectInvoice_Succeeds (988ms)\r\n  PASS EDICustomer_1Line_SingleILE_CorrectInvoice_Succeeds (444ms)\r\n  PASS NonEDICustomer_1Line_Split2ILEs_CorrectInvoice_Succeeds (706ms)\r\n  PASS S4_EDICustomer_3Lines_Line2Split2ILEs_CMOrderMatchesInvoice (563ms)\r\n  PASS S5_EDICustomer_NoDescriptionLinesOnCreditMemo (355ms)\r\n  PASS S12_EDICustomer_3Lines_Line1Split2ILEs_CMOrderMatchesInvoice (547ms)\r\n  PASS S13_EDICustomer_3Lines_Line3Split2ILEs_CMOrderMatchesInvoice (718ms)\r\n  PASS N01_EDI_5Lines_L1Split2ILEs_CmCorr_CMOrderMatchesInvoice (532ms)\r\n  PASS N02_EDI_5Lines_L1Split2ILEs_BelegKop_CMOrderMatchesInvoice (761ms)\r\n  PASS N03_EDI_5Lines_L5Split2ILEs_CmCorr_CMOrderMatchesInvoice (573ms)\r\n  PASS N04_EDI_17Lines_L1Split2ILEs_CmCorr_CMOrderMatchesInvoice (437ms)\r\n  PASS N05_EDI_17Lines_L1Split2ILEs_BelegKop_CMOrderMatchesInvoice (998ms)\r\n  PASS N06_EDI_17L_L9Split_L5ZeroQty_CmCorr_CMOrderMatchesInvoice (367ms)\r\n  PASS N07_EDI_17L_L9Split_L5ZeroQty_BelegKop_CMOrderMatchesInvoice (84ms)\r\n  PASS N08_EDI_17Lines_L17Split2ILEs_CmCorr_CMOrderMatchesInvoice (109ms)\r\n  PASS NonEDICustomer_1Line_SingleILE_CorrectInvoice_Succeeds (900ms)\r\n  PASS  (522ms)\r\n\r\n===== Codeunit 59011 =====\r\nTest run completed: 17 passed, 5 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS Static_WithChargeCode_PropagatesPercentLine (702ms)\r\n  PASS Piece_WithSuperiorCharge_PropagatesPercentLine (572ms)\r\n  PASS Per100kg_WithSuperiorCharge_PropagatesPercentLine (477ms)\r\n  PASS PerPallet_WithSuperiorCharge_PropagatesPercentLine (510ms)\r\n  PASS GivenPercentOnPercentChain_WhenCalculationIsRun_ThenEachLevelUsesItsSuperiorAmount (92ms)\r\n  FAIL GivenCircularSuperiorChargeCodes_WhenCalculationIsRun_ThenCircularReferenceErrorIsRaised (63ms)\r\n       Assert.ExpectedError failed. Expected: circular Superior Charge Code reference. Actual: Die Berechnungszeilen von Artikel GL00000009 und Kalkulation GU00000016-C3 enthalten einen kreisf\u00F6rmigen \u00AB\u00DCbergeordneter Zuschlagscode\u00BB-Verweis: GU00000-P2 -\u003E GU00000-P1 -\u003E GU00000-P2. Sie k\u00F6nnen nicht berechnet werden..\r\nAL Callstack:\r\n\u0022Library Assert\u0022(CodeUnit 130002).ExpectedError line 7 - Library Assert by Microsoft version 28.2.50931.51034\r\n\u0022Import Calc Perc. Prop. Tests\u0022(CodeUnit 59011).GivenCircularSuperiorChargeCodes_WhenCalculationIsRun_ThenCircularReferenceErrorIsRaised line 25 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n  FAIL GivenGenuineTwoLineCycleStillDetected_WhenCalculationIsRun_ThenErrorIsRaised (34ms)\r\n       Assert.ExpectedError failed. Expected: circular Superior Charge Code reference. Actual: Die Berechnungszeilen von Artikel GL00000009 und Kalkulation GU00000016-C20 enthalten einen kreisf\u00F6rmigen \u00AB\u00DCbergeordneter Zuschlagscode\u00BB-Verweis: GU00000-P2 -\u003E GU00000-P1 -\u003E GU00000-P2. Sie k\u00F6nnen nicht berechnet werden..\r\nAL Callstack:\r\n\u0022Library Assert\u0022(CodeUnit 130002).ExpectedError line 7 - Library Assert by Microsoft version 28.2.50931.51034\r\n\u0022Import Calc Perc. Prop. Tests\u0022(CodeUnit 59011).GivenGenuineTwoLineCycleStillDetected_WhenCalculationIsRun_ThenErrorIsRaised line 23 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n  PASS GivenCircularSuperiorChargeCodes_WhenCalculationIsRun_ThenErrorNamesItemAndChain (31ms)\r\n  PASS GivenCircularSuperiorChargeCodes_WhenCurrencyIsRevalidated_ThenErrorNamesItemAndChain (71ms)\r\n  PASS GivenCycleNotStartingAtQueriedLine_WhenResolverRuns_ThenReportedChainExcludesUnrelatedLine (10ms)\r\n  PASS GivenSelfReferencingPercentLine_WhenCalculationIsRun_ThenResolvesWithoutError (43ms)\r\n  PASS GivenSelfReferencingPercentLine_WhenBatchCheckRuns_ThenNotReported (9ms)\r\n  PASS GivenSelfReferencingPercentLine_WhenLineIsValidated_ThenValidateSucceeds (18ms)\r\n  FAIL GivenTwoLineCycleEnteredInteractively_WhenSecondLineIsValidated_ThenValidateRejectsImmediately (25ms)\r\n       Assert.ExpectedError failed. Expected: circular Superior Charge Code reference. Actual: Die Berechnungszeilen von Artikel  und Kalkulation GU00000020-C8 enthalten einen kreisf\u00F6rmigen \u00AB\u00DCbergeordneter Zuschlagscode\u00BB-Verweis: GU00000-P2 -\u003E GU00000-P1 -\u003E GU00000-P2. Sie k\u00F6nnen nicht berechnet werden..\r\nAL Callstack:\r\n\u0022Library Assert\u0022(CodeUnit 130002).ExpectedError line 7 - Library Assert by Microsoft version 28.2.50931.51034\r\n\u0022Import Calc Perc. Prop. Tests\u0022(CodeUnit 59011).GivenTwoLineCycleEnteredInteractively_WhenSecondLineIsValidated_ThenValidateRejectsImmediately line 36 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n  PASS GivenCopyChargeLinesWithPreExistingCycleInSource_WhenCopied_ThenCopySucceeds (23ms)\r\n  FAIL GivenMixedValidAndInvalidCalculations_WhenBatchCheckRuns_ThenOnlyInvalidOnesAreReported (24ms)\r\n       Assert.IsTrue failed. The cycle reason must be reported.\r\nAL Callstack:\r\n\u0022Library Assert\u0022(CodeUnit 130002).IsTrue line 3 - Library Assert by Microsoft version 28.2.50931.51034\r\n\u0022Import Calc Perc. Prop. Tests\u0022(CodeUnit 59011).GivenMixedValidAndInvalidCalculations_WhenBatchCheckRuns_ThenOnlyInvalidOnesAreReported line 36 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n  PASS GivenDuplicateChargeCodeOnNonPercentLines_WhenBatchCheckRuns_ThenNotReported (7ms)\r\n  PASS GivenSelfReferencingSuperiorChargeCodeOnNonPercentLine_WhenLineIsValidated_ThenValidateSucceeds (8ms)\r\n  PASS GivenMissingSuperiorOnNonPercentLine_WhenBatchCheckRuns_ThenNotReported (6ms)\r\n  PASS GivenSameChargeCodeValuesAcrossTwoCalculations_WhenBatchCheckRuns_ThenNoFalseCycleIsReported (18ms)\r\n  PASS GivenPercentChargeWithoutSuperiorChargeCode_WhenCalculationIsRun_ThenMandatoryFieldErrorIsRaised (45ms)\r\n  FAIL  (799ms)\r\n       \u00DCbergeordneter Zuschlagscode must have a value in Artikel Kalkulation Zuschlag: Kalkulationscode=GU00000029-C4, Zeilennr.=703. It cannot be zero or empty.\r\nAL Callstack:\r\n\u0022Calculation Mgt.\u0022(CodeUnit 50037).ChargeLineCalcValue line 42 - Gustav Gerig AG Base by Aproda AG version 25.0.0.182\r\n\u0022Calculation Mgt.\u0022(CodeUnit 50037).CalcChargeLinesInDependencyOrder line 21 - Gustav Gerig AG Base by Aproda AG version 25.0.0.182\r\n\u0022Calculation Mgt.\u0022(CodeUnit 50037).CheckChargeLines line 14 - Gustav Gerig AG Base by Aproda AG version 25.0.0.182\r\n\u0022Import Calc Perc. Prop. Tests\u0022(CodeUnit 59011).GivenPercentChargeWithoutSuperiorChargeCode_WhenCalculationIsRun_ThenMandatoryFieldErrorIsRaised line 20 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n\r\n===== Codeunit 59012 =====\r\nTest run completed: 6 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS BC_N01_EDI_CopyDoc_InvToOrder_LinesComplete (393ms)\r\n  PASS BC_N02_NonEDI_CopyDoc_InvToOrder_LinesComplete (674ms)\r\n  PASS BC_N03_EDI_CopyDoc_InvToInvoice_LinesComplete (134ms)\r\n  PASS BC_N04_NonEDI_CopyDoc_InvToInvoice_LinesComplete (122ms)\r\n  PASS BC_N05_NonEDI_CopyDoc_InvToCreditMemo_LinesComplete (635ms)\r\n  PASS  (961ms)\r\n\r\n===== Codeunit 59013 =====\r\nTest run completed: 24 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS GivenCargoPercentChargeWithoutParentTotaling_WhenTotaled_ThenUnitCostContributionIsTen (494ms)\r\n  PASS GivenCargoPercentChargeWithNonBaseUoM_WhenTotaled_ThenUnitCostIgnoresUomFactor (732ms)\r\n  PASS GivenPercentChargesWithDifferentTotaling_WhenTotaled_ThenEachIsRoutedToItsOwnGroup (439ms)\r\n  PASS GivenPrecomputedPieceAndPercentAmountsInSameGroup_WhenTotaled_ThenBothContributeExactlyOnce (450ms)\r\n  PASS GivenStaticChargeWithBaseUoM_WhenTotaled_ThenStaticFormulaIsApplied (505ms)\r\n  PASS GivenStaticChargeWithDifferentUoMs_WhenTotaled_ThenStaticUoMRatioIsApplied (583ms)\r\n  PASS GivenPieceChargeWithBaseUoM_WhenTotaled_ThenPieceFormulaIsApplied (542ms)\r\n  PASS GivenPieceChargeWithNonBasePurchaseUoM_WhenTotaled_ThenPieceFormulaIgnoresUoMFactor (543ms)\r\n  PASS GivenPercentChargeWithIndependentUoMFactors_WhenTotaled_ThenOnlyQuantityIsApplied (450ms)\r\n  PASS GivenPer100kgNetWeightWithBaseUoM_WhenTotaled_ThenNetWeightFormulaIsApplied (428ms)\r\n  PASS GivenPer100kgGrossWeightWithBaseUoM_WhenTotaled_ThenGrossWeightFormulaIsApplied (465ms)\r\n  PASS GivenPer100kgDripOffWeightWithBaseUoM_WhenTotaled_ThenDripOffWeightFormulaIsApplied (388ms)\r\n  PASS GivenPer100kgNetWeightWithDifferentUoMs_WhenTotaled_ThenNetWeightUoMFormulaIsApplied (519ms)\r\n  PASS GivenPer100kgGrossWeightWithDifferentUoMs_WhenTotaled_ThenGrossWeightUoMFormulaIsApplied (415ms)\r\n  PASS GivenPer100kgDripOffWeightWithDifferentUoMs_WhenTotaled_ThenDripOffWeightUoMFormulaIsApplied (460ms)\r\n  PASS GivenPerPalletChargesWithBasePurchaseUoM_WhenTotaled_ThenEveryPackageTypeUsesItsConfiguredUoM (332ms)\r\n  PASS GivenPerPalletChargesWithNonBasePurchaseUoM_WhenTotaled_ThenPurchaseUoMFactorIsIgnored (199ms)\r\n  PASS GivenTwoPurchaseLinesWithSameTotaling_WhenTotaled_ThenExistingGroupIsAccumulated (482ms)\r\n  PASS GivenExistingCargoGroupWithNonBaseUoM_WhenTotaled_ThenExistingGroupIgnoresUoMFactor (436ms)\r\n  PASS GivenReleasedTotalingAfterPurchaseLineDeletion_WhenRebuilt_ThenCurrentAmountAndReleasedFlagRemain (516ms)\r\n  PASS GivenZeroQuantityPurchaseLine_WhenPurchaseCalculationIsCreated_ThenUnitCostIsNotUpdated (386ms)\r\n  PASS GivenSmallPercentAmountAndLargeQuantity_WhenTotaled_ThenExactDecimalContributionIsKept (343ms)\r\n  PASS GivenZeroCalculationBaseQuantity_WhenPer100kgChargeIsCalculated_ThenAmountsAreZero (43ms)\r\n  PASS  (161ms)\r\n\r\n===== Codeunit 59014 =====\r\nTest run completed: 11 passed, 3 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS GivenFifteenPalletsInThreeLines_WhenCargoPerPalletIsTotaled_ThenConvertedBaseFreightIsShown (7ms)\r\n  PASS GivenPerPalletCargoWithTenPercentSurcharge_WhenParentIsRecalculatedAndTotaled_ThenCargoIncludesSurcharge (536ms)\r\n  PASS GivenCargoAndMiscellaneousCharges_WhenTotaled_ThenAmountsAreRoutedToTheirOwnGroups (683ms)\r\n  PASS GivenExistingCargoTotal_WhenFurtherPurchaseLinesAreProcessed_ThenBaseAndPercentAreAccumulatedOnce (610ms)\r\n  PASS GivenChangedPerPalletChargeValue_WhenRecalculatedTwice_ThenTotalUsesOnlyLatestParentAndPercentAmounts (722ms)\r\n  PASS GivenForeignCurrencyRates_WhenPerPalletAndPercentAreTotaled_ThenBothUseTheSameRateDirection (618ms)\r\n  PASS GivenNonUnitPalletUoM_WhenPerPalletCargoIsTotaled_ThenQuantityConversionIsAppliedOnce (684ms)\r\n  PASS GivenFractionalFreightAcrossLines_WhenTotaled_ThenDocumentRoundingMatchesBusinessRule (634ms)\r\n  PASS GivenPercentChargeWithBlankOrDifferentTotaling_WhenTotaled_ThenItIsExcludedOrRoutedAccordingToConfiguration (644ms)\r\n  PASS GivenTwoSubordinatePercentCharges_WhenParentIsRecalculated_ThenEachConfiguredSurchargeIsIncludedExactlyOnce (651ms)\r\n  PASS GivenCalculationQuantityIsCleared_WhenTotaled_ThenOrderKeepsItsCargoSnapshot (756ms)\r\n  FAIL GivenZeroPalletUoM_WhenSourceCalculationIsRun_ThenUserIsGuidedToItemUnits (331ms)\r\n       Assert.ExpectedError failed. Expected: Qty. per Unit of Measure must be greater than 0. Actual: Die Menge pro Masseinheit muss f\u00FCr die Artikel-Masseinheit GL00000022 und die Paletten-Masseinheit GU00000123 gr\u00F6sser als 0 sein. Bitte geben Sie einen Wert in den Artikel-Masseinheiten ein..\r\nAL Callstack:\r\n\u0022Library Assert\u0022(CodeUnit 130002).ExpectedError line 7 - Library Assert by Microsoft version 28.2.50931.51034\r\n\u0022Import Calc Totaling Reg\u0022(CodeUnit 59014).GivenZeroPalletUoM_WhenSourceCalculationIsRun_ThenUserIsGuidedToItemUnits line 4 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n  FAIL GivenZeroPalletUoM_WhenPurchaseCalculationIsRecalculated_ThenUserIsGuidedToItemUnits (482ms)\r\n       Assert.ExpectedError failed. Expected: Qty. per Unit of Measure must be greater than 0. Actual: Die Menge pro Masseinheit muss f\u00FCr die Artikel-Masseinheit GL00000022 und die Paletten-Masseinheit GU00000123 gr\u00F6sser als 0 sein. Bitte geben Sie einen Wert in den Artikel-Masseinheiten ein..\r\nAL Callstack:\r\n\u0022Library Assert\u0022(CodeUnit 130002).ExpectedError line 7 - Library Assert by Microsoft version 28.2.50931.51034\r\n\u0022Import Calc Totaling Reg\u0022(CodeUnit 59014).GivenZeroPalletUoM_WhenPurchaseCalculationIsRecalculated_ThenUserIsGuidedToItemUnits line 6 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n  FAIL  (365ms)\r\n       Assert.ExpectedError failed. Expected: Qty. per Unit of Measure must be greater than 0. Actual: Die Menge pro Masseinheit muss f\u00FCr die Artikel-Masseinheit GL00000022 und die Paletten-Masseinheit GU00000123 gr\u00F6sser als 0 sein. Bitte geben Sie einen Wert in den Artikel-Masseinheiten ein..\r\nAL Callstack:\r\n\u0022Library Assert\u0022(CodeUnit 130002).ExpectedError line 7 - Library Assert by Microsoft version 28.2.50931.51034\r\n\u0022Import Calc Totaling Reg\u0022(CodeUnit 59014).GivenZeroPalletUoM_WhenPurchaseCalculationIsRecalculated_ThenUserIsGuidedToItemUnits line 6 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n\r\n===== Codeunit 59015 =====\r\nTest run completed: 7 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS GivenSurchargeChargeLineBeforeFreight_WhenCalculationIsRun_ThenSurchargeAmountIsZero (931ms)\r\n  PASS GivenSurchargeChargeLineBeforeFreight_WhenOrderIsCreated_ThenCargoStaysAtBaseFreight (673ms)\r\n  PASS GivenSurchargeLineAboveFreightLine_WhenFreightValueIsReentered_ThenSurchargeIsNotPropagated (491ms)\r\n  PASS GivenManualSurchargeAsLastDocumentRow_WhenFreightIsRecalculated_ThenSurchargeRowSurvives (425ms)\r\n  PASS GivenSurchargeAddedAfterOrderExists_WhenCalculationIsRerun_ThenOrderKeepsItsSnapshot (577ms)\r\n  PASS GivenSurchargeWithoutCurrency_WhenTotaled_ThenSurchargeUsesTheFreightRate (528ms)\r\n  PASS  (628ms)\r\n\r\n===== Codeunit 59016 =====\r\nTest run completed: 5 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS GivenBlankCalculationAndPurchaseCurrency_WhenStaticChargeIsTotaled_ThenRateOneIsUsed (855ms)\r\n  PASS GivenForeignCalculationAndLocalPurchase_WhenRateChangesBeforeTotaling_ThenPurchaseRateIsAppliedIndependently (392ms)\r\n  PASS GivenForeignCalculationCurrency_WhenStaticChargeIsTotaled_ThenCalculationCurrencyRateIsUsed (298ms)\r\n  PASS GivenHistoricalCurrencyRates_WhenCalculationUsesWorkDate_ThenMostRecentRateIsUsed (375ms)\r\n  PASS  (921ms)\r\n\r\n===== Codeunit 59017 =====\r\nTest run completed: 4 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS InsertBartenderLabelCode_ValidCode_RecordFound (147ms)\r\n  PASS GCSSSCCLabelGeneral_ValidBartenderCode_Accepted (82ms)\r\n  PASS GCSSSCCLabelGeneral_NonExistentCode_RaisesError (4ms)\r\n  PASS  (234ms)\r\n\r\n===== Codeunit 59019 =====\r\nTest run completed: 4 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS GetBartenderLabelCode_ShippingAgentSet_FallsBackToGCS (112ms)\r\n  PASS GetBartenderLabelCode_NoAgentNoASDX_ReturnsEmpty (21ms)\r\n  PASS GetBartenderLabelCode_PartnerLineWithEmptyCode_FallsBackToGCS (92ms)\r\n  PASS  (226ms)\r\n\r\n===== Codeunit 59020 =====\r\nTest run completed: 13 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS TC_P01_GivenManorNonCD_WhenPrintFromLU_ThenNPrimaryLabelsDispatched (608ms)\r\n  PASS TC_P02_GivenManorCD_WhenPrintFromLU_Then1AlternateLabelDispatched (179ms)\r\n  PASS TC_P03_GivenCoopNonCD_WhenPrintFromLU_ThenNPrimaryLabelsDispatched (105ms)\r\n  PASS TC_P04_GivenCoopCD_WhenPrintFromLU_ThenZeroLabelsDispatched (110ms)\r\n  PASS TC_P05_GivenPistorSingleLine_WhenPrintFromLU_ThenPrimaryLabelDispatched (112ms)\r\n  PASS TC_P06_GivenPistorMixedItems_WhenPrintFromLU_ThenAlternateLabelDispatched (114ms)\r\n  PASS TC_P07_GivenMigrosStandard_WhenPrintFromLU_ThenNPrimaryLabelsDispatched (102ms)\r\n  PASS TC_P08_GivenDennerStandard_WhenPrintFromLU_ThenNPrimaryLabelsDispatched (100ms)\r\n  PASS TC_P09_GivenSingleLabel_WhenPrintFromLU_ThenExactly1LabelDispatched (106ms)\r\n  PASS TC_P10_GivenNoPartnerLine_WhenPrintFromLU_ThenGCSFallbackLabelDispatched (115ms)\r\n  PASS TC_P11_GivenPickWithLU_WhenPrintFromWarehouseActivity_ThenLabelsDispatched (119ms)\r\n  PASS TC_P12_GivenShipmentWithLU_WhenPrintFromWarehouseShipment_ThenLabelsDispatched (89ms)\r\n  PASS  (865ms)\r\n\r\n===== Codeunit 59021 =====\r\nTest run completed: 10 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS ProfileOnPartner_AllValuesComeFromOneRecord (388ms)\r\n  PASS NoProfile_WithShippingAgent_UsesCompanyLabel (38ms)\r\n  PASS NoProfile_NoShippingAgent_LogsFailure (84ms)\r\n  PASS ProfileWithoutPrinter_UsesCompanyDefaultPrinter (83ms)\r\n  PASS NewProfile_DefaultsToTwoCopies (0ms)\r\n  PASS ProfileCopies_ArePassedToDispatch (90ms)\r\n  PASS PartnerWithTwoPartnerLines_ResolvesOneProfile (26ms)\r\n  PASS CustomerWithoutEDIPartner_FallsBackToCompanyLabel (25ms)\r\n  PASS TwoCustomersOneEDIPartner_ShareOneProfile (54ms)\r\n  PASS  (791ms)\r\n\r\n===== Codeunit 59022 =====\r\nTest run completed: 22 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS Build_AllContractKeysPresent (498ms)\r\n  PASS Build_EmptyValuesAreEmptyStrings (93ms)\r\n  PASS Build_DatesInBothFormats (88ms)\r\n  PASS Build_NumbersWithoutSeparators (88ms)\r\n  PASS Build_OrderNoIsExternalDocumentNo (75ms)\r\n  PASS Build_GTINIsPieceEAN (77ms)\r\n  PASS Build_ItemDescriptionFallsBackToItem (100ms)\r\n  PASS Build_ContractKeys_MatchSingleList (68ms)\r\n  PASS Build_V2Values_FromHeaderAndLine (266ms)\r\n  PASS Build_FailingSourceNotRequired_Passes (90ms)\r\n  PASS Build_FailingSourceRequired_Raises (88ms)\r\n  PASS Build_EmptyRequiredList_ChecksNothing (71ms)\r\n  PASS Build_SSCCMissing_AlwaysRaises (71ms)\r\n  PASS Build_EmptyValueNotAnError (64ms)\r\n  PASS Build_CartonGTIN_FromCartonUnit (135ms)\r\n  PASS Build_ItemReference_Order (146ms)\r\n  PASS Build_Quantities_UnitAndScope (92ms)\r\n  PASS Region_Crossdock_WithAndWithoutSuffix (253ms)\r\n  PASS Region_NonCrossdock_Empty (86ms)\r\n  PASS Region_ShortNumber_Empty (72ms)\r\n  PASS Region_HeaderValueWins (112ms)\r\n  PASS  (644ms)\r\n\r\n===== Codeunit 59023 =====\r\nTest run completed: 25 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS Send_Success_StampsLineAndLU (507ms)\r\n  PASS Send_Failure_LogsWithContext (140ms)\r\n  PASS Send_FailureOnFirstLabel_ContinuesRun (186ms)\r\n  PASS Send_TwoFailures_BothPersisted (159ms)\r\n  PASS BeginRun_Failure_NoLabelAttempted (102ms)\r\n  PASS CrossdockSuppress_LogsSuppression (104ms)\r\n  PASS Automatic_SkipsPrintedLines (133ms)\r\n  PASS Manual_ReprintsAndIncrements (121ms)\r\n  PASS TenantGuardOff_AutomaticDoesNothing (120ms)\r\n  PASS TenantGuardOff_ManualRaises (107ms)\r\n  PASS TenantGuardOff_ManualNoUnits_StillRaises (18ms)\r\n  PASS Automatic_NoLogisticUnits_NoRunEntries (22ms)\r\n  PASS SingleLabel_Success_StampsAllCoveredLines (134ms)\r\n  PASS Log_FailedSend_StoresPayload (99ms)\r\n  PASS Log_PayloadBlob_CopiedByFinishRun (115ms)\r\n  PASS Log_Suppressed_NoPayload (109ms)\r\n  PASS Log_PreconditionFailure_NoPayload (100ms)\r\n  PASS Log_BeginRunFailure_NoPayload (88ms)\r\n  PASS Log_PayloadRoundTrip_1KB (9ms)\r\n  PASS Log_PayloadTemporaryRecord_RoundTrip (0ms)\r\n  PASS Log_PayloadFileName (0ms)\r\n  PASS Log_ShowPayload_EmptyEntry_Message (117ms)\r\n  PASS Log_ShowPayload_WithPayload_OpensViewer (67ms)\r\n  PASS Retention_Register_IsIdempotentAndRegistersTable (3ms)\r\n  PASS  (570ms)\r\n\r\n===== Codeunit 59024 =====\r\nTest run completed: 46 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS EAN_13Or14Digits_Accepted (341ms)\r\n  PASS EAN_8And12Digits_Accepted (56ms)\r\n  PASS EAN_15Digits_Rejected (62ms)\r\n  PASS EAN_9And11Digits_Rejected (32ms)\r\n  PASS GetItemEAN_PadsTo14 (232ms)\r\n  PASS GetItemEAN_NonNumeric_Raises (74ms)\r\n  PASS GetItemEAN_WrongLength_Raises (52ms)\r\n  PASS GetItemEAN_Empty_Raises (57ms)\r\n  PASS EAN_NonNumeric_Rejected (47ms)\r\n  PASS EAN_Empty_Accepted (32ms)\r\n  PASS PickTrigger_RegisteredPick_PrintsAutomatically (204ms)\r\n  PASS PickTrigger_NonPickActivity_DoesNothing (95ms)\r\n  PASS PickTrigger_SuppressCommit_DoesNothing (101ms)\r\n  PASS PickTrigger_AlreadyPrinted_NotReprinted (109ms)\r\n  PASS DeliveryNote_FlagOnPartner_Suppressed (28ms)\r\n  PASS DeliveryNote_NoEDIPartner_NotSuppressed (6ms)\r\n  PASS DeliveryNote_FlagOffOnPartner_NotSuppressed (13ms)\r\n  PASS DeliveryNote_PartnerRecordMissing_NotSuppressed (16ms)\r\n  PASS Defaults_EmptyCompany_CreatesBaseline (113ms)\r\n  PASS Defaults_RunTwice_ChangesNothing (155ms)\r\n  PASS Defaults_ExistingSeriesWithOtherLine_Untouched (65ms)\r\n  PASS Defaults_LayoutLinkedOnlyOnExactMatch (73ms)\r\n  PASS Defaults_LayoutAmbiguous_NotLinked (81ms)\r\n  PASS Defaults_LayoutSuggestion_DatePrefixAndBtw (62ms)\r\n  PASS Defaults_LayoutPrefixName_NotLinked (54ms)\r\n  PASS Defaults_LayoutLinkExisting_Untouched (69ms)\r\n  PASS Defaults_CompanySetup_FillsBlankOnly (105ms)\r\n  PASS Defaults_PalletWeight_NonZero_Untouched (62ms)\r\n  PASS Defaults_MissingUnit_SkippedAndReported (69ms)\r\n  PASS Defaults_NewLabelCode_GermanDescriptionTrimmed (61ms)\r\n  PASS Defaults_ExistingLabelCode_KeepsDescription (56ms)\r\n  PASS Defaults_RequiredKeys_FilledWhenBlankOnly (55ms)\r\n  PASS Upgrade_QuantityKey_RenamedToPieceCount (46ms)\r\n  PASS Defaults_RequiredKeys_DerivedListsExpanded (52ms)\r\n  PASS Defaults_Printer_UniqueIDEnding_Set (59ms)\r\n  PASS Defaults_Printer_UniqueNameWithSSCC_Set (52ms)\r\n  PASS Defaults_Printer_TwoMatches_Empty (60ms)\r\n  PASS Defaults_Printer_AlreadySet_Untouched (57ms)\r\n  PASS Defaults_WillCreateSeries_TrueThenFalse (69ms)\r\n  PASS Defaults_Summary_ListsResults (98ms)\r\n  PASS Defaults_Summary_NothingSkippedNoPrinter (57ms)\r\n  PASS LabelCode_RequiredKeys_UnknownKey_Rejected (1ms)\r\n  PASS LabelCode_RequiredKeys_NormalisedAndEmptyOk (0ms)\r\n  PASS LabelCode_ContractKeys_31InSpecOrder (0ms)\r\n  PASS Defaults_TenantFlagOff_Raises (48ms)\r\n  PASS  (258ms)\r\n\r\n===== Codeunit 59025 =====\r\nTest run completed: 16 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS BeginRun_IntegrationDisabled_ReturnsFalseWithReason (123ms)\r\n  PASS BeginRun_NoSetupRecord_ReturnsFalseWithReason (2ms)\r\n  PASS BeginRun_IntegrationEnabledTokenNotDue_ReturnsTrue (8ms)\r\n  PASS BeginRun_TokenDueInWriteTransaction_SkipsRefresh (5ms)\r\n  PASS SendLabel_LabelCodeWithoutLayout_FailsBeforeAnyCall (16ms)\r\n  PASS SendLabel_LayoutNotImported_Fails (19ms)\r\n  PASS SendLabel_StoredNameWithoutBtw_ResolvesLayout (26ms)\r\n  PASS SendLabel_TwoNormalisedMatches_AmbiguousError (29ms)\r\n  PASS SendLabel_NoNormalisedMatch_NotImportedError (18ms)\r\n  PASS SendLabel_NoPrinter_Fails (18ms)\r\n  PASS SendLabel_PrinterNotImported_Fails (26ms)\r\n  PASS SendLabel_PreconditionsMetPayloadFails_ReturnsFalseWithReason (30ms)\r\n  PASS SendLabel_FailingKeyNotRequired_IsSent (668ms)\r\n  PASS SendLabel_FailingKeyRequired_FailsWithOriginalError (144ms)\r\n  PASS PrintRun_RequiredKeyFails_LogsOriginalError (275ms)\r\n  PASS  (413ms)\r\n\r\n===== Codeunit 59026 =====\r\nTest run completed: 4 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS LayoutMatch_NormaliseName (89ms)\r\n  PASS LayoutMatch_TwoVersions_NoUniqueMatch (33ms)\r\n  PASS LayoutMatch_PrefixNeverMatches (21ms)\r\n  PASS  (144ms)\r\n\r\n===== Codeunit 59027 =====\r\nTest run completed: 38 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS FindBarCode_ValidReference_Returned (366ms)\r\n  PASS FindBarCode_ItemNumberReference_Ignored (184ms)\r\n  PASS FindBarCode_InvalidOrExpired_Ignored (68ms)\r\n  PASS FindBarCode_ValidityBoundaries_Accepted (57ms)\r\n  PASS FindBarCode_TwoValid_FirstByReferenceNo (57ms)\r\n  PASS FindBarCode_Variant_FilteredByVariant (93ms)\r\n  PASS FindItemUnitByBarCode_Valid_ReturnsKey (86ms)\r\n  PASS FindItemUnitByBarCode_InvalidOrExpired_Ignored (85ms)\r\n  PASS FindItemUnitByBarCode_NotAGtin_False (67ms)\r\n  PASS GetItemEAN_NoReference_Raises (74ms)\r\n  PASS GetItemEAN_NoReference_UnitFieldIgnored (91ms)\r\n  PASS GetItemEAN_NoReference_SalesLineItemEANFallbackKept (83ms)\r\n  PASS Analyze_Categories (284ms)\r\n  PASS CreateMissing_CreatesOnlyMissing_Idempotent (250ms)\r\n  PASS CreateMissing_NonNumeric_NotWritten (285ms)\r\n  PASS ReplaceDifferent_KeepsNonGtinReferences (371ms)\r\n  PASS ReplaceDifferent_SkipsEDIEntry (190ms)\r\n  PASS CreateMissing_TogaDisabled_Raises (175ms)\r\n  PASS ReplaceDifferent_TogaDisabled_Raises (139ms)\r\n  PASS CreateMissing_TargetKeyBarCodeInvalid_Skipped (144ms)\r\n  PASS CreateMissing_TargetKeyExpired_Skipped (196ms)\r\n  PASS ReplaceDifferent_TargetKeyBarCodeInvalid_Skipped (186ms)\r\n  PASS ReplaceDifferent_TargetKeyExpired_Skipped (174ms)\r\n  PASS ReplaceDifferent_ReferenceBecomesEDIAfterSnapshot_Skipped (193ms)\r\n  PASS ReplaceDifferent_ReferenceDeletedAfterSnapshot_NoError (211ms)\r\n  PASS CreateMissing_TargetKeyOccupiedAfterSnapshot_Skipped (190ms)\r\n  PASS Analyze_PaddedReference_Different (96ms)\r\n  PASS Analyze_UnpaddedReferenceOf14DigitUnitEAN_Different (60ms)\r\n  PASS Analyze_ExactReference_Equal (154ms)\r\n  PASS ReplaceDifferent_PaddedReference_ReplacedByUnitEAN (96ms)\r\n  PASS Analyze_Relevant_SoldNotBlockedItem (163ms)\r\n  PASS Analyze_Relevant_NotRelevantCases (296ms)\r\n  PASS Analyze_Relevant_SaleOnCutoffDate_Relevant (63ms)\r\n  PASS Analyze_Relevant_KeepsCallerFilter (177ms)\r\n  PASS Analyze_ReferenceDeactivated_OnlyForOccupiedTargetKey (165ms)\r\n  PASS Analyze_ReferenceDeactivated_OtherInvalidValue_NotFlagged (150ms)\r\n  PASS Page_DataMigrationGroup (274ms)\r\n  PASS  (14ms)\r\n\r\n===== Codeunit 59028 =====\r\nTest run completed: 13 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS PostWhseShipment_WithLU_FillsSSCCDX (638ms)\r\n  PASS PostWhseShipment_MultiLUShipment_CreatesOneRecordPerLULine (158ms)\r\n  PASS PostWhseShipment_GustavCompany_NoSSCCDX (26ms)\r\n  PASS PostWhseShipment_OnlyMasterFlagOn_NoSSCCDX (45ms)\r\n  PASS PostWhseShipment_ZeroQtyLULine_Excluded (139ms)\r\n  PASS PostWhseShipment_RePost_NoDuplicateSSCCDX (70ms)\r\n  PASS PostWhseShipment_LULines_GetSalesShipmentNo (107ms)\r\n  PASS FullIntegration_SalesOrderToSSCCDX_ViaPickAndPost (996ms)\r\n  PASS PostWhseShipment_LUWithoutSSCC_NoSSCCDX (751ms)\r\n  PASS PostWhseShipment_ExpiryDateFromILEFallback (768ms)\r\n  PASS PostWhseShipment_NoSalesLine_NoSSCCDX (375ms)\r\n  PASS PostWhseShipment_NonLotItem_ExpiryDateEmpty_QtyRounded (528ms)\r\n  PASS  (606ms)\r\n\r\n===== Codeunit 59031 =====\r\nTest run completed: 12 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS ValidateLUNo_ActionTypeTake_CreatesLogisticUnit (366ms)\r\n  PASS ValidateLUNo_SameLuNoTwice_AccumulatesQuantityWithoutDuplicating (228ms)\r\n  PASS ValidateLUNo_SplitLineAcrossTwoLUs_NoOfLUsCountsTwo (242ms)\r\n  PASS ValidateLUNo_SetToZero_RemovesLULines (113ms)\r\n  PASS ValidateLUNo_WithPartialQty_LULineHasPartialQty (92ms)\r\n  PASS WhseActLineOnValidateLuNo_DirectCall_CreatesLogisticUnit (126ms)\r\n  PASS ValidateLUNo_ActionTypePlace_RaisesError (53ms)\r\n  PASS ValidateLUNo_WithAssignedToLuNo_SetsParentOnNewLogisticUnit (110ms)\r\n  PASS ValidateAssignedToLuNo_NoLuAllocatedYet_DoesNothing (58ms)\r\n  PASS ValidateAssignedToLuNo_ExistingLu_ReparentsLogisticUnit (204ms)\r\n  PASS ValidateAssignedToLuNo_TargetLuMissing_RaisesError (122ms)\r\n  PASS  (717ms)\r\n\r\n===== Codeunit 59032 =====\r\nTest run completed: 16 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS GetQtyOnPalett_LessThanFull_ReturnsQty (946ms)\r\n  PASS GetQtyOnPalett_ExactPallet_ReturnsPalletQty (234ms)\r\n  PASS GetNoOfPaletts_MultiPallet_ReturnsCount (161ms)\r\n  PASS GetNoOfPaletts_Partial_RoundsUp (155ms)\r\n  PASS CreateSSCC_ValidSetup_Returns18CharCode (72ms)\r\n  PASS CreateSSCC_EmptySerialCode_RaisesError (9ms)\r\n  PASS CalcMinExpirationDate_ReturnEarlierDate (266ms)\r\n  PASS PickingListTOG_RendersWithoutError (333ms)\r\n  PASS PutAwayListTOG_RendersWithoutError (288ms)\r\n  PASS WhseReceiptTOG_RendersWithoutError (407ms)\r\n  PASS LabelSheetPalette_RendersWithoutError (260ms)\r\n  PASS PrintPick_TogaCompany_RoutesToTOGReport (214ms)\r\n  PASS PrintPutAway_TogaCompany_RoutesToTOGReport (189ms)\r\n  PASS PrintRcpt_TogaCompany_RoutesToTOGReport (230ms)\r\n  PASS PrintPick_GustavCompany_SubscriberExitsEarly (10ms)\r\n  PASS  (780ms)\r\n\r\n===== Codeunit 59034 =====\r\nTest run completed: 12 passed, 0 failed, 0 skipped.\r\n\r\nResults:\r\n  PASS Resolve_ItemNumberFirst_GtinChosen (986ms)\r\n  PASS Resolve_NoGtin_Empty (315ms)\r\n  PASS Resolve_CULine_LineGtinIsCU (431ms)\r\n  PASS Resolve_TULine_LineGtinIsTU (341ms)\r\n  PASS Resolve_Variant_UsedForLookup (292ms)\r\n  PASS CorrectSalesLine_RawValue_Replaced (585ms)\r\n  PASS CorrectSalesLine_MappingValue_Kept (297ms)\r\n  PASS CorrectSalesLine_NoGtin_Empty (507ms)\r\n  PASS CorrectSSCCLine_RawValue_Replaced (546ms)\r\n  PASS FindItemUnitByGtin_Delegates (271ms)\r\n  PASS Faktor4_ItemNumberReference_ReturnsGtin (783ms)\r\n  PASS  (360ms)\r\n\r\nTest run completed: 325 passed, 8 failed, 0 skipped.",
   "data": {
     "success": false,
-    "total": 13,
-    "passed": 11,
-    "failed": 2,
+    "passed": 325,
+    "failed": 8,
     "skipped": 0,
+    "total": 333,
     "results": [
-      { "codeunitId": 59020, "methodName": "TestCaseB01", "status": "Failed", "output": "Injected error for the diagnostic comparison.\nAL call stack:\n  \"Fixture Base Test\"(CodeUnit 59020).TestCaseB01 line 7 - Fixture Base Test by Aproda AG v1.0.0.0\n  \"Test Runner - Isol. Disabled\"(CodeUnit 130450).Run line 12 - Test Runner by Microsoft v28.0.0.0", "durationMs": 44 },
-      { "codeunitId": 59020, "methodName": "TestCaseB02", "status": "Passed", "output": "", "durationMs": 12 },
-      { "codeunitId": 59020, "methodName": "TestCaseB03", "status": "Passed", "output": "", "durationMs": 9 },
-      { "codeunitId": 59020, "methodName": "TestCaseB04", "status": "Passed", "output": "", "durationMs": 11 },
-      { "codeunitId": 59020, "methodName": "TestCaseB05", "status": "Passed", "output": "", "durationMs": 10 },
-      { "codeunitId": 59020, "methodName": "TestCaseB06", "status": "Passed", "output": "", "durationMs": 14 },
-      { "codeunitId": 59020, "methodName": "TestCaseB07", "status": "Passed", "output": "", "durationMs": 8 },
-      { "codeunitId": 59020, "methodName": "TestCaseB08", "status": "Passed", "output": "", "durationMs": 9 },
-      { "codeunitId": 59020, "methodName": "TestCaseB09", "status": "Passed", "output": "", "durationMs": 13 },
-      { "codeunitId": 59020, "methodName": "TestCaseB10", "status": "Passed", "output": "", "durationMs": 12 },
-      { "codeunitId": 59020, "methodName": "TestCaseB11", "status": "Passed", "output": "", "durationMs": 10 },
-      { "codeunitId": 59020, "methodName": "TestCaseB12", "status": "Passed", "output": "", "durationMs": 9 },
-      { "codeunitId": 59020, "methodName": "", "status": "Failed", "output": "Injected error for the diagnostic comparison.\nAL call stack:\n  \"Fixture Base Test\"(CodeUnit 59020).TestCaseB01 line 7 - Fixture Base Test by Aproda AG v1.0.0.0", "durationMs": 0 }
+      {
+        "codeunitId": 59010,
+        "methodName": "SetupSmoke_EDIAgreementActive_InvoiceHas2ILEs",
+        "status": "passed",
+        "output": "",
+        "durationMs": 114
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "EDICustomer_1LineSplit2ILEs_CorrectInvoice_Succeeds",
+        "status": "passed",
+        "output": "",
+        "durationMs": 788
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "EDICustomer_3Lines_Line2Split2ILEs_CorrectInvoice_Succeeds",
+        "status": "passed",
+        "output": "",
+        "durationMs": 527
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "EDICustomer_1Line_Split3ILEs_CorrectInvoice_Succeeds",
+        "status": "passed",
+        "output": "",
+        "durationMs": 988
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "EDICustomer_1Line_SingleILE_CorrectInvoice_Succeeds",
+        "status": "passed",
+        "output": "",
+        "durationMs": 444
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "NonEDICustomer_1Line_Split2ILEs_CorrectInvoice_Succeeds",
+        "status": "passed",
+        "output": "",
+        "durationMs": 706
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "S4_EDICustomer_3Lines_Line2Split2ILEs_CMOrderMatchesInvoice",
+        "status": "passed",
+        "output": "",
+        "durationMs": 563
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "S5_EDICustomer_NoDescriptionLinesOnCreditMemo",
+        "status": "passed",
+        "output": "",
+        "durationMs": 355
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "S12_EDICustomer_3Lines_Line1Split2ILEs_CMOrderMatchesInvoice",
+        "status": "passed",
+        "output": "",
+        "durationMs": 547
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "S13_EDICustomer_3Lines_Line3Split2ILEs_CMOrderMatchesInvoice",
+        "status": "passed",
+        "output": "",
+        "durationMs": 718
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "N01_EDI_5Lines_L1Split2ILEs_CmCorr_CMOrderMatchesInvoice",
+        "status": "passed",
+        "output": "",
+        "durationMs": 532
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "N02_EDI_5Lines_L1Split2ILEs_BelegKop_CMOrderMatchesInvoice",
+        "status": "passed",
+        "output": "",
+        "durationMs": 761
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "N03_EDI_5Lines_L5Split2ILEs_CmCorr_CMOrderMatchesInvoice",
+        "status": "passed",
+        "output": "",
+        "durationMs": 573
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "N04_EDI_17Lines_L1Split2ILEs_CmCorr_CMOrderMatchesInvoice",
+        "status": "passed",
+        "output": "",
+        "durationMs": 437
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "N05_EDI_17Lines_L1Split2ILEs_BelegKop_CMOrderMatchesInvoice",
+        "status": "passed",
+        "output": "",
+        "durationMs": 998
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "N06_EDI_17L_L9Split_L5ZeroQty_CmCorr_CMOrderMatchesInvoice",
+        "status": "passed",
+        "output": "",
+        "durationMs": 367
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "N07_EDI_17L_L9Split_L5ZeroQty_BelegKop_CMOrderMatchesInvoice",
+        "status": "passed",
+        "output": "",
+        "durationMs": 84
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "N08_EDI_17Lines_L17Split2ILEs_CmCorr_CMOrderMatchesInvoice",
+        "status": "passed",
+        "output": "",
+        "durationMs": 109
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "NonEDICustomer_1Line_SingleILE_CorrectInvoice_Succeeds",
+        "status": "passed",
+        "output": "",
+        "durationMs": 900
+      },
+      {
+        "codeunitId": 59010,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 522
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "Static_WithChargeCode_PropagatesPercentLine",
+        "status": "passed",
+        "output": "",
+        "durationMs": 702
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "Piece_WithSuperiorCharge_PropagatesPercentLine",
+        "status": "passed",
+        "output": "",
+        "durationMs": 572
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "Per100kg_WithSuperiorCharge_PropagatesPercentLine",
+        "status": "passed",
+        "output": "",
+        "durationMs": 477
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "PerPallet_WithSuperiorCharge_PropagatesPercentLine",
+        "status": "passed",
+        "output": "",
+        "durationMs": 510
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenPercentOnPercentChain_WhenCalculationIsRun_ThenEachLevelUsesItsSuperiorAmount",
+        "status": "passed",
+        "output": "",
+        "durationMs": 92
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenCircularSuperiorChargeCodes_WhenCalculationIsRun_ThenCircularReferenceErrorIsRaised",
+        "status": "failed",
+        "output": "Assert.ExpectedError failed. Expected: circular Superior Charge Code reference. Actual: Die Berechnungszeilen von Artikel GL00000009 und Kalkulation GU00000016-C3 enthalten einen kreisf\u00F6rmigen \u00AB\u00DCbergeordneter Zuschlagscode\u00BB-Verweis: GU00000-P2 -\u003E GU00000-P1 -\u003E GU00000-P2. Sie k\u00F6nnen nicht berechnet werden..\r\nAL Callstack:\r\n\u0022Library Assert\u0022(CodeUnit 130002).ExpectedError line 7 - Library Assert by Microsoft version 28.2.50931.51034\r\n\u0022Import Calc Perc. Prop. Tests\u0022(CodeUnit 59011).GivenCircularSuperiorChargeCodes_WhenCalculationIsRun_ThenCircularReferenceErrorIsRaised line 25 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n\r\n",
+        "durationMs": 63
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenGenuineTwoLineCycleStillDetected_WhenCalculationIsRun_ThenErrorIsRaised",
+        "status": "failed",
+        "output": "Assert.ExpectedError failed. Expected: circular Superior Charge Code reference. Actual: Die Berechnungszeilen von Artikel GL00000009 und Kalkulation GU00000016-C20 enthalten einen kreisf\u00F6rmigen \u00AB\u00DCbergeordneter Zuschlagscode\u00BB-Verweis: GU00000-P2 -\u003E GU00000-P1 -\u003E GU00000-P2. Sie k\u00F6nnen nicht berechnet werden..\r\nAL Callstack:\r\n\u0022Library Assert\u0022(CodeUnit 130002).ExpectedError line 7 - Library Assert by Microsoft version 28.2.50931.51034\r\n\u0022Import Calc Perc. Prop. Tests\u0022(CodeUnit 59011).GivenGenuineTwoLineCycleStillDetected_WhenCalculationIsRun_ThenErrorIsRaised line 23 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n\r\n",
+        "durationMs": 34
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenCircularSuperiorChargeCodes_WhenCalculationIsRun_ThenErrorNamesItemAndChain",
+        "status": "passed",
+        "output": "",
+        "durationMs": 31
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenCircularSuperiorChargeCodes_WhenCurrencyIsRevalidated_ThenErrorNamesItemAndChain",
+        "status": "passed",
+        "output": "",
+        "durationMs": 71
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenCycleNotStartingAtQueriedLine_WhenResolverRuns_ThenReportedChainExcludesUnrelatedLine",
+        "status": "passed",
+        "output": "",
+        "durationMs": 10
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenSelfReferencingPercentLine_WhenCalculationIsRun_ThenResolvesWithoutError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 43
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenSelfReferencingPercentLine_WhenBatchCheckRuns_ThenNotReported",
+        "status": "passed",
+        "output": "",
+        "durationMs": 9
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenSelfReferencingPercentLine_WhenLineIsValidated_ThenValidateSucceeds",
+        "status": "passed",
+        "output": "",
+        "durationMs": 18
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenTwoLineCycleEnteredInteractively_WhenSecondLineIsValidated_ThenValidateRejectsImmediately",
+        "status": "failed",
+        "output": "Assert.ExpectedError failed. Expected: circular Superior Charge Code reference. Actual: Die Berechnungszeilen von Artikel  und Kalkulation GU00000020-C8 enthalten einen kreisf\u00F6rmigen \u00AB\u00DCbergeordneter Zuschlagscode\u00BB-Verweis: GU00000-P2 -\u003E GU00000-P1 -\u003E GU00000-P2. Sie k\u00F6nnen nicht berechnet werden..\r\nAL Callstack:\r\n\u0022Library Assert\u0022(CodeUnit 130002).ExpectedError line 7 - Library Assert by Microsoft version 28.2.50931.51034\r\n\u0022Import Calc Perc. Prop. Tests\u0022(CodeUnit 59011).GivenTwoLineCycleEnteredInteractively_WhenSecondLineIsValidated_ThenValidateRejectsImmediately line 36 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n\r\n",
+        "durationMs": 25
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenCopyChargeLinesWithPreExistingCycleInSource_WhenCopied_ThenCopySucceeds",
+        "status": "passed",
+        "output": "",
+        "durationMs": 23
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenMixedValidAndInvalidCalculations_WhenBatchCheckRuns_ThenOnlyInvalidOnesAreReported",
+        "status": "failed",
+        "output": "Assert.IsTrue failed. The cycle reason must be reported.\r\nAL Callstack:\r\n\u0022Library Assert\u0022(CodeUnit 130002).IsTrue line 3 - Library Assert by Microsoft version 28.2.50931.51034\r\n\u0022Import Calc Perc. Prop. Tests\u0022(CodeUnit 59011).GivenMixedValidAndInvalidCalculations_WhenBatchCheckRuns_ThenOnlyInvalidOnesAreReported line 36 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n\r\n",
+        "durationMs": 24
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenDuplicateChargeCodeOnNonPercentLines_WhenBatchCheckRuns_ThenNotReported",
+        "status": "passed",
+        "output": "",
+        "durationMs": 7
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenSelfReferencingSuperiorChargeCodeOnNonPercentLine_WhenLineIsValidated_ThenValidateSucceeds",
+        "status": "passed",
+        "output": "",
+        "durationMs": 8
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenMissingSuperiorOnNonPercentLine_WhenBatchCheckRuns_ThenNotReported",
+        "status": "passed",
+        "output": "",
+        "durationMs": 6
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenSameChargeCodeValuesAcrossTwoCalculations_WhenBatchCheckRuns_ThenNoFalseCycleIsReported",
+        "status": "passed",
+        "output": "",
+        "durationMs": 18
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "GivenPercentChargeWithoutSuperiorChargeCode_WhenCalculationIsRun_ThenMandatoryFieldErrorIsRaised",
+        "status": "passed",
+        "output": "",
+        "durationMs": 45
+      },
+      {
+        "codeunitId": 59011,
+        "methodName": "",
+        "status": "failed",
+        "output": "\u00DCbergeordneter Zuschlagscode must have a value in Artikel Kalkulation Zuschlag: Kalkulationscode=GU00000029-C4, Zeilennr.=703. It cannot be zero or empty.\r\nAL Callstack:\r\n\u0022Calculation Mgt.\u0022(CodeUnit 50037).ChargeLineCalcValue line 42 - Gustav Gerig AG Base by Aproda AG version 25.0.0.182\r\n\u0022Calculation Mgt.\u0022(CodeUnit 50037).CalcChargeLinesInDependencyOrder line 21 - Gustav Gerig AG Base by Aproda AG version 25.0.0.182\r\n\u0022Calculation Mgt.\u0022(CodeUnit 50037).CheckChargeLines line 14 - Gustav Gerig AG Base by Aproda AG version 25.0.0.182\r\n\u0022Import Calc Perc. Prop. Tests\u0022(CodeUnit 59011).GivenPercentChargeWithoutSuperiorChargeCode_WhenCalculationIsRun_ThenMandatoryFieldErrorIsRaised line 20 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n\r\n",
+        "durationMs": 799
+      },
+      {
+        "codeunitId": 59012,
+        "methodName": "BC_N01_EDI_CopyDoc_InvToOrder_LinesComplete",
+        "status": "passed",
+        "output": "",
+        "durationMs": 393
+      },
+      {
+        "codeunitId": 59012,
+        "methodName": "BC_N02_NonEDI_CopyDoc_InvToOrder_LinesComplete",
+        "status": "passed",
+        "output": "",
+        "durationMs": 674
+      },
+      {
+        "codeunitId": 59012,
+        "methodName": "BC_N03_EDI_CopyDoc_InvToInvoice_LinesComplete",
+        "status": "passed",
+        "output": "",
+        "durationMs": 134
+      },
+      {
+        "codeunitId": 59012,
+        "methodName": "BC_N04_NonEDI_CopyDoc_InvToInvoice_LinesComplete",
+        "status": "passed",
+        "output": "",
+        "durationMs": 122
+      },
+      {
+        "codeunitId": 59012,
+        "methodName": "BC_N05_NonEDI_CopyDoc_InvToCreditMemo_LinesComplete",
+        "status": "passed",
+        "output": "",
+        "durationMs": 635
+      },
+      {
+        "codeunitId": 59012,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 961
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenCargoPercentChargeWithoutParentTotaling_WhenTotaled_ThenUnitCostContributionIsTen",
+        "status": "passed",
+        "output": "",
+        "durationMs": 494
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenCargoPercentChargeWithNonBaseUoM_WhenTotaled_ThenUnitCostIgnoresUomFactor",
+        "status": "passed",
+        "output": "",
+        "durationMs": 732
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenPercentChargesWithDifferentTotaling_WhenTotaled_ThenEachIsRoutedToItsOwnGroup",
+        "status": "passed",
+        "output": "",
+        "durationMs": 439
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenPrecomputedPieceAndPercentAmountsInSameGroup_WhenTotaled_ThenBothContributeExactlyOnce",
+        "status": "passed",
+        "output": "",
+        "durationMs": 450
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenStaticChargeWithBaseUoM_WhenTotaled_ThenStaticFormulaIsApplied",
+        "status": "passed",
+        "output": "",
+        "durationMs": 505
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenStaticChargeWithDifferentUoMs_WhenTotaled_ThenStaticUoMRatioIsApplied",
+        "status": "passed",
+        "output": "",
+        "durationMs": 583
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenPieceChargeWithBaseUoM_WhenTotaled_ThenPieceFormulaIsApplied",
+        "status": "passed",
+        "output": "",
+        "durationMs": 542
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenPieceChargeWithNonBasePurchaseUoM_WhenTotaled_ThenPieceFormulaIgnoresUoMFactor",
+        "status": "passed",
+        "output": "",
+        "durationMs": 543
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenPercentChargeWithIndependentUoMFactors_WhenTotaled_ThenOnlyQuantityIsApplied",
+        "status": "passed",
+        "output": "",
+        "durationMs": 450
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenPer100kgNetWeightWithBaseUoM_WhenTotaled_ThenNetWeightFormulaIsApplied",
+        "status": "passed",
+        "output": "",
+        "durationMs": 428
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenPer100kgGrossWeightWithBaseUoM_WhenTotaled_ThenGrossWeightFormulaIsApplied",
+        "status": "passed",
+        "output": "",
+        "durationMs": 465
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenPer100kgDripOffWeightWithBaseUoM_WhenTotaled_ThenDripOffWeightFormulaIsApplied",
+        "status": "passed",
+        "output": "",
+        "durationMs": 388
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenPer100kgNetWeightWithDifferentUoMs_WhenTotaled_ThenNetWeightUoMFormulaIsApplied",
+        "status": "passed",
+        "output": "",
+        "durationMs": 519
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenPer100kgGrossWeightWithDifferentUoMs_WhenTotaled_ThenGrossWeightUoMFormulaIsApplied",
+        "status": "passed",
+        "output": "",
+        "durationMs": 415
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenPer100kgDripOffWeightWithDifferentUoMs_WhenTotaled_ThenDripOffWeightUoMFormulaIsApplied",
+        "status": "passed",
+        "output": "",
+        "durationMs": 460
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenPerPalletChargesWithBasePurchaseUoM_WhenTotaled_ThenEveryPackageTypeUsesItsConfiguredUoM",
+        "status": "passed",
+        "output": "",
+        "durationMs": 332
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenPerPalletChargesWithNonBasePurchaseUoM_WhenTotaled_ThenPurchaseUoMFactorIsIgnored",
+        "status": "passed",
+        "output": "",
+        "durationMs": 199
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenTwoPurchaseLinesWithSameTotaling_WhenTotaled_ThenExistingGroupIsAccumulated",
+        "status": "passed",
+        "output": "",
+        "durationMs": 482
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenExistingCargoGroupWithNonBaseUoM_WhenTotaled_ThenExistingGroupIgnoresUoMFactor",
+        "status": "passed",
+        "output": "",
+        "durationMs": 436
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenReleasedTotalingAfterPurchaseLineDeletion_WhenRebuilt_ThenCurrentAmountAndReleasedFlagRemain",
+        "status": "passed",
+        "output": "",
+        "durationMs": 516
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenZeroQuantityPurchaseLine_WhenPurchaseCalculationIsCreated_ThenUnitCostIsNotUpdated",
+        "status": "passed",
+        "output": "",
+        "durationMs": 386
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenSmallPercentAmountAndLargeQuantity_WhenTotaled_ThenExactDecimalContributionIsKept",
+        "status": "passed",
+        "output": "",
+        "durationMs": 343
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "GivenZeroCalculationBaseQuantity_WhenPer100kgChargeIsCalculated_ThenAmountsAreZero",
+        "status": "passed",
+        "output": "",
+        "durationMs": 43
+      },
+      {
+        "codeunitId": 59013,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 161
+      },
+      {
+        "codeunitId": 59014,
+        "methodName": "GivenFifteenPalletsInThreeLines_WhenCargoPerPalletIsTotaled_ThenConvertedBaseFreightIsShown",
+        "status": "passed",
+        "output": "",
+        "durationMs": 7
+      },
+      {
+        "codeunitId": 59014,
+        "methodName": "GivenPerPalletCargoWithTenPercentSurcharge_WhenParentIsRecalculatedAndTotaled_ThenCargoIncludesSurcharge",
+        "status": "passed",
+        "output": "",
+        "durationMs": 536
+      },
+      {
+        "codeunitId": 59014,
+        "methodName": "GivenCargoAndMiscellaneousCharges_WhenTotaled_ThenAmountsAreRoutedToTheirOwnGroups",
+        "status": "passed",
+        "output": "",
+        "durationMs": 683
+      },
+      {
+        "codeunitId": 59014,
+        "methodName": "GivenExistingCargoTotal_WhenFurtherPurchaseLinesAreProcessed_ThenBaseAndPercentAreAccumulatedOnce",
+        "status": "passed",
+        "output": "",
+        "durationMs": 610
+      },
+      {
+        "codeunitId": 59014,
+        "methodName": "GivenChangedPerPalletChargeValue_WhenRecalculatedTwice_ThenTotalUsesOnlyLatestParentAndPercentAmounts",
+        "status": "passed",
+        "output": "",
+        "durationMs": 722
+      },
+      {
+        "codeunitId": 59014,
+        "methodName": "GivenForeignCurrencyRates_WhenPerPalletAndPercentAreTotaled_ThenBothUseTheSameRateDirection",
+        "status": "passed",
+        "output": "",
+        "durationMs": 618
+      },
+      {
+        "codeunitId": 59014,
+        "methodName": "GivenNonUnitPalletUoM_WhenPerPalletCargoIsTotaled_ThenQuantityConversionIsAppliedOnce",
+        "status": "passed",
+        "output": "",
+        "durationMs": 684
+      },
+      {
+        "codeunitId": 59014,
+        "methodName": "GivenFractionalFreightAcrossLines_WhenTotaled_ThenDocumentRoundingMatchesBusinessRule",
+        "status": "passed",
+        "output": "",
+        "durationMs": 634
+      },
+      {
+        "codeunitId": 59014,
+        "methodName": "GivenPercentChargeWithBlankOrDifferentTotaling_WhenTotaled_ThenItIsExcludedOrRoutedAccordingToConfiguration",
+        "status": "passed",
+        "output": "",
+        "durationMs": 644
+      },
+      {
+        "codeunitId": 59014,
+        "methodName": "GivenTwoSubordinatePercentCharges_WhenParentIsRecalculated_ThenEachConfiguredSurchargeIsIncludedExactlyOnce",
+        "status": "passed",
+        "output": "",
+        "durationMs": 651
+      },
+      {
+        "codeunitId": 59014,
+        "methodName": "GivenCalculationQuantityIsCleared_WhenTotaled_ThenOrderKeepsItsCargoSnapshot",
+        "status": "passed",
+        "output": "",
+        "durationMs": 756
+      },
+      {
+        "codeunitId": 59014,
+        "methodName": "GivenZeroPalletUoM_WhenSourceCalculationIsRun_ThenUserIsGuidedToItemUnits",
+        "status": "failed",
+        "output": "Assert.ExpectedError failed. Expected: Qty. per Unit of Measure must be greater than 0. Actual: Die Menge pro Masseinheit muss f\u00FCr die Artikel-Masseinheit GL00000022 und die Paletten-Masseinheit GU00000123 gr\u00F6sser als 0 sein. Bitte geben Sie einen Wert in den Artikel-Masseinheiten ein..\r\nAL Callstack:\r\n\u0022Library Assert\u0022(CodeUnit 130002).ExpectedError line 7 - Library Assert by Microsoft version 28.2.50931.51034\r\n\u0022Import Calc Totaling Reg\u0022(CodeUnit 59014).GivenZeroPalletUoM_WhenSourceCalculationIsRun_ThenUserIsGuidedToItemUnits line 4 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n\r\n",
+        "durationMs": 331
+      },
+      {
+        "codeunitId": 59014,
+        "methodName": "GivenZeroPalletUoM_WhenPurchaseCalculationIsRecalculated_ThenUserIsGuidedToItemUnits",
+        "status": "failed",
+        "output": "Assert.ExpectedError failed. Expected: Qty. per Unit of Measure must be greater than 0. Actual: Die Menge pro Masseinheit muss f\u00FCr die Artikel-Masseinheit GL00000022 und die Paletten-Masseinheit GU00000123 gr\u00F6sser als 0 sein. Bitte geben Sie einen Wert in den Artikel-Masseinheiten ein..\r\nAL Callstack:\r\n\u0022Library Assert\u0022(CodeUnit 130002).ExpectedError line 7 - Library Assert by Microsoft version 28.2.50931.51034\r\n\u0022Import Calc Totaling Reg\u0022(CodeUnit 59014).GivenZeroPalletUoM_WhenPurchaseCalculationIsRecalculated_ThenUserIsGuidedToItemUnits line 6 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n\r\n",
+        "durationMs": 482
+      },
+      {
+        "codeunitId": 59014,
+        "methodName": "",
+        "status": "failed",
+        "output": "Assert.ExpectedError failed. Expected: Qty. per Unit of Measure must be greater than 0. Actual: Die Menge pro Masseinheit muss f\u00FCr die Artikel-Masseinheit GL00000022 und die Paletten-Masseinheit GU00000123 gr\u00F6sser als 0 sein. Bitte geben Sie einen Wert in den Artikel-Masseinheiten ein..\r\nAL Callstack:\r\n\u0022Library Assert\u0022(CodeUnit 130002).ExpectedError line 7 - Library Assert by Microsoft version 28.2.50931.51034\r\n\u0022Import Calc Totaling Reg\u0022(CodeUnit 59014).GivenZeroPalletUoM_WhenPurchaseCalculationIsRecalculated_ThenUserIsGuidedToItemUnits line 6 - Gustav Gerig AG Base Test by Aproda AG version 25.0.0.68\r\n\r\n",
+        "durationMs": 365
+      },
+      {
+        "codeunitId": 59015,
+        "methodName": "GivenSurchargeChargeLineBeforeFreight_WhenCalculationIsRun_ThenSurchargeAmountIsZero",
+        "status": "passed",
+        "output": "",
+        "durationMs": 931
+      },
+      {
+        "codeunitId": 59015,
+        "methodName": "GivenSurchargeChargeLineBeforeFreight_WhenOrderIsCreated_ThenCargoStaysAtBaseFreight",
+        "status": "passed",
+        "output": "",
+        "durationMs": 673
+      },
+      {
+        "codeunitId": 59015,
+        "methodName": "GivenSurchargeLineAboveFreightLine_WhenFreightValueIsReentered_ThenSurchargeIsNotPropagated",
+        "status": "passed",
+        "output": "",
+        "durationMs": 491
+      },
+      {
+        "codeunitId": 59015,
+        "methodName": "GivenManualSurchargeAsLastDocumentRow_WhenFreightIsRecalculated_ThenSurchargeRowSurvives",
+        "status": "passed",
+        "output": "",
+        "durationMs": 425
+      },
+      {
+        "codeunitId": 59015,
+        "methodName": "GivenSurchargeAddedAfterOrderExists_WhenCalculationIsRerun_ThenOrderKeepsItsSnapshot",
+        "status": "passed",
+        "output": "",
+        "durationMs": 577
+      },
+      {
+        "codeunitId": 59015,
+        "methodName": "GivenSurchargeWithoutCurrency_WhenTotaled_ThenSurchargeUsesTheFreightRate",
+        "status": "passed",
+        "output": "",
+        "durationMs": 528
+      },
+      {
+        "codeunitId": 59015,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 628
+      },
+      {
+        "codeunitId": 59016,
+        "methodName": "GivenBlankCalculationAndPurchaseCurrency_WhenStaticChargeIsTotaled_ThenRateOneIsUsed",
+        "status": "passed",
+        "output": "",
+        "durationMs": 855
+      },
+      {
+        "codeunitId": 59016,
+        "methodName": "GivenForeignCalculationAndLocalPurchase_WhenRateChangesBeforeTotaling_ThenPurchaseRateIsAppliedIndependently",
+        "status": "passed",
+        "output": "",
+        "durationMs": 392
+      },
+      {
+        "codeunitId": 59016,
+        "methodName": "GivenForeignCalculationCurrency_WhenStaticChargeIsTotaled_ThenCalculationCurrencyRateIsUsed",
+        "status": "passed",
+        "output": "",
+        "durationMs": 298
+      },
+      {
+        "codeunitId": 59016,
+        "methodName": "GivenHistoricalCurrencyRates_WhenCalculationUsesWorkDate_ThenMostRecentRateIsUsed",
+        "status": "passed",
+        "output": "",
+        "durationMs": 375
+      },
+      {
+        "codeunitId": 59016,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 921
+      },
+      {
+        "codeunitId": 59017,
+        "methodName": "InsertBartenderLabelCode_ValidCode_RecordFound",
+        "status": "passed",
+        "output": "",
+        "durationMs": 147
+      },
+      {
+        "codeunitId": 59017,
+        "methodName": "GCSSSCCLabelGeneral_ValidBartenderCode_Accepted",
+        "status": "passed",
+        "output": "",
+        "durationMs": 82
+      },
+      {
+        "codeunitId": 59017,
+        "methodName": "GCSSSCCLabelGeneral_NonExistentCode_RaisesError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 4
+      },
+      {
+        "codeunitId": 59017,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 234
+      },
+      {
+        "codeunitId": 59019,
+        "methodName": "GetBartenderLabelCode_ShippingAgentSet_FallsBackToGCS",
+        "status": "passed",
+        "output": "",
+        "durationMs": 112
+      },
+      {
+        "codeunitId": 59019,
+        "methodName": "GetBartenderLabelCode_NoAgentNoASDX_ReturnsEmpty",
+        "status": "passed",
+        "output": "",
+        "durationMs": 21
+      },
+      {
+        "codeunitId": 59019,
+        "methodName": "GetBartenderLabelCode_PartnerLineWithEmptyCode_FallsBackToGCS",
+        "status": "passed",
+        "output": "",
+        "durationMs": 92
+      },
+      {
+        "codeunitId": 59019,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 226
+      },
+      {
+        "codeunitId": 59020,
+        "methodName": "TC_P01_GivenManorNonCD_WhenPrintFromLU_ThenNPrimaryLabelsDispatched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 608
+      },
+      {
+        "codeunitId": 59020,
+        "methodName": "TC_P02_GivenManorCD_WhenPrintFromLU_Then1AlternateLabelDispatched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 179
+      },
+      {
+        "codeunitId": 59020,
+        "methodName": "TC_P03_GivenCoopNonCD_WhenPrintFromLU_ThenNPrimaryLabelsDispatched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 105
+      },
+      {
+        "codeunitId": 59020,
+        "methodName": "TC_P04_GivenCoopCD_WhenPrintFromLU_ThenZeroLabelsDispatched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 110
+      },
+      {
+        "codeunitId": 59020,
+        "methodName": "TC_P05_GivenPistorSingleLine_WhenPrintFromLU_ThenPrimaryLabelDispatched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 112
+      },
+      {
+        "codeunitId": 59020,
+        "methodName": "TC_P06_GivenPistorMixedItems_WhenPrintFromLU_ThenAlternateLabelDispatched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 114
+      },
+      {
+        "codeunitId": 59020,
+        "methodName": "TC_P07_GivenMigrosStandard_WhenPrintFromLU_ThenNPrimaryLabelsDispatched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 102
+      },
+      {
+        "codeunitId": 59020,
+        "methodName": "TC_P08_GivenDennerStandard_WhenPrintFromLU_ThenNPrimaryLabelsDispatched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 100
+      },
+      {
+        "codeunitId": 59020,
+        "methodName": "TC_P09_GivenSingleLabel_WhenPrintFromLU_ThenExactly1LabelDispatched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 106
+      },
+      {
+        "codeunitId": 59020,
+        "methodName": "TC_P10_GivenNoPartnerLine_WhenPrintFromLU_ThenGCSFallbackLabelDispatched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 115
+      },
+      {
+        "codeunitId": 59020,
+        "methodName": "TC_P11_GivenPickWithLU_WhenPrintFromWarehouseActivity_ThenLabelsDispatched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 119
+      },
+      {
+        "codeunitId": 59020,
+        "methodName": "TC_P12_GivenShipmentWithLU_WhenPrintFromWarehouseShipment_ThenLabelsDispatched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 89
+      },
+      {
+        "codeunitId": 59020,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 865
+      },
+      {
+        "codeunitId": 59021,
+        "methodName": "ProfileOnPartner_AllValuesComeFromOneRecord",
+        "status": "passed",
+        "output": "",
+        "durationMs": 388
+      },
+      {
+        "codeunitId": 59021,
+        "methodName": "NoProfile_WithShippingAgent_UsesCompanyLabel",
+        "status": "passed",
+        "output": "",
+        "durationMs": 38
+      },
+      {
+        "codeunitId": 59021,
+        "methodName": "NoProfile_NoShippingAgent_LogsFailure",
+        "status": "passed",
+        "output": "",
+        "durationMs": 84
+      },
+      {
+        "codeunitId": 59021,
+        "methodName": "ProfileWithoutPrinter_UsesCompanyDefaultPrinter",
+        "status": "passed",
+        "output": "",
+        "durationMs": 83
+      },
+      {
+        "codeunitId": 59021,
+        "methodName": "NewProfile_DefaultsToTwoCopies",
+        "status": "passed",
+        "output": "",
+        "durationMs": 0
+      },
+      {
+        "codeunitId": 59021,
+        "methodName": "ProfileCopies_ArePassedToDispatch",
+        "status": "passed",
+        "output": "",
+        "durationMs": 90
+      },
+      {
+        "codeunitId": 59021,
+        "methodName": "PartnerWithTwoPartnerLines_ResolvesOneProfile",
+        "status": "passed",
+        "output": "",
+        "durationMs": 26
+      },
+      {
+        "codeunitId": 59021,
+        "methodName": "CustomerWithoutEDIPartner_FallsBackToCompanyLabel",
+        "status": "passed",
+        "output": "",
+        "durationMs": 25
+      },
+      {
+        "codeunitId": 59021,
+        "methodName": "TwoCustomersOneEDIPartner_ShareOneProfile",
+        "status": "passed",
+        "output": "",
+        "durationMs": 54
+      },
+      {
+        "codeunitId": 59021,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 791
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_AllContractKeysPresent",
+        "status": "passed",
+        "output": "",
+        "durationMs": 498
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_EmptyValuesAreEmptyStrings",
+        "status": "passed",
+        "output": "",
+        "durationMs": 93
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_DatesInBothFormats",
+        "status": "passed",
+        "output": "",
+        "durationMs": 88
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_NumbersWithoutSeparators",
+        "status": "passed",
+        "output": "",
+        "durationMs": 88
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_OrderNoIsExternalDocumentNo",
+        "status": "passed",
+        "output": "",
+        "durationMs": 75
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_GTINIsPieceEAN",
+        "status": "passed",
+        "output": "",
+        "durationMs": 77
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_ItemDescriptionFallsBackToItem",
+        "status": "passed",
+        "output": "",
+        "durationMs": 100
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_ContractKeys_MatchSingleList",
+        "status": "passed",
+        "output": "",
+        "durationMs": 68
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_V2Values_FromHeaderAndLine",
+        "status": "passed",
+        "output": "",
+        "durationMs": 266
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_FailingSourceNotRequired_Passes",
+        "status": "passed",
+        "output": "",
+        "durationMs": 90
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_FailingSourceRequired_Raises",
+        "status": "passed",
+        "output": "",
+        "durationMs": 88
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_EmptyRequiredList_ChecksNothing",
+        "status": "passed",
+        "output": "",
+        "durationMs": 71
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_SSCCMissing_AlwaysRaises",
+        "status": "passed",
+        "output": "",
+        "durationMs": 71
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_EmptyValueNotAnError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 64
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_CartonGTIN_FromCartonUnit",
+        "status": "passed",
+        "output": "",
+        "durationMs": 135
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_ItemReference_Order",
+        "status": "passed",
+        "output": "",
+        "durationMs": 146
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Build_Quantities_UnitAndScope",
+        "status": "passed",
+        "output": "",
+        "durationMs": 92
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Region_Crossdock_WithAndWithoutSuffix",
+        "status": "passed",
+        "output": "",
+        "durationMs": 253
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Region_NonCrossdock_Empty",
+        "status": "passed",
+        "output": "",
+        "durationMs": 86
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Region_ShortNumber_Empty",
+        "status": "passed",
+        "output": "",
+        "durationMs": 72
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "Region_HeaderValueWins",
+        "status": "passed",
+        "output": "",
+        "durationMs": 112
+      },
+      {
+        "codeunitId": 59022,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 644
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Send_Success_StampsLineAndLU",
+        "status": "passed",
+        "output": "",
+        "durationMs": 507
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Send_Failure_LogsWithContext",
+        "status": "passed",
+        "output": "",
+        "durationMs": 140
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Send_FailureOnFirstLabel_ContinuesRun",
+        "status": "passed",
+        "output": "",
+        "durationMs": 186
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Send_TwoFailures_BothPersisted",
+        "status": "passed",
+        "output": "",
+        "durationMs": 159
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "BeginRun_Failure_NoLabelAttempted",
+        "status": "passed",
+        "output": "",
+        "durationMs": 102
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "CrossdockSuppress_LogsSuppression",
+        "status": "passed",
+        "output": "",
+        "durationMs": 104
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Automatic_SkipsPrintedLines",
+        "status": "passed",
+        "output": "",
+        "durationMs": 133
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Manual_ReprintsAndIncrements",
+        "status": "passed",
+        "output": "",
+        "durationMs": 121
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "TenantGuardOff_AutomaticDoesNothing",
+        "status": "passed",
+        "output": "",
+        "durationMs": 120
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "TenantGuardOff_ManualRaises",
+        "status": "passed",
+        "output": "",
+        "durationMs": 107
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "TenantGuardOff_ManualNoUnits_StillRaises",
+        "status": "passed",
+        "output": "",
+        "durationMs": 18
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Automatic_NoLogisticUnits_NoRunEntries",
+        "status": "passed",
+        "output": "",
+        "durationMs": 22
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "SingleLabel_Success_StampsAllCoveredLines",
+        "status": "passed",
+        "output": "",
+        "durationMs": 134
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Log_FailedSend_StoresPayload",
+        "status": "passed",
+        "output": "",
+        "durationMs": 99
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Log_PayloadBlob_CopiedByFinishRun",
+        "status": "passed",
+        "output": "",
+        "durationMs": 115
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Log_Suppressed_NoPayload",
+        "status": "passed",
+        "output": "",
+        "durationMs": 109
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Log_PreconditionFailure_NoPayload",
+        "status": "passed",
+        "output": "",
+        "durationMs": 100
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Log_BeginRunFailure_NoPayload",
+        "status": "passed",
+        "output": "",
+        "durationMs": 88
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Log_PayloadRoundTrip_1KB",
+        "status": "passed",
+        "output": "",
+        "durationMs": 9
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Log_PayloadTemporaryRecord_RoundTrip",
+        "status": "passed",
+        "output": "",
+        "durationMs": 0
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Log_PayloadFileName",
+        "status": "passed",
+        "output": "",
+        "durationMs": 0
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Log_ShowPayload_EmptyEntry_Message",
+        "status": "passed",
+        "output": "",
+        "durationMs": 117
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Log_ShowPayload_WithPayload_OpensViewer",
+        "status": "passed",
+        "output": "",
+        "durationMs": 67
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "Retention_Register_IsIdempotentAndRegistersTable",
+        "status": "passed",
+        "output": "",
+        "durationMs": 3
+      },
+      {
+        "codeunitId": 59023,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 570
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "EAN_13Or14Digits_Accepted",
+        "status": "passed",
+        "output": "",
+        "durationMs": 341
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "EAN_8And12Digits_Accepted",
+        "status": "passed",
+        "output": "",
+        "durationMs": 56
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "EAN_15Digits_Rejected",
+        "status": "passed",
+        "output": "",
+        "durationMs": 62
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "EAN_9And11Digits_Rejected",
+        "status": "passed",
+        "output": "",
+        "durationMs": 32
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "GetItemEAN_PadsTo14",
+        "status": "passed",
+        "output": "",
+        "durationMs": 232
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "GetItemEAN_NonNumeric_Raises",
+        "status": "passed",
+        "output": "",
+        "durationMs": 74
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "GetItemEAN_WrongLength_Raises",
+        "status": "passed",
+        "output": "",
+        "durationMs": 52
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "GetItemEAN_Empty_Raises",
+        "status": "passed",
+        "output": "",
+        "durationMs": 57
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "EAN_NonNumeric_Rejected",
+        "status": "passed",
+        "output": "",
+        "durationMs": 47
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "EAN_Empty_Accepted",
+        "status": "passed",
+        "output": "",
+        "durationMs": 32
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "PickTrigger_RegisteredPick_PrintsAutomatically",
+        "status": "passed",
+        "output": "",
+        "durationMs": 204
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "PickTrigger_NonPickActivity_DoesNothing",
+        "status": "passed",
+        "output": "",
+        "durationMs": 95
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "PickTrigger_SuppressCommit_DoesNothing",
+        "status": "passed",
+        "output": "",
+        "durationMs": 101
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "PickTrigger_AlreadyPrinted_NotReprinted",
+        "status": "passed",
+        "output": "",
+        "durationMs": 109
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "DeliveryNote_FlagOnPartner_Suppressed",
+        "status": "passed",
+        "output": "",
+        "durationMs": 28
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "DeliveryNote_NoEDIPartner_NotSuppressed",
+        "status": "passed",
+        "output": "",
+        "durationMs": 6
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "DeliveryNote_FlagOffOnPartner_NotSuppressed",
+        "status": "passed",
+        "output": "",
+        "durationMs": 13
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "DeliveryNote_PartnerRecordMissing_NotSuppressed",
+        "status": "passed",
+        "output": "",
+        "durationMs": 16
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_EmptyCompany_CreatesBaseline",
+        "status": "passed",
+        "output": "",
+        "durationMs": 113
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_RunTwice_ChangesNothing",
+        "status": "passed",
+        "output": "",
+        "durationMs": 155
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_ExistingSeriesWithOtherLine_Untouched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 65
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_LayoutLinkedOnlyOnExactMatch",
+        "status": "passed",
+        "output": "",
+        "durationMs": 73
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_LayoutAmbiguous_NotLinked",
+        "status": "passed",
+        "output": "",
+        "durationMs": 81
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_LayoutSuggestion_DatePrefixAndBtw",
+        "status": "passed",
+        "output": "",
+        "durationMs": 62
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_LayoutPrefixName_NotLinked",
+        "status": "passed",
+        "output": "",
+        "durationMs": 54
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_LayoutLinkExisting_Untouched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 69
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_CompanySetup_FillsBlankOnly",
+        "status": "passed",
+        "output": "",
+        "durationMs": 105
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_PalletWeight_NonZero_Untouched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 62
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_MissingUnit_SkippedAndReported",
+        "status": "passed",
+        "output": "",
+        "durationMs": 69
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_NewLabelCode_GermanDescriptionTrimmed",
+        "status": "passed",
+        "output": "",
+        "durationMs": 61
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_ExistingLabelCode_KeepsDescription",
+        "status": "passed",
+        "output": "",
+        "durationMs": 56
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_RequiredKeys_FilledWhenBlankOnly",
+        "status": "passed",
+        "output": "",
+        "durationMs": 55
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Upgrade_QuantityKey_RenamedToPieceCount",
+        "status": "passed",
+        "output": "",
+        "durationMs": 46
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_RequiredKeys_DerivedListsExpanded",
+        "status": "passed",
+        "output": "",
+        "durationMs": 52
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_Printer_UniqueIDEnding_Set",
+        "status": "passed",
+        "output": "",
+        "durationMs": 59
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_Printer_UniqueNameWithSSCC_Set",
+        "status": "passed",
+        "output": "",
+        "durationMs": 52
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_Printer_TwoMatches_Empty",
+        "status": "passed",
+        "output": "",
+        "durationMs": 60
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_Printer_AlreadySet_Untouched",
+        "status": "passed",
+        "output": "",
+        "durationMs": 57
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_WillCreateSeries_TrueThenFalse",
+        "status": "passed",
+        "output": "",
+        "durationMs": 69
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_Summary_ListsResults",
+        "status": "passed",
+        "output": "",
+        "durationMs": 98
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_Summary_NothingSkippedNoPrinter",
+        "status": "passed",
+        "output": "",
+        "durationMs": 57
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "LabelCode_RequiredKeys_UnknownKey_Rejected",
+        "status": "passed",
+        "output": "",
+        "durationMs": 1
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "LabelCode_RequiredKeys_NormalisedAndEmptyOk",
+        "status": "passed",
+        "output": "",
+        "durationMs": 0
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "LabelCode_ContractKeys_31InSpecOrder",
+        "status": "passed",
+        "output": "",
+        "durationMs": 0
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "Defaults_TenantFlagOff_Raises",
+        "status": "passed",
+        "output": "",
+        "durationMs": 48
+      },
+      {
+        "codeunitId": 59024,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 258
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "BeginRun_IntegrationDisabled_ReturnsFalseWithReason",
+        "status": "passed",
+        "output": "",
+        "durationMs": 123
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "BeginRun_NoSetupRecord_ReturnsFalseWithReason",
+        "status": "passed",
+        "output": "",
+        "durationMs": 2
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "BeginRun_IntegrationEnabledTokenNotDue_ReturnsTrue",
+        "status": "passed",
+        "output": "",
+        "durationMs": 8
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "BeginRun_TokenDueInWriteTransaction_SkipsRefresh",
+        "status": "passed",
+        "output": "",
+        "durationMs": 5
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "SendLabel_LabelCodeWithoutLayout_FailsBeforeAnyCall",
+        "status": "passed",
+        "output": "",
+        "durationMs": 16
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "SendLabel_LayoutNotImported_Fails",
+        "status": "passed",
+        "output": "",
+        "durationMs": 19
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "SendLabel_StoredNameWithoutBtw_ResolvesLayout",
+        "status": "passed",
+        "output": "",
+        "durationMs": 26
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "SendLabel_TwoNormalisedMatches_AmbiguousError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 29
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "SendLabel_NoNormalisedMatch_NotImportedError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 18
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "SendLabel_NoPrinter_Fails",
+        "status": "passed",
+        "output": "",
+        "durationMs": 18
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "SendLabel_PrinterNotImported_Fails",
+        "status": "passed",
+        "output": "",
+        "durationMs": 26
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "SendLabel_PreconditionsMetPayloadFails_ReturnsFalseWithReason",
+        "status": "passed",
+        "output": "",
+        "durationMs": 30
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "SendLabel_FailingKeyNotRequired_IsSent",
+        "status": "passed",
+        "output": "",
+        "durationMs": 668
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "SendLabel_FailingKeyRequired_FailsWithOriginalError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 144
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "PrintRun_RequiredKeyFails_LogsOriginalError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 275
+      },
+      {
+        "codeunitId": 59025,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 413
+      },
+      {
+        "codeunitId": 59026,
+        "methodName": "LayoutMatch_NormaliseName",
+        "status": "passed",
+        "output": "",
+        "durationMs": 89
+      },
+      {
+        "codeunitId": 59026,
+        "methodName": "LayoutMatch_TwoVersions_NoUniqueMatch",
+        "status": "passed",
+        "output": "",
+        "durationMs": 33
+      },
+      {
+        "codeunitId": 59026,
+        "methodName": "LayoutMatch_PrefixNeverMatches",
+        "status": "passed",
+        "output": "",
+        "durationMs": 21
+      },
+      {
+        "codeunitId": 59026,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 144
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "FindBarCode_ValidReference_Returned",
+        "status": "passed",
+        "output": "",
+        "durationMs": 366
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "FindBarCode_ItemNumberReference_Ignored",
+        "status": "passed",
+        "output": "",
+        "durationMs": 184
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "FindBarCode_InvalidOrExpired_Ignored",
+        "status": "passed",
+        "output": "",
+        "durationMs": 68
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "FindBarCode_ValidityBoundaries_Accepted",
+        "status": "passed",
+        "output": "",
+        "durationMs": 57
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "FindBarCode_TwoValid_FirstByReferenceNo",
+        "status": "passed",
+        "output": "",
+        "durationMs": 57
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "FindBarCode_Variant_FilteredByVariant",
+        "status": "passed",
+        "output": "",
+        "durationMs": 93
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "FindItemUnitByBarCode_Valid_ReturnsKey",
+        "status": "passed",
+        "output": "",
+        "durationMs": 86
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "FindItemUnitByBarCode_InvalidOrExpired_Ignored",
+        "status": "passed",
+        "output": "",
+        "durationMs": 85
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "FindItemUnitByBarCode_NotAGtin_False",
+        "status": "passed",
+        "output": "",
+        "durationMs": 67
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "GetItemEAN_NoReference_Raises",
+        "status": "passed",
+        "output": "",
+        "durationMs": 74
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "GetItemEAN_NoReference_UnitFieldIgnored",
+        "status": "passed",
+        "output": "",
+        "durationMs": 91
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "GetItemEAN_NoReference_SalesLineItemEANFallbackKept",
+        "status": "passed",
+        "output": "",
+        "durationMs": 83
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "Analyze_Categories",
+        "status": "passed",
+        "output": "",
+        "durationMs": 284
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "CreateMissing_CreatesOnlyMissing_Idempotent",
+        "status": "passed",
+        "output": "",
+        "durationMs": 250
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "CreateMissing_NonNumeric_NotWritten",
+        "status": "passed",
+        "output": "",
+        "durationMs": 285
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "ReplaceDifferent_KeepsNonGtinReferences",
+        "status": "passed",
+        "output": "",
+        "durationMs": 371
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "ReplaceDifferent_SkipsEDIEntry",
+        "status": "passed",
+        "output": "",
+        "durationMs": 190
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "CreateMissing_TogaDisabled_Raises",
+        "status": "passed",
+        "output": "",
+        "durationMs": 175
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "ReplaceDifferent_TogaDisabled_Raises",
+        "status": "passed",
+        "output": "",
+        "durationMs": 139
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "CreateMissing_TargetKeyBarCodeInvalid_Skipped",
+        "status": "passed",
+        "output": "",
+        "durationMs": 144
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "CreateMissing_TargetKeyExpired_Skipped",
+        "status": "passed",
+        "output": "",
+        "durationMs": 196
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "ReplaceDifferent_TargetKeyBarCodeInvalid_Skipped",
+        "status": "passed",
+        "output": "",
+        "durationMs": 186
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "ReplaceDifferent_TargetKeyExpired_Skipped",
+        "status": "passed",
+        "output": "",
+        "durationMs": 174
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "ReplaceDifferent_ReferenceBecomesEDIAfterSnapshot_Skipped",
+        "status": "passed",
+        "output": "",
+        "durationMs": 193
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "ReplaceDifferent_ReferenceDeletedAfterSnapshot_NoError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 211
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "CreateMissing_TargetKeyOccupiedAfterSnapshot_Skipped",
+        "status": "passed",
+        "output": "",
+        "durationMs": 190
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "Analyze_PaddedReference_Different",
+        "status": "passed",
+        "output": "",
+        "durationMs": 96
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "Analyze_UnpaddedReferenceOf14DigitUnitEAN_Different",
+        "status": "passed",
+        "output": "",
+        "durationMs": 60
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "Analyze_ExactReference_Equal",
+        "status": "passed",
+        "output": "",
+        "durationMs": 154
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "ReplaceDifferent_PaddedReference_ReplacedByUnitEAN",
+        "status": "passed",
+        "output": "",
+        "durationMs": 96
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "Analyze_Relevant_SoldNotBlockedItem",
+        "status": "passed",
+        "output": "",
+        "durationMs": 163
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "Analyze_Relevant_NotRelevantCases",
+        "status": "passed",
+        "output": "",
+        "durationMs": 296
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "Analyze_Relevant_SaleOnCutoffDate_Relevant",
+        "status": "passed",
+        "output": "",
+        "durationMs": 63
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "Analyze_Relevant_KeepsCallerFilter",
+        "status": "passed",
+        "output": "",
+        "durationMs": 177
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "Analyze_ReferenceDeactivated_OnlyForOccupiedTargetKey",
+        "status": "passed",
+        "output": "",
+        "durationMs": 165
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "Analyze_ReferenceDeactivated_OtherInvalidValue_NotFlagged",
+        "status": "passed",
+        "output": "",
+        "durationMs": 150
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "Page_DataMigrationGroup",
+        "status": "passed",
+        "output": "",
+        "durationMs": 274
+      },
+      {
+        "codeunitId": 59027,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 14
+      },
+      {
+        "codeunitId": 59028,
+        "methodName": "PostWhseShipment_WithLU_FillsSSCCDX",
+        "status": "passed",
+        "output": "",
+        "durationMs": 638
+      },
+      {
+        "codeunitId": 59028,
+        "methodName": "PostWhseShipment_MultiLUShipment_CreatesOneRecordPerLULine",
+        "status": "passed",
+        "output": "",
+        "durationMs": 158
+      },
+      {
+        "codeunitId": 59028,
+        "methodName": "PostWhseShipment_GustavCompany_NoSSCCDX",
+        "status": "passed",
+        "output": "",
+        "durationMs": 26
+      },
+      {
+        "codeunitId": 59028,
+        "methodName": "PostWhseShipment_OnlyMasterFlagOn_NoSSCCDX",
+        "status": "passed",
+        "output": "",
+        "durationMs": 45
+      },
+      {
+        "codeunitId": 59028,
+        "methodName": "PostWhseShipment_ZeroQtyLULine_Excluded",
+        "status": "passed",
+        "output": "",
+        "durationMs": 139
+      },
+      {
+        "codeunitId": 59028,
+        "methodName": "PostWhseShipment_RePost_NoDuplicateSSCCDX",
+        "status": "passed",
+        "output": "",
+        "durationMs": 70
+      },
+      {
+        "codeunitId": 59028,
+        "methodName": "PostWhseShipment_LULines_GetSalesShipmentNo",
+        "status": "passed",
+        "output": "",
+        "durationMs": 107
+      },
+      {
+        "codeunitId": 59028,
+        "methodName": "FullIntegration_SalesOrderToSSCCDX_ViaPickAndPost",
+        "status": "passed",
+        "output": "",
+        "durationMs": 996
+      },
+      {
+        "codeunitId": 59028,
+        "methodName": "PostWhseShipment_LUWithoutSSCC_NoSSCCDX",
+        "status": "passed",
+        "output": "",
+        "durationMs": 751
+      },
+      {
+        "codeunitId": 59028,
+        "methodName": "PostWhseShipment_ExpiryDateFromILEFallback",
+        "status": "passed",
+        "output": "",
+        "durationMs": 768
+      },
+      {
+        "codeunitId": 59028,
+        "methodName": "PostWhseShipment_NoSalesLine_NoSSCCDX",
+        "status": "passed",
+        "output": "",
+        "durationMs": 375
+      },
+      {
+        "codeunitId": 59028,
+        "methodName": "PostWhseShipment_NonLotItem_ExpiryDateEmpty_QtyRounded",
+        "status": "passed",
+        "output": "",
+        "durationMs": 528
+      },
+      {
+        "codeunitId": 59028,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 606
+      },
+      {
+        "codeunitId": 59031,
+        "methodName": "ValidateLUNo_ActionTypeTake_CreatesLogisticUnit",
+        "status": "passed",
+        "output": "",
+        "durationMs": 366
+      },
+      {
+        "codeunitId": 59031,
+        "methodName": "ValidateLUNo_SameLuNoTwice_AccumulatesQuantityWithoutDuplicating",
+        "status": "passed",
+        "output": "",
+        "durationMs": 228
+      },
+      {
+        "codeunitId": 59031,
+        "methodName": "ValidateLUNo_SplitLineAcrossTwoLUs_NoOfLUsCountsTwo",
+        "status": "passed",
+        "output": "",
+        "durationMs": 242
+      },
+      {
+        "codeunitId": 59031,
+        "methodName": "ValidateLUNo_SetToZero_RemovesLULines",
+        "status": "passed",
+        "output": "",
+        "durationMs": 113
+      },
+      {
+        "codeunitId": 59031,
+        "methodName": "ValidateLUNo_WithPartialQty_LULineHasPartialQty",
+        "status": "passed",
+        "output": "",
+        "durationMs": 92
+      },
+      {
+        "codeunitId": 59031,
+        "methodName": "WhseActLineOnValidateLuNo_DirectCall_CreatesLogisticUnit",
+        "status": "passed",
+        "output": "",
+        "durationMs": 126
+      },
+      {
+        "codeunitId": 59031,
+        "methodName": "ValidateLUNo_ActionTypePlace_RaisesError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 53
+      },
+      {
+        "codeunitId": 59031,
+        "methodName": "ValidateLUNo_WithAssignedToLuNo_SetsParentOnNewLogisticUnit",
+        "status": "passed",
+        "output": "",
+        "durationMs": 110
+      },
+      {
+        "codeunitId": 59031,
+        "methodName": "ValidateAssignedToLuNo_NoLuAllocatedYet_DoesNothing",
+        "status": "passed",
+        "output": "",
+        "durationMs": 58
+      },
+      {
+        "codeunitId": 59031,
+        "methodName": "ValidateAssignedToLuNo_ExistingLu_ReparentsLogisticUnit",
+        "status": "passed",
+        "output": "",
+        "durationMs": 204
+      },
+      {
+        "codeunitId": 59031,
+        "methodName": "ValidateAssignedToLuNo_TargetLuMissing_RaisesError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 122
+      },
+      {
+        "codeunitId": 59031,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 717
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "GetQtyOnPalett_LessThanFull_ReturnsQty",
+        "status": "passed",
+        "output": "",
+        "durationMs": 946
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "GetQtyOnPalett_ExactPallet_ReturnsPalletQty",
+        "status": "passed",
+        "output": "",
+        "durationMs": 234
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "GetNoOfPaletts_MultiPallet_ReturnsCount",
+        "status": "passed",
+        "output": "",
+        "durationMs": 161
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "GetNoOfPaletts_Partial_RoundsUp",
+        "status": "passed",
+        "output": "",
+        "durationMs": 155
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "CreateSSCC_ValidSetup_Returns18CharCode",
+        "status": "passed",
+        "output": "",
+        "durationMs": 72
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "CreateSSCC_EmptySerialCode_RaisesError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 9
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "CalcMinExpirationDate_ReturnEarlierDate",
+        "status": "passed",
+        "output": "",
+        "durationMs": 266
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "PickingListTOG_RendersWithoutError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 333
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "PutAwayListTOG_RendersWithoutError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 288
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "WhseReceiptTOG_RendersWithoutError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 407
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "LabelSheetPalette_RendersWithoutError",
+        "status": "passed",
+        "output": "",
+        "durationMs": 260
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "PrintPick_TogaCompany_RoutesToTOGReport",
+        "status": "passed",
+        "output": "",
+        "durationMs": 214
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "PrintPutAway_TogaCompany_RoutesToTOGReport",
+        "status": "passed",
+        "output": "",
+        "durationMs": 189
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "PrintRcpt_TogaCompany_RoutesToTOGReport",
+        "status": "passed",
+        "output": "",
+        "durationMs": 230
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "PrintPick_GustavCompany_SubscriberExitsEarly",
+        "status": "passed",
+        "output": "",
+        "durationMs": 10
+      },
+      {
+        "codeunitId": 59032,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 780
+      },
+      {
+        "codeunitId": 59034,
+        "methodName": "Resolve_ItemNumberFirst_GtinChosen",
+        "status": "passed",
+        "output": "",
+        "durationMs": 986
+      },
+      {
+        "codeunitId": 59034,
+        "methodName": "Resolve_NoGtin_Empty",
+        "status": "passed",
+        "output": "",
+        "durationMs": 315
+      },
+      {
+        "codeunitId": 59034,
+        "methodName": "Resolve_CULine_LineGtinIsCU",
+        "status": "passed",
+        "output": "",
+        "durationMs": 431
+      },
+      {
+        "codeunitId": 59034,
+        "methodName": "Resolve_TULine_LineGtinIsTU",
+        "status": "passed",
+        "output": "",
+        "durationMs": 341
+      },
+      {
+        "codeunitId": 59034,
+        "methodName": "Resolve_Variant_UsedForLookup",
+        "status": "passed",
+        "output": "",
+        "durationMs": 292
+      },
+      {
+        "codeunitId": 59034,
+        "methodName": "CorrectSalesLine_RawValue_Replaced",
+        "status": "passed",
+        "output": "",
+        "durationMs": 585
+      },
+      {
+        "codeunitId": 59034,
+        "methodName": "CorrectSalesLine_MappingValue_Kept",
+        "status": "passed",
+        "output": "",
+        "durationMs": 297
+      },
+      {
+        "codeunitId": 59034,
+        "methodName": "CorrectSalesLine_NoGtin_Empty",
+        "status": "passed",
+        "output": "",
+        "durationMs": 507
+      },
+      {
+        "codeunitId": 59034,
+        "methodName": "CorrectSSCCLine_RawValue_Replaced",
+        "status": "passed",
+        "output": "",
+        "durationMs": 546
+      },
+      {
+        "codeunitId": 59034,
+        "methodName": "FindItemUnitByGtin_Delegates",
+        "status": "passed",
+        "output": "",
+        "durationMs": 271
+      },
+      {
+        "codeunitId": 59034,
+        "methodName": "Faktor4_ItemNumberReference_ReturnsGtin",
+        "status": "passed",
+        "output": "",
+        "durationMs": 783
+      },
+      {
+        "codeunitId": 59034,
+        "methodName": "",
+        "status": "passed",
+        "output": "",
+        "durationMs": 360
+      }
     ]
-  }
+  },
+  "nextSteps": [],
+  "errorDetails": {
+    "code": "TestRunFailed",
+    "description": "Test run failed",
+    "possibleCauses": [
+      "One or more test methods failed",
+      "Test run was cancelled",
+      "Server connection settings incorrect"
+    ],
+    "suggestedActions": [
+      "Review the failed test output for details",
+      "Fix the failing tests and retry",
+      "Check server connection and re-run"
+    ],
+    "alternatives": [],
+    "missingPrerequisites": [],
+    "diagnosticHints": [
+      "Check the test output for assertion failures or runtime errors"
+    ],
+    "retryable": true
+  },
+  "warnings": []
 }
+
+--- stderr ---
+MergeFromLaunchJson: Looking for launch.json in project: <repo>\Test
+MergeFromLaunchJson: Found launch.json config: server=https://<host>, instance=BC, envType=OnPrem, envName=(null), auth=UserPassword
+MergeFromLaunchJson: Incoming params - Environment=Production, EnvironmentName=(null), EnvironmentType=OnPrem, Server=http://<host>, ServerInstance=<instance>
+MergeFromLaunchJson: Heuristics - requestLooksCloud=False, hasExplicitOnPremSettings=True
+MergeFromLaunchJson: Applied all launch.json settings (on-prem or explicit settings detected)
+MergeFromLaunchJson: Final params - Server=http://<host>, ServerInstance=<instance>, EnvironmentType=OnPrem, Auth=Windows
+Built ConnectionOptions: auth=Windows, server=http://<host>, instance=<instance>, env=null
+Targeting server 'http://<host>', server instance '<instance>' and tenant 'default'.
+Using Windows authentication.
+Test hub connected.
+TestRunnerHub connected.
+SignalR hub connection established with context [CTrRkpbSf2DTB4wvTvbFfw]
+A task was canceled.
+

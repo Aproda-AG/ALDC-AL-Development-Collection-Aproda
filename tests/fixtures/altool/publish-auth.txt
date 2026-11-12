@@ -1,2 +1,14 @@
-Publishing 'Aproda AG_Fixture Base_1.0.0.0.app' to https://dev.example.com:7049/BC ...
-Error: UserNotAuthenticatedException: The credentials were not accepted by the server.
+# exit code: 1; timedOut: False; durationMs: 617
+--- stdout ---
+Publishing AL package...
+MergeFromLaunchJson: No project path specified, skipping launch.json lookup
+Publishing <repo>\Base\Aproda AG_Gustav Gerig AG Base_25.0.0.182.app (auth=UserPassword)
+Publishing package to tenant 'default'
+Targeting server 'https://<host>', server instance 'BC' and tenant 'default'.
+Using credentials from environment variables (BC_SERVER_USERNAME=<user>
+Using user name and password authentication. User name used is: '<user>'.
+Sending request to https://<host>:7049/BC/dev/apps?tenant=default&SchemaUpdateMode=forcesync&DependencyPublishingOption=ignore
+
+--- stderr ---
+Publish failed: Publish operation failed. Check the output for details.
+

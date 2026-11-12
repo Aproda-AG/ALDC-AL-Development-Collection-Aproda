@@ -1,2 +1,16 @@
-Publishing 'Aproda AG_Fixture Base_1.0.0.0.app' to http://nst-test.example.com:1/BC ...
-ConnectionFailed: No connection could be made because the target machine actively refused it.
+# exit code: 1; timedOut: False; durationMs: 2477
+--- stdout ---
+Publishing AL package...
+MergeFromLaunchJson: No project path specified, skipping launch.json lookup
+Publishing <repo>\Base\Aproda AG_Gustav Gerig AG Base_25.0.0.182.app (auth=Windows)
+Publishing package to tenant 'default'
+Targeting server 'http://<host>', server instance '<instance>' and tenant 'default'.
+Using Windows authentication.
+Sending request to http://<host>:9549/<instance>/dev/apps?tenant=default&SchemaUpdateMode=forcesync&DependencyPublishingOption=ignore
+
+--- stderr ---
+Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte. (<host>:9549)
+Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte. (<host>:9549)
+Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte. (<host>:9549)
+Publish failed: Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte. (<host>:9549)
+

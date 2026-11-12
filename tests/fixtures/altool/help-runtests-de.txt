@@ -1,17 +1,32 @@
-Beschreibung:
-  Tests auf einem Server ausführen
+# exit code: 0; timedOut: False; durationMs: 135
+--- stdout ---
+Description:
+  Runs AL unit tests against a Business Central server.
 
 Nutzung:
-  altool runtests [Optionen]
+  altool runtests [<codeunitId>] [options]
+
+Argumente:
+  <codeunitId>  The test codeunit ID to run (e.g., 50100). Optional when --testgroups is used. [default: 0]
 
 Optionen:
-  --testgroups <testgroups>            JSON-Datei mit den auszuführenden Testgruppen
-  --project <project>                  Projektordner
-  --company <company>                  Firmenname
-  --server <server>                    Server-URL
-  --serverinstance <serverinstance>    Serverinstanz
-  --port <port>                        Port
-  --authentication <authentication>    Authentifizierungstyp
-  --tenant <tenant>                    Mandant
-  --environmenttype <environmenttype>  Umgebungstyp
-  -?, -h, --help                       Hilfe- und Nutzungsinformationen anzeigen
+  --testmethods <testmethods>          Test method names to run within the codeunit. Runs all methods if not specified.
+  --project <project>                  AL project folder path. Used to locate launch.json for connection settings.
+  --company <company>                  The company name to use when running tests (e.g., 'CRONUS International Ltd.').
+  --testgroups <testgroups>            Path to a JSON file describing the test groups to run over a single connection: [{ "codeunitId": 134001, "testMethods": ["MethodA"] }, ...]. Each group pairs a codeunit with the methods to run in it; an empty or omitted testMethods runs all methods of that codeunit. Runs the whole set with one auth + one session, avoiding the per-codeunit connect cost. Cannot be combined with the codeunitId argument or --testmethods.
+  --raw                                Emit the raw server log output and a human-readable text summary on stdout instead of the default structured JSON.
+  --server <server>                    Cloud targets use AAD/OAuth by default. For on-premise deployments, set the server URL (e.g., 'http://localhost'). Defaults to BC_SERVER_URL.
+  --serverinstance <serverinstance>    Server instance name for on-premise deployment (e.g., 'BC'). Defaults to BC_SERVER_INSTANCE.
+  --port <port>                        Port number for on-premise development service. Defaults to BC_SERVER_PORT.
+  --environment <environment>          Publish environment for endpoint selection: Production (default), Tie, ServicesTie.
+  --environmentname <environmentname>  Environment name for cloud deployment (e.g., 'sandbox').
+  --environmenttype <environmenttype>  Environment type: 'OnPrem', 'Sandbox', or 'Production'.
+  --authentication <authentication>    Authentication method. Cloud targets default to AAD/OAuth; on-premise targets can use Windows or UserPassword. UserPassword is auto-detected when BC_SERVER_USERNAME and BC_SERVER_PASSWORD are set.
+  --tenant <tenant>                    Tenant ID for multi-tenant environments.
+  --nocache                            Force re-authentication (bypass cached tokens).
+  --usemoderntieauthurl                Use the modern Tie/ServicesTie Entra ID authority URL (login.microsoftonline-ppe.com) instead of legacy (login.windows-ppe.net).
+  -?, -h, --help                       Show help and usage information
+
+
+--- stderr ---
+

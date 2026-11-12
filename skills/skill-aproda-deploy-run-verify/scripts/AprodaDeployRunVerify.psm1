@@ -96,8 +96,9 @@ function Resolve-DeployRunVerifyConfig {
     param([Parameter(Mandatory)][string]$ConfigPath, [switch]$BuildOnly)
 
     if (-not (Test-Path $ConfigPath)) { throw "Config not found: $ConfigPath" }
-    $cfgDir = Split-Path -Parent (Resolve-Path $ConfigPath)
-    $cfgFile = (Resolve-Path $ConfigPath).Path
+    # Convert-Path drops the Microsoft.PowerShell.Core\FileSystem:: provider prefix.
+    $cfgFile = Convert-Path -LiteralPath $ConfigPath
+    $cfgDir = Split-Path -Parent $cfgFile
 
     # Strip // and /* */ comments, then parse. Lookbehind keeps URL '://' intact.
     $raw = Get-Content $ConfigPath -Raw
@@ -218,7 +219,7 @@ function Resolve-DeployRunVerifyConfig {
     # --- Resolve apps in dependency order ---
     if (-not $cfg.appsInOrder -or @($cfg.appsInOrder).Count -eq 0) { throw "appsInOrder is required (project dirs, dependency order, test app last)." }
     $apps = foreach ($rel in $cfg.appsInOrder) {
-        $proj = Resolve-Path (Join-Path $cfgDir $rel)
+        $proj = Convert-Path -LiteralPath (Join-Path $cfgDir $rel)
         $aj = Get-Content (Join-Path $proj 'app.json') -Raw | ConvertFrom-Json
         [pscustomobject]@{
             ProjectDir = "$proj"
@@ -273,7 +274,7 @@ function Resolve-DeployRunVerifyConfig {
     # runnerDirFull is the BASE folder; the actual runner is a version subfolder (see Resolve-DeployRunVerifyRunner).
     $runnerBase = Join-Path $cfgDir $cfg.runnerDir
     if (-not (Test-Path $runnerBase)) { New-Item -ItemType Directory $runnerBase -Force | Out-Null }
-    $cfg | Add-Member runnerDirFull ("$(Resolve-Path $runnerBase)") -Force
+    $cfg | Add-Member runnerDirFull (Convert-Path -LiteralPath $runnerBase) -Force
     return $cfg
 }
 
@@ -823,21 +824,38 @@ $Script:DeployRunVerifyMsTestLibraries = [ordered]@{
 
 function Get-DeployRunVerifyAppManifest {
     param([Parameter(Mandatory)][string]$AppFile)
-    if (-not (Get-Command al -ErrorAction SilentlyContinue)) {
-        Write-Warning "The 'al' CLI is not on PATH — cannot inspect the manifest of $AppFile."
+    $skipped = 'the missing-dependency preflight and the MS test-library auto-install are skipped'
+    $alTool = Get-DeployRunVerifyAlTool
+    $text = $null
+    # The path is positional: `altool GetPackageManifest <packagepath>` (`--package` is not recognized).
+    if ($alTool.Path) {
+        $call = Invoke-DeployRunVerifyAlTool -AlTool $alTool -Arguments @('GetPackageManifest', $AppFile) -TimeoutMs 60000
+        if ((Get-DeployRunVerifyProperty -Object $call -Name 'LaunchError') -or $call.TimedOut -or $call.ExitCode -ne 0) {
+            Write-Warning "altool GetPackageManifest failed for $AppFile (exit $($call.ExitCode)); $skipped."
+            return $null
+        }
+        $text = [string]$call.StdOut
+    }
+    elseif (Get-Command al -ErrorAction SilentlyContinue) {
+        $raw = & al GetPackageManifest $AppFile 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "al GetPackageManifest failed for $AppFile (exit $LASTEXITCODE); $skipped."
+            return $null
+        }
+        $text = ($raw | Out-String)
+    }
+    else {
+        Write-Warning "Neither altool nor the 'al' CLI is available - cannot read the manifest of $AppFile; $skipped."
         return $null
     }
-    # TODO (verify against a live app): al GetPackageManifest emits the package manifest as
-    # JSON on stdout, expected to carry name, version and a `dependencies` array of { id, name,
-    # publisher, version } — the same shape skill-aproda-fkh's bundled sortapps.ps1 already consumes.
-    $raw = & al GetPackageManifest --package $AppFile 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "al GetPackageManifest failed for $AppFile (exit $LASTEXITCODE)."
-        return $null
+    $start = $text.IndexOf('{')
+    $end = $text.LastIndexOf('}')
+    try {
+        if ($start -lt 0 -or $end -le $start) { throw 'no JSON object' }
+        return ($text.Substring($start, $end - $start + 1) | ConvertFrom-Json)
     }
-    try { return ($raw | ConvertFrom-Json) }
     catch {
-        Write-Warning "Could not parse al GetPackageManifest output for $AppFile."
+        Write-Warning "Could not parse the GetPackageManifest output for $AppFile; $skipped."
         return $null
     }
 }
@@ -845,10 +863,7 @@ function Get-DeployRunVerifyAppManifest {
 function Get-DeployRunVerifyAppManifestDependencies {
     param([Parameter(Mandatory)][string]$AppFile)
     $manifest = Get-DeployRunVerifyAppManifest -AppFile $AppFile
-    if ($null -eq $manifest) {
-        Write-Warning "Missing-dependency preflight is skipped for $AppFile."
-        return @()
-    }
+    if ($null -eq $manifest) { return @() }
     return @(Get-DeployRunVerifyProperty -Object $manifest -Name 'dependencies' -Default @())
 }
 
@@ -1073,7 +1088,7 @@ function New-DeployRunVerifyBasicAuthorization {
 function Get-DeployRunVerifyPublishOutcome {
     # Classifies a publish attempt (spec 6.4). Returns { Outcome; Reason }.
     # Published | AuthFailure | Duplicate | ProtocolError | Rejected | InvocationFailure.
-    # altool strings are PROVISIONAL until the scrubbed captures of L-4b.12 (OS-1).
+    # altool strings verified against the real captures of L-4b.12.
     [CmdletBinding(DefaultParameterSetName = 'AlTool')]
     param(
         [Parameter(Mandatory, ParameterSetName = 'Http')][AllowNull()][Nullable[int]]$HttpStatus,
@@ -1107,6 +1122,10 @@ function Get-DeployRunVerifyPublishOutcome {
         return (& $result 'Rejected' $reasonText)
     }
     if ($Output -match '(?i)ConnectionFailed|connection\s+(was\s+)?refused|actively\s+refused|No such host|name or service not known|remote name could not be resolved|SSL|TLS|certificate|timed?\s*out|A task was canceled|retryable"?\s*:\s*true|SocketException|HttpRequestException') {
+        return (& $result 'InvocationFailure' $reasonText)
+    }
+    # Locale-independent (E-010 L-4b.8, D-5): request sent but no 'failed with code <HttpStatusName>' line = no HTTP response (spec 6.4).
+    if ($Output -match '(?i)Sending request to' -and $Output -notmatch '(?i)failed with code\s+\w+') {
         return (& $result 'InvocationFailure' $reasonText)
     }
     # Unrecognized failure: stop rather than fall back; a second publish attempt could repeat a half-done one.
@@ -1252,6 +1271,57 @@ function Get-DeployRunVerifyAppState {
     }
 }
 
+function Get-DeployRunVerifyAppStateAllVersions {
+    # Read-only: every version of one app on the target (installed or only published) with its SyncState.
+    param([Parameter(Mandatory)]$Cfg, [Parameter(Mandatory)][string]$Name, $Context)
+    $entries = @()
+    if ($Cfg.adapter -eq 'Fkh') {
+        $raw = & fkh getappinfo --name $Context.AppLabel --appName $Name --asJson --backendUrl $Context.BackendUrl
+        if ($LASTEXITCODE -ne 0) { throw "Fkh getappinfo failed: $Name" }
+        $info = $raw | ConvertFrom-Json
+        if ($info.PSObject.Properties.Name -contains 'apps') { $entries = @($info.apps) }
+    }
+    else {
+        $mgmtDllPath = [string](Get-DeployRunVerifyProperty -Object $Cfg -Name 'mgmtDllPath' -Default '')
+        if ([string]::IsNullOrWhiteSpace($mgmtDllPath)) { throw 'mgmtDllPath is required for the ASINST adapter (state read).' }
+        $session = New-PSSession -ComputerName $Cfg.server
+        try {
+            $entries = @(Invoke-Command -Session $session -ScriptBlock {
+                    param($si, $tenant, $mgmt, $name)
+                    Import-Module $mgmt -ErrorAction Stop
+                    Get-NAVAppInfo -ServerInstance $si -Tenant $tenant -TenantSpecificProperties -Name $name | Select-Object -Property Name, Version, IsInstalled, SyncState
+                } -ArgumentList $Cfg.serverInstance, $Cfg.tenant, $mgmtDllPath, $Name)
+        }
+        finally { Remove-PSSession $session }
+    }
+    return @($entries | ForEach-Object {
+            [pscustomobject]@{
+                Version     = [string](Get-DeployRunVerifyProperty -Object $_ -Name 'Version' -Default '')
+                IsInstalled = [bool](Get-DeployRunVerifyProperty -Object $_ -Name 'IsInstalled' -Default $false)
+                SyncState   = [string](Get-DeployRunVerifyProperty -Object $_ -Name 'SyncState' -Default '')
+            }
+        })
+}
+
+function Get-DeployRunVerifyStateAfterReject {
+    # Best effort, read-only (E-010 L-4b.11): what is left on the target after a rejected publish. Never throws.
+    param([Parameter(Mandatory)]$Cfg, [Parameter(Mandatory)][string]$Name, $Context)
+    try {
+        $versions = @(Get-DeployRunVerifyAppStateAllVersions -Cfg $Cfg -Name $Name -Context $Context)
+        $installed = @($versions | Where-Object { $_.IsInstalled } | ForEach-Object { $_.Version })
+        $published = @($versions | ForEach-Object { "$($_.Version) ($($_.SyncState))" })
+        $installedText = if ($installed.Count -gt 0) { $installed -join ',' } else { 'none' }
+        $publishedText = if ($published.Count -gt 0) { $published -join ', ' } else { 'none' }
+        $line = "STATE AFTER REJECT: $Name installed=$installedText; published=$publishedText"
+        Write-Host $line
+        return [pscustomobject]@{ Read = $true; NoneInstalled = ($installed.Count -eq 0); Line = $line }
+    }
+    catch {
+        Write-Warning "STATE AFTER REJECT: could not read the target state of $Name ($(ConvertTo-DeployRunVerifyRedactedText -Text $_.Exception.Message))."
+        return [pscustomobject]@{ Read = $false; NoneInstalled = $false; Line = $null }
+    }
+}
+
 function Assert-DeployRunVerifyAppPublished {
     # Never run tests against a half-deployed server: the exact version must be installed and Synced.
     param([Parameter(Mandatory)]$Cfg, [Parameter(Mandatory)][string]$Name, [Parameter(Mandatory)][string]$Version, $Context)
@@ -1354,7 +1424,24 @@ function Invoke-DeployRunVerifyPublishApp {
     for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
         $credential = $null
         if ($Cfg.authentication -eq 'UserPassword') { $credential = Get-DeployRunVerifyCredential -Cfg $Cfg -SkipStore:($attempt -gt 1) }
-        $result = Invoke-DeployRunVerifyPublishRoutes -Cfg $Cfg -AppFile $AppFile -Name $Name -Version $Version -Schema $schema -Policy $policy -Credential $credential -ForceUpgrade:$ForceUpgrade
+        try {
+            $result = Invoke-DeployRunVerifyPublishRoutes -Cfg $Cfg -AppFile $AppFile -Name $Name -Version $Version -Schema $schema -Policy $policy -Credential $credential -ForceUpgrade:$ForceUpgrade
+        }
+        catch {
+            $message = $_.Exception.Message
+            # A non-401 HTTP answer proves the credential works (D-43): save it before stopping.
+            $httpAnswered = $message -match '^(PUBLISH_DUPLICATE|PUBLISH_PROTOCOL_ERROR)' -or
+            ($message -like 'PUBLISH_REJECTED*' -and $message -match '(?i)failed with code\s+\w+|\bHTTP\s+[2-5]\d\d\b')
+            if ($httpAnswered) {
+                Save-DeployRunVerifyCredentialAfterSuccess -Cfg $Cfg -Credential $credential
+            }
+            if ($message -like 'PUBLISH_REJECTED*') {
+                $state = Get-DeployRunVerifyStateAfterReject -Cfg $Cfg -Name $Name -Context $Context
+                if ($state.NoneInstalled) { $message += " Target left without an installed version of $Name - see references/redeploy-recovery.md." }
+                throw $message
+            }
+            throw
+        }
         if ($result.Outcome -eq 'Published') { break }
         if ($attempt -lt $maxAttempts -and $Cfg.authentication -eq 'UserPassword') {
             Write-Warning "Authentication for $($Cfg.server) was refused. Retrying once with a freshly prompted credential..."
@@ -1751,7 +1838,7 @@ function Get-DeployRunVerifyTestRecords {
 
 function Get-DeployRunVerifyTestOutcome {
     # Classifies a `runtests` run (spec 6.6). Returns { Outcome; Reason; Json }.
-    # Green | Red | AuthFailure | Incomplete | InvocationFailure. altool strings are PROVISIONAL (OS-1, L-4b.12).
+    # Green | Red | AuthFailure | Incomplete | InvocationFailure. altool strings verified against real captures (L-4b.12).
     [CmdletBinding()]
     param(
         [AllowEmptyString()][string]$Output = '',
@@ -1764,9 +1851,11 @@ function Get-DeployRunVerifyTestOutcome {
     if ($LaunchError) { return (& $result 'InvocationFailure' "altool could not be started: $(ConvertTo-DeployRunVerifyRedactedText -Text $LaunchError)" $null) }
     if ($TimedOut) { return (& $result 'InvocationFailure' 'altool runtests timed out' $null) }
 
+    # Evaluated only for failed runs (succeeded=false / no JSON), so a "401" in a test name of a green or red run cannot match (E-010 D-10).
+    $authPattern = '(?i)UserNotAuthenticated|\b401\b|\bUnauthorized\b'
     $json = ConvertFrom-DeployRunVerifyAlToolJson -Text $Output
     if ($null -eq $json) {
-        if ($Output -match 'UserNotAuthenticated') { return (& $result 'AuthFailure' 'UserNotAuthenticated' $null) }
+        if ($Output -match $authPattern) { return (& $result 'AuthFailure' 'UserNotAuthenticated' $null) }
         return (& $result 'InvocationFailure' "no parseable result JSON (exit $ExitCode)" $null)
     }
 
@@ -1775,7 +1864,8 @@ function Get-DeployRunVerifyTestOutcome {
     $errorText = if ($errorDetails) { ($errorDetails | ConvertTo-Json -Depth 5 -Compress) } else { '' }
     if (-not [bool]$json.succeeded) {
         if ($errorCode -eq 'TestRunFailed') { return (& $result 'Red' 'TestRunFailed' $json) }
-        if ($errorText -match 'UserNotAuthenticated' -or $Output -match 'UserNotAuthenticated') { return (& $result 'AuthFailure' 'UserNotAuthenticated' $json) }
+        $messageText = [string](Get-DeployRunVerifyProperty -Object $json -Name 'message' -Default '')
+        if ($errorCode -eq 'UserNotAuthenticated' -or $messageText -match $authPattern -or $errorText -match $authPattern -or $Output -match $authPattern) { return (& $result 'AuthFailure' 'UserNotAuthenticated' $json) }
         $detail = if ($errorCode) { $errorCode } else { 'succeeded=false' }
         return (& $result 'InvocationFailure' "altool reported $detail" $json)
     }

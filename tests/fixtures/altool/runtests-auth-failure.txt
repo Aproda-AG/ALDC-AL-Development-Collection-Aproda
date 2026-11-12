@@ -1,8 +1,42 @@
+# exit code: 1; timedOut: False; durationMs: 701
+--- stdout ---
 {
   "succeeded": false,
+  "message": "Response status code does not indicate success: 401 (Unauthorized).",
+  "nextSteps": [],
   "errorDetails": {
     "code": "UnknownError",
-    "message": "Microsoft.Dynamics.Nav.Types.Exceptions.UserNotAuthenticatedException: The credentials were not accepted by the server.",
-    "retryable": false
-  }
+    "description": "An unknown error occurred",
+    "possibleCauses": [
+      "Extension internal error",
+      "Unexpected system state"
+    ],
+    "suggestedActions": [
+      "Try the operation again",
+      "Restart VS Code",
+      "Check AL extension output for details"
+    ],
+    "alternatives": [],
+    "missingPrerequisites": [],
+    "diagnosticHints": [
+      "Check the AL Language extension output panel for details"
+    ],
+    "retryable": true
+  },
+  "warnings": []
 }
+
+--- stderr ---
+MergeFromLaunchJson: Looking for launch.json in project: <repo>\Test
+MergeFromLaunchJson: Found launch.json config: server=https://<host>, instance=BC, envType=OnPrem, envName=(null), auth=UserPassword
+MergeFromLaunchJson: Incoming params - Environment=Production, EnvironmentName=(null), EnvironmentType=OnPrem, Server=https://<host>, ServerInstance=BC
+MergeFromLaunchJson: Heuristics - requestLooksCloud=False, hasExplicitOnPremSettings=True
+MergeFromLaunchJson: Applied all launch.json settings (on-prem or explicit settings detected)
+MergeFromLaunchJson: Final params - Server=https://<host>, ServerInstance=BC, EnvironmentType=OnPrem, Auth=UserPassword
+Built ConnectionOptions: auth=UserPassword, server=https://<host>, instance=BC, env=null
+Targeting server 'https://<host>', server instance 'BC' and tenant 'default'.
+Using credentials from environment variables (BC_SERVER_USERNAME=<user>
+Using user name and password authentication. User name used is: '<user>'.
+Failed to establish SignalR hub connection due to: Response status code does not indicate success: 401 (Unauthorized).
+Response status code does not indicate success: 401 (Unauthorized).
+

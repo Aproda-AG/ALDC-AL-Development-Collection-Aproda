@@ -95,7 +95,9 @@ This initial classifier is intentionally conservative and mechanical. A target t
 | `Duplicate` (HTTP 422 **and** *duplicate package ID* text) | stop; inspect the state ([`redeploy-recovery.md`](references/redeploy-recovery.md)); **never repeat** the publish |
 | `ProtocolError` (HTTP 415) | stop (engine defect) |
 | `Rejected` (other HTTP 4xx/5xx incl. a 422 without *duplicate package* such as a compile error `AL1024`, sync/schema message, unrecognized failure) | stop with the redacted server text; no fallback |
-| `InvocationFailure` | `altool` → direct POST (pinned for the rest of the run); direct POST → stop |
+| `InvocationFailure` (also: request sent but no HTTP answer, locale independent; a wrong password on the `altool` route lands here, the direct POST then returns the 401) | `altool` → direct POST (pinned for the rest of the run); direct POST → stop |
+
+After a `Rejected` stop the engine prints `STATE AFTER REJECT:` (installed/published versions on the target).
 
 **Schema mode (D-39), both adapters and both routes.** The DRV config key `fkhSyncMode` (`Add` default | `ForceSync`) drives the publish: `Add` → `--schemaupdatemode Synchronize` / `SchemaUpdateMode=synchronize`; `ForceSync` → `ForceSync` / `forcesync`. Set `ForceSync` when a destructive schema change requires it and inform the user briefly — no separate confirmation (D-39); the run prints `SCHEMA MODE: ForceSync (fkhSyncMode)`. `Recreate` is never used. `forceUpgrade` (`--forceupgrade`) is a Tier-3 action: only after an explicit request for that run, via `APRODA_DEPLOY_RUN_VERIFY_FORCE_UPGRADE=1`; it is not available on the direct POST (`FORCEUPGRADE_REQUIRES_ALTOOL`). `DependencyPublishingOption` comes from the selected `launch.json` configuration (default `Default`).
 

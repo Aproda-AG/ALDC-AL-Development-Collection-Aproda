@@ -318,7 +318,15 @@ try { Resolve-DeployRunVerifyConfig -ConfigPath $env:DRV_TEST_CONFIG | Out-Null;
     $middleDot = [string][char]0x00B7
     $rightArrow = [string][char]0x2192
 
-    function Get-AlToolFixture { param([string]$Name) return (Get-Content -LiteralPath (Join-Path $altoolFixtures $Name) -Raw) }
+    function Get-AlToolFixture {
+        # Captured files carry a header and stdout/stderr markers; strip them and join both streams.
+        param([string]$Name)
+        $raw = Get-Content -LiteralPath (Join-Path $altoolFixtures $Name) -Raw
+        if ($raw -notmatch '^# exit code:') { return $raw }
+        $out = ''; $err = ''
+        if ($raw -match '(?s)--- stdout ---\r?\n(.*?)(\r?\n--- stderr ---\r?\n(.*))?$') { $out = $Matches[1]; $err = $Matches[3] }
+        return ($out + $(if ($err) { "`n" + $err } else { '' }))
+    }
 
     function New-DrvPublishCfg {
         param([string]$Authentication = 'Windows', [string]$Adapter = 'Asinst', [string]$SyncMode = 'Add', [string]$DeployRoute = 'auto', [string]$Scheme = 'http')
@@ -478,7 +486,7 @@ try { Resolve-DeployRunVerifyConfig -ConfigPath $env:DRV_TEST_CONFIG | Out-Null;
 
     Invoke-TestCase 'S-4b.4 publish outcome classification' {
         $cases = @(
-            @('publish-success.txt', 0, 'Published'), @('publish-duplicate.txt', 1, 'Duplicate'), @('publish-auth.txt', 1, 'AuthFailure'),
+            @('publish-success.txt', 0, 'Published'), @('publish-duplicate.txt', 1, 'Duplicate'), @('publish-auth.txt', 1, 'InvocationFailure'),
             @('publish-rejected-sync.txt', 1, 'Rejected'), @('publish-rejected-compile-422.txt', 1, 'Rejected'), @('publish-connection-refused.txt', 1, 'InvocationFailure'))
         foreach ($case in $cases) {
             $outcome = Get-DeployRunVerifyPublishOutcome -ExitCode $case[1] -Output (Get-AlToolFixture $case[0])
@@ -684,7 +692,7 @@ try { Resolve-DeployRunVerifyConfig -ConfigPath $env:DRV_TEST_CONFIG | Out-Null;
         Assert-Throws { Invoke-DeployRunVerifyPublishApp -Cfg $cfg -AppFile 'x.app' -Name 'AppA' -Version '1.0.0.0' -ForceUpgrade } 'FORCEUPGRADE_REQUIRES_ALTOOL' 'Chain: altool failed, forceUpgrade requested.' | Out-Null
     }
 
-    Invoke-TestCase 'alc.exe is resolved lazily: config, altool neighbour, both extension layouts, semver order' {
+    Invoke-TestCase 'S-4b.21 alc.exe is resolved lazily: config, altool neighbour, both extension layouts, semver order' {
         $extRoot = Join-Path $drvTempRoot ('alc-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
         $new = Join-Path $extRoot 'ms-dynamics-smb.al-18.1.2842859\bin'
         $old = Join-Path $extRoot 'ms-dynamics-smb.al-9.0.1234567\bin\win32'
@@ -801,7 +809,7 @@ try { Resolve-DeployRunVerifyConfig -ConfigPath $env:DRV_TEST_CONFIG | Out-Null;
             $json = ConvertFrom-DeployRunVerifyAlToolJson -Text (Get-AlToolFixture $name)
             Assert-True ($null -ne $json -and $null -ne $json.PSObject.Properties['succeeded']) "$name : the result object must be parsed."
         }
-        Assert-Equal @((ConvertFrom-DeployRunVerifyAlToolJson -Text (Get-AlToolFixture 'runtests-green-complete.txt')).data.results).Count 25 'Green fixture records.'
+        Assert-Equal @((ConvertFrom-DeployRunVerifyAlToolJson -Text (Get-AlToolFixture 'runtests-green-complete.txt')).data.results).Count 333 'Green fixture records.'
         Assert-Null (ConvertFrom-DeployRunVerifyAlToolJson -Text "A task was canceled.`nno json here") 'No JSON.'
         Assert-Null (ConvertFrom-DeployRunVerifyAlToolJson -Text '') 'Empty.'
         $withBraces = "{ not json }`n{ ""succeeded"": true, ""data"": { ""results"": [ { ""methodName"": ""a}b{"", ""codeunitId"": 1, ""status"": ""Passed"" } ] } }"
@@ -815,7 +823,7 @@ try { Resolve-DeployRunVerifyConfig -ConfigPath $env:DRV_TEST_CONFIG | Out-Null;
             @('runtests-noise-chunklength.txt', 0, $requested, 'Green'),
             @('runtests-truncated-first-group.txt', 0, $requested, 'Incomplete'),
             @('runtests-nontest-only.txt', 0, @(59011), 'Incomplete'),
-            @('runtests-red-testrunfailed.txt', 1, @(59020), 'Red'),
+            @('runtests-red-testrunfailed.txt', 1, @(59011), 'Red'),
             @('runtests-auth-failure.txt', 1, @(59010), 'AuthFailure'),
             @('runtests-wrong-port.txt', 1, @(59010), 'InvocationFailure'))
         foreach ($case in $cases) {
@@ -834,19 +842,19 @@ try { Resolve-DeployRunVerifyConfig -ConfigPath $env:DRV_TEST_CONFIG | Out-Null;
 
     Invoke-TestCase 'S-4b.13 runtests result normalization' {
         $green = ConvertTo-DeployRunVerifyTestSummary -Json (ConvertFrom-DeployRunVerifyAlToolJson -Text (Get-AlToolFixture 'runtests-green-complete.txt'))
-        Assert-Equal $green.Total 23 'Green: 25 records, 23 counted.'
-        Assert-Equal $green.Passed 23 'Green passed.'
+        Assert-Equal $green.Total 312 'Green: 333 records, 312 counted.'
+        Assert-Equal $green.Passed 312 'Green passed.'
         Assert-Equal $green.Failed 0 'Green failed.'
         Assert-Equal $green.Skipped 0 'Green skipped.'
         Assert-Equal @($green.Failures).Count 0 'Green failures.'
         Assert-Equal $green.Stage 'ran' 'Stage.'
         $red = ConvertTo-DeployRunVerifyTestSummary -Json (ConvertFrom-DeployRunVerifyAlToolJson -Text (Get-AlToolFixture 'runtests-red-testrunfailed.txt'))
-        Assert-Equal $red.Total 12 'Red: the blank completion record is not counted.'
-        Assert-Equal $red.Passed 11 'Red passed.'
-        Assert-Equal $red.Failed 1 'Red failed (blank record de-duplicated).'
-        Assert-Equal (@($red.Failures) -join ',') '59020:TestCaseB01' 'Failures are codeunit:method.'
-        Assert-True ($red.FailureDetails[0].Output -like '*AL call stack*') 'The call stack is kept.'
-        Assert-Equal $red.FailureDetails[0].Test '59020:TestCaseB01' 'Detail name.'
+        Assert-Equal $red.Total 312 'Red: blank completion records are not counted.'
+        Assert-Equal $red.Passed 306 'Red passed.'
+        Assert-Equal $red.Failed 6 'Red failed (blank records de-duplicated).'
+        Assert-Equal @($red.Failures)[0] '59011:GivenCircularSuperiorChargeCodes_WhenCalculationIsRun_ThenCircularReferenceErrorIsRaised' 'Failures are codeunit:method.'
+        Assert-True ($red.FailureDetails[0].Output -like '*AL Callstack*') 'The call stack is kept.'
+        Assert-Equal $red.FailureDetails[0].Test '59011:GivenCircularSuperiorChargeCodes_WhenCalculationIsRun_ThenCircularReferenceErrorIsRaised' 'Detail name.'
         $skipped = '{ "succeeded": true, "data": { "results": [ { "codeunitId": 1, "methodName": "A", "status": "Skipped" }, { "codeunitId": 1, "methodName": "B", "status": "PASSED" }, { "codeunitId": 1, "methodName": "C", "status": "weird" } ] } }'
         $mixed = ConvertTo-DeployRunVerifyTestSummary -Json (ConvertFrom-DeployRunVerifyAlToolJson -Text $skipped)
         Assert-True ($mixed.Skipped -eq 1 -and $mixed.Passed -eq 1 -and $mixed.Failed -eq 1) 'Status matching is case-insensitive; an unknown status counts as failed.'
@@ -869,14 +877,14 @@ try { Resolve-DeployRunVerifyConfig -ConfigPath $env:DRV_TEST_CONFIG | Out-Null;
 
         . $mocks
         $summary = Invoke-DeployRunVerifyTests -Cfg $cfg
-        Assert-Equal $summary.Total 23 'Green summary normalized.'
+        Assert-Equal $summary.Total 312 'Green summary normalized.'
         Assert-Equal $Script:DeployRunVerifyRoutes['Tests'].Route 'altool' 'Route altool.'
         Assert-Equal $script:legacyRuns 0 'No legacy run.'
 
         . $mocks
         $script:next = [pscustomobject]@{ Outcome = 'Red'; Reason = 'TestRunFailed'; Json = $redJson }
         $summary = Invoke-DeployRunVerifyTests -Cfg $cfg
-        Assert-Equal $summary.Failed 1 'Red result as is.'
+        Assert-Equal $summary.Failed 6 'Red result as is.'
         Assert-Equal $script:legacyRuns 0 'Red must never trigger the web-client runner.'
         Assert-Equal @($Script:DeployRunVerifyFallbacks).Count 0 'No fallback on red.'
 
@@ -932,7 +940,7 @@ try { Resolve-DeployRunVerifyConfig -ConfigPath $env:DRV_TEST_CONFIG | Out-Null;
         Assert-Equal (@($groups | ForEach-Object { $_.codeunitId }) -join ',') '59010,59013' 'Groups file lists the codeunits.'
         $groupFile = Join-Path $runnerDir '_altool\testgroups.json'
         Assert-Equal ($script:capturedArguments -join ' ') "runtests --testgroups $groupFile --project C:\repo\Test --company CRONUS CH --server http://nst-test.example.com --serverinstance BC --port 7049 --authentication Windows --tenant default --environmenttype OnPrem" 'Arguments: complete bundle, test project, company.'
-        Assert-True ((Get-Content -LiteralPath (Join-Path $runnerDir '_altool\runtests.out.txt') -Raw) -like 'A task was canceled.*') 'Raw stdout saved.'
+        Assert-True ((Get-Content -LiteralPath (Join-Path $runnerDir '_altool\runtests.out.txt') -Raw) -like '*"succeeded"*') 'Raw stdout saved.'
         $single = [pscustomobject]@{ Route = 'altool'; Reason = ''; Codeunits = [int[]]@(59010); AlTool = $decision.AlTool }
         Invoke-Captured { Invoke-DeployRunVerifyAlToolTestRun -Cfg $cfg -Decision $single } | Out-Null
         Assert-True ((Get-Content -LiteralPath $groupFile -Raw).TrimStart().StartsWith('[')) 'A single codeunit is still a JSON array.'
@@ -1133,6 +1141,109 @@ try { Resolve-DeployRunVerifyConfig -ConfigPath $env:DRV_TEST_CONFIG | Out-Null;
         Assert-Throws { Get-DeployRunVerifyPublishContext -Cfg $cfg } 'mgmtDllPath is required for the ASINST adapter' 'No mgmtDllPath.' | Out-Null
         $cfg | Add-Member mgmtDllPath 'D:\x\Microsoft.Dynamics.Nav.Management.dll' -Force
         Assert-Null (Get-DeployRunVerifyPublishContext -Cfg $cfg) 'ASINST needs no context object.'
+    }
+
+    Invoke-TestCase 'S-4b.22 package manifest is read with the positional altool form (D-4)' {
+        $source = Get-Content -LiteralPath $enginePath -Raw
+        Assert-True ($source -notmatch 'GetPackageManifest\s+--package') 'The unsupported --package form is gone.'
+        $script:manifestArgs = $null
+        $script:manifestOut = "noise line`n{ ""name"": ""Dep"", ""version"": ""1.0.0.0"", ""dependencies"": [ { ""name"": ""A"", ""publisher"": ""Microsoft"", ""version"": ""1.0.0.0"" } ] }"
+        $script:manifestExit = 0
+        function Get-DeployRunVerifyAlTool { [pscustomobject]@{ Path = 'C:\fake\altool.exe'; Version = '18.1.43'; Source = 'extension'; Error = $null } }
+        function Invoke-DeployRunVerifyAlTool {
+            param($AlTool, $Arguments, $Credential, $TimeoutMs)
+            $script:manifestArgs = @($Arguments)
+            [pscustomobject]@{ ExitCode = $script:manifestExit; StdOut = $script:manifestOut; StdErr = ''; DurationMs = 1; TimedOut = $false; LaunchError = $null }
+        }
+        $deps = @(Get-DeployRunVerifyAppManifestDependencies -AppFile 'C:\x\Dep.app')
+        Assert-Equal ($script:manifestArgs -join '|') 'GetPackageManifest|C:\x\Dep.app' 'Positional package path.'
+        Assert-Equal $deps.Count 1 'Dependencies parsed past the noise line.'
+        $script:manifestExit = 1
+        $warnings = @(Get-DeployRunVerifyAppManifest -AppFile 'C:\x\Dep.app' 3>&1 | Where-Object { $_ -is [System.Management.Automation.WarningRecord] })
+        Assert-True ($warnings.Count -ge 1 -and $warnings[0].Message -match 'preflight' -and $warnings[0].Message -match 'auto-install') 'An unreadable manifest warns that preflight and auto-install are skipped.'
+        Assert-Equal @(Get-DeployRunVerifyAppManifestDependencies -AppFile 'C:\x\Dep.app' 3>$null).Count 0 'Unreadable manifest yields no dependencies.'
+    }
+
+    Invoke-TestCase 'S-4b.23 runtests 401 is an auth failure only for failed runs (D-10)' {
+        $auth = Get-DeployRunVerifyTestOutcome -Output '{ "succeeded": false, "message": "Response status code does not indicate success: 401 (Unauthorized).", "errorDetails": { "code": "UnknownError" } }' -ExitCode 1
+        Assert-Equal $auth.Outcome 'AuthFailure' 'JSON 401 message.'
+        Assert-Equal (Get-DeployRunVerifyTestOutcome -Output 'Response status code does not indicate success: 401 (Unauthorized).' -ExitCode 1).Outcome 'AuthFailure' 'No JSON, 401 text.'
+        Assert-Equal (Get-DeployRunVerifyTestOutcome -Output '{ "succeeded": false, "errorDetails": { "code": "TestRunFailed" }, "data": { "results": [ { "codeunitId": 1, "methodName": "Test401Unauthorized", "status": "Failed" } ] } }' -ExitCode 1).Outcome 'Red' 'TestRunFailed stays Red.'
+        $green = '{ "succeeded": true, "data": { "results": [ { "codeunitId": 1, "methodName": "Test401", "status": "Passed" } ] } }'
+        Assert-Equal (Get-DeployRunVerifyTestOutcome -Output $green -RequestedCodeunits @(1)).Outcome 'Green' '401 in a test name of a green run is ignored.'
+    }
+
+    Invoke-TestCase 'S-4b.4b publish without an HTTP response is locale independent (D-5)' {
+        $german = "Sending request to http://h:7049/BC/dev/apps`nEs konnte keine Verbindung hergestellt werden."
+        Assert-Equal (Get-DeployRunVerifyPublishOutcome -ExitCode 1 -Output $german).Outcome 'InvocationFailure' 'Request sent, no HTTP status line.'
+        $withStatus = "Sending request to http://h:7049/BC/dev/apps`nRequest failed with code InternalServerError"
+        Assert-Equal (Get-DeployRunVerifyPublishOutcome -ExitCode 1 -Output $withStatus).Outcome 'Rejected' 'An HTTP status line keeps the Rejected classification.'
+    }
+
+    Invoke-TestCase 'S-4b.24 a rejected publish reports the state left on the target' {
+        . $publishMocks
+        $cfg = New-DrvPublishCfg
+        $script:alOutcome = 'Rejected'
+        $script:allVersions = @([pscustomobject]@{ Version = '1.0.0.1'; IsInstalled = $true; SyncState = 'Synced' }, [pscustomobject]@{ Version = '1.0.0.2'; IsInstalled = $false; SyncState = 'NotSynced' })
+        function Get-DeployRunVerifyAppStateAllVersions { param($Cfg, $Name, $Context) if ($null -eq $script:allVersions) { throw 'boom' }; $script:allVersions }
+        $run = Invoke-Captured { Assert-Throws { Invoke-DeployRunVerifyPublishApp -Cfg $cfg -AppFile 'x.app' -Name 'AppA' -Version '1.0.0.2' } 'PUBLISH_REJECTED' 'Installed remains.' }
+        Assert-True (($run.Info -join "`n") -match 'STATE AFTER REJECT: AppA installed=1\.0\.0\.1; published=1\.0\.0\.1 \(Synced\), 1\.0\.0\.2 \(NotSynced\)') 'State line printed.'
+        Assert-True ($run.Result -notmatch 'redeploy-recovery') 'Installed version remains: no recovery hint.'
+
+        $script:allVersions = @([pscustomobject]@{ Version = '1.0.0.2'; IsInstalled = $false; SyncState = 'NotSynced' })
+        $run = Invoke-Captured { Assert-Throws { Invoke-DeployRunVerifyPublishApp -Cfg $cfg -AppFile 'x.app' -Name 'AppA' -Version '1.0.0.2' } 'PUBLISH_REJECTED' 'None installed.' }
+        Assert-True ($run.Result -match '^PUBLISH_REJECTED' -and $run.Result -match 'left without an installed version of AppA - see references/redeploy-recovery.md') 'Recovery hint appended, prefix kept.'
+
+        $script:allVersions = $null
+        $run = Invoke-Captured { Assert-Throws { Invoke-DeployRunVerifyPublishApp -Cfg $cfg -AppFile 'x.app' -Name 'AppA' -Version '1.0.0.2' } 'PUBLISH_REJECTED' 'State read fails.' }
+        Assert-True ($run.Result -notmatch 'redeploy-recovery') 'A failed state read keeps the original error.'
+        Remove-Item Function:\Get-DeployRunVerifyAppStateAllVersions
+    }
+
+    Invoke-TestCase 'S-4b.26 a provider-qualified config path yields plain file system paths' {
+        $configPath = New-DrvTestRepo -Fixture 'case-configured-windows'
+        $qualified = 'Microsoft.PowerShell.Core\FileSystem::' + $configPath
+        $cfg = Resolve-DeployRunVerifyConfig -ConfigPath $qualified -BuildOnly
+        Assert-True (-not ($cfg.apps[0].ProjectDir -like '*FileSystem::*')) "ProjectDir kept the provider prefix: $($cfg.apps[0].ProjectDir)"
+        Assert-True (-not ($cfg.apps[0].AppFile -like '*FileSystem::*')) 'AppFile kept the provider prefix.'
+        Assert-True (-not ($cfg.runnerDirFull -like '*FileSystem::*')) 'runnerDirFull kept the provider prefix.'
+    }
+
+    Invoke-TestCase 'S-4b.25 a re-prompted credential is saved after the first non-401 answer' {
+        . $publishMocks
+        $script:saved = 0
+        function Save-FkhCredential { param($Key, $Credential) $script:saved++ }
+        $script:outcomes = @()
+        $queueMocks = {
+            function Invoke-DeployRunVerifyAlToolPublish { $o = $script:outcomes[0]; $script:outcomes = @($script:outcomes | Select-Object -Skip 1); [pscustomobject]@{ Outcome = $o; Reason = $(if ($o -eq 'Rejected') { $script:rejectReason } else { "altool says $o" }) } }
+            function Get-DeployRunVerifyAppStateAllVersions { @() }
+        }
+        $userCfg = New-DrvPublishCfg -Authentication UserPassword -Scheme https
+        $script:rejectReason = 'The request for path /BC/dev/apps failed with code UnprocessableEntity. Reason: schema'
+        foreach ($final in 'Duplicate', 'Rejected', 'ProtocolError') {
+            . $publishMocks; . $queueMocks
+            $script:saved = 0; $Script:DeployRunVerifyCredentialFromStore = $false
+            $script:outcomes = @('AuthFailure', $final)
+            Assert-Throws { Invoke-DeployRunVerifyPublishApp -Cfg $userCfg -AppFile 'x.app' -Name 'AppA' -Version '1.0.0.0' } 'PUBLISH_' "AuthFailure then $final." | Out-Null
+            Assert-Equal $script:saved 1 "Credential saved after $final."
+        }
+        . $publishMocks; . $queueMocks
+        $script:saved = 0; $Script:DeployRunVerifyCredentialFromStore = $false
+        $script:rejectReason = 'altool: unrecognized failure before any request'
+        $script:outcomes = @('AuthFailure', 'Rejected')
+        Assert-Throws { Invoke-DeployRunVerifyPublishApp -Cfg $userCfg -AppFile 'x.app' -Name 'AppA' -Version '1.0.0.0' } 'PUBLISH_REJECTED' 'Rejected without an HTTP answer.' | Out-Null
+        Assert-Equal $script:saved 0 'Not saved when Rejected carries no HTTP answer.'
+        . $publishMocks; . $queueMocks
+        $script:saved = 0; $Script:DeployRunVerifyCredentialFromStore = $false
+        $script:outcomes = @('AuthFailure', 'AuthFailure')
+        Assert-Throws { Invoke-DeployRunVerifyPublishApp -Cfg $userCfg -AppFile 'x.app' -Name 'AppA' -Version '1.0.0.0' } 'PUBLISH_AUTH_FAILED' 'Two auth failures.' | Out-Null
+        Assert-Equal $script:saved 0 'Never saved on AuthFailure.'
+        $script:saved = 0; $script:alOutcome = 'InvocationFailure'; $script:postOutcome = 'InvocationFailure'
+        $script:outcomes = @('InvocationFailure')
+        Assert-Throws { Invoke-DeployRunVerifyPublishApp -Cfg $userCfg -AppFile 'x.app' -Name 'AppA' -Version '1.0.0.0' } 'PUBLISH_FAILED' 'Invocation failure.' | Out-Null
+        Assert-Equal $script:saved 0 'Never saved on InvocationFailure.'
+        Remove-Item Function:\Save-FkhCredential, Function:\Get-DeployRunVerifyAppStateAllVersions -ErrorAction SilentlyContinue
+        $Script:DeployRunVerifyCredentialFromStore = $false
     }
 
     Invoke-TestCase 'S-4b.20 missing MS test libraries are installed from the DVD, only the missing links, in chain order' {

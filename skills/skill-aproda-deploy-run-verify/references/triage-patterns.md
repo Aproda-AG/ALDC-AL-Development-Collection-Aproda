@@ -68,6 +68,11 @@ When a test fails, match the symptom below → apply the fix → re-deploy → r
 - **Cause:** the changed schema cannot be applied with `Synchronize`.
 - **Fix:** `fkhSyncMode = ForceSync` for the run (D-39: tell the user briefly; it can drop data of changed tables). Not `Recreate`; `forceUpgrade` only on an explicit request.
 
+### T-13 — `STATE AFTER REJECT` / *Target left without an installed version*
+- **Symptom:** `PUBLISH_REJECTED` plus `STATE AFTER REJECT: <app> installed=none; published=…`.
+- **Cause:** the server rejected the new version after it had already unloaded the installed one (typically a failed schema sync).
+- **Fix:** resolve the rejection cause (T-9 / T-12), then publish again with the rebuilt package, or re-publish the previous version; see [`redeploy-recovery.md`](redeploy-recovery.md). If the state read itself failed, a warning says so and the original error stands.
+
 ### T-10 — `Incomplete` altool test run ✅ (Q-13a, measured)
 - **Symptom:** `ROUTE-FALLBACK: tests → webClient (Incomplete: requested codeunit(s) missing …)`, or `no test results (empty run)`.
 - **Cause:** a non-test codeunit in the group stopped the run after the first group (`A task was canceled.`) while `succeeded` and `data.success` stayed `true`; or the group contained only a non-test codeunit (`total: 0`). `succeeded: true` alone does not prove a complete run.

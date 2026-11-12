@@ -1,9 +1,42 @@
-Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'chunkLength')
+# exit code: 1; timedOut: False; durationMs: 2560
+--- stdout ---
 {
   "succeeded": false,
+  "message": "Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte. (<host>:9549)",
+  "nextSteps": [],
   "errorDetails": {
     "code": "UnknownError",
-    "message": "Metadata discovery failed: no connection could be made because the target machine actively refused it.",
+    "description": "An unknown error occurred",
+    "possibleCauses": [
+      "Extension internal error",
+      "Unexpected system state"
+    ],
+    "suggestedActions": [
+      "Try the operation again",
+      "Restart VS Code",
+      "Check AL extension output for details"
+    ],
+    "alternatives": [],
+    "missingPrerequisites": [],
+    "diagnosticHints": [
+      "Check the AL Language extension output panel for details"
+    ],
     "retryable": true
-  }
+  },
+  "warnings": []
 }
+
+--- stderr ---
+MergeFromLaunchJson: Looking for launch.json in project: <repo>\Test
+MergeFromLaunchJson: Found launch.json config: server=https://<host>, instance=BC, envType=OnPrem, envName=(null), auth=UserPassword
+MergeFromLaunchJson: Incoming params - Environment=Production, EnvironmentName=(null), EnvironmentType=OnPrem, Server=http://<host>, ServerInstance=<instance>
+MergeFromLaunchJson: Heuristics - requestLooksCloud=False, hasExplicitOnPremSettings=True
+MergeFromLaunchJson: Applied all launch.json settings (on-prem or explicit settings detected)
+MergeFromLaunchJson: Final params - Server=http://<host>, ServerInstance=<instance>, EnvironmentType=OnPrem, Auth=Windows
+Built ConnectionOptions: auth=Windows, server=http://<host>, instance=<instance>, env=null
+Targeting server 'http://<host>', server instance '<instance>' and tenant 'default'.
+Using Windows authentication.
+Sending request to http://<host>:9549/<instance>/dev/metadata?tenant=default
+Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte. (<host>:9549)
+Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte. (<host>:9549)
+

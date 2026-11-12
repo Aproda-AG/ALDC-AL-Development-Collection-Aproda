@@ -1,3 +1,15 @@
-Publishing 'Aproda AG_Fixture Base_1.0.0.0.app' to http://nst-test.example.com:7049/BC ...
-Error: the server rejected the request with HTTP 422 UnprocessableEntity.
-  InvalidOperation: duplicate package ID 3f1c2a9e-0000-0000-0000-000000000001
+# exit code: 1; timedOut: False; durationMs: 515
+--- stdout ---
+Publishing AL package...
+MergeFromLaunchJson: No project path specified, skipping launch.json lookup
+Publishing <repo>\Base\Aproda AG_Gustav Gerig AG Base_25.0.0.182.app (auth=Windows)
+Publishing package to tenant 'default'
+Targeting server 'http://<host>', server instance '<instance>' and tenant 'default'.
+Using Windows authentication.
+Sending request to http://<host>:9540/<instance>/dev/apps?tenant=default&SchemaUpdateMode=forcesync&DependencyPublishingOption=ignore
+The request for path /<instance>/dev/apps?tenant=default&SchemaUpdateMode=forcesync&DependencyPublishingOption=ignore failed with code UnprocessableEntity. Reason: A duplicate package ID is detected. Cannot publish an extension with packageId: '7471064f-99db-46f5-ab55-7e7b7b53c351', appId: '7b3189f2-9c3b-4304-a512-86fa3ab8d30d', name: 'Gustav Gerig AG Base', publisher: 'Aproda AG' and version: '25.0.0.182', because the same package ID already exists in a published extension with packageId: '7471064f-99db-46f5-ab55-7e7b7b53c351', appId: '7b3189f2-9c3b-4304-a512-86fa3ab8d30d', name: 'Gustav Gerig AG Base', publisher: 'Aproda AG' and version: '25.0.0.182'.
+
+
+--- stderr ---
+Publish failed: Publish operation failed. Check the output for details.
+

@@ -1,17 +1,32 @@
-Beschreibung:
-  AL-Befehlszeilentool
+# exit code: 0; timedOut: False; durationMs: 141
+--- stdout ---
+Description:
+  Microsoft AL CLI tools
 
 Nutzung:
-  altool [Befehl] [Optionen]
+  altool [command] [options]
 
 Optionen:
+  -?, -h, --help  Show help and usage information
   --version       Versionsinformationen anzeigen
-  -?, -h, --help  Hilfe- und Nutzungsinformationen anzeigen
 
 Befehle:
-  compile          AL-Projekt kompilieren
-  workspace        Arbeitsbereichsoperationen
-  publishapp       App auf einem Server veröffentlichen
-  runtests         Tests auf einem Server ausführen
-  auth             Authentifizierung
-  launchmcpserver  MCP-Server starten
+  compile <args>                                      Compiles a package by invoking alc with the specified arguments.
+  workspace                                           Workspace related commands
+  GetPackageManifest, gpm <packagepath>               Get the manifest from a .app file.
+  CreateSymbolPackage <sourcePath> <targetPath>       Creates a symbol package from a given application package.
+  GetLatestSupportedRuntimeVersion <platformVersion>  Get latest supported AL runtime version for a platform version
+  IsSymbolOnly <inputPath>                            Checks if the given .app package is a symbol-only package.
+  IsRuntimePackage <inputPath>                        Checks if the given .app package is a runtime package.
+  launchmcpserver <projects>                          Launch an AL Model Context Protocol (MCP) server.
+  launchprofilingmcpproxy                             Launch an AL Performance Profiling MCP proxy (stdio) that captures .alcpuprofile CPU profiles from a slow Business Central session for agentic troubleshooting. The target session id is supplied per tool call.
+  launchsnapshotmcpproxy                              Launch an AL Snapshot Debugging MCP proxy (stdio) that captures snapshot archives from a Business Central environment for agentic troubleshooting.
+  launchlspserver <projects>                          Launch an AL Language Server Protocol (LSP) server over stdio for agentic AL development.
+  publishapp <appPath>                                Publishes an AL package (.app file) to a Business Central server.
+  runtests <codeunitId>                               Runs AL unit tests against a Business Central server. [default: 0]
+  auth                                                Authentication helpers for cloud (Entra ID/AAD).
+  graph                                               Query the AL call graph across your apps.
+
+
+--- stderr ---
+
