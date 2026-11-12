@@ -1,4 +1,10 @@
-# E-010 — Live test brief (phases 2, 3, 4a, 4b)
+# E-010 — Live test brief (phases 2, 3, 4a, 4b, agent harness)
+
+**Executed 2026-11-02 … 11-10** (run 1, evidence in [`live-evidence/`](live-evidence/AlMcpE010Evidence.md)). The open
+points are retested with [`E-010-live-test-brief-2.md`](E-010-live-test-brief-2.md).
+
+**Updated:** 2026-11-02 — step 0.5, block H (Q-25, Q-26), DRV fixes of 2026-10-27/-29 (`L-4b.13`, `L-4b.14`),
+safety rule 7.
 
 **For:** the Copilot session in *Gustav Gerig AG Base* (environment access to TOGA and the Fkh container).
 **Source of truth:** [`E-010.test-plan.md`](E-010.test-plan.md) (case IDs, expected results, safety rules §2),
@@ -17,15 +23,19 @@
 5. Do not commit anything in the project. Temporary files under the ignored `Test/PowerShell/_temp/`.
 6. A failed case: stop the block, report, wait. No workarounds in layer files — the engine and skills are
    immutable in the project; fixes happen in the fork.
+7. The DRV preflight installs missing **Microsoft test libraries** from the K: DVD on its own (D-52 addendum,
+   `autoInstallMsTestLibraries`, default `true`). That is a target write: allowed only inside a block with
+   acknowledgement (D, L-H.2, L-H.4); record every `AUTO-INSTALL (MS test library)` line.
 
 ## Block 0 — Preparation (Florian)
 
 | Step | Action | Check |
 |---|---|---|
-| 0.1 | Fork: commit the E-010 implementation on the work branch (push optional). | `git status` clean except unrelated files |
-| 0.2 | Project: Aproda extension settings `aprodaAldc.source.mode = localFork`, `aprodaAldc.source.forkPath = <fork path>`; then *Aproda ALDC: Check for Updates* / apply. A warning that the fork is not on `aproda` is expected. | `.github/skills/skill-aproda-al-mcp/` exists; `.github/skills/skill-aproda-deploy-run-verify/scripts/AprodaDeployRunVerify.psm1` contains `Invoke-DeployRunVerifyPublish` |
-| 0.3 | Do **not** install the new extension yet (needed only in block C). | Extension version still `0.1.7` |
+| 0.1 | Fork: E-010 is committed (`b78d815`), plus the DRV fixes `f5d7f3f` (HTTP 422 classification, MS test-library auto-install) and `a8f2b7c` (lazy `alc.exe`). Record the fork HEAD. | `git status` clean except unrelated files |
+| 0.2 | Project: Aproda extension settings `aprodaAldc.source.mode = localFork`, `aprodaAldc.source.forkPath = <fork path>`; then *Aproda ALDC: Apply Toolkit to Project (per Repo)* (*Check for Updates* reports nothing in `localFork`). The sync copies the fork's **working tree**; no push needed. Warnings that the fork is not on `aproda` or has uncommitted changes are expected. | `.github/skills/skill-aproda-al-mcp/` exists; `.github/skills/skill-aproda-deploy-run-verify/scripts/AprodaDeployRunVerify.psm1` contains `Invoke-DeployRunVerifyPublish`, `Resolve-DeployRunVerifyAlcPath` and `Get-DeployRunVerifyMsTestLibraryPlan` |
+| 0.3 | Do **not** install the new extension yet (needed only in block C). | Extension version still below `0.2.0` (record it) |
 | 0.4 | Confirm the hand-copied pre-step engine files are overwritten by the pull. | hash of the engine = fork |
+| 0.5 | Record VS Code version (*Help: About*), `chat.mcp.autostart`, and the harness of the test session (prefix in the chat title: *Local* or *Copilot*). Run blocks A, B, D and C in the **Local** harness unless a case says otherwise; block H covers the Copilot harness. | values in the report header |
 
 ## Block A — DRV target selection (phase 4a) · no target writes
 
@@ -66,7 +76,9 @@ them afterwards.
 | L-4b.9 | Fkh | wrong password in the store (Florian enters it), `full` | one re-prompt; right password → green + store updated; wrong again → `PUBLISH_AUTH_FAILED`, stop |
 | L-4b.10 | TOGA | probe app with a removed field: `fkhSyncMode: Add`, then `ForceSync` (D-39: agent informs, no confirmation — but probe app only) | 1st `PUBLISH_REJECTED` with the schema message, no automatic escalation; 2nd `SCHEMA MODE: ForceSync (fkhSyncMode)`, green |
 | L-4b.11 | TOGA | probe app in two versions; `Get-DeployRunVerifyCleanupCandidates`; remove the not-installed version after confirmation (`Remove-DeployRunVerifyAppVersion`) | candidate with full identity; installed version never a candidate; absence confirmed; afterwards remove the probe completely (Q-16 sequence) |
-| L-4b.12 | both | capture the raw stdout/stderr of: `runtests` green (L-4b.5), `runtests` red (only if a naturally red test exists — otherwise skip and say so), `publishapp` success (L-4b.1), duplicate (L-4b.7), wrong port (L-4b.8), auth failure (L-4b.9), `altool --help` and `runtests --help` | one file per capture in `altool-captures/`, **scrubbed**: host names → `<host>`, instance → `<instance>`, user → `<user>`, no secrets; file names as in `tests/fixtures/altool/README.md` of the fork |
+| L-4b.12 | both | capture the raw stdout/stderr of: `runtests` green (L-4b.5), `runtests` red (only if a naturally red test exists — otherwise skip and say so), `publishapp` success (L-4b.1), duplicate (L-4b.7), wrong port (L-4b.8), auth failure (L-4b.9), `altool --help` and `runtests --help` | one file per capture in `altool-captures/`, **scrubbed**: host names → `<host>`, instance → `<instance>`, user → `<user>`, no secrets; file names as in `tests/fixtures/altool/README.md` of the fork. `publish-rejected-compile-422.txt` exists already (live 2026-10-23) — do not recapture |
+| L-4b.13 | both | In the preflight of L-4b.1/L-4b.2: look for `AUTO-INSTALL (MS test library)` lines. Only if a fresh container (Test Toolkit, without System Application Test Library) is available **and** Florian agrees: one `full` run there | normally no line (libraries present) — record "not exercised"; on a fresh container only the missing links, in chain order, re-verify green, 23/23 |
+| L-4b.14 | — | `alcPath` empty in `Test/deploy-run-verify.config.jsonc`, AL Language 18.1: `buildonly` | green via `altool`; no `alc.exe not found`, no `ALC_NOT_FOUND` |
 
 ## Block C — Extension `0.2.0` (phase 3)
 
@@ -87,9 +99,24 @@ reload. Florian performs the UI steps; the agent records.
 | **Q-5** | Temporary agent file `.github/agents/_e010-probe.agent.md` (ignored path) with `tools:` candidates `al-mcp/al_compile`, `al-mcp/*`, `aprodaag.aproda-aldc/al-mcp/al_compile`, `aprodaAldc.alMcp/al_compile`; reload; *Configure Tools*. Delete the file afterwards. | the form(s) that list the tool as enabled |
 | L-3.6 | Chat tool `startAlMcp` (`start`, `restart`). | confirmation dialog each time; result JSON; server state matches |
 
+## Block H — Copilot harness (after block C, extension `0.2.0` installed)
+
+New session with *Session Target* = **Copilot** (chat title prefix *Copilot*). Same workspace, same selection.
+Acknowledgement by Florian before L-H.2 and L-H.4 (target writes).
+
+| Case | Steps | Expected / record |
+|---|---|---|
+| L-H.1 (Q-25) | *Chat: Open Customizations* → *MCP Servers* and *Tools* in the Copilot harness. | Is `al-mcp` listed? Are its 16 tools listed? Record yes/no each. |
+| L-H.2 (Q-25) | If listed: `al_run_tests` 59021 with the complete bundle, Fkh target. | 10/10, or the exact error. If not listed: repeat L-H.1 with the interim `.github/.vscode/mcp.json` re-added (and the extension start mode `manual`, not started), record whether it is listed and whether `${workspaceFolder}` resolved, then remove it again. |
+| L-H.3 (Q-26) | Select the custom agent `al-developer` in the Copilot harness; *Configure Tools* / Tools tab. | Which of `ms-dynamics-smb.al/*`, `aprodaag.aproda-aldc/aldcConfiguration`, `aprodaag.aproda-aldc/startAlMcp`, `ado/*`, `context7/*`, `microsoft-learn/*` are enabled; any reported as unknown. |
+| L-H.4 | Copilot harness agent runs DRV `buildonly`, then `runonly` on Fkh (credential stored). | SRP-safe loading works in the harness shell tool; `runonly` green. With the credential file renamed (Florian): fail-fast message (no hanging prompt), then restore. |
+| L-H.5 | Same session: `#aldcConfiguration`. | `local` block identical to the Local-harness result (L-3.4). |
+
 ## Reporting format (`AlMcpE010Evidence.md`)
 
 Per case one row: `| Case | Date | Target | Auth | AL / altool version | Route(s) | Result (counts, duration) | Deviation / note |`.
-Then sections: *Q-5*, *Q-23*, *Q-24*, *OS-1 captures* (list of files), *OS-2*, *OS-3*, *pwsh stdio pass-through*
+Then sections: *Environment* (VS Code version, `chat.mcp.autostart`, harness per block, fork HEAD), *Q-5*, *Q-23*,
+*Q-24*, *Q-25*, *Q-26*, *OS-1 captures* (list of files), *OS-2*, *OS-3*, *MS test-library auto-install* (L-4b.13),
+*pwsh stdio pass-through*
 (L-2.1), *Open defects* (one line each: case, observed, expected, log excerpt without secrets).
 Close with: which blocks are complete, which are blocked and why.
