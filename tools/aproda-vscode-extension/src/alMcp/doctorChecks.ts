@@ -3,7 +3,6 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { alMcpStartMode } from "../config";
 import { describeActiveAltool } from "./altool";
-import { ownStartPathConfirmed } from "./serverCommands";
 
 export interface AlMcpFinding {
     readonly level: "info" | "warning";
@@ -45,11 +44,6 @@ export function collectAlMcpFindings(): AlMcpFinding[] {
 
     for (const file of findDuplicateRegistrations()) {
         findings.push({ level: "warning", message: `Duplicate AL MCP registration: ${file} contains 'launchmcpserver'. Remove it; the Aproda extension provides the al-mcp server.` });
-    }
-
-    const autostart = vscode.workspace.getConfiguration("chat.mcp").get<string>("autostart");
-    if (mode === "auto" && autostart === "never" && !ownStartPathConfirmed) {
-        findings.push({ level: "warning", message: "aprodaAldc.alMcp.start is 'auto' but chat.mcp.autostart is 'never', and the extension's own start command is not confirmed (Q-23): the AL MCP server may not start until you start it manually." });
     }
     return findings;
 }

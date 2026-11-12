@@ -16,7 +16,7 @@ const providerId = "aprodaAldc.alMcp";
 async function withRegistration(setup, fn) {
     const mock = createVscodeMock(setup);
     const logger = createLogger();
-    const context = { subscriptions: [] };
+    const context = { subscriptions: [], extension: { id: "AprodaAG.Aproda-ALDC" } };
     return withVscode(mock, async (load) => {
         const { registerAlMcp } = load("alMcp/register");
         const serverCommands = load("alMcp/serverCommands");
@@ -33,6 +33,7 @@ async function withRegistration(setup, fn) {
     });
 }
 
+const ownId = "aprodaag.aproda-aldc/al-mcp";
 const startCalls = (state) => state.executedCommands.filter((call) => call.name === "workbench.mcp.startServer");
 const configurationEvent = { affectsConfiguration: (key) => key === "aprodaAldc.alMcp.start" };
 
@@ -65,7 +66,7 @@ const tests = {
             const result = await invokeTool(state, { action: "start" });
             assert.strictEqual(result.state, "started");
             assert.strictEqual(result.server, "al-mcp");
-            assert.deepStrictEqual(state.executedCommands, [{ name: "workbench.mcp.startServer", args: [serverCommands.ownServerIdCandidate] }]);
+            assert.deepStrictEqual(state.executedCommands, [{ name: "workbench.mcp.startServer", args: [ownId] }]);
         });
     },
 
@@ -91,11 +92,11 @@ const tests = {
             state.executedCommands.length = 0;
             const restarted = await invokeTool(state, { action: "restart" });
             assert.strictEqual(restarted.state, "restarted");
-            assert.deepStrictEqual(state.executedCommands, [{ name: "workbench.mcp.restartServer", args: [serverCommands.ownServerIdCandidate] }]);
+            assert.deepStrictEqual(state.executedCommands, [{ name: "workbench.mcp.restartServer", args: [ownId] }]);
 
             state.executedCommands.length = 0;
             await invokeTool(state, { action: "start", serverId: "evil/other-server", server: "x", args: ["y"] });
-            assert.deepStrictEqual(state.executedCommands, [{ name: "workbench.mcp.startServer", args: [serverCommands.ownServerIdCandidate] }], "model input never reaches the command");
+            assert.deepStrictEqual(state.executedCommands, [{ name: "workbench.mcp.startServer", args: [ownId] }], "model input never reaches the command");
 
             state.executedCommands.length = 0;
             const invalid = await invokeTool(state, { action: "stop" });
@@ -105,7 +106,7 @@ const tests = {
             state.commandFailure = new Error("command not found");
             const failed = await invokeTool(state, { action: "start" });
             assert.strictEqual(failed.state, "failed");
-            assert.ok(logger.lines.some((line) => line.includes("workbench.mcp.startServer failed") && line.includes("Q-23")), "failure logged with Q-23 reference");
+            assert.ok(logger.lines.some((line) => line.includes("workbench.mcp.startServer failed") && line.includes("aprodaag.aproda-aldc/al-mcp")), "failure logged with the id");
             state.commandFailure = undefined;
 
             const prepared = await state.registeredTools.get(toolName).prepareInvocation({ input: { action: "start" } });
@@ -278,7 +279,7 @@ const tests = {
         assert.strictEqual(none.filter((finding) => finding.level === "warning").length, 0);
 
         const autostartNever = await find({ workspaceFolders: [projectFolder(clean)], configuration: { "chat.mcp.autostart": "never" } });
-        assert.ok(autostartNever.some((finding) => finding.level === "warning" && finding.message.includes("chat.mcp.autostart")));
+        assert.ok(!autostartNever.some((finding) => finding.message.includes("chat.mcp.autostart")), "own start path is confirmed, no autostart warning");
         const manualNever = await find({ workspaceFolders: [projectFolder(clean)], configuration: { "chat.mcp.autostart": "never", "aprodaAldc.alMcp.start": "manual" } });
         assert.ok(!manualNever.some((finding) => finding.message.includes("chat.mcp.autostart")), "manual mode is not affected");
     },
@@ -287,7 +288,7 @@ const tests = {
         const repo = makeRepo(scratch, nextName(), { local: localJson("Base", "dev-win") });
         const mock = createVscodeMock({ workspaceFolders: [projectFolder(repo)] });
         const logger = createLogger();
-        const context = { subscriptions: [] };
+        const context = { subscriptions: [], extension: { id: "AprodaAG.Aproda-ALDC" } };
         await withVscode(mock, async (load) => {
             load("alMcp/debugHint").registerDebugHint(context, logger);
             const session = (name, type = "al") => ({ type, configuration: { name }, workspaceFolder: projectFolder(repo) });

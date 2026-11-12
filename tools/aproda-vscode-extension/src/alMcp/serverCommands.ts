@@ -1,36 +1,48 @@
 import * as vscode from "vscode";
 import { Logger } from "../log";
 
-// TODO(Q-23): the argument VS Code expects for `workbench.mcp.startServer` / `workbench.mcp.restartServer` for a
-// provider-registered server is not measured yet (E-010 spec §4.9). This is a GUESS (provider id + "/" + label).
-// Measure with a scratch command, record the accepted form in E-010-plan.md, then change ONLY this constant and
-// flip `ownStartPathConfirmed`. The server id must never come from the model or from user input.
-export const ownServerIdCandidate = "aprodaAldc.alMcp/al-mcp";
+// Single source of the label: the provider uses it as the definition label, the start id is derived from it.
+export const serverLabel = "al-mcp";
 
-// Doctor input (spec §4.8): false while Q-23 is open, so `auto` + `chat.mcp.autostart = never` is reported.
-export const ownStartPathConfirmed = false;
+// Measured in VS Code 1.144 (Q-23): the id is toKey(extension id) = lower-case extension id, "/", definition label.
+export function ownServerIdFor(extensionId: string): string {
+    return `${extensionId.toLowerCase()}/${serverLabel}`;
+}
+
+// The id comes only from the extension context, never from the model or user input.
+let ownServerId: string | undefined;
+
+export function configureOwnServer(extensionId: string): void {
+    ownServerId = ownServerIdFor(extensionId);
+}
+
+export function currentOwnServerId(): string | undefined {
+    return ownServerId;
+}
 
 export type StartResult = "started" | "failed";
 export type RestartResult = "restarted" | "failed";
 
-// workbench.mcp.startServer resolves without telling whether a server with that id exists, so "started" means
-// "the command was issued", not "the server is running".
-export async function startOwnServer(logger: Logger): Promise<StartResult> {
+async function issue(command: "workbench.mcp.startServer" | "workbench.mcp.restartServer", logger: Logger): Promise<boolean> {
+    if (!ownServerId) {
+        logger.error(`${command} not issued: the own server id is not configured.`);
+        return false;
+    }
+    logger.info(`${command} issued for '${ownServerId}'.`);
     try {
-        await vscode.commands.executeCommand("workbench.mcp.startServer", ownServerIdCandidate);
-        return "started";
+        await vscode.commands.executeCommand(command, ownServerId);
+        return true;
     } catch (error) {
-        logger.error(`workbench.mcp.startServer failed for '${ownServerIdCandidate}' (Q-23): ${error instanceof Error ? error.message : String(error)}`);
-        return "failed";
+        logger.error(`${command} failed for '${ownServerId}': ${error instanceof Error ? error.message : String(error)}`);
+        return false;
     }
 }
 
+// The command resolves without telling whether a server with that id exists, so "started" means "the command was issued".
+export async function startOwnServer(logger: Logger): Promise<StartResult> {
+    return await issue("workbench.mcp.startServer", logger) ? "started" : "failed";
+}
+
 export async function restartOwnServer(logger: Logger): Promise<RestartResult> {
-    try {
-        await vscode.commands.executeCommand("workbench.mcp.restartServer", ownServerIdCandidate);
-        return "restarted";
-    } catch (error) {
-        logger.error(`workbench.mcp.restartServer failed for '${ownServerIdCandidate}' (Q-23): ${error instanceof Error ? error.message : String(error)}`);
-        return "failed";
-    }
+    return await issue("workbench.mcp.restartServer", logger) ? "restarted" : "failed";
 }

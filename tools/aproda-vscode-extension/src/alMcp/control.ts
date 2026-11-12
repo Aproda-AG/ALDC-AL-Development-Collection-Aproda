@@ -16,9 +16,9 @@ export interface ControlResult {
     readonly message: string;
 }
 
-const failureHint = "VS Code did not accept the start command (see the Aproda ALDC log, Q-23). Start the server from MCP: List Servers.";
+const failureHint = "VS Code did not accept the start command (see the Aproda ALDC log). Start the server from MCP: List Servers.";
 
-// Shared by the commands and the chat tool. The server id never comes from the caller (Q-23 stays in serverCommands).
+// Shared by the commands and the chat tool. The server id never comes from the caller (serverCommands derives it).
 export async function controlAlMcp(action: "start" | "restart", provider: StartRequestTarget, logger: Logger): Promise<ControlResult> {
     if (!isAlWorkspace()) {
         return { state: "notAlWorkspace", server: "al-mcp", message: "The open workspace is not an AL workspace (no folder with app.json); the AL MCP server is not provided." };

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+- Fixes the AL MCP server id used by *Start/Restart AL MCP Server* and the `startAlMcp` tool: it is now derived from the extension id (`<lower-case extension id>/al-mcp`, measured in VS Code 1.144) instead of a guess that VS Code silently ignored.
+- The AL MCP server is now restarted after its definition version changed (target, `launch.json`, stored credential, AL extension or layer version). VS Code only stops the server on such a change; a burst of changes ends in one restart, and `manual` mode restarts only after a start request.
+- The credential terminal now closes after the credential is stored (no `-NoExit`); on failure it shows the error and waits for Enter. Storing a credential restarts the server through the version change, and the credential directory is created so its watcher sees the first file.
+- Environment diagnostics no longer warn about `chat.mcp.autostart = never`; the start path no longer depends on it.
 ## 0.2.0
 
 - Registers the AL MCP server (`al-mcp`, `altool launchmcpserver`) as an extension-provided MCP server for the repository's AL projects. The provider starts the toolkit's `Start-AprodaAlMcp.ps1` content-based (SRP-safe), passes no target or credential values itself, and restarts the server when the selected target, its `launch.json` configuration, the stored credential, the AL extension or the layer version changes.

@@ -11,14 +11,19 @@ import { credentialStoreDirectory, hasStoredCredential, storeAlCredential } from
 import { LocalSelection, getLaunchFilePath, getLocalSelection } from "./localSelection";
 import { psQuote } from "./psQuote";
 import { selectAlTarget } from "./selectTarget";
+import { restartOwnServer, serverLabel } from "./serverCommands";
 import { readToolkitInfo } from "./toolkit";
 
 export const providerId = "aprodaAldc.alMcp";
-export const serverLabel = "al-mcp";
+export { serverLabel };
+
+// VS Code stops the server when the definition version changes (D-7); the restart waits until that stop has happened.
+const defaultRestartDelayMs = 1500;
 
 export interface AlMcpProviderOptions {
     readonly debounceMs?: number;
     readonly notificationWaitMs?: number;
+    readonly restartDelayMs?: number;
 }
 
 interface ProviderContext {
@@ -87,11 +92,15 @@ export class AlMcpProvider implements vscode.McpServerDefinitionProvider<vscode.
     private startRequested = false;
     private timer: ReturnType<typeof setTimeout> | undefined;
     private loggedMissingStarter: string | undefined;
+    private lastProvidedVersion: string | undefined;
+    private restartTimer: ReturnType<typeof setTimeout> | undefined;
     private readonly debounceMs: number;
     private readonly notificationWaitMs: number;
+    private readonly restartDelayMs: number;
 
     constructor(private readonly logger: Logger, options: AlMcpProviderOptions = {}) {
         this.debounceMs = options.debounceMs ?? 500;
+        this.restartDelayMs = options.restartDelayMs ?? defaultRestartDelayMs;
         this.notificationWaitMs = options.notificationWaitMs ?? 30_000;
         this.subscriptions.push(
             this.emitter,
@@ -136,14 +145,14 @@ export class AlMcpProvider implements vscode.McpServerDefinitionProvider<vscode.
 
     async provideMcpServerDefinitions(): Promise<vscode.McpStdioServerDefinition[]> {
         if (!isAlWorkspace()) {
-            return [];
+            return this.notProvided();
         }
         if (alMcpStartMode() === "manual" && !this.startRequested) {
-            return [];
+            return this.notProvided();
         }
         const context = await this.resolveContext();
         if (!context) {
-            return [];
+            return this.notProvided();
         }
         const selection = getLocalSelection(context.repositoryRoot);
         this.ensureWatchers(context, selection);
@@ -156,9 +165,34 @@ export class AlMcpProvider implements vscode.McpServerDefinitionProvider<vscode.
             buildStarterCommand(context.starterPath, context.repositoryRoot, context.skillRoot, alExtension)
         ];
         // env stays empty: the extension never passes target or credential values to the server.
-        const definition = new vscode.McpStdioServerDefinition(serverLabel, pwshPath(), args, {}, computeVersion(collectVersionInputs(context, selection)));
+        const version = computeVersion(collectVersionInputs(context, selection));
+        const definition = new vscode.McpStdioServerDefinition(serverLabel, pwshPath(), args, {}, version);
         definition.cwd = vscode.Uri.file(context.repositoryRoot);
+        if (this.lastProvidedVersion !== undefined && this.lastProvidedVersion !== version) {
+            this.scheduleRestart();
+        }
+        this.lastProvidedVersion = version;
         return [definition];
+    }
+
+    private notProvided(): vscode.McpStdioServerDefinition[] {
+        this.lastProvidedVersion = undefined;
+        return [];
+    }
+
+    // A version change makes VS Code stop the running server; a burst of changes ends in one restart.
+    private scheduleRestart(): void {
+        if (this.restartTimer) {
+            clearTimeout(this.restartTimer);
+        }
+        this.restartTimer = setTimeout(() => {
+            this.restartTimer = undefined;
+            if (alMcpStartMode() === "manual" && !this.startRequested) {
+                return;
+            }
+            this.logger.info(`AL MCP definition version changed to ${this.lastProvidedVersion}; restarting ${serverLabel}.`);
+            void restartOwnServer(this.logger);
+        }, this.restartDelayMs);
     }
 
     async resolveMcpServerDefinition(server: vscode.McpStdioServerDefinition, token: vscode.CancellationToken): Promise<vscode.McpStdioServerDefinition> {
@@ -175,6 +209,10 @@ export class AlMcpProvider implements vscode.McpServerDefinitionProvider<vscode.
         if (this.timer) {
             clearTimeout(this.timer);
             this.timer = undefined;
+        }
+        if (this.restartTimer) {
+            clearTimeout(this.restartTimer);
+            this.restartTimer = undefined;
         }
         for (const watcher of this.watchers) {
             watcher.dispose();
@@ -211,6 +249,12 @@ export class AlMcpProvider implements vscode.McpServerDefinitionProvider<vscode.
         const targets = [selection.path, launchPath, context.configurationPath].filter((value): value is string => !!value)
             .map((filePath) => ({ base: path.dirname(filePath), pattern: path.basename(filePath) }));
         if (credentialDirectory) {
+            // A watcher on a missing directory never reports the first credential file.
+            try {
+                fs.mkdirSync(credentialDirectory, { recursive: true });
+            } catch {
+                // best effort
+            }
             targets.push({ base: credentialDirectory, pattern: "*.cred.xml" });
         }
         const key = JSON.stringify(targets);

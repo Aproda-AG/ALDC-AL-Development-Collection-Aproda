@@ -42,6 +42,16 @@ async function withProvider(setup, fn) {
     });
 }
 
+const restartCalls = (state) => state.executedCommands.filter((call) => call.name === "workbench.mcp.restartServer");
+
+async function withRestartProvider(repo, configuration, fn, restartDelayMs = 20) {
+    const mock = { workspaceFolders: [projectFolder(repo)], alExtension: alExtension("18.1.0"), configuration };
+    return withProvider({ mock, options: { restartDelayMs } }, async (ctx) => {
+        ctx.load("alMcp/serverCommands").configureOwnServer("AprodaAG.Aproda-ALDC");
+        return fn(ctx);
+    });
+}
+
 const tests = {
     async "S-3.2 provider returns [] outside an AL workspace"(scratch) {
         const repo = makeRepo(scratch, nextName(), { local: localJson("Base", "dev-win") });
@@ -243,6 +253,8 @@ const tests = {
                 const command = terminal.options.shellArgs.at(-1);
                 assert.ok(command.includes("Save-FkhCredential -Key 'up.example.com'"));
                 assert.ok(command.includes(path.join(repo, ".github", "skills", "skill-aproda-fkh", "scripts", "FkhCredentialStore.ps1")));
+                assert.ok(!terminal.options.shellArgs.includes("-NoExit"), "D-8: the terminal closes on success");
+                assert.ok(/catch \{[^}]*Read-Host/.test(command), "D-8: a failure waits for Enter");
             });
         });
     },
@@ -339,6 +351,76 @@ const tests = {
         });
     },
 
+    async "D-7 restart: auto, one version change -> one restart with the lower-case own id"(scratch) {
+        const repo = makeRepo(scratch, nextName(), { local: localJson("Base", "dev-win") });
+        await withRestartProvider(repo, {}, async ({ provider, state }) => {
+            await provider.provideMcpServerDefinitions();
+            state.alExtension = alExtension("18.2.0");
+            await provider.provideMcpServerDefinitions();
+            await waitFor(() => restartCalls(state).length === 1, "the restart");
+            await sleep(80);
+            assert.deepStrictEqual(restartCalls(state), [{ name: "workbench.mcp.restartServer", args: ["aprodaag.aproda-aldc/al-mcp"] }]);
+        });
+    },
+
+    async "D-7 restart: three quick version changes -> one restart"(scratch) {
+        const repo = makeRepo(scratch, nextName(), { local: localJson("Base", "dev-win") });
+        await withRestartProvider(repo, {}, async ({ provider, state }) => {
+            await provider.provideMcpServerDefinitions();
+            for (const version of ["18.2.0", "18.3.0", "18.4.0"]) {
+                state.alExtension = alExtension(version);
+                await provider.provideMcpServerDefinitions();
+            }
+            await waitFor(() => restartCalls(state).length === 1, "the restart");
+            await sleep(80);
+            assert.strictEqual(restartCalls(state).length, 1);
+        });
+    },
+
+    async "D-7 restart: unchanged version and first provide -> no restart"(scratch) {
+        const repo = makeRepo(scratch, nextName(), { local: localJson("Base", "dev-win") });
+        await withRestartProvider(repo, {}, async ({ provider, state }) => {
+            await provider.provideMcpServerDefinitions();
+            await sleep(80);
+            assert.strictEqual(restartCalls(state).length, 0, "first provide");
+            await provider.provideMcpServerDefinitions();
+            await provider.provideMcpServerDefinitions();
+            await sleep(80);
+            assert.strictEqual(restartCalls(state).length, 0, "unchanged version");
+        });
+    },
+
+    async "D-7 restart: manual without start request -> nothing; after requestStart a change restarts once"(scratch) {
+        const repo = makeRepo(scratch, nextName(), { local: localJson("Base", "dev-win") });
+        await withRestartProvider(repo, { "aprodaAldc.alMcp.start": "manual" }, async ({ provider, state }) => {
+            assert.deepStrictEqual(await provider.provideMcpServerDefinitions(), []);
+            state.alExtension = alExtension("18.2.0");
+            assert.deepStrictEqual(await provider.provideMcpServerDefinitions(), []);
+            await sleep(80);
+            assert.strictEqual(restartCalls(state).length, 0);
+
+            provider.requestStart();
+            assert.strictEqual((await provider.provideMcpServerDefinitions()).length, 1);
+            state.alExtension = alExtension("18.3.0");
+            await provider.provideMcpServerDefinitions();
+            await waitFor(() => restartCalls(state).length === 1, "the restart");
+            await sleep(80);
+            assert.strictEqual(restartCalls(state).length, 1);
+        });
+    },
+
+    async "D-7 restart: dispose before the delay -> no restart"(scratch) {
+        const repo = makeRepo(scratch, nextName(), { local: localJson("Base", "dev-win") });
+        await withRestartProvider(repo, {}, async ({ provider, state }) => {
+            await provider.provideMcpServerDefinitions();
+            state.alExtension = alExtension("18.2.0");
+            await provider.provideMcpServerDefinitions();
+            provider.dispose();
+            await sleep(100);
+            assert.strictEqual(restartCalls(state).length, 0);
+        }, 60);
+    },
+
     "S-3.14 manifest: setting, provider, commands and tool"() {
         const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"));
         const setting = manifest.contributes.configuration.properties["aprodaAldc.alMcp.start"];
@@ -356,7 +438,7 @@ const tests = {
         assert.strictEqual(tool.when, "aprodaAldc.isAlProject");
         assert.deepStrictEqual(tool.inputSchema.properties.action.enum, ["start", "restart"]);
         assert.deepStrictEqual(tool.inputSchema.required, ["action"]);
-        assert.strictEqual(manifest.version, "0.2.0");
+        assert.strictEqual(manifest.version, "0.2.1");
     }
 };
 

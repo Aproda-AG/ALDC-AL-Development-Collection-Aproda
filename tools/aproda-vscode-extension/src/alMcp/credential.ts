@@ -34,12 +34,13 @@ export function hasStoredCredential(key: string | null | undefined, localAppData
 
 // The password is typed into Get-Credential's prompt in this terminal only; it never passes through the extension.
 export function buildStoreCredentialCommand(storeScriptPath: string, host: string): string {
-    return [
-        "$ErrorActionPreference = 'Stop'",
+    const save = [
         `. ([ScriptBlock]::Create((Get-Content -LiteralPath ${psQuote(storeScriptPath)} -Raw)))`,
         `Save-FkhCredential -Key ${psQuote(host)} -Credential (Get-Credential -Message ${psQuote(`AL target ${host}`)})`,
-        `Write-Host ${psQuote(`Credential stored for ${host}. You can close this terminal.`)}`
+        `Write-Host ${psQuote(`Credential stored for ${host}.`)}`
     ].join("; ");
+    // Success ends the terminal; on failure the message stays visible until Enter (never the password).
+    return `$ErrorActionPreference = 'Stop'; try { ${save} } catch { Write-Host ("Credential NOT stored: " + $_.Exception.Message); Read-Host 'Press Enter to close' | Out-Null }`;
 }
 
 export async function storeAlCredential(logger: Logger): Promise<void> {
@@ -74,7 +75,7 @@ export async function storeAlCredential(logger: Logger): Promise<void> {
     const terminal = vscode.window.createTerminal({
         name: "Aproda ALDC: AL credential",
         shellPath: pwshPath(),
-        shellArgs: ["-NoProfile", "-NoExit", "-Command", buildStoreCredentialCommand(storeScript, host)]
+        shellArgs: ["-NoProfile", "-Command", buildStoreCredentialCommand(storeScript, host)]
     });
     terminal.show(true);
 }

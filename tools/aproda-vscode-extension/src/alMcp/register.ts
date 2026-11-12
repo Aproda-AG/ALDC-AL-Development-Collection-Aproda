@@ -8,7 +8,7 @@ import { storeAlCredential } from "./credential";
 import { registerDebugHint } from "./debugHint";
 import { AlMcpProvider, providerId } from "./provider";
 import { selectAlTarget } from "./selectTarget";
-import { startOwnServer } from "./serverCommands";
+import { configureOwnServer, startOwnServer } from "./serverCommands";
 
 // Spec §4.3a, `auto`: in an AL workspace the extension starts its own server once, so the tools exist before the
 // first chat message. Leaving auto mode or the AL workspace re-arms it. If the start command is unavailable, VS Code's
@@ -51,6 +51,7 @@ async function runControlCommand(action: "start" | "restart", provider: AlMcpPro
 }
 
 export function registerAlMcp(context: vscode.ExtensionContext, logger: Logger): AlMcpProvider {
+    configureOwnServer(context.extension.id);
     const provider = new AlMcpProvider(logger);
     const autoStart = new AlMcpAutoStart(provider, logger);
     context.subscriptions.push(
