@@ -1,13 +1,22 @@
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as vscode from "vscode";
-import { autoReconcileBcquality, setBcqualityEnvInWorkspace } from "../config";
+import { autoReconcileBcquality, externalMount, setBcqualityEnvInWorkspace } from "../config";
 import { Logger } from "../log";
 import { BcqualityResolution, resolveBcquality } from "../bcquality/resolve";
+import { migrateWorkspaceFile } from "../external/workspaceMigration";
 
 // Junction lives at <repositoryRoot>/.external/bcquality (T-29): the wrapper is tracked and seeded by the syncer,
-// the junction itself is git-ignored and extension-managed.
-export async function reconcileBcquality(repositoryRoot: string, bcqualityRoot: string, logger: Logger): Promise<void> {
+// the junction itself is git-ignored and extension-managed (only for external.mount=junction).
+export async function reconcileBcquality(repositoryRoot: string, bcqualityRoot: string, logger: Logger, onReconciled?: () => void): Promise<void> {
+    try {
+        await reconcileBcqualityCore(repositoryRoot, bcqualityRoot, logger);
+    } finally {
+        onReconciled?.();
+    }
+}
+
+async function reconcileBcqualityCore(repositoryRoot: string, bcqualityRoot: string, logger: Logger): Promise<void> {
     const resolution = await resolveBcquality();
     const linkPath = path.join(repositoryRoot, ".external", "bcquality");
 
@@ -19,14 +28,28 @@ export async function reconcileBcquality(repositoryRoot: string, bcqualityRoot: 
     }
 
     if (!autoReconcileBcquality()) {
-        // The opt-out only gates the additive work (Global setting + creating a junction).
+        // The opt-out gates every write: workspace file, Global setting and link.
         logger.info("BCQuality reconciliation is switched off (bcquality.autoReconcile); leaving the workspace unchanged.");
         return;
     }
-    // The env var and the junction must not be two independently resolved answers: the caller's value
+    // Runs in every mount mode and without a resolved clone: the constant entry depends on neither (Q-9).
+    try {
+        await migrateWorkspaceFile(repositoryRoot, logger);
+    } catch (error) {
+        logger.warn(`Workspace migration failed: ${(error as Error).message}`);
+    }
+    // The env var and the link must not be two independently resolved answers: the caller's value
     // was resolved earlier and can already be stale by now.
-    await updateBcqualityHomeGlobalSetting(resolution.verified && resolution.root ? resolution.root : bcqualityRoot);
+    const home = resolution.verified && resolution.root ? resolution.root : bcqualityRoot;
+    if (home) {
+        await updateBcqualityHomeGlobalSetting(home);
+    }
 
+    if (externalMount() !== "junction") {
+        // virtual/none: a junction left behind by an earlier mode is removed, never its target.
+        await removeBcqualityLinkSafely(linkPath, logger);
+        return;
+    }
     if (!resolution.verified || !resolution.root) {
         // No verified clone yet (the default for a new project): never link to nothing.
         logger.info("BCQuality did not resolve to a verified clone; no link created.");
@@ -35,26 +58,30 @@ export async function reconcileBcquality(repositoryRoot: string, bcqualityRoot: 
     await createBcqualityLink(linkPath, resolution.root, logger);
 }
 
+async function removeBcqualityLinkSafely(linkPath: string, logger: Logger): Promise<void> {
+    try {
+        await removeBcqualityLink(linkPath, logger);
+    } catch (error) {
+        logger.warn(`BCQuality link could not be removed (${(error as Error).message}). Remove it with: cmd /c rmdir "${linkPath}"`);
+    }
+}
+
 // The junction used to be created only by a command. An init that writes the *.code-workspace makes
 // VS Code reload the window, killing the extension host mid-run -- so on a first init the link was
 // never reached (measured: HEKS Base, 2026-09-28). Ordering alone cannot fix that; the desired state
 // has to be re-established on activation instead of being tied to one run surviving.
-export async function reconcileBcqualityOnStartup(repositoryRoot: string, logger: Logger): Promise<void> {
+export async function reconcileBcqualityOnStartup(repositoryRoot: string, logger: Logger, onReconciled?: () => void): Promise<void> {
     const resolution = await resolveBcquality();
     if (!shouldReconcileOnStartup(resolution)) {
         return;
     }
-    await reconcileBcquality(repositoryRoot, resolution.root ?? "", logger);
+    await reconcileBcquality(repositoryRoot, resolution.root ?? "", logger, onReconciled);
 }
 
-// Pure, so the gate is testable. Staying silent when nothing resolves is what keeps this off the log of
-// every project that has no clone -- and prevents an empty BCQUALITY_HOME from being written.
-export function shouldReconcileOnStartup(resolution: Pick<BcqualityResolution, "enabled" | "verified" | "root">): boolean {
-    if (resolution.enabled === false) {
-        // A disabled BCQuality must still have a stray link removed, even though nothing resolved.
-        return true;
-    }
-    return resolution.verified && !!resolution.root;
+// Pure, so the gate is testable. The workspace migration needs no clone, so every project reconciles;
+// the Global BCQUALITY_HOME and the junction still require a verified clone inside the reconcile.
+export function shouldReconcileOnStartup(_resolution: Pick<BcqualityResolution, "enabled" | "verified" | "root">): boolean {
+    return true;
 }
 
 const terminalEnvPlatforms = ["windows", "linux", "osx"] as const;
@@ -198,10 +225,15 @@ export async function removeBcqualityLink(linkPath: string, logger: Logger): Pro
         logger.error(`Refusing to remove ${linkPath}: not a link.`);
         return;
     }
-    if (process.platform === "win32") {
-        await fs.rmdir(linkPath);
-    } else {
-        await fs.unlink(linkPath);
+    try {
+        if (process.platform === "win32") {
+            await fs.rmdir(linkPath);
+        } else {
+            await fs.unlink(linkPath);
+        }
+    } catch (error) {
+        logger.warn(`BCQuality link could not be removed (${(error as Error).message}). Remove it with: cmd /c rmdir "${linkPath}"`);
+        return;
     }
     logger.info(`Removed BCQuality link: ${linkPath}`);
 }

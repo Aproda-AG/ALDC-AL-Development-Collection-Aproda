@@ -36,10 +36,9 @@ function recordingLogger() {
 function testStartupGate() {
     // Disabled must still run, so a stray link gets removed even though nothing resolved.
     assert.strictEqual(shouldReconcileOnStartup({ enabled: false, verified: false, root: undefined }), true);
-    // Nothing resolved and not disabled: staying silent avoids writing an empty BCQUALITY_HOME.
-    assert.strictEqual(shouldReconcileOnStartup({ enabled: "auto", verified: false, root: undefined }), false);
-    // "verified" without a root would still yield an empty path.
-    assert.strictEqual(shouldReconcileOnStartup({ enabled: "auto", verified: true, root: undefined }), false);
+    // Migration needs no clone (E-011 §6), so an unresolved clone still reconciles; the empty-home guard lives inside.
+    assert.strictEqual(shouldReconcileOnStartup({ enabled: "auto", verified: false, root: undefined }), true);
+    assert.strictEqual(shouldReconcileOnStartup({ enabled: "auto", verified: true, root: undefined }), true);
     assert.strictEqual(shouldReconcileOnStartup({ enabled: "auto", verified: true, root: "C:\\clone" }), true);
 }
 

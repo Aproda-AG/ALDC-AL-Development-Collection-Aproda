@@ -11,6 +11,7 @@ export const globalSettingKeys = [
     "bcquality.setEnvInWorkspace",
     "bcquality.autoFixWorkspacePath",
     "bcquality.autoReconcile",
+    "external.mount",
     "gettingStartedUrl",
     "source.mode",
     "source.forkPath",
@@ -45,6 +46,13 @@ export function autoReconcileBcquality(): boolean {
         return configuration.get<boolean>("bcquality.autoFixWorkspacePath", true);
     }
     return configuration.get<boolean>("bcquality.autoReconcile", true);
+}
+
+export type ExternalMount = "virtual" | "junction" | "none";
+
+export function externalMount(): ExternalMount {
+    const value = vscode.workspace.getConfiguration(section).get<string>("external.mount", "virtual");
+    return value === "junction" || value === "none" ? value : "virtual";
 }
 
 export function gettingStartedUrl(): string {

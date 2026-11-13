@@ -3,7 +3,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { bcqualityPath, devRoot } from "../config";
 import { directoryExists } from "../env/devRoot";
-import { AldcRepositoryResolution, resolveAldcRepository } from "../env/gitRoot";
+import { AldcRepositoryResolution, fileWorkspaceFolders, resolveAldcRepository } from "../env/gitRoot";
 import { readBcqualityAldcConfig } from "./aldcConfig";
 
 const defaultEntryPoint = "skills/entry.md";
@@ -66,7 +66,7 @@ export async function resolveBcquality(repository?: AldcRepositoryResolution): P
 }
 
 async function workspaceFolderCandidates(entryPoint: string): Promise<BcqualityCandidate[]> {
-    const folders = vscode.workspace.workspaceFolders ?? [];
+    const folders = fileWorkspaceFolders();
     if (folders.length === 0) {
         return [{ source: "workspaceFolder", verdict: "notSet" }];
     }

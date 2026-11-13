@@ -24,6 +24,9 @@ import { copyRecommendedMcpServers } from "./commands/copyRecommendedMcpServers"
 import { BcqualityStatusBar } from "./status/bcqualityStatusBar";
 import { registerAlMcp } from "./alMcp/register";
 import { isAlWorkspace } from "./workspace/alWorkspace";
+import { registerExternalFileSystemProvider } from "./external/externalFileSystemProvider";
+import { revealBcqualityClone } from "./commands/revealBcqualityClone";
+import { warnInvalidExplicitCandidates } from "./bcquality/invalidExplicit";
 
 export function activate(context: vscode.ExtensionContext): void {
   const logger = new Logger();
@@ -33,14 +36,42 @@ export function activate(context: vscode.ExtensionContext): void {
   registerReadAldcConfigurationTool(context);
   registerBcqualityTool(context);
   const alMcpProvider = registerAlMcp(context, logger);
+  // Unconditional (even with autoReconcile off): serving is read-only and changes nothing on disk.
+  const externalProvider = registerExternalFileSystemProvider(context, logger);
 
   const bcqualityStatusBar = new BcqualityStatusBar();
+  let reconcileRunning = false;
   context.subscriptions.push(bcqualityStatusBar);
   context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((event) => {
-    if (event.affectsConfiguration("aprodaAldc.bcquality")) {
+    if (event.affectsConfiguration("aprodaAldc.bcquality") || event.affectsConfiguration("aprodaAldc.external")) {
       void bcqualityStatusBar.refresh();
     }
+    if (event.affectsConfiguration("aprodaAldc.external.mount") || event.affectsConfiguration("aprodaAldc.bcquality.path")) {
+      externalProvider.refresh();
+      // Once per change; the guard stops a reconcile-triggered change from re-entering.
+      if (!reconcileRunning) {
+        reconcileRunning = true;
+        void (async () => {
+          try {
+            const repositoryRoot = await resolveTargetRepo();
+            if (repositoryRoot) {
+              await reconcileBcqualityOnStartup(repositoryRoot, logger, () => externalProvider.refresh());
+            }
+          } catch (error) {
+            logger.error(asMessage(error));
+          } finally {
+            reconcileRunning = false;
+            void bcqualityStatusBar.refresh();
+          }
+        })();
+      }
+    }
+    if (event.affectsConfiguration("aprodaAldc.bcquality.path")) {
+      void warnInvalidExplicitCandidates(logger);
+    }
   }));
+  context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.revealBcqualityClone", (arg?: vscode.Uri) => revealBcqualityClone(externalProvider, arg)));
+  context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.revealExternalPath", (arg?: vscode.Uri) => revealBcqualityClone(externalProvider, arg)));
   context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => void bcqualityStatusBar.refresh()));
 
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.showLog", () => logger.show()));
@@ -63,7 +94,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const bcqualityRoot = await installOrUpdateBcquality(logger);
       const repositoryRoot = await resolveTargetRepo();
       if (bcqualityRoot && repositoryRoot) {
-        await reconcileBcquality(repositoryRoot, bcqualityRoot, logger);
+        await reconcileBcquality(repositoryRoot, bcqualityRoot, logger, () => externalProvider.refresh());
       }
     } catch (error) {
       logger.error(asMessage(error));
@@ -73,6 +104,7 @@ export function activate(context: vscode.ExtensionContext): void {
         }
       });
     } finally {
+      externalProvider.refresh();
       void bcqualityStatusBar.refresh();
     }
   }));
@@ -114,6 +146,7 @@ export function activate(context: vscode.ExtensionContext): void {
     bcqualityStatusBar.setVisible(isAlProject);
     if (isAlProject) {
       void bcqualityStatusBar.refresh();
+      void warnInvalidExplicitCandidates(logger);
       void checkBcqualitySelfHeal(context);
     }
     const setupCompleted = await offerInitialSetup(context);
@@ -128,7 +161,7 @@ export function activate(context: vscode.ExtensionContext): void {
     // to be the shorter path. See sequenceStartupChecks for why it must hold.
     const repoRoot = isInitializedProject ? await resolveTargetRepo() : undefined;
     if (repoRoot) {
-      await reconcileBcqualityOnStartup(repoRoot, logger);
+      await reconcileBcqualityOnStartup(repoRoot, logger, () => externalProvider.refresh());
     }
     startupCheck = sequenceStartupChecks(
       extensionUpdateCheck,

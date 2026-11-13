@@ -22,8 +22,14 @@ export async function findGitRoot(start: string): Promise<string | undefined> {
     }
 }
 
+// Workspace folders served by a virtual file system provider (e.g. `aldc-external:/`) have no disk path; probing their
+// `fsPath` would inspect `/`. A missing scheme is tolerated (plain mocks / legacy folder objects).
+export function fileWorkspaceFolders(): readonly vscode.WorkspaceFolder[] {
+    return (vscode.workspace.workspaceFolders ?? []).filter((folder) => !folder.uri.scheme || folder.uri.scheme === "file");
+}
+
 export async function resolveTargetRepo(): Promise<string | undefined> {
-    const folders = vscode.workspace.workspaceFolders ?? [];
+    const folders = fileWorkspaceFolders();
     const roots = new Map<string, string>();
     for (const folder of folders) {
         const root = await findGitRoot(folder.uri.fsPath);
@@ -106,7 +112,7 @@ async function isBcqualityClone(root: string): Promise<boolean> {
 
 export async function resolveAldcRepository(): Promise<AldcRepositoryResolution> {
     const roots = new Map<string, string>();
-    for (const folder of vscode.workspace.workspaceFolders ?? []) {
+    for (const folder of fileWorkspaceFolders()) {
         const root = await findGitRoot(folder.uri.fsPath);
         if (root) {
             roots.set(root.toLocaleLowerCase(), root);

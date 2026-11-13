@@ -32,6 +32,20 @@ export async function readBcqualityAldcConfig(resolution: AldcRepositoryResoluti
     }
 }
 
+// Names of every `external.<name>` block in aldc.yaml (used to report blocks that have no registered source).
+export async function readExternalSourceNames(resolution: AldcRepositoryResolution): Promise<string[]> {
+    if (resolution.state !== "configured") {
+        return [];
+    }
+    try {
+        const document = YAML.parse(await fs.readFile(resolution.configurationPath, "utf8"));
+        const external = isRecord(document) ? document.external : undefined;
+        return isRecord(external) ? Object.keys(external) : [];
+    } catch {
+        return [];
+    }
+}
+
 function normalizeEnabled(value: unknown): "auto" | boolean {
     if (value === true || value === false) {
         return value;

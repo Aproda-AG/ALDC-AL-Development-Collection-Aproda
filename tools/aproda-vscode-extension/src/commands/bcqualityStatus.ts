@@ -4,6 +4,9 @@ import * as vscode from "vscode";
 import { BcqualityCandidate, BcqualityResolution, resolveBcquality, BcqualitySource, BcqualityVerdict } from "../bcquality/resolve";
 import { readBcqualityAldcConfig } from "../bcquality/aldcConfig";
 import { resolveAldcRepository } from "../env/gitRoot";
+import { externalMount } from "../config";
+import { isExternalProviderRegistered } from "../external/externalFileSystemProvider";
+import { junctionState, workspaceRootForm } from "../external/mountState";
 
 // The UI half of "fail loudly" (E-006 §1.3): makes the whole resolver chain visible in one click, and
 // shows the declared aldc.yaml home next to the live resolved root instead of ever writing one into the other.
@@ -21,7 +24,11 @@ export async function showBcqualityStatus(): Promise<void> {
     const summaryItems: vscode.QuickPickItem[] = [
         { label: "Resolved root", description: resolution.verified ? resolution.root : "(none)", detail: resolution.resolvedFrom ? `via ${sourceLabel(resolution.resolvedFrom)}` : undefined },
         { label: "Declared (aldc.yaml → external.bcquality.home)", description: declaredHome ?? "(not set)" },
-        { label: ".external/bcquality junction", description: junctionExists ? "exists" : "does not exist" }
+        { label: ".external/bcquality junction", description: junctionExists ? "exists" : "does not exist" },
+        { label: "External mount (aprodaAldc.external.mount)", description: externalMount() },
+        { label: "aldc-external: provider", description: isExternalProviderRegistered() ? "registered" : "not registered" },
+        { label: "Workspace root form", description: await workspaceRootForm() },
+        { label: "Junction state", description: repository.state === "configured" ? await junctionState(repository.repositoryRoot) : "absent" }
     ];
 
     const items: vscode.QuickPickItem[] = [

@@ -2,7 +2,7 @@
     "name": "aproda-aldc",
     "displayName": "Aproda ALDC",
     "description": "Aproda ALDC toolkit for Visual Studio Code projects.",
-    "version": "0.2.2",
+    "version": "0.3.0",
     "publisher": "aprodaag",
     "license": "MIT",
     "repository": {
@@ -18,7 +18,8 @@
     "icon": "media/A-ALDC Logo.png",
     "main": "./dist/extension.js",
     "activationEvents": [
-        "onStartupFinished"
+        "onStartupFinished",
+        "onFileSystem:aldc-external"
     ],
     "contributes": {
         "mcpServerDefinitionProviders": [
@@ -171,8 +172,31 @@
             {
                 "command": "aprodaAldc.storeAlCredential",
                 "title": "Aproda ALDC: Store Credential for AL Target"
+            },
+            {
+                "command": "aprodaAldc.revealBcqualityClone",
+                "title": "Aproda ALDC: Reveal BCQuality Clone"
+            },
+            {
+                "command": "aprodaAldc.revealExternalPath",
+                "title": "Reveal in File Explorer (real path)"
             }
         ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "aprodaAldc.revealExternalPath",
+                    "when": "false"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "command": "aprodaAldc.revealExternalPath",
+                    "when": "resourceScheme == aldc-external",
+                    "group": "navigation@100"
+                }
+            ]
+        },
         "configuration": {
             "title": "Aproda ALDC",
             "properties": {
@@ -200,7 +224,23 @@
                 "aprodaAldc.bcquality.autoReconcile": {
                     "type": "boolean",
                     "default": true,
-                    "markdownDescription": "Automatically maintain the Global `BCQUALITY_HOME` setting and the `.external/bcquality` junction. Disabling this only stops that additive work: if BCQuality is disabled in `aldc.yaml`, an existing junction is still removed regardless of this setting."
+                    "markdownDescription": "Master switch for ALL automatic maintenance: workspace migration, the `.external/bcquality` junction (create/remove) and the Global `BCQUALITY_HOME` setting. When off, the extension changes nothing on disk or in the workspace; the `aldc-external:` provider still serves. Kill-switch retained: if BCQuality is disabled in `aldc.yaml`, an existing junction is still removed regardless of this setting."
+                },
+                "aprodaAldc.external.mount": {
+                    "type": "string",
+                    "enum": [
+                        "virtual",
+                        "junction",
+                        "none"
+                    ],
+                    "default": "virtual",
+                    "scope": "application",
+                    "enumDescriptions": [
+                        "Serve external sources (BCQuality) read-only through the aldc-external:/ virtual workspace folder.",
+                        "Use the classic .external/bcquality junction on disk.",
+                        "No mount: external sources are reached only through the #bcquality tool or the resolved path."
+                    ],
+                    "description": "How external knowledge sources such as BCQuality are made reachable in the workspace."
                 },
                 "aprodaAldc.gettingStartedUrl": {
                     "type": "string",
@@ -362,7 +402,7 @@
         "watch": "node ./node_modules/typescript/lib/tsc.js -p . --watch",
         "package": "npm run compile && node ./scripts/package.js",
         "lint": "node ./node_modules/typescript/lib/tsc.js --noEmit",
-        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/extension-version.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js && node ./test/bcquality-terminal-env-platform.test.js && node ./test/extension-update.test.js && node ./test/aldc-config-path.test.js && node ./test/bcquality-resolve.test.js && node ./test/bcquality-resolve-canonicalize.test.js && node ./test/bcquality-junction.test.js && node ./test/bcquality-junction-self-reference.test.js && node ./test/bcquality-reconcile-toggle.test.js && node ./test/bcquality-containment.test.js && node ./test/bcquality-tool.test.js && node ./test/bcquality-self-heal.test.js && node ./test/git-root-resolution.test.js && node ./test/bcquality-install-confirm.test.js && node ./test/init-bcquality-preresolve.test.js && node ./test/version-service-config-path.test.js && node ./test/version-service-channels.test.js && node ./test/version-service-release-channel.test.js && node ./test/glob-to-regex-case-table.test.js && node ./test/startup-check-per-repo.test.js && node ./test/startup-prompt-states.test.js && node ./test/bcquality-startup-reconcile.test.js && node ./test/init-migration-preflight.test.js && node ./test/validate-npm-spawn.test.js && node ./test/process-tls-env.test.js && node ./test/startup-sequence.test.js && node ./test/bridge-dryrun-count.test.js && node ./test/bcquality-status-resolver-chain.test.js && node ./test/al-mcp-local-selection.test.js && node ./test/al-mcp-provider.test.js && node ./test/al-mcp-start-tool.test.js && node ./test/al-mcp-manual-start-race.test.js && node ./test/bcquality-link-eexist.test.js && node ./test/read-configuration-local.test.js"
+        "test": "npm run compile && node ./test/version-compare.test.js && node ./test/extension-version.test.js && node ./test/reset-data.test.js && node ./test/dev-root.test.js && node ./test/bcquality-workspace.test.js && node ./test/bcquality-terminal-env-platform.test.js && node ./test/extension-update.test.js && node ./test/aldc-config-path.test.js && node ./test/bcquality-resolve.test.js && node ./test/bcquality-resolve-canonicalize.test.js && node ./test/bcquality-junction.test.js && node ./test/bcquality-junction-self-reference.test.js && node ./test/bcquality-reconcile-toggle.test.js && node ./test/bcquality-containment.test.js && node ./test/bcquality-tool.test.js && node ./test/bcquality-self-heal.test.js && node ./test/git-root-resolution.test.js && node ./test/bcquality-install-confirm.test.js && node ./test/init-bcquality-preresolve.test.js && node ./test/version-service-config-path.test.js && node ./test/version-service-channels.test.js && node ./test/version-service-release-channel.test.js && node ./test/glob-to-regex-case-table.test.js && node ./test/startup-check-per-repo.test.js && node ./test/startup-prompt-states.test.js && node ./test/bcquality-startup-reconcile.test.js && node ./test/init-migration-preflight.test.js && node ./test/validate-npm-spawn.test.js && node ./test/process-tls-env.test.js && node ./test/startup-sequence.test.js && node ./test/bridge-dryrun-count.test.js && node ./test/bcquality-status-resolver-chain.test.js && node ./test/al-mcp-local-selection.test.js && node ./test/al-mcp-provider.test.js && node ./test/al-mcp-start-tool.test.js && node ./test/al-mcp-manual-start-race.test.js && node ./test/bcquality-link-eexist.test.js && node ./test/read-configuration-local.test.js && node ./test/external-mount.test.js && node ./test/external-workspace-migration.test.js && node ./test/external-reconcile.test.js"
     },
     "dependencies": {
         "jsonc-parser": "^3.3.1",

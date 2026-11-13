@@ -4,6 +4,8 @@ import YAML from "yaml";
 import { resolveAldcRepository } from "../env/gitRoot";
 import { resolveBcquality } from "../bcquality/resolve";
 import { getLocalSelection, toLocalBlock } from "../alMcp/localSelection";
+import { externalMount } from "../config";
+import { junctionPath, junctionState } from "../external/mountState";
 
 const toolName = "aprodaAldc_readConfiguration";
 
@@ -43,6 +45,10 @@ class ReadAldcConfigurationTool implements vscode.LanguageModelTool<Record<strin
             const plans = isRecord(document.plans) ? document.plans : undefined;
             const aproda = isRecord(document.aproda) ? document.aproda : undefined;
             const bcqualityResolution = await resolveBcquality(resolution);
+            const mount = externalMount();
+            // The virtual mount is only offered while the source is active (mount != none, not disabled) and verified.
+            const mountActive = mount !== "none" && bcqualityResolution.enabled !== false && bcqualityResolution.verified;
+            const diskPath = await junctionState(resolution.repositoryRoot) === "readable" ? junctionPath(resolution.repositoryRoot) : undefined;
 
             return this.result({
                 state: "configured",
@@ -65,11 +71,14 @@ class ReadAldcConfigurationTool implements vscode.LanguageModelTool<Record<strin
                     resolvedHome: bcqualityResolution.root,
                     resolvedFrom: bcqualityResolution.resolvedFrom,
                     verified: bcqualityResolution.verified,
-                    mounted: bcqualityResolution.candidates.some((candidate) => candidate.source === "workspaceFolder" && candidate.verdict === "verified")
+                    mounted: bcqualityResolution.candidates.some((candidate) => candidate.source === "workspaceFolder" && candidate.verdict === "verified"),
+                    mount,
+                    mountUri: mountActive ? "aldc-external:/bcquality/" : undefined,
+                    diskPath
                 } : undefined,
                 // Never merged with aldc.yaml values: the git-ignored per-developer AL target selection.
                 local: toLocalBlock(getLocalSelection(resolution.repositoryRoot)),
-                guidance: "This is the authoritative configuration for the current ALDC repository. Use these values; do not guess missing values. For bcquality, `home` is only the static declared default: `resolvedHome`/`resolvedFrom`/`verified` come from the live resolver (user setting, mounted workspace folder, environment, devRoot, then this file) and are authoritative. `local` is a selection only, not an environment acknowledgement. `absent`, `invalid` or `stale` means: ask the user, never infer a target. Pass `targetBundle` unchanged to every `al_publish`/`al_run_tests` call."
+                guidance: "This is the authoritative configuration for the current ALDC repository. Use these values; do not guess missing values. For bcquality, `home` is only the static declared default: `resolvedHome`/`resolvedFrom`/`verified` come from the live resolver (user setting, mounted workspace folder, environment, devRoot, then this file) and are authoritative. `local` is a selection only, not an environment acknowledgement. `absent`, `invalid` or `stale` means: ask the user, never infer a target. Pass `targetBundle` unchanged to every `al_publish`/`al_run_tests` call. BCQuality access rule: (1) use the `#bcquality` tool (read/list) whenever it is available; (2) if it is missing or fails, read through a reachable mount: (a) `mountUri` -- `aldc-external:/bcquality/<path>` (one or three slashes after the scheme, never two); (b) the `resolvedHome` path; (c) `diskPath` / `.external/bcquality` (junction mode); (3) never block: if nothing is reachable, apply `external.bcquality.fallback` (skills-mode) and record the reason."
             });
         } catch (error) {
             return this.result({

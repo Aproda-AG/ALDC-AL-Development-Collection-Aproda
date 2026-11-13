@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- New virtual `.external` mount: the workspace folder `{ "name": ".external", "uri": "aldc-external:/" }` serves BCQuality and other external sources through a file system provider; no junction needed. Setting `aprodaAldc.external.mount` (`virtual` default, `junction`, `none`).
+- Reconcile migrates the `*.code-workspace` file: a `.external` path root or a legacy direct BCQuality clone root (incl. its search/watcher excludes and `BCQUALITY_HOME`) becomes the single `aldc-external:/` entry; comments and formatting are preserved, no write when nothing changes. Unparseable files are left untouched with a warning.
+- With `virtual`/`none` an existing `.external/bcquality` junction is removed (link only); a failing removal warns with `cmd /c rmdir "<path>"` instead of throwing. `junction` stays available as an option.
+- New command to reveal the external sources, and a warning for an invalid configured path.
+- A migrated workspace file needs extension 0.3.0 on every machine that opens it.
+
 ## 0.2.2
 
 - Fixes *Start AL MCP Server* (and the `startAlMcp` tool) doing nothing on the first call in `manual` mode: the start command is now issued only after VS Code has fetched the server definition (up to 5 s, then it is issued anyway with a warning).
