@@ -3,19 +3,24 @@
 Request JSONs for frequent support questions. Pass them to `Invoke-BcDataQuery -Request '<json>'`.
 Cite results in diagnoses by table, key and setup value — never personal data (SKILL.md §7).
 
-## Find field names of a table
+## Find field names of a table (run this first for any unfamiliar table)
 
 ```json
-{"tables":[{"table":2000000041,"filters":[{"field":"TableNo","filter":"77"}],"fields":["No.","FieldName","Class","Type"],"top":200}]}
+{"tables":[{"table":2000000041,"filters":[{"field":"TableNo","filter":"77"}],"fields":["No.","FieldName","Class","Type"],"top":500}]}
 ```
 
-`Class` shows `Normal` / `FlowField` / `FlowFilter`. Works for base, PTE and table-extension fields.
+`Class` shows `Normal` / `FlowField` / `FlowFilter`. Works for base, PTE and table-extension fields. To find the table
+number from a name: `{"tables":[{"table":2000000058,"filters":[{"field":"Object Type","filter":"Table"},{"field":"Object Name","filter":"*Layout*"}],"fields":["Object ID","Object Name"],"top":100}]}`
+(`AllObjWithCaption`). Build every request from the returned `FieldName` values — never from memory.
 
 ## Installed apps and versions
 
 ```json
-{"tables":[{"table":2000000153,"fields":["Name","Publisher","Version Major","Version Minor","Version Build","Published As"],"top":500}]}
+{"tables":[{"table":2000000153,"fields":["Name","Publisher","Version Major","Version Minor","Version Build","Version Revision","Published As"],"top":1000}]}
 ```
+
+While a session runs, the list **includes the helper app *Aproda BC Data Access* itself** — leave it out of the
+answer. Count the rows (`@($r[0].records).Count`); do not compute numbers by difference.
 
 ## Report selection for a document
 

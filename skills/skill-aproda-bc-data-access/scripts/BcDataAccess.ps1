@@ -493,7 +493,9 @@ function Stop-BcDataAccessSession {
     param([string]$CompanyId, [switch]$KeepToken)
     $s = Get-BcdaRequiredSession
     $c = Get-BcdaCompanyId -Session $s -CompanyId $CompanyId
+    $start = Get-BcdaNow
     Invoke-BcdaCleanup -CompanyId $c
+    $seconds = [math]::Round(((Get-BcdaNow) - $start).TotalSeconds)
     $dir = Get-BcdaSessionDir
     $out = Join-Path $dir 'out'
     if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Recurse -Force }
@@ -506,8 +508,11 @@ function Stop-BcDataAccessSession {
             $p = Join-Path $dir $f
             if (Test-Path -LiteralPath $p) { Remove-Item -LiteralPath $p -Force }
         }
+        if ((Test-Path -LiteralPath $dir) -and -not (Get-ChildItem -LiteralPath $dir -Force | Select-Object -First 1)) {
+            Remove-Item -LiteralPath $dir -Force
+        }
     }
-    "BCDA: CLEAN app removed from $($s['environment']) (uninstall with data deletion + unpublish); session files deleted"
+    "BCDA: CLEAN app removed from $($s['environment']) (uninstall with data deletion + unpublish) in $seconds s; session files deleted"
 }
 
 #endregion

@@ -438,8 +438,9 @@ try {
     Invoke-TestCase 'S-12.27 stop removes out, session and token; -KeepToken keeps the token' {
         Reset-Fake -Packages @(New-Pkg); $null = Connect-Fake $skill; $null = Start-Fake
         $null = Invoke-BcDataQuery -Request '{"tables":[]}' -OutFile 'r.json'
-        $null = Stop-BcDataAccessSession
-        foreach ($n in 'out', 'session.json', 'token.txt') { Assert-True (-not (Test-Path (Join-Path $env:BCDA_SESSION_DIR $n))) "$n removed" }
+        $msg = Stop-BcDataAccessSession
+        Assert-True ("$msg" -match '^BCDA: CLEAN .* in \d+ s;') "CLEAN line carries the duration: $msg"
+        Assert-True (-not (Test-Path $env:BCDA_SESSION_DIR)) 'empty session folder removed'
         Reset-Fake -Packages @(New-Pkg); $null = Connect-Fake $skill; $null = Start-Fake
         $null = Stop-BcDataAccessSession -KeepToken
         Assert-True (Test-Path (Join-Path $env:BCDA_SESSION_DIR 'token.txt')) 'token kept'
@@ -468,6 +469,9 @@ try {
     Invoke-TestCase 'S-12.L1 SKILL.md frontmatter and no BOM' {
         $md = Get-Content (Join-Path $skillRoot 'SKILL.md') -Raw
         Assert-True ($md -match '(?s)^---\s*\r?\nname:\s*skill-aproda-bc-data-access\s*\r?\ndescription:\s*".+?"\s*\r?\n---') 'frontmatter name/description'
+        $desc = [regex]::Match($md, '(?m)^description:\s*"(.+)"\s*$').Groups[1].Value
+        Assert-True ($desc -match 'Online \(SaaS\)' -and $desc -match 'Not for OnPrem') 'description routes SaaS here and OnPrem elsewhere (F-33)'
+        Assert-True ($md -match 'Never show it with placeholders' -and $md -match 'Never guess field names' -and $md -match 'list them and ask') 'run-4 rules F-30/F-31/F-32 present'
         $files = @(Get-ChildItem $skillRoot -Recurse -File | Where-Object Extension -ne '.app') + @(Get-ChildItem (Join-Path $repositoryRoot 'tools\aproda-bc-data-access') -Recurse -File |
                 Where-Object { $_.Extension -ne '.app' -and $_.FullName -notmatch '\\\.alpackages\\' }) + @(Get-Item (Join-Path $repositoryRoot 'tests\powershell\BcDataAccess.Tests.ps1'))
         foreach ($f in $files) { $b = [IO.File]::ReadAllBytes($f.FullName); Assert-True (-not ($b.Length -ge 3 -and $b[0] -eq 0xEF -and $b[1] -eq 0xBB -and $b[2] -eq 0xBF)) "BOM in $($f.Name)" }

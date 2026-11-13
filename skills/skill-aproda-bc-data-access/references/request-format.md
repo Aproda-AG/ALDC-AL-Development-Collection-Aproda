@@ -35,6 +35,17 @@ trigger and answers `201` with an empty `result` (E-012 F-19). The library alway
 [ { "tableNo": 3, "tableName": "Payment Terms", "records": [ { "Code": "…", "Due Date Calculation": "…" } ] } ]
 ```
 
+In PowerShell `Invoke-BcDataQuery` returns this array already parsed — one object per requested table:
+
+```powershell
+$r = Invoke-BcDataQuery -Request $req
+$r[0].tableName                # "Payment Terms"
+@($r[0].records).Count         # number of rows of the first table — the rows are in .records (there is no .rows)
+$r[0].records | Format-Table   # the rows
+```
+
+Only `-OutFile` returns a summary (`tableName`, `rows`, `file`) instead of the data.
+
 | Field type | JSON value |
 |---|---|
 | Integer, BigInteger, Decimal | number |
