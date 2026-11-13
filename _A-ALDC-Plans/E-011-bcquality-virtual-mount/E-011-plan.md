@@ -25,7 +25,7 @@ default `true`). It works only where the repository sits on a local NTFS volume:
 
 | # | Goal |
 |---|---|
-| G-1 | Default mount = a **virtual, read-only workspace folder** `aldc-external:/` served by the Aproda extension (`FileSystemProvider`). It mirrors the `.external/` concept: one subfolder per external source (today `bcquality/`, served from the resolver-verified clone). Works on any drive, no link, nothing written into the tracked workspace file when a clone moves. |
+| G-1 | Default mount = a **virtual workspace folder** `aldc-external:/` served by the Aproda extension (`FileSystemProvider`; writable since `0.3.1`, edits go to the real files). It mirrors the `.external/` concept: one subfolder per external source (today `bcquality/`, served from the resolver-verified clone). Works on any drive, no link, nothing written into the tracked workspace file when a clone moves. |
 | G-1a | The `.external/` concept stays **extensible**: a new source = a new `external.<name>` block in `aldc.yaml` plus a resolver; it appears as `aldc-external:/<name>/` (virtual) or `.external/<name>` (junction) without a new scheme, setting or workspace entry. |
 | G-2 | The junction stays available as a **secondary, opt-in** mount; the default is no junction. |
 | G-3 | Agents use `#bcquality` **whenever it is available**; otherwise they fall back to a readable path (virtual URI, resolved clone path, junction). A path is never blocked. |
