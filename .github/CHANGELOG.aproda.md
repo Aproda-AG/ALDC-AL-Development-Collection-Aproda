@@ -2,6 +2,21 @@
 
 > Curated release notes for the Aproda layer (`aldc.yaml` → `aproda.layerVersion`). The technical, per-commit record stays in the [Version / pin changelog](decisions.aproda.md#version--pin-changelog); this file is the human-readable summary maintained alongside each release, mirroring the style of [`tools/aproda-vscode-extension/CHANGELOG.md`](../tools/aproda-vscode-extension/CHANGELOG.md). See `skill-aproda-aldc-release` for when this file is updated.
 
+## 1.2.0_aproda.18
+
+> **Upgrade order:** install the Aproda ALDC extension **0.3.0 or newer** (released together: 0.3.2) before applying this layer. The workspace seed now mounts the virtual root `aldc-external:/`, which older extensions cannot serve.
+
+- **BCQuality becomes a workstation property (E-006, D-49).** The clone location is resolved and probe-verified by the extension (user setting → mounted folder → `$BCQUALITY_HOME` → `<devRoot>/BCQuality-Aproda` → `aldc.yaml` `home`) and served to agents through the new `#bcquality` tool, with a documented direct-path fallback. Consumer `aldc.yaml` moves to `<toolkitRoot>` (`.github/aldc.yaml`, two-rung lookup, non-breaking); the tracked `.external/` wrapper with its README ships with the toolkit; `Migrate-AprodaProjectLayout.ps1` migrates existing projects (workspace file backed up before the first rewrite).
+- **One constant virtual `.external` root (E-011, D-54).** External sources are served through `aldc-external:/` instead of a workspace root pointing at the clone; the junction is now optional. Init refreshes unmodified `.external/README.md` seeds and adds the root to existing workspace files.
+- **Release channels (D-50).** `dualVariant` gains computed side injections (the delivered commit becomes part of the layer); update detection is channel-aware (`release`, `pinned`, `edge`, `branch`).
+- **Deploy-Run-Verify:** missing target dependencies are detected by an adapter-agnostic preflight and resolved as an HITL offer with a confirmed-file-only install helper (D-51/D-52); HTTP 422 compile errors classify as *Rejected*; missing Microsoft test libraries install from the DVD; `alc.exe` is resolved lazily and version-ranked (`bin\alc.exe` and `bin\win32\alc.exe`); altool and ASINST remote-read failures are classified with readable reasons.
+- **New skill `skill-aproda-al-mcp` (E-010, D-53):** Level-1 AL MCP access through `altool launchmcpserver` — one local target selection, SRP-safe starter, tool tiers; every publish goes through the Dev Endpoint.
+- **New skill `skill-aproda-bc-data-access` (E-012, D-55):** read-only live data of a customer's BC SaaS environment for support/RCA through a session-lived helper app installed via the Automation API behind an identity guard; wired into `al-triage`.
+- **Validation and sync tooling:** `aldc-validate` resolves `aldc.yaml` two-rung and gains the `agentToolCasing` rule (warn); both glob translators let `**/` span zero directories; the noise skip is depth-aware; `Test-InPlaceEditsRegister.ps1` verifies against a real `basePin` (corrected to the upstream merge-base `4f3371f`, E-006 T-16).
+- **XLIFF:** strict-mode-safe consecutive-space check and version-aware `alc.exe` finder in `tools/aproda-ps-xliffsync/`; clarified German target rules in the translation subagent.
+- **Agents and workflows:** model pins of 9 of 11 agents and several workflow prompts moved to Claude Sonnet 5.5 (`al-review-subagent` stays on GPT-5.6 Terra, `al-translate-subagent` on GPT-5.6 Luna); tool lists refreshed for semantic navigation, AL MCP and the new extension tools.
+- Release checks: catalogs verified in sync (on disk = indexes = entrypoint: 11 agents, 23 skills, 12 workflows, 10 instructions); `agentToolCasing` 0 hits; `Test-InPlaceEditsRegister.ps1` 26/26 paths verified against `basePin`; `aldc-validate` COMPLIANT (2 known false-positive "ALDC Core v1.1" warnings from historical prose in `skill-aproda-aldc-release`).
+
 ## 1.2.0_aproda.17
 
 - Ships the tiered AI translation workflow for XLIFF (E-005): Stage 0 (delegated AI batch translation with a PoEdit approval gate) and Stage 1 (deterministic invariant/project-memory resolution) are implemented and validated against a real BC app.

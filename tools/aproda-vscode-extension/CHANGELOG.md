@@ -41,6 +41,12 @@
 - `#aldcConfiguration` now returns a separate `local` block with the git-ignored target selection (`aldc.local.json`): state, resolved launch values, issue codes and the target bundle. No credential state is reported.
 - Environment diagnostics report the active `altool`, the start mode, duplicate `launchmcpserver` registrations in workspace `mcp.json` or the workspace file, and `auto` combined with `chat.mcp.autostart = never`.
 - Offers to switch the ALDC target when an AL debug session starts with another `launch.json` configuration; it never switches silently.
+- BCQuality resolver (E-006, D-49): one resolver finds the clone through a probe-verified precedence (setting `aprodaAldc.bcquality.path` → mounted workspace folder → `$BCQUALITY_HOME` → `<devRoot>/BCQuality-Aproda` → `aldc.yaml` `home`); `#aldcConfiguration` reports `resolvedHome` / `resolvedFrom` / `mounted` and finds `aldc.yaml` at `<toolkitRoot>` before the repository root.
+- Adds the chat tool `#bcquality` (`aprodaAldc_bcquality`, `read` / `list`) serving files of the resolved clone with path containment, a BCQuality status bar item and the command *Show BCQuality Status* (declared vs. resolved).
+- Reconciles BCQuality on startup instead of writing clone paths into `*.code-workspace` files; the setting `aprodaAldc.bcquality.autoReconcile` replaces `autoFixWorkspacePath` (old key still honoured). Fixes a duplicate clone, a machine-wide path leak and the resolver discovering its own junction (B-23..B-34).
+- *Apply Toolkit to Project* runs a layout-migration preflight and asks before migrating an existing project.
+- Adds the `branch` channel (`aprodaAldc.branchName`); update detection is channel-aware (D-50), and the extension update is always offered before the toolkit update (B-38).
+- Child processes no longer inherit VS Code's `NODE_TLS_REJECT_UNAUTHORIZED=0`, so `npm install` verifies certificates again (B-35).
 
 ## 0.1.7
 

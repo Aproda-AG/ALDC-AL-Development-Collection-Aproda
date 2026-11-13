@@ -20,7 +20,7 @@ toolkitRoot: "."
 # auto-synced as a dualVariant file (D-18) — it is not maintained by hand.
 # ─────────────────────────────────────────────────────────────────────────────
 aproda:
-  layerVersion: "1.2.0_aproda.17"       # <ALDC core.version>_aproda.<revision>
+  layerVersion: "1.2.0_aproda.18"       # <ALDC core.version>_aproda.<revision>
   fork: "https://github.com/Aproda-AG/ALDC-AL-Development-Collection-Aproda"
   basePin: "4f3371f69c3013edb508540673f60e5e8a0b64b6"   # ALDC merge-base the fork sits on (2026-08-18); NOT in sync — upstream was 27 commits ahead on 2026-09-24, see E-006 T-16
   inventory: ".github/readme.aproda.md"
