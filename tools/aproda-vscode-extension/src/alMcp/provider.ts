@@ -90,6 +90,7 @@ export class AlMcpProvider implements vscode.McpServerDefinitionProvider<vscode.
     private watchers: vscode.Disposable[] = [];
     private watchKey = "";
     private startRequested = false;
+    private fetchWaiters: Array<() => void> = [];
     private timer: ReturnType<typeof setTimeout> | undefined;
     private loggedMissingStarter: string | undefined;
     private lastProvidedVersion: string | undefined;
@@ -122,6 +123,21 @@ export class AlMcpProvider implements vscode.McpServerDefinitionProvider<vscode.
     requestStart(): void {
         this.startRequested = true;
         this.emitter.fire();
+    }
+
+    // Resolves true once provideMcpServerDefinitions next returns a definition, false on timeout.
+    waitForDefinitionFetched(timeoutMs: number): Promise<boolean> {
+        return new Promise((resolve) => {
+            const waiter = (): void => {
+                clearTimeout(timeout);
+                resolve(true);
+            };
+            const timeout = setTimeout(() => {
+                this.fetchWaiters = this.fetchWaiters.filter((entry) => entry !== waiter);
+                resolve(false);
+            }, timeoutMs);
+            this.fetchWaiters.push(waiter);
+        });
     }
 
     scheduleRefresh(): void {
@@ -172,6 +188,9 @@ export class AlMcpProvider implements vscode.McpServerDefinitionProvider<vscode.
             this.scheduleRestart();
         }
         this.lastProvidedVersion = version;
+        const waiters = this.fetchWaiters;
+        this.fetchWaiters = [];
+        waiters.forEach((waiter) => waiter());
         return [definition];
     }
 

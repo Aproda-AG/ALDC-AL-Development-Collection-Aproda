@@ -261,7 +261,7 @@ const noCancellation = { isCancellationRequested: false, onCancellationRequested
 
 function createLogger() {
     const lines = [];
-    return { lines, info: (message) => lines.push(message), error: (message) => lines.push(`ERROR: ${message}`), show() { }, dispose() { } };
+    return { lines, info: (message) => lines.push(message), warn: (message) => lines.push(`WARNING: ${message}`), error: (message) => lines.push(`ERROR: ${message}`), show() { }, dispose() { } };
 }
 
 // Workspace folder of the AL project (app.json at its root) inside a makeRepo() repository.

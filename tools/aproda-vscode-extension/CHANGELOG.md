@@ -1,10 +1,15 @@
 # Changelog
 
+## 0.2.2
+
+- Fixes *Start AL MCP Server* (and the `startAlMcp` tool) doing nothing on the first call in `manual` mode: the start command is now issued only after VS Code has fetched the server definition (up to 5 s, then it is issued anyway with a warning).
+- *Apply Toolkit to Project* no longer logs an error when the BCQuality link already exists but is unreadable (junction on a network drive); it logs a warning with the removal command and continues. A link that is created but not readable also warns.
+
 ## 0.2.1
 
 - Fixes the AL MCP server id used by *Start/Restart AL MCP Server* and the `startAlMcp` tool: it is now derived from the extension id (`<lower-case extension id>/al-mcp`, measured in VS Code 1.144) instead of a guess that VS Code silently ignored.
 - The AL MCP server is now restarted after its definition version changed (target, `launch.json`, stored credential, AL extension or layer version). VS Code only stops the server on such a change; a burst of changes ends in one restart, and `manual` mode restarts only after a start request.
-- The credential terminal now closes after the credential is stored (no `-NoExit`); on failure it shows the error and waits for Enter. Storing a credential restarts the server through the version change, and the credential directory is created so its watcher sees the first file.
+- The credential terminal now closes after the credential is stored (no `-NoExit`); an error inside the save keeps the message visible until Enter. Cancelling the prompt is only possible with Ctrl+C, which closes the terminal (accepted behaviour). Storing a credential restarts the server through the version change, and the credential directory is created so its watcher sees the first file.
 - Environment diagnostics no longer warn about `chat.mcp.autostart = never`; the start path no longer depends on it.
 ## 0.2.0
 

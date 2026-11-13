@@ -72,7 +72,7 @@ const tests = {
 
     async "S-3.9 tool: start in manual sets the start flag, fires onDidChange, then starts"(scratch) {
         const repo = makeRepo(scratch, nextName(), { local: localJson("Base", "dev-win") });
-        await withRegistration({ workspaceFolders: [projectFolder(repo)], configuration: { "aprodaAldc.alMcp.start": "manual" } }, async ({ state, provider }) => {
+        await withRegistration({ workspaceFolders: [projectFolder(repo)], configuration: { "aprodaAldc.alMcp.start": "manual" } }, async ({ state, provider, load }) => { Object.assign(load("alMcp/control").startDelays, { fetchTimeoutMs: 30, settleMs: 0 });
             assert.deepStrictEqual(await provider.provideMcpServerDefinitions(), []);
             assert.strictEqual(startCalls(state).length, 0, "manual: no automatic start");
             const order = [];
@@ -114,7 +114,7 @@ const tests = {
             assert.ok(prepared.confirmationMessages.message.includes(repo), prepared.confirmationMessages.message);
         });
 
-        await withRegistration({ workspaceFolders: [projectFolder(repo)], configuration: { "aprodaAldc.alMcp.start": "manual" } }, async ({ state }) => {
+        await withRegistration({ workspaceFolders: [projectFolder(repo)], configuration: { "aprodaAldc.alMcp.start": "manual" } }, async ({ state, load }) => { Object.assign(load("alMcp/control").startDelays, { fetchTimeoutMs: 30, settleMs: 0 });
             const result = await invokeTool(state, { action: "restart" });
             assert.strictEqual(result.state, "started", "a manual restart of a never-provided server becomes a start");
             assert.strictEqual(startCalls(state).length, 1);
@@ -133,7 +133,7 @@ const tests = {
         await withRegistration({ workspaceFolders: [projectFolder(repo)] }, async ({ state }) => {
             assert.strictEqual(startCalls(state).length, 1, "auto + AL workspace: one start call");
         });
-        await withRegistration({ workspaceFolders: [projectFolder(repo)], configuration: { "aprodaAldc.alMcp.start": "manual" } }, async ({ state, provider }) => {
+        await withRegistration({ workspaceFolders: [projectFolder(repo)], configuration: { "aprodaAldc.alMcp.start": "manual" } }, async ({ state, provider, load }) => { Object.assign(load("alMcp/control").startDelays, { fetchTimeoutMs: 30, settleMs: 0 });
             assert.strictEqual(startCalls(state).length, 0, "manual: no start call");
             assert.deepStrictEqual(await provider.provideMcpServerDefinitions(), []);
         });

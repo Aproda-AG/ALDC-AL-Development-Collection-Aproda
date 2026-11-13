@@ -438,7 +438,7 @@ const tests = {
         assert.strictEqual(tool.when, "aprodaAldc.isAlProject");
         assert.deepStrictEqual(tool.inputSchema.properties.action.enum, ["start", "restart"]);
         assert.deepStrictEqual(tool.inputSchema.required, ["action"]);
-        assert.strictEqual(manifest.version, "0.2.1");
+        assert.strictEqual(manifest.version, "0.2.2");
     }
 };
 

@@ -7,6 +7,10 @@ export class Logger implements vscode.Disposable {
         this.channel.appendLine(`[${new Date().toISOString()}] ${message}`);
     }
 
+    warn(message: string): void {
+        this.info(`WARNING: ${message}`);
+    }
+
     error(message: string): void {
         this.info(`ERROR: ${message}`);
     }

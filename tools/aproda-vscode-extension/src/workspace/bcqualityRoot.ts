@@ -115,8 +115,20 @@ export async function createBcqualityLink(linkPath: string, target: string, logg
         await removeBcqualityLink(linkPath, logger);
     }
     await fs.mkdir(path.dirname(linkPath), { recursive: true });
-    await fs.symlink(target, linkPath, process.platform === "win32" ? "junction" : "dir");
-    logger.info(`Linked BCQuality: ${linkPath} -> ${target}`);
+    try {
+        await fs.symlink(target, linkPath, process.platform === "win32" ? "junction" : "dir");
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "EEXIST") {
+            throw error;
+        }
+        logger.warn(`BCQuality link not created: ${linkPath} already exists but cannot be read (typical for a junction on a network drive). Junctions on network drives do not work (E-006 e2e-05). Remove it with: cmd /c rmdir "${linkPath}"`);
+        return;
+    }
+    if (await isLinkReadable(linkPath)) {
+        logger.info(`Linked BCQuality: ${linkPath} -> ${target}`);
+    } else {
+        logger.warn(`BCQuality link created but not readable: ${linkPath} -> ${target} (typical for a junction on a network drive). Junctions on network drives do not work (E-006 e2e-05).`);
+    }
 }
 
 // Windows path comparison is case-insensitive: readlink() reports the drive letter as stored ("C:\"),
@@ -150,6 +162,15 @@ async function canonicalOrResolved(candidatePath: string): Promise<string> {
         return path.resolve((await fs.realpath(candidatePath)).replace(/^\\\\\?\\/, ""));
     } catch {
         return path.resolve(candidatePath);
+    }
+}
+
+async function isLinkReadable(linkPath: string): Promise<boolean> {
+    try {
+        await fs.readdir(linkPath);
+        return true;
+    } catch {
+        return false;
     }
 }
 
