@@ -1,7 +1,8 @@
 # E-011 — BCQuality as a virtual workspace mount (junction becomes optional)
 
-**Status:** 2026-11-13 — phases 0–3 done (D-54; extension `0.3.0` built; layer changes committed); phase 4: live test
-brief [`E-011-live-test-brief.md`](E-011-live-test-brief.md) ready.
+**Status:** 2026-11-13 — phases 0–3 done (D-54; extension `0.3.0` built; layer changes committed); phase 4: live
+run 1 done ([evidence](evidence/E011Evidence-run1.md)), defects D-1…D-5 fixed in extension `0.3.1` + Initialize;
+retest of L-11.1, L-11.2, L-11.8, L-11.11 open ([brief](E-011-live-test-brief.md)).
 **Origin:** E-006 (T-29, D-49 part 4: `.external/bcquality` junction; spike e2e-05 "Option 1") and E-010 run 2
 (EEXIST for the junction on `I:`). Evidence: [`evidence/`](evidence/) (spike runs 01/02 and the provider log).
 **Governing decision:** D-54 (2026-11-13) — revises D-49 parts 2 and 4.
@@ -117,5 +118,5 @@ no search leak, repoint, explicit error) carry over to `aldc-external:` with a s
 | 1 | Decision record (D-54, D-16), spec + test plan | review — **done 2026-11-13** |
 | 2 | Extension: provider, settings, command, reconcile/migration, tests, VSIX | `npm test`, review — **done** (`0.3.0`) |
 | 3 | Layer: templates, scripts, docs, agent/instruction prose | `aldc-validate`, review — **done** |
-| 4 | Live test brief (M-1…M-3) in Gustav | evidence — brief ready |
+| 4 | Live test brief (M-1…M-3) in Gustav | evidence — **run 1 done** ([evidence](evidence/E011Evidence-run1.md)); defects D-1…D-5 fixed in `0.3.1`; retest open (L-11.1, L-11.2, L-11.8, L-11.11, step 0.3 README) |
 | 5 | Release: extension, then layer | rollout per E-008 channels |
