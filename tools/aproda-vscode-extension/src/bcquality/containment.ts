@@ -60,7 +60,7 @@ async function safeRealpath(candidate: string): Promise<string | undefined> {
 async function realpathOfNearestAncestor(candidate: string): Promise<string> {
     const rest: string[] = [];
     let current = candidate;
-    for (;;) {
+    for (; ;) {
         const real = await safeRealpath(current);
         if (real !== undefined) {
             return rest.length === 0 ? real : path.join(real, ...rest.reverse());
