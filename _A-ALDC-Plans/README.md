@@ -34,7 +34,8 @@ It is deliberately not a content store; it points at the real sources.
 | [`E-005-translation-ai-workflow/`](E-005-translation-ai-workflow/) | E-005 | In progress — stages 0/1 implemented, 2/3 design-only |
 | [`E-006-layer-visibility-and-version-consistency/`](E-006-layer-visibility-and-version-consistency/) | E-006 | Blocks 1–3 done; Block 4 (BCQuality part 1) next |
 | [`E-007-azure-cli-skill/`](E-007-azure-cli-skill/) | E-007 | V2 (MCP-first hybrid) in progress |
-| [`E-010-al-mcp-integration/`](E-010-al-mcp-integration/) | E-010 | Approved (D-53) — pre-step B-1/B-2 implemented and live-validated; spec, test plan and rollout written; phase 2 next |
+| [`E-010-al-mcp-integration/`](E-010-al-mcp-integration/) | E-010 | Phases 2–4b implemented, live runs 1+2 done (extension 0.2.2); phase 4c next |
+| [`E-011-bcquality-virtual-mount/`](E-011-bcquality-virtual-mount/) | E-011 | Phase 1 done — D-54, spec and test plan written; phase 2 (extension) next |
 | [`dev-day-2026-09-16/`](dev-day-2026-09-16/) | — | Session notes, not a backlog item |
 
 > Keep this table current when adding a folder — it is the only index of this tree.
