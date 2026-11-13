@@ -315,7 +315,7 @@ This table **is** the Aproda index (D-17) — the one place to answer "what has 
 | ADO work-item integration skill | `skills/skill-aproda-ado/` | D-4 | live |
 | Fkh transport skill | `skills/skill-aproda-fkh/` | D-26, D-36 | **VALIDATED** (26/26 live) |
 | AL MCP integration skill (level 1, E-010 phase 2) | `skills/skill-aproda-al-mcp/` | D-53 | synthetic tests green; live validation pending |
-| BC data access skill (support/RCA, E-012) | `skills/skill-aproda-bc-data-access/` | D-55 | synthetic tests green; live validation pending |
+| BC data access skill (support/RCA, E-012) | `skills/skill-aproda-bc-data-access/` | D-55 | synthetic tests green; **live-validated** (E-012 run 4) |
 | BC data access app source (fork-only, never synced) | `tools/aproda-bc-data-access/` | D-55 | builds 0 errors / 0 warnings |
 | AL Translation Subagent | `agents/al-translate-subagent.aproda.agent.md` | D-32 | live |
 | Steward guardrail (HITL on layer edits) | `instructions/aproda-aldc-steward.aproda.instructions.md` | D-16 | live |

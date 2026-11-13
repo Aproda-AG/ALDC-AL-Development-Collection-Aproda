@@ -1,10 +1,9 @@
 # E-012 — BC Data Access skill (read live BC data from agents)
 
-**Status:** Phase 5 (2026-11-13) — **implemented** (phases 3–4, synthetic + layer tests green); live validation
-(brief 4) pending. Approved (Florian), decision **D-55**; spec and test plan
-([`E-012.spec.md`](E-012.spec.md), [`E-012.test-plan.md`](E-012.test-plan.md)). Live runs 1–3 done. Run 3 (§4e): session use and guarded clean-up
-proven; run 2 (§4d): auth as GDAP partner, Automation API lifecycle, generic reader; run 1 (§4c): BC MCP Data Query
-Tools need BC 29 → custom app path. Not released yet. Later sections (§4b–§4e) supersede parts
+**Status:** Phase 5 (2026-11-13) — **implemented and accepted** (Florian: "it works, good enough"). Live run 4 (§4f)
+validated the shipped skill end to end through `@AL Triage` and a plain chat; remaining L-cases waived. Approved,
+decision **D-55**; spec and test plan ([`E-012.spec.md`](E-012.spec.md), [`E-012.test-plan.md`](E-012.test-plan.md)).
+Runs 1–3: §4c–§4e. Not released yet; polish F-30…F-36 done (§4f). Later sections (§4b–§4f) supersede parts
 of §3.3 and §4.
 **Origin:** Colleague proposal, built and validated in the *Relesta AG* project (author is not an ALDC core
 maintainer). Source (read-only, on the project share):
@@ -379,6 +378,40 @@ before approval: the review with the colleague and the open governance questions
 
 ---
 
+## 4f. Live run 4 result (2026-11-13) — shipped skill, accepted
+
+Evidence: [`E-012-evidence-run-4.md`](E-012-evidence-run-4.md) (Gustav, GDAP partner; `Sandbox_Integration_TogaFood` and
+`Develop_Integration_TogaFood`; app 1.0.0.0, hash verified).
+
+| Case | Result |
+|---|---|
+| L-12.1 | ✅ `@AL Triage` loaded the skill **without being told** (*Skills loaded* line), asked for the environment type, showed the acknowledgement and waited |
+| L-12.2 | ✅ `LOGIN_OK`, `READY` in 63 s; library loaded content-based (no SRP error) |
+| L-12.3 | ✅ correct, data-backed answer to a real support question (10 queries, 3 self-corrected field-name errors) |
+| L-12.5 | ✅ `BCDA: CLEAN`; nothing left in the environment, `git status` unchanged |
+| L-12.7 | ✅ plain chat found the skill through its description; acknowledgement via `ask_user`; `READY` 113 s; 99 apps; `CLEAN` |
+| L-12.4, L-12.6, L-12.8–L-12.10 | **waived** by Florian ("it works, good enough") — covered by synthetic tests S-12.16 (reuse), S-12.21 (token expiry), S-12.25/S-12.L2 (data handling) |
+
+**Acceptance (Florian, 2026-11-13):** the skill works end to end; no further live tests.
+
+### Polish items (not blocking; skill text/library only — the app is unaffected)
+
+**Status 2026-11-13:** F-30…F-35 **done** (SKILL.md, `request-format.md`, `rca-recipes.md`, `BcDataAccess.ps1`; tests S-12.27 and S-12.L1 extended, 34/34 green); F-36 documented in SKILL.md §5; F-37 accepted; F-38 deferred.
+
+| # | Run-4 ID | Item | Proposed change |
+|---|---|---|---|
+| F-30 | F-2, F-11 | Acknowledgement shown with placeholders once; company sometimes outside the text | SKILL.md §5: fill every field first; company inside the text |
+| F-31 | F-1 | Several launch configurations for one tenant → no rule to ask | SKILL.md §3: list SaaS candidates from `launch.json` and ask |
+| F-32 | F-7, F-12 | Invented field names; `.rows` vs `.records` | SKILL.md §6 + `request-format.md`: look up fields via the `Field` recipe for unfamiliar tables; show the result shape |
+| F-33 | F-10 | Plain chat loaded `skill-aproda-al-mcp` first; no *Skills loaded* line | description: "Business Central **Online/SaaS**"; §4: print the *Skills loaded* line |
+| F-34 | F-13 | Helper app counted in app lists | `rca-recipes.md`: note that *Aproda BC Data Access* appears while the session runs; count rows |
+| F-35 | F-5, F-9 | `CLEAN` without seconds; empty session folder stays | library: duration in `CLEAN`, remove the empty folder |
+| F-36 | F-4 | Login before acknowledgement vs. brief wording | keep (login is not a change to the environment); document in SKILL.md §5 |
+| F-37 | F-3 | Type confirmed implicitly by "yes" on the filled text | accept (type is shown in bold in the text) |
+| F-38 | F-8 | Unsupported inference in an answer | note for `al-triage`: separate observed facts from conclusions (no change now) |
+
+---
+
 ## 5. Phases
 
 | Phase | Content | Gate |
@@ -388,7 +421,7 @@ before approval: the review with the colleague and the open governance questions
 | 2 | Spec + test plan: [`E-012.spec.md`](E-012.spec.md), [`E-012.test-plan.md`](E-012.test-plan.md) — drafted 2026-11-13. Not tested by decision: a user with only `DA APD Exec`; a build against BC 25.4 symbols | HITL |
 | 3 | Port the skill: rename, placeholders (F-2), engine into `scripts/` (F-9), auth adapter (Q-4), data-handling + tier rules (F-12, Q-5), catalogs (F-4) — ✅ 2026-11-13: X-03…X-14, X-16 implemented; 34/34 synthetic + layer tests green, `aldc-validate` COMPLIANT (baseline 2 warnings), sync dry run ships the skill incl. `.app` and not the app source | ✅ |
 | 4 | Server side per Q-2 (separate app or templates), incl. F-13/F-16 fixes — ✅ 2026-11-13: X-01/X-02 — app `Aproda BC Data Access` 1.0.0.0 (new id), fork-only source `tools/aproda-bc-data-access/`, built 0 errors / 0 warnings (BC 28.3 symbols), asset + manifest in the skill | ✅ |
-| 5 | Live validation (test plan §4, brief 4 in *Gustav Gerig AG Base*); then layer release (X-15 changelog) and Relesta migration note (X-17) | HITL |
+| 5 | Live validation — ✅ 2026-11-13 accepted after run 4 (§4f; remaining L-cases waived). Polish F-30…F-36 done. Open: layer release (X-15 changelog), Relesta migration note (X-17) | ✅ |
 
 ## 6. Acceptance criteria (draft)
 

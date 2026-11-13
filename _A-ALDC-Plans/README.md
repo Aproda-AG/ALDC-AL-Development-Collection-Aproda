@@ -36,7 +36,7 @@ It is deliberately not a content store; it points at the real sources.
 | [`E-007-azure-cli-skill/`](E-007-azure-cli-skill/) | E-007 | V2 (MCP-first hybrid) in progress |
 | [`E-010-al-mcp-integration/`](E-010-al-mcp-integration/) | E-010 | Phases 2–4b implemented, live runs 1+2 done (extension 0.2.2); phase 4c next |
 | [`E-011-bcquality-virtual-mount/`](E-011-bcquality-virtual-mount/) | E-011 | Phase 1 done — D-54, spec and test plan written; phase 2 (extension) next |
-| [`E-012-bc-data-access-skill/`](E-012-bc-data-access-skill/) | E-012 | Phase 5 — implemented (skill, app 1.0.0.0, al-triage wiring, catalogs; 34/34 tests green); next: live brief 4 in Gustav, then release |
+| [`E-012-bc-data-access-skill/`](E-012-bc-data-access-skill/) | E-012 | Accepted — skill live-validated (run 4); polish done; open: release, Relesta note |
 | [`dev-day-2026-09-16/`](dev-day-2026-09-16/) | — | Session notes, not a backlog item |
 
 > Keep this table current when adding a folder — it is the only index of this tree.
