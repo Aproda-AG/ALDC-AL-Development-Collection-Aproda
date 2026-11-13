@@ -9,8 +9,10 @@ directly.
 
 By default the `.external` workspace root is the constant virtual root
 `{ "name": ".external", "uri": "aldc-external:/" }`, served by the Aproda ALDC extension. It shows the
-BCQuality clone as `bcquality/` in the Explorer — read-only, nothing is created on disk, and it is the
-same entry in every project. The real clone stays wherever it lives on your workstation.
+BCQuality clone as `bcquality/` in the Explorer. No link is created on disk, and it is the same entry in
+every project. The root is editable: changes go to the real files (this folder's own files, and the clone
+under `bcquality/` — commit or discard them there). The real clone stays wherever it lives on your
+workstation.
 
 ## Mount modes
 

@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext): void {
   registerReadAldcConfigurationTool(context);
   registerBcqualityTool(context);
   const alMcpProvider = registerAlMcp(context, logger);
-  // Unconditional (even with autoReconcile off): serving is read-only and changes nothing on disk.
+  // Unconditional (even with autoReconcile off): serving changes nothing on disk unless the user writes through it.
   const externalProvider = registerExternalFileSystemProvider(context, logger);
 
   const bcqualityStatusBar = new BcqualityStatusBar();

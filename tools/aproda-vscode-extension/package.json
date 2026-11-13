@@ -236,7 +236,7 @@
                     "default": "virtual",
                     "scope": "application",
                     "enumDescriptions": [
-                        "Serve external sources (BCQuality) read-only through the aldc-external:/ virtual workspace folder.",
+                        "Serve external sources (BCQuality) through the aldc-external:/ virtual workspace folder (writable; edits go to the real files).",
                         "Use the classic .external/bcquality junction on disk.",
                         "No mount: external sources are reached only through the #bcquality tool or the resolved path."
                     ],

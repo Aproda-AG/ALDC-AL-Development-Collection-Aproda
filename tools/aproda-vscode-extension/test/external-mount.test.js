@@ -10,6 +10,7 @@ class FileSystemError extends Error {
         this.code = code;
     }
     static FileNotFound(arg) { return new FileSystemError("FileNotFound", arg); }
+    static FileExists(arg) { return new FileSystemError("FileExists", arg); }
     static NoPermissions(arg) { return new FileSystemError("NoPermissions", arg); }
     static Unavailable(arg) { return new FileSystemError("Unavailable", arg); }
     static FileIsADirectory(arg) { return new FileSystemError("FileIsADirectory", arg); }
@@ -34,7 +35,7 @@ function makeMock({ folders, settings = {}, registrations = [], warnings = [], c
         Disposable: class { constructor(f) { this.dispose = f; } },
         FileType: { File: 1, Directory: 2 },
         FilePermission: { Readonly: 1 },
-        FileChangeType: { Changed: 1 },
+        FileChangeType: { Changed: 1, Created: 2, Deleted: 3 },
         workspace: {
             workspaceFolders: folders,
             workspaceFile: undefined,
@@ -95,7 +96,7 @@ async function testProvider(scratch) {
         const logs = [];
         const provider = mod.registerExternalFileSystemProvider({ subscriptions: [] }, { info: (m) => logs.push(m) });
         // S-11.1
-        assert.deepStrictEqual(registrations, [{ scheme: "aldc-external", options: { isCaseSensitive: false, isReadonly: true } }]);
+        assert.deepStrictEqual(registrations, [{ scheme: "aldc-external", options: { isCaseSensitive: false } }]);
         // S-11.2 virtual
         assert.deepStrictEqual(names(await provider.readDirectory(u("/"))), ["README.md", "bcquality"]);
         // S-11.3 / S-11.4
@@ -107,10 +108,33 @@ async function testProvider(scratch) {
         assert.strictEqual(await codeOf(provider.readFile(u("/bcquality/../../x"))), "FileNotFound");
         assert.strictEqual(await codeOf(provider.readFile(u("/../README.md"))), "FileNotFound");
         assert.deepStrictEqual(names(await provider.readDirectory(u("/bcquality/skills/.."))), ["skills"]);
-        // S-11.6
-        for (const op of ["writeFile", "createDirectory", "delete", "rename"]) {
-            assert.strictEqual(await codeOf(Promise.resolve().then(() => provider[op]())), "NoPermissions");
+        // S-11.6 writes act on the real files; root and source roots are protected
+        const write = (p, s, o = { create: true, overwrite: true }) => provider.writeFile(u(p), Buffer.from(s), o);
+        const disk = (...p) => fs.readFile(path.join(...p), "utf8");
+        await write("/README.md", "edited");
+        assert.strictEqual(await disk(repo, ".external", "README.md"), "edited");
+        await write("/bcquality/skills/read.md", "clone-edited");
+        assert.strictEqual(await disk(clone, "skills", "read.md"), "clone-edited");
+        await write("/bcquality/skills/new.md", "new");
+        assert.strictEqual(await disk(clone, "skills", "new.md"), "new");
+        assert.strictEqual(await codeOf(write("/bcquality/skills/new.md", "x", { create: true, overwrite: false })), "FileExists");
+        assert.strictEqual(await codeOf(write("/bcquality/skills/absent.md", "x", { create: false, overwrite: true })), "FileNotFound");
+        assert.strictEqual(await codeOf(write("/bcquality/nodir/x.md", "x")), "FileNotFound");
+        await provider.createDirectory(u("/notes"));
+        await write("/notes/a.md", "a");
+        await provider.rename(u("/notes/a.md"), u("/notes/b.md"), { overwrite: false });
+        assert.strictEqual(await disk(repo, ".external", "notes", "b.md"), "a");
+        await provider.delete(u("/notes"), { recursive: true });
+        assert.strictEqual(await codeOf(fs.stat(path.join(repo, ".external", "notes"))), "ENOENT");
+        await provider.delete(u("/bcquality/skills/new.md"), { recursive: false });
+        assert.strictEqual(await codeOf(fs.stat(path.join(clone, "skills", "new.md"))), "ENOENT");
+        for (const p of ["/", "/bcquality", "/BCQuality"]) {
+            assert.strictEqual(await codeOf(provider.delete(u(p), { recursive: true })), "NoPermissions", p);
+            assert.strictEqual(await codeOf(provider.rename(u(p), u("/moved"), { overwrite: false })), "NoPermissions", p);
         }
+        assert.strictEqual(await codeOf(provider.createDirectory(u("/bcquality"))), "NoPermissions");
+        assert.strictEqual(await codeOf(write("/bcquality/../../x.md", "x")), "FileNotFound");
+        assert.ok(await fs.stat(path.join(clone, "skills", "entry.md")));
         // S-11.10
         const events = [];
         provider.onDidChangeFile((e) => events.push(e));
@@ -148,6 +172,9 @@ async function testMountNoneAndDisabledAndSymlink(scratch) {
         const provider = new (req("external/externalFileSystemProvider").ExternalFileSystemProvider)();
         if (linked) {
             assert.strictEqual(await codeOf(provider.readFile(u("/bcquality/link/secret.txt"))), "FileNotFound");
+            // a new file below a link inside the clone must not land outside
+            assert.strictEqual(await codeOf(provider.writeFile(u("/bcquality/link/planted.txt"), Buffer.from("x"), { create: true, overwrite: true })), "FileNotFound");
+            assert.strictEqual(await codeOf(fs.stat(path.join(outside, "planted.txt"))), "ENOENT");
         }
         if (process.platform === "win32") {
             assert.strictEqual(await codeOf(provider.readFile(u("/bcquality/skills/read.md::$DATA"))), "FileNotFound");

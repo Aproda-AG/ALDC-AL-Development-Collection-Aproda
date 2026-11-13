@@ -30,7 +30,7 @@ export async function resolveContained(root: string, relativePath: string): Prom
     // Compare canonical paths too: a symlink inside the clone (or a case-only match on Windows) must not
     // be able to make the string check above pass while the real target sits outside the root.
     const realRoot = await safeRealpath(resolvedRoot) ?? resolvedRoot;
-    const realCandidate = await safeRealpath(candidate) ?? candidate;
+    const realCandidate = await realpathOfNearestAncestor(candidate);
     if (!isWithin(realRoot, realCandidate)) {
         return { ok: false, reason: "Path escapes the BCQuality clone root." };
     }
@@ -52,5 +52,24 @@ async function safeRealpath(candidate: string): Promise<string | undefined> {
         return await fs.realpath(candidate);
     } catch {
         return undefined;
+    }
+}
+
+// A not-yet-existing path (write target) is canonicalised through its nearest existing ancestor, so 8.3 short
+// names and links above it compare like the realpath'd root.
+async function realpathOfNearestAncestor(candidate: string): Promise<string> {
+    const rest: string[] = [];
+    let current = candidate;
+    for (;;) {
+        const real = await safeRealpath(current);
+        if (real !== undefined) {
+            return rest.length === 0 ? real : path.join(real, ...rest.reverse());
+        }
+        const parent = path.dirname(current);
+        if (parent === current) {
+            return candidate;
+        }
+        rest.push(path.basename(current));
+        current = parent;
     }
 }

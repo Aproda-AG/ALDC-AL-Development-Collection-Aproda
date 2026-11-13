@@ -19,8 +19,9 @@ reviews.
   relative to each mounted root) — so the clone's 246 example `.al` files used
   to leak into every symbol search and Quick Open (E-006 finding **B-9**). The
   fix: the constant workspace root `{ "name": ".external", "uri": "aldc-external:/" }`
-  (D-54), a **virtual, read-only** root served by the Aproda extension that
-  shows the clone as `bcquality/`. Nothing is created on disk and the entry is
+  (D-54), a **virtual** root served by the Aproda extension that
+  shows the clone as `bcquality/` (editable — edits go to the real clone).
+  No link is created on disk and the entry is
   identical in every project. It never reaches the search index, while staying
   fully readable by path. **Never `files.exclude`** — that would block the read
   path the agents depend on. `.external/README.md` is tracked and ships with
