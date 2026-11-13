@@ -70,17 +70,19 @@ cases passed, failed or were not run and why.
 
 ## Retest after run 1 (`0.3.1`)
 
-Run 1 ([evidence](evidence/E011Evidence-run1.md)) found D-1…D-5. Fork HEAD `40aedaf` or later; same safety rules.
+Run 1 ([evidence](evidence/E011Evidence-run1.md)) found D-1…D-5. Fork HEAD at the commit that adds this note or
+later (includes the writable root); same safety rules. Junction cases (L-11.7, L-11.9) are **not tested** (Florian,
+2026-11-13) — out of scope for the retest and for the E-011 sign-off.
 **Report to:** `E011Evidence-run2.md` next to the run-1 file in the project, same row format.
 
 | Step | Who | Action | Expected |
 |---|---|---|---|
 | R.0 | agent | `git status --short`, hash of the current workspace file and of `.external/README.md`. | values recorded |
-| R.1 (D-1) | Florian | *Apply Toolkit to Project (per Repo)* (`localFork`). | `.external/README.md` replaced by the current seed (log: *refreshed*) unless it was edited locally (then: kept + hint) |
-| R.2 | Florian | Install `dist/aproda-aldc-0.3.1.vsix`; *Developer: Reload Window*. | installed version `0.3.1` |
-| R.3 (L-11.1, D-2) | agent + Florian | Agent restores the pre-migration workspace file from `Test/PowerShell/_temp/e011-workspace-before.json`; Florian reloads **once**. | Migration logged; either the `.external` root switches on its own, or within a few seconds *Reload Window* is offered and, after it, the root shows `README.md`, `bcquality/…`. No second manual reload needed |
+| R.1 | Florian | Install `dist/aproda-aldc-0.3.1.vsix` (rebuilt 2026-11-13 19:02 or later; reinstall if an earlier 0.3.1 is installed); *Developer: Reload Window*. | installed version `0.3.1` |
+| R.2 (D-1) | Florian | *Apply Toolkit to Project (per Repo)* (`localFork`). | `.external/README.md` replaced by the current seed (log: *refreshed*; Gustav's README is the unmodified `ad66461` seed, normalised SHA-256 `fbe112c3…`); it now says the root is editable. The workspace file stays `E8D1896E…` |
+| R.3 (L-11.1, D-2) | agent + Florian | Agent restores the **pre-migration** workspace file from `Test/PowerShell/_temp/e011-workspace-restored.json` (`BF783F13…`; not `e011-workspace-before.json`, which is already migrated); Florian reloads **once**. | Migration logged; either the `.external` root switches on its own, or within a few seconds *Reload Window* is offered and, after it, the root shows `README.md`, `bcquality/…`. No second manual reload needed; file hash `E8D1896E…` again |
 | R.4 (L-11.11, D-5) | agent | As L-11.11 (legacy entry with a comment line above, `BCQUALITY_HOME`); reload. | Comment line kept, entry replaced at the same position; `BCQUALITY_HOME` and the empty container removed |
 | R.5 (L-11.2, D-3) | Florian | Select `bcquality/skills/entry.md` in the Explorer, then right-click another file → *Reveal in File Explorer (real path)*; then palette *Reveal BCQuality Clone* with an Explorer node selected. | Windows Explorer opens with the clicked file selected (not the selection), then with `skills/entry.md` in the clone |
 | R.5a (writable) | Florian | In the virtual root: create `.external/e011-write.md`, edit and save it, rename it, delete it; append a blank line to `bcquality/skills/entry.md`, save, then undo + save; try to delete `bcquality`. | Each step lands on disk (`.external\` resp. the clone; `git -C <clone> status` clean at the end); deleting `bcquality` is refused |
 | R.6 (L-11.8, D-4) | Florian | `aprodaAldc.bcquality.path` = existing folder without `skills/entry.md`; reload; reload again; restore. | Exactly one warning over both reloads; no *Install BCQuality* prompt |
-| R.7 (L-11.10) | agent | `git status --short`. | Only the workspace migration and `.external/README.md` |
+| R.7 (L-11.10) | agent | `git status --short`; compare with R.0. | New vs. R.0: only `.external/README.md` (the workspace file was already ` M`). Pre-existing before the retest (2026-11-13 19:10): ` M .gitignore`, ` M Base/.vscode/launch.json`, ` D Base/.vscode/mcp.json`, ` M Base/app.json`, ` M GustavGerigAG.code-workspace`, `?? .github/_e2e-tests/`, `?? .github/documentation/ALDC/` |
