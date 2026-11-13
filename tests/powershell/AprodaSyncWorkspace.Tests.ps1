@@ -133,15 +133,24 @@ try {
     }
 
     # Init 4 (D-1): README refresh only for unmodified older seeds
-    Invoke-TestCase 'D1 Init refreshes an unmodified old .external/README.md seed' {
-        $p = New-ScratchProject
-        $readme = Join-Path $p.Root '.external\README.md'
-        $old = (git -C $syncRoot show 'ad66461:tools/aproda-sync/templates/external-readme.seed.md') -join "`r`n"
-        Write-TestFile $readme $old
-        $out = Invoke-SyncScript $p 'Initialize-AprodaProject.ps1'
-        $new = [System.IO.File]::ReadAllText((Join-Path $p.ScriptDir 'templates\external-readme.seed.md'))
-        Assert-Equal ([System.IO.File]::ReadAllText($readme)) $new 'README not refreshed.'
-        Assert-True ($out -match 'refreshed') 'missing refresh notice.'
+    foreach ($seedCommit in '1f1d9c2', 'ad66461', '8a796e0') {
+        Invoke-TestCase "D1 Init refreshes the unmodified $seedCommit .external/README.md seed" {
+            $p = New-ScratchProject
+            $readme = Join-Path $p.Root '.external\README.md'
+            # Byte-exact (UTF-8): the console encoding would mangle non-ASCII characters and hide a hash mismatch.
+            $savedEncoding = [Console]::OutputEncoding
+            try {
+                [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+                $old = (git -C $syncRoot show "${seedCommit}:tools/aproda-sync/templates/external-readme.seed.md") -join "`r`n"
+            }
+            finally { [Console]::OutputEncoding = $savedEncoding }
+            Assert-True ($old -match '—') 'seed read without its non-ASCII characters.'
+            Write-TestFile $readme $old
+            $out = Invoke-SyncScript $p 'Initialize-AprodaProject.ps1'
+            $new = [System.IO.File]::ReadAllText((Join-Path $p.ScriptDir 'templates\external-readme.seed.md'))
+            Assert-Equal ([System.IO.File]::ReadAllText($readme)) $new 'README not refreshed.'
+            Assert-True ($out -match 'refreshed') 'missing refresh notice.'
+        }
     }
     Invoke-TestCase 'D1 Init keeps a locally edited .external/README.md' {
         $p = New-ScratchProject

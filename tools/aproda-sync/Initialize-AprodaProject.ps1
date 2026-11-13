@@ -272,8 +272,8 @@ if (-not (Test-Path $externalReadmeTarget)) {
 elseif (Test-Path -LiteralPath $externalReadmeStubPath) {
     # D-1: refresh only an unmodified older seed (known hashes, CRLF-normalised); local edits are never clobbered.
     $knownOldSeedHashes = @(
-        '9834d8d786414ca655e68f6a3b2312659d6ff47d232b8470c9fb7004e71f5bf0',
-        'f00d3fac2cb49d04dd1dabcc9a22aafc2b56a783b558eeb724d8cc6e5c9b39de',
+        'fa25b6bd1084694c958e640b0cd633505f4d806a73bd9badf4372729c42eb655',
+        'fbe112c3f514dc688c6c98cc32c88bac355d7d3f8cca69795f0bb6c6d61304ac',
         '0d302d9d1281711be7052d818e3847885a757652abcd6fcaf7df4dd73843a1d2'
     )
     $normalise = { param($text) ($text -replace "`r`n", "`n").TrimEnd() }
