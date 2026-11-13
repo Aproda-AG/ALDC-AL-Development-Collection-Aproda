@@ -603,6 +603,35 @@ function ConvertTo-DeployRunVerifyRedactedText {
     return $out
 }
 
+function ConvertTo-DeployRunVerifyReasonSentence {
+    # A reason as a closed sentence ("HTTP 401. ") for mid-message use; empty reason -> empty string.
+    param([AllowNull()][string]$Reason)
+    $text = ([string]$Reason).Trim().TrimEnd('.', ' ')
+    if ([string]::IsNullOrWhiteSpace($text)) { return '' }
+    return "$text. "
+}
+
+function ConvertTo-DeployRunVerifyAsinstError {
+    # Classifies a failed ASINST remote call: unknown instance -> TARGET_INSTANCE_NOT_FOUND (names the selected launch
+    # configuration), anything else -> TARGET_STATE_READ_FAILED. -NotFoundOnly returns $null for other errors.
+    param([Parameter(Mandatory)]$Cfg, [Parameter(Mandatory)]$ErrorRecord, [string]$What = 'the installed apps', [switch]$NotFoundOnly)
+    $text = [string]$ErrorRecord.Exception.Message
+    $instance = [string]$Cfg.serverInstance
+    if ($text -match '(?i)Unable to locate the server instance') {
+        $launchConfig = [string](Get-DeployRunVerifyProperty -Object $Cfg -Name 'launchConfig' -Default '')
+        $launchProject = [string](Get-DeployRunVerifyProperty -Object $Cfg -Name 'launchProject' -Default '')
+        $where = ''
+        if ($launchConfig) {
+            $where = " (selected configuration '$launchConfig'"
+            if ($launchProject) { $where += " of $launchProject/.vscode/launch.json" }
+            $where += ')'
+        }
+        return "TARGET_INSTANCE_NOT_FOUND: ASINST server instance '$instance' does not exist on $($Cfg.server)$where. Check serverInstance there or select another target."
+    }
+    if ($NotFoundOnly) { return $null }
+    return "TARGET_STATE_READ_FAILED: could not read $What on $($Cfg.server)/$instance`: $(ConvertTo-DeployRunVerifyRedactedText -Text $text)"
+}
+
 # ---------------------------------------------------------------------------
 # altool: locator, capability detection, child process (spec 2.4, 6.2, 6.3)
 # ---------------------------------------------------------------------------
@@ -935,16 +964,18 @@ function Get-DeployRunVerifyInstalledAppsFkh {
 
 function Get-DeployRunVerifyInstalledAppsAsinst {
     param([Parameter(Mandatory)]$Cfg)
-    $session = New-PSSession -ComputerName $Cfg.server
+    $session = $null
     try {
+        $session = New-PSSession -ComputerName $Cfg.server -ErrorAction Stop
         return Invoke-Command -Session $session -ScriptBlock {
             param($si, $tenant, $mgmt)
             Import-Module $mgmt -ErrorAction Stop
             Get-NAVAppInfo -ServerInstance $si -Tenant $tenant -TenantSpecificProperties |
             Select-Object Name, Publisher, Version, IsInstalled
-        } -ArgumentList $Cfg.serverInstance, $Cfg.tenant, $Cfg.mgmtDllPath
+        } -ArgumentList $Cfg.serverInstance, $Cfg.tenant, $Cfg.mgmtDllPath -ErrorAction Stop
     }
-    finally { Remove-PSSession $session }
+    catch { throw (ConvertTo-DeployRunVerifyAsinstError -Cfg $Cfg -ErrorRecord $_) }
+    finally { if ($session) { Remove-PSSession $session } }
 }
 
 function Test-DeployRunVerifyTargetDependencies {
@@ -1252,16 +1283,18 @@ function Get-DeployRunVerifyAppState {
     else {
         $mgmtDllPath = [string](Get-DeployRunVerifyProperty -Object $Cfg -Name 'mgmtDllPath' -Default '')
         if ([string]::IsNullOrWhiteSpace($mgmtDllPath)) { throw 'mgmtDllPath is required for the ASINST adapter (state verification).' }
-        $session = New-PSSession -ComputerName $Cfg.server
+        $session = $null
         try {
+            $session = New-PSSession -ComputerName $Cfg.server -ErrorAction Stop
             $entry = Invoke-Command -Session $session -ScriptBlock {
                 param($si, $tenant, $mgmt, $name, $version)
                 Import-Module $mgmt -ErrorAction Stop
                 Get-NAVAppInfo -ServerInstance $si -Tenant $tenant -TenantSpecificProperties -Name $name |
                 Where-Object { [string]$_.Version -eq $version } | Select-Object -First 1 -Property Name, Version, IsInstalled, SyncState
-            } -ArgumentList $Cfg.serverInstance, $Cfg.tenant, $mgmtDllPath, $Name, $Version
+            } -ArgumentList $Cfg.serverInstance, $Cfg.tenant, $mgmtDllPath, $Name, $Version -ErrorAction Stop
         }
-        finally { Remove-PSSession $session }
+        catch { throw (ConvertTo-DeployRunVerifyAsinstError -Cfg $Cfg -ErrorRecord $_ -What "the state of $Name $Version") }
+        finally { if ($session) { Remove-PSSession $session } }
     }
     if (-not $entry) { return [pscustomobject]@{ Found = $false; IsInstalled = $false; SyncState = $null } }
     return [pscustomobject]@{
@@ -1284,15 +1317,17 @@ function Get-DeployRunVerifyAppStateAllVersions {
     else {
         $mgmtDllPath = [string](Get-DeployRunVerifyProperty -Object $Cfg -Name 'mgmtDllPath' -Default '')
         if ([string]::IsNullOrWhiteSpace($mgmtDllPath)) { throw 'mgmtDllPath is required for the ASINST adapter (state read).' }
-        $session = New-PSSession -ComputerName $Cfg.server
+        $session = $null
         try {
+            $session = New-PSSession -ComputerName $Cfg.server -ErrorAction Stop
             $entries = @(Invoke-Command -Session $session -ScriptBlock {
                     param($si, $tenant, $mgmt, $name)
                     Import-Module $mgmt -ErrorAction Stop
                     Get-NAVAppInfo -ServerInstance $si -Tenant $tenant -TenantSpecificProperties -Name $name | Select-Object -Property Name, Version, IsInstalled, SyncState
-                } -ArgumentList $Cfg.serverInstance, $Cfg.tenant, $mgmtDllPath, $Name)
+                } -ArgumentList $Cfg.serverInstance, $Cfg.tenant, $mgmtDllPath, $Name -ErrorAction Stop)
         }
-        finally { Remove-PSSession $session }
+        catch { throw (ConvertTo-DeployRunVerifyAsinstError -Cfg $Cfg -ErrorRecord $_ -What "the versions of $Name") }
+        finally { if ($session) { Remove-PSSession $session } }
     }
     return @($entries | ForEach-Object {
             [pscustomobject]@{
@@ -1356,7 +1391,7 @@ function Assert-DeployRunVerifyPublishResult {
         'ProtocolError' { throw "PUBLISH_PROTOCOL_ERROR: $Name $Version - HTTP 415 on route $Route is an engine defect (multipart shape), not a target problem. $($Result.Reason)" }
         'Rejected' {
             $hint = if ($Result.Reason -match '\bAL1024\b') { ' AL1024 = a dependency is missing on the target: publish the dependency chain first (references/triage-patterns.md T-12).' } else { '' }
-            throw "PUBLISH_REJECTED: $Name $Version was rejected by the target (route $Route). $($Result.Reason)$hint"
+            throw "PUBLISH_REJECTED: $Name $Version was rejected by the target (route $Route). $((ConvertTo-DeployRunVerifyReasonSentence $Result.Reason).TrimEnd())$hint"
         }
         'InvocationFailure' {
             if ($Policy -eq 'devEndpoint') { throw "ROUTE_UNAVAILABLE: deploy=devEndpoint ($($Result.Reason))" }
@@ -1448,7 +1483,7 @@ function Invoke-DeployRunVerifyPublishApp {
             Reset-DeployRunVerifyCredential
             continue
         }
-        throw "PUBLISH_AUTH_FAILED: $($Cfg.server) refused the credentials for $Name $Version ($($Cfg.authentication)). $($result.Reason) Check the account; no other route is tried."
+        throw "PUBLISH_AUTH_FAILED: $($Cfg.server) refused the credentials for $Name $Version ($($Cfg.authentication)). $(ConvertTo-DeployRunVerifyReasonSentence $result.Reason)Check the account; no other route is tried."
     }
     Save-DeployRunVerifyCredentialAfterSuccess -Cfg $Cfg -Credential $credential
     Assert-DeployRunVerifyAppPublished -Cfg $Cfg -Name $Name -Version $Version -Context $Context
@@ -1508,8 +1543,9 @@ function Get-DeployRunVerifyCleanupCandidates {
     $mgmtDllPath = [string](Get-DeployRunVerifyProperty -Object $Cfg -Name 'mgmtDllPath' -Default '')
     if ([string]::IsNullOrWhiteSpace($mgmtDllPath)) { throw 'mgmtDllPath is required for the ASINST adapter.' }
     $names = @($Cfg.apps | ForEach-Object { $_.Name })
-    $session = New-PSSession -ComputerName $Cfg.server
+    $session = $null
     try {
+        $session = New-PSSession -ComputerName $Cfg.server -ErrorAction Stop
         $rows = Invoke-Command -Session $session -ScriptBlock {
             param($si, $tenant, $mgmt, $names)
             Import-Module $mgmt -ErrorAction Stop
@@ -1527,9 +1563,10 @@ function Get-DeployRunVerifyCleanupCandidates {
                     }
                 }
             }
-        } -ArgumentList $Cfg.serverInstance, $Cfg.tenant, $mgmtDllPath, $names
+        } -ArgumentList $Cfg.serverInstance, $Cfg.tenant, $mgmtDllPath, $names -ErrorAction Stop
     }
-    finally { Remove-PSSession $session }
+    catch { throw (ConvertTo-DeployRunVerifyAsinstError -Cfg $Cfg -ErrorRecord $_ -What 'the published apps') }
+    finally { if ($session) { Remove-PSSession $session } }
     return @(Select-DeployRunVerifyCleanupCandidates -Rows @($rows))
 }
 
@@ -1540,8 +1577,9 @@ function Remove-DeployRunVerifyAppVersion {
     if ($Cfg.adapter -ne 'Asinst') { throw "CLEANUP_ASINST_ONLY: the one-time cleanup applies to the ASINST adapter (adapter is '$($Cfg.adapter)')." }
     $mgmtDllPath = [string](Get-DeployRunVerifyProperty -Object $Cfg -Name 'mgmtDllPath' -Default '')
     if ([string]::IsNullOrWhiteSpace($mgmtDllPath)) { throw 'mgmtDllPath is required for the ASINST adapter.' }
-    $session = New-PSSession -ComputerName $Cfg.server
+    $session = $null
     try {
+        $session = New-PSSession -ComputerName $Cfg.server -ErrorAction Stop
         $outcome = Invoke-Command -Session $session -ScriptBlock {
             param($si, $tenant, $mgmt, $name, $publisher, $version)
             Import-Module $mgmt -ErrorAction Stop
@@ -1558,9 +1596,14 @@ function Remove-DeployRunVerifyAppVersion {
             $still = Get-NAVAppInfo -ServerInstance $si -Name $name -Publisher $publisher -Version $version | Select-Object -First 1
             if ($still) { return 'STILL_PUBLISHED' }
             return 'REMOVED'
-        } -ArgumentList $Cfg.serverInstance, $Cfg.tenant, $mgmtDllPath, $Name, $Publisher, $Version
+        } -ArgumentList $Cfg.serverInstance, $Cfg.tenant, $mgmtDllPath, $Name, $Publisher, $Version -ErrorAction Stop
     }
-    finally { Remove-PSSession $session }
+    catch {
+        $classified = ConvertTo-DeployRunVerifyAsinstError -Cfg $Cfg -ErrorRecord $_ -NotFoundOnly
+        if ($classified) { throw $classified }
+        throw
+    }
+    finally { if ($session) { Remove-PSSession $session } }
     switch ($outcome) {
         'REMOVED' { Write-Host "Removed: $Name $Version ($Publisher)"; return $true }
         'INSTALLED' { throw "REMOVE_REFUSED_INSTALLED: $Name $Version is installed on tenant '$($Cfg.tenant)'; the cleanup never removes an installed version." }

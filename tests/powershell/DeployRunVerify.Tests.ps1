@@ -602,7 +602,8 @@ try { Resolve-DeployRunVerifyConfig -ConfigPath $env:DRV_TEST_CONFIG | Out-Null;
         . $publishMocks
         $script:alOutcome = 'AuthFailure'
         $userCfg = New-DrvPublishCfg -Authentication UserPassword -Scheme https
-        Assert-Throws { Invoke-DeployRunVerifyPublishApp -Cfg $userCfg -AppFile 'x.app' -Name 'AppA' -Version '1.0.0.0' } 'PUBLISH_AUTH_FAILED' 'AuthFailure twice.' | Out-Null
+        $authMessage = Assert-Throws { Invoke-DeployRunVerifyPublishApp -Cfg $userCfg -AppFile 'x.app' -Name 'AppA' -Version '1.0.0.0' } 'PUBLISH_AUTH_FAILED' 'AuthFailure twice.'
+        Assert-True ($authMessage -like '*(UserPassword). altool says AuthFailure. Check the account*') "Reason is a sentence: $authMessage"
         Assert-Equal $script:credentialCalls 2 'Credential read twice (second time store skipped).'
         Assert-Equal $script:resetCalls 1 'One reset / re-prompt.'
         Assert-Equal $script:alToolCalls 2 'altool tried twice.'
@@ -1207,6 +1208,41 @@ try { Resolve-DeployRunVerifyConfig -ConfigPath $env:DRV_TEST_CONFIG | Out-Null;
         Assert-True (-not ($cfg.apps[0].ProjectDir -like '*FileSystem::*')) "ProjectDir kept the provider prefix: $($cfg.apps[0].ProjectDir)"
         Assert-True (-not ($cfg.apps[0].AppFile -like '*FileSystem::*')) 'AppFile kept the provider prefix.'
         Assert-True (-not ($cfg.runnerDirFull -like '*FileSystem::*')) 'runnerDirFull kept the provider prefix.'
+    }
+
+    Invoke-TestCase 'S-4b.27 ASINST remote state reads classify unknown instances and other failures; reasons read as sentences' {
+        $cfg = [pscustomobject]@{ adapter = 'Asinst'; apps = @([pscustomobject]@{ Name = 'AppA' }); server = 'srv1'; serverInstance = 'BC_WRONG'; tenant = 'default'; mgmtDllPath = 'x.dll'; launchConfig = 'Dev (wrong port)'; launchProject = 'App' }
+        function New-PSSession { param($ComputerName, $ErrorAction) if ($script:sessionError) { throw $script:sessionError }; 'session' }
+        function Remove-PSSession { param($Session) }
+        function Invoke-Command { param($Session, $ScriptBlock, $ArgumentList, $ErrorAction) throw $script:remoteError }
+        $script:sessionError = $null
+        $script:remoteError = 'Get-NAVAppInfo: Unable to locate the server instance: MicrosoftDynamicsNavServer$BC_WRONG'
+        $message = Assert-Throws { Get-DeployRunVerifyInstalledAppsAsinst -Cfg $cfg } 'TARGET_INSTANCE_NOT_FOUND' 'Unknown instance.'
+        Assert-True ($message -like "*'BC_WRONG'*srv1*'Dev (wrong port)'*App/.vscode/launch.json*") "Instance and configuration named: $message"
+        $bare = [pscustomobject]@{ adapter = 'Asinst'; server = 'srv1'; serverInstance = 'BC_WRONG'; tenant = 'default'; mgmtDllPath = 'x.dll' }
+        $message = Assert-Throws { Get-DeployRunVerifyInstalledAppsAsinst -Cfg $bare } 'TARGET_INSTANCE_NOT_FOUND' 'No launch config.'
+        Assert-True ($message -notlike '*selected configuration*') 'Empty configuration omitted.'
+        $message = Assert-Throws { Get-DeployRunVerifyAppStateAllVersions -Cfg $cfg -Name 'AppA' } 'TARGET_INSTANCE_NOT_FOUND' 'AllVersions.'
+        Assert-Throws { Get-DeployRunVerifyAppState -Cfg $cfg -Name 'AppA' -Version '1.0.0.0' } 'TARGET_INSTANCE_NOT_FOUND' 'AppState.' | Out-Null
+        Assert-Throws { Get-DeployRunVerifyCleanupCandidates -Cfg $cfg } 'TARGET_INSTANCE_NOT_FOUND' 'Cleanup candidates.' | Out-Null
+        Assert-Throws { Remove-DeployRunVerifyAppVersion -Cfg $cfg -Name 'AppA' -Publisher 'P' -Version '1.0.0.0' } 'TARGET_INSTANCE_NOT_FOUND' 'Remove.' | Out-Null
+
+        $script:remoteError = 'The term Import-Module failed password=secret123 for x.dll'
+        $message = Assert-Throws { Get-DeployRunVerifyInstalledAppsAsinst -Cfg $cfg } 'TARGET_STATE_READ_FAILED: could not read the installed apps on srv1/BC_WRONG: ' 'Other remote error.'
+        Assert-True ($message -notlike '*secret123*') 'Message redacted.'
+        $script:sessionError = 'WinRM cannot process the request'
+        Assert-Throws { Get-DeployRunVerifyInstalledAppsAsinst -Cfg $cfg } 'TARGET_STATE_READ_FAILED' 'Session cannot be opened.' | Out-Null
+        $script:sessionError = $null
+        $removeError = $null
+        try { Remove-DeployRunVerifyAppVersion -Cfg $cfg -Name 'AppA' -Publisher 'P' -Version '1.0.0.0' } catch { $removeError = $_.Exception.Message }
+        Assert-True ($removeError -notlike 'TARGET_*') 'Remove keeps other errors unclassified.'
+        $stateAfter = Get-DeployRunVerifyStateAfterReject -Cfg $cfg -Name 'AppA' -Context $null 3>$null
+        Assert-True ($stateAfter.Read -eq $false) 'StateAfterReject still never throws.'
+        Remove-Item Function:\New-PSSession, Function:\Remove-PSSession, Function:\Invoke-Command
+
+        Assert-Equal (ConvertTo-DeployRunVerifyReasonSentence 'HTTP 401 ') 'HTTP 401. ' 'Sentence closed.'
+        Assert-Equal (ConvertTo-DeployRunVerifyReasonSentence 'HTTP 401.') 'HTTP 401. ' 'No double period.'
+        Assert-Equal (ConvertTo-DeployRunVerifyReasonSentence '') '' 'Empty reason stays empty.'
     }
 
     Invoke-TestCase 'S-4b.25 a re-prompted credential is saved after the first non-401 answer' {

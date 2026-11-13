@@ -88,6 +88,11 @@ When a test fails, match the symptom below → apply the fix → re-deploy → r
 - **Cause:** the server compiles the package on publish and a dependency (for example a Microsoft test library) is not published on the target. 422 is not specific to duplicates; only the text *duplicate package* is.
 - **Fix:** not a code bug. The preflight normally installs missing Microsoft test libraries itself (`autoInstallMsTestLibraries`, K: DVD), so this only appears when the preflight was skipped (`al` CLI missing) or the switch is off. Install the missing chain (Test Runner → Any → Library Assert → Library Variable Storage → System Application Test Library → …; see [`dependency-resolution.md`](dependency-resolution.md)), then re-run.
 
+### T-14 — `TARGET_INSTANCE_NOT_FOUND` / `TARGET_STATE_READ_FAILED` (ASINST)
+- **Symptom:** the preflight or a state read stops with `TARGET_INSTANCE_NOT_FOUND: ASINST server instance '<name>' does not exist on <server>` or `TARGET_STATE_READ_FAILED: could not read <what> on <server>/<instance>: …`.
+- **Cause:** `serverInstance` is wrong, typically in the selected `launch.json` configuration (the message names it), or the server is unreachable / the Management module cannot be imported. Not a code bug.
+- **Fix:** correct `serverInstance` in that configuration or select another target, then re-run. For `TARGET_STATE_READ_FAILED` check remote access and `mgmtDllPath` from the quoted reason.
+
 ## Regression checklist after a shared-code fix
 
 After any fix to **shared** code (edit-control codeunit, tableextension guard), re-confirm the **previously-green** tests in the same area didn't regress — not just the one you fixed. (E.g. the Routing guard re-read had to keep `StartEditUnlocksCertified`, `DeleteCapturesFinalState`, `ChildBlockedWhenNotInEdit`, `ChecksumChainIntact` green.)
