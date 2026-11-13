@@ -11,8 +11,9 @@
       2. (No code here — the `.gitignore` Aproda block already covers both locations;
          Initialize-AprodaProject.ps1's own Init 2 keeps it current on every run, so
          this is not duplicated.)
-      3. A `*.code-workspace` legacy sibling BCQuality root (`../BCQuality-Aproda`),
-         superseded by the tracked `.external/` wrapper (T-29).
+      3. A `*.code-workspace` legacy BCQuality root (sibling clone `../BCQuality-Aproda`,
+         any direct clone path, or the D-49 `.external` path root), superseded by the
+         constant virtual root `{ "name": ".external", "uri": "aldc-external:/" }` (D-54).
       4. A `BCQUALITY_HOME` entry under `terminal.integrated.env.*` in the workspace
          file, superseded by a Global VS Code setting the extension writes (T-17).
 
@@ -26,15 +27,13 @@
     pull that caused it, not discovered later.
     Order-sensitive preconditions: the stale root `aldc.yaml` is only removed once
     `.github/aldc.yaml` exists, is non-empty, and looks like a real config (contains a
-    `toolkitRoot:` key) -- never leave a half-migrated project with no config at all;
-    the legacy BCQuality root is only replaced once `.external/` exists in the repo
-    (never leave a project with no BCQuality root at all). Both are normally already
-    satisfied by the time this runs, because Initialize-AprodaProject.ps1 chains it as
-    its LAST step, after its own Init 2/4 have run.
+    `toolkitRoot:` key) -- never leave a half-migrated project with no config at all.
+    The workspace migration has no `.external/` precondition: the virtual root works
+    without the real folder. This script stays the route for projects opened without
+    the Aproda VS Code extension (whose reconcile does the same migration).
 
-    Never touches `.external/bcquality` itself — that is an extension-managed junction
-    onto the developer's real clone, outside the repo. Only its PARENT folder's existence
-    is checked here; nothing in this script enumerates or recurses into it.
+    Never touches `.external/bcquality` itself (an optional extension-managed junction
+    onto the developer's real clone, outside the repo); nothing here enumerates it.
 
     SRP-safe: content-load and invoke (no path-based dot-sourcing / execution):
 
@@ -91,7 +90,6 @@ else {
 
 $rootAldcYaml = Join-Path $projectRoot 'aldc.yaml'
 $githubAldcYaml = Join-Path $projectRoot '.github\aldc.yaml'
-$externalDir = Join-Path $projectRoot '.external'
 
 $migrated = New-Object System.Collections.Generic.List[string]
 $current = New-Object System.Collections.Generic.List[string]
@@ -124,10 +122,10 @@ else {
 }
 
 # ── Items 3 & 4: *.code-workspace -- legacy BCQuality root + BCQUALITY_HOME ───
-# `.external/bcquality` is an extension-managed junction onto the developer's real
-# clone outside the repo -- only its parent folder's existence is checked below,
-# never its contents.
-$externalExists = Test-Path -LiteralPath $externalDir
+# The target is the constant virtual root `aldc-external:/` (D-54); it needs no real
+# `.external/` folder. Only the explicit file `skills/entry.md` is probed in a candidate
+# clone path, never its contents.
+$externalUri = 'aldc-external:/'
 $envKeys = @('terminal.integrated.env.windows', 'terminal.integrated.env.linux', 'terminal.integrated.env.osx')
 
 $wsFiles = Get-ChildItem -Path $projectRoot -Filter '*.code-workspace' -File -ErrorAction SilentlyContinue
@@ -141,46 +139,96 @@ else {
             $json = $raw | ConvertFrom-Json -ErrorAction Stop
         }
         catch {
-            $manual.Add("$($wsFile.Name) could not be parsed (JSONC/comments?) -- left untouched. Manually: replace the '../BCQuality-Aproda' folder entry with a '.external' root, and remove any 'BCQUALITY_HOME' key under settings 'terminal.integrated.env.*'.")
+            $manual.Add("$($wsFile.Name) could not be parsed (JSONC/comments?) -- left untouched. Manually: replace the BCQuality folder entry (or the '.external' path root) with { name: '.external', uri: 'aldc-external:/' }, and remove any 'BCQUALITY_HOME' key under settings 'terminal.integrated.env.*'.")
             continue
         }
 
         $changed = $false
 
-        # Legacy sibling BCQuality root -> `.external`, only once `.external/` exists --
-        # never leave the project with no BCQuality root at all.
+        # Classify each folder entry: constant virtual root (keep one), `.external` path root
+        # (D-49, replace in place), legacy direct clone root (remove), anything else (untouched).
         if ($json.folders) {
-            $legacyFolders = @($json.folders | Where-Object { "$($_.path)" -match 'BCQuality-Aproda' })
-            if ($legacyFolders.Count -gt 0) {
-                if ($externalExists) {
-                    $json.folders = @($json.folders | Where-Object { "$($_.path)" -notmatch 'BCQuality-Aproda' })
-                    $hasExternalRoot = @($json.folders | Where-Object { "$($_.path)" -match '^\.external$' }).Count -gt 0
-                    if (-not $hasExternalRoot) {
-                        $json.folders = @($json.folders) + @([pscustomobject]@{ name = '.external'; path = '.external' })
+            $newFolders = New-Object System.Collections.Generic.List[object]
+            $hasConstant = $false
+            $replacedExternal = $false
+            $removedLegacy = @()
+            $droppedDuplicates = 0
+            foreach ($folder in @($json.folders)) {
+                $folderPath = "$($folder.path)"
+                $folderUri = "$($folder.uri)"
+                if ($folderUri -eq $externalUri) {
+                    if ($hasConstant) { $droppedDuplicates++; continue }
+                    $hasConstant = $true
+                    $newFolders.Add($folder)
+                    continue
+                }
+                $normalised = ($folderPath -replace '\\', '/').Trim().TrimEnd('/')
+                $normalised = $normalised -replace '^(\./)+', ''
+                $isExternalPathRoot = ($folder.name -eq '.external') -or ($folderPath -and $normalised -eq '.external')
+                if ($isExternalPathRoot) {
+                    $replacedExternal = $true
+                    if ($hasConstant) { continue }
+                    $hasConstant = $true
+                    $newFolders.Add([pscustomobject]@{ name = '.external'; uri = $externalUri })
+                    continue
+                }
+                $isLegacyClone = $false
+                if ($folderPath) {
+                    $leaf = ($normalised -split '/')[-1]
+                    if ($leaf -match '^bcquality(-aproda)?$') {
+                        $isLegacyClone = $true
                     }
-                    $changed = $true
-                    $migrated.Add("$($wsFile.Name): replaced the legacy '../BCQuality-Aproda' root with '.external'.")
-
-                    # The sibling root's exclude globs are meaningless once it is gone --
-                    # leaving them behind contradicts the new `bcquality/**` entry forever.
-                    if ($json.settings) {
-                        foreach ($excludeKey in @('search.exclude', 'files.watcherExclude')) {
-                            $excludeProp = $json.settings.PSObject.Properties[$excludeKey]
-                            if (-not $excludeProp) { continue }
-                            $staleGlobs = @($excludeProp.Value.PSObject.Properties | Where-Object { $_.Name -match 'BCQuality-Aproda' } | Select-Object -ExpandProperty Name)
-                            foreach ($glob in $staleGlobs) { $excludeProp.Value.PSObject.Properties.Remove($glob) }
-                            if ($staleGlobs.Count -gt 0) {
-                                $migrated.Add("$($wsFile.Name): removed $($staleGlobs.Count) stale '$excludeKey' glob(s) for the retired sibling root.")
-                            }
-                        }
+                    else {
+                        $candidate = if ([System.IO.Path]::IsPathRooted($folderPath)) { $folderPath } else { Join-Path $wsFile.DirectoryName $folderPath }
+                        if (Test-Path -LiteralPath (Join-Path $candidate 'skills/entry.md') -PathType Leaf) { $isLegacyClone = $true }
                     }
                 }
-                else {
-                    $manual.Add("$($wsFile.Name) still has the legacy '../BCQuality-Aproda' root, but '.external/' does not exist in this repo yet -- run a pull first (it seeds .external/README.md), then re-run this migration.")
+                if ($isLegacyClone) {
+                    $removedLegacy += $folderPath
+                    continue
+                }
+                $newFolders.Add($folder)
+            }
+            if (-not $hasConstant) {
+                $newFolders.Add([pscustomobject]@{ name = '.external'; uri = $externalUri })
+                $hasConstant = $true
+                if ($removedLegacy.Count -eq 0 -and -not $replacedExternal) {
+                    $migrated.Add("$($wsFile.Name): added the missing '.external' virtual root ($externalUri).")
                 }
             }
-            else {
-                $current.Add("$($wsFile.Name): no legacy BCQuality sibling root found.")
+
+            if ($removedLegacy.Count -gt 0 -or $replacedExternal -or $droppedDuplicates -gt 0 -or ($newFolders.Count -ne @($json.folders).Count) -or (-not (@($json.folders) | Where-Object { "$($_.uri)" -eq $externalUri }))) {
+                $json.folders = $newFolders.ToArray()
+                $changed = $true
+            }
+            if ($removedLegacy.Count -gt 0) {
+                $migrated.Add("$($wsFile.Name): replaced the legacy BCQuality root(s) '$($removedLegacy -join "', '")' with the '.external' virtual root ($externalUri).")
+            }
+            if ($replacedExternal) {
+                $migrated.Add("$($wsFile.Name): replaced the '.external' path root with the virtual root ($externalUri).")
+            }
+            if ($droppedDuplicates -gt 0) {
+                $migrated.Add("$($wsFile.Name): dropped $droppedDuplicates duplicate '.external' virtual root(s).")
+            }
+            if ($removedLegacy.Count -eq 0 -and -not $replacedExternal -and $droppedDuplicates -eq 0) {
+                $current.Add("$($wsFile.Name): no legacy BCQuality root found.")
+            }
+
+            # A retired root's exclude globs are meaningless once it is gone; the junction-mode
+            # `bcquality/**` glob is kept.
+            if ($removedLegacy.Count -gt 0 -and $json.settings) {
+                foreach ($excludeKey in @('search.exclude', 'files.watcherExclude')) {
+                    $excludeProp = $json.settings.PSObject.Properties[$excludeKey]
+                    if (-not $excludeProp) { continue }
+                    $staleGlobs = @($excludeProp.Value.PSObject.Properties | Where-Object {
+                            $globName = $_.Name
+                            $globName -ne 'bcquality/**' -and @($removedLegacy | Where-Object { $_ -and $globName.IndexOf($_, [System.StringComparison]::OrdinalIgnoreCase) -ge 0 }).Count -gt 0
+                        } | Select-Object -ExpandProperty Name)
+                    foreach ($glob in $staleGlobs) { $excludeProp.Value.PSObject.Properties.Remove($glob) }
+                    if ($staleGlobs.Count -gt 0) {
+                        $migrated.Add("$($wsFile.Name): removed $($staleGlobs.Count) stale '$excludeKey' glob(s) for the retired root.")
+                    }
+                }
             }
         }
 

@@ -70,14 +70,14 @@ external:
     # Aproda VS Code extension's resolver (src/bcquality/resolve.ts) re-resolves and
     # probe-verifies the real clone location on every call, through a five-rung
     # precedence this value is only the last rung of. Correct by construction for
-    # the shipped `.external/bcquality` junction layout (D-49) — wrong only where no
-    # junction has been created yet, and there the earlier rungs answer first, so
+    # junction mode only (`aprodaAldc.external.mount: junction`, D-54) — in the default
+    # virtual mode no link exists, and there the earlier rungs answer first, so
     # the miss is inert. To see the REAL resolved value, don't read this line: check
     # the user setting `aprodaAldc.bcquality.path`, or run
     # "Aproda ALDC: Show BCQuality Status".
     home: ".external/bcquality"
     entryPoint: "skills/entry.md"         # relative to `home`
-    workspace: "aldc.code-workspace"      # multi-root workspace; since T-29 it mounts `.external/` (wrapper) rather than the clone itself — a root cannot exclude itself (B-9). See docs/bcquality.md
+    workspace: "aldc.code-workspace"      # multi-root workspace; mounts the constant virtual root `.external` (`aldc-external:/`, D-54) rather than the clone itself — a root cannot exclude itself (B-9). See docs/bcquality.md
     consumedBy: ["agents/al-review-subagent.agent.md", "agents/dredd.agent.md", "agents/al-triage.agent.md"]
     # Policy when BCQuality is ABSENT (the default until a clone is installed).
     # The .github/hooks/bcquality-precondition hook reads this and injects the

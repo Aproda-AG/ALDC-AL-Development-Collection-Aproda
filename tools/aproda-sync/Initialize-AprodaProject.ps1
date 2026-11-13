@@ -9,13 +9,13 @@
                                      "# Aproda ALDC Tool - BEGIN/END" marker block so
                                      they are obvious and updated as one unit.
       3. *.code-workspace          — the .github root (toolkit discovery) + the .external
-                                     wrapper root (BCQuality, consumed outside the build via a
-                                     junction/symlink so its example .al files never enter
-                                     compilation), plus chat.useCustomizationsInParentRepositories
-                                     and the search.exclude / files.watcherExclude rules that keep
-                                     the mounted junction out of project-wide search.
-      4. .external/README.md       — seeded once from the ALDC template; explains the junction
-                                     the Aproda VS Code extension creates inside .external/bcquality.
+                                     virtual root (constant `aldc-external:/` URI, served by the
+                                     Aproda VS Code extension; BCQuality is consumed outside the
+                                     build so its example .al files never enter compilation), plus
+                                     chat.useCustomizationsInParentRepositories and the
+                                     search.exclude / files.watcherExclude rules for junction mode.
+      4. .external/README.md       — seeded once from the ALDC template; explains the mount modes
+                                     and the optional .external/bcquality junction.
       5. Legacy-layout migration   — chains Migrate-AprodaProjectLayout.ps1 (T-35) as the LAST
                                      step, so a pre-Block-4 project (root aldc.yaml, sibling
                                      BCQuality workspace root, BCQUALITY_HOME in the workspace
@@ -124,21 +124,21 @@ else {
 # Two roots must be present for the toolkit to work when you open the workspace:
 #   1) the .github root — the toolkit (copilot-instructions, instructions/, prompts/,
 #      agents/) lives here; surfacing it as a folder keeps it editable/visible.
-#   2) the .external wrapper root — BCQuality is reached through a junction/symlink at
-#      .external/bcquality, never mounted directly (a workspace root cannot exclude
+#   2) the .external virtual root (constant `aldc-external:/` URI, D-54) — BCQuality is served
+#      by the Aproda extension, never mounted directly (a workspace root cannot exclude
 #      itself, so the clone's example .al files would otherwise leak into every search).
-# Both are added only when missing (idempotent). JSONC that does not parse is left
-# untouched with a manual hint. Existing projects that still carry the legacy sibling
-# root (../BCQuality-Aproda) are left alone here — migrating them off it is T-35.
+# Both are added only when missing (idempotent); an existing `.external` entry in any form
+# (uri, name or path) counts as present. JSONC that does not parse is left
+# untouched with a manual hint. Legacy roots are migrated by Init 5 (Migrate-AprodaProjectLayout.ps1).
 $requiredRoots = @(
     @{ name = '.github'; path = '.github'; match = '^\.github$' },
-    @{ name = '.external'; path = '.external'; match = '^\.external$' }
+    @{ name = '.external'; uri = 'aldc-external:/'; match = '^\.external$' }
 )
 # Settings ALDC needs surfaced in every workspace. parentCustomizations lets Copilot
 # walk up to the .git root and pick up the repo-root .github customizations even when
 # only a single app folder is opened (VS Code: chat.useCustomizationsInParentRepositories).
 $parentCustomizationsKey = 'chat.useCustomizationsInParentRepositories'
-# Exclude globs that keep the .external/bcquality junction out of search/watcher without
+# Exclude globs that keep the .external/bcquality junction (junction mode) out of search/watcher without
 # hiding it from reads — files.exclude would also block the agents' read path (never use it).
 $bcqualityExcludeKeys = @('search.exclude', 'files.watcherExclude')
 $bcqualityExcludeGlob = 'bcquality/**'
@@ -154,7 +154,7 @@ if (-not $wsFiles) {
             [ordered]@{ name = '.github'; path = '.github' },
             [ordered]@{ name = 'App'; path = 'App' },
             [ordered]@{ name = 'Test'; path = 'Test' },
-            [ordered]@{ name = '.external'; path = '.external' }
+            [ordered]@{ name = '.external'; uri = 'aldc-external:/' }
         )
         settings = [ordered]@{
             $parentCustomizationsKey = $true
@@ -181,20 +181,23 @@ else {
         if (-not $json.folders) {
             $json | Add-Member -NotePropertyName folders -NotePropertyValue @() -Force
         }
-        $existingPaths = @($json.folders | ForEach-Object { "$($_.path)" })
         $added = @()
         foreach ($root in $requiredRoots) {
-            $present = $existingPaths | Where-Object { $_ -match $root.match }
-            if (-not $present) {
-                $entry = [pscustomobject]@{ name = $root.name; path = $root.path }
+            $present = @($json.folders | Where-Object {
+                    $pathMatch = "$($_.path)" -match $root.match
+                    # The virtual .external root may be recognised by name or uri as well as a legacy path.
+                    $pathMatch -or ($root.uri -and ("$($_.name)" -eq $root.name -or "$($_.uri)" -eq $root.uri))
+                })
+            if ($present.Count -eq 0) {
+                $entry = if ($root.uri) { [pscustomobject]@{ name = $root.name; uri = $root.uri } } else { [pscustomobject]@{ name = $root.name; path = $root.path } }
                 # .github must always be the first workspace folder.
-                if ($root.path -eq '.github') {
+                if ($root.name -eq '.github') {
                     $json.folders = @($entry) + @($json.folders)
                 }
                 else {
                     $json.folders = @($json.folders) + @($entry)
                 }
-                $added += $root.path
+                $added += $root.name
             }
         }
         # Ensure the parent-customizations setting is present (idempotent).
@@ -244,8 +247,8 @@ else {
 }
 
 # ── Init 4: seed .external/README.md if not yet present ───────────────────────
-# The wrapper folder itself is tracked (unlike the junction inside it, which is
-# gitignored) so it exists in every fresh clone and explains itself. Never
+# The wrapper folder itself is tracked (it holds the README and, in junction mode, the gitignored
+# junction inside it) so it exists in every fresh clone and explains itself. Never
 # overwritten once present — same "copy, never clobber" rule as Init 1's memory
 # seed: a developer may have annotated it, and there is nothing time-sensitive in
 # its content that would justify a forced refresh.

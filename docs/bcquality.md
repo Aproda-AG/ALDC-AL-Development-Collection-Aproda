@@ -13,20 +13,31 @@ reviews.
   every repository, at `<developer root>/BCQuality-Aproda` by default. Because
   that clone has no `app.json`, the AL compiler never builds it, so its example
   `.al` files can't pollute your extension's error list.
-- **Reached through a tracked wrapper, `.external/`, never mounted directly.**
+- **Reached through a wrapper root, `.external`, never mounted directly.**
   A directly-mounted clone is itself a workspace root, and **a workspace root
   cannot exclude itself** from search (`search.exclude` globs are evaluated
   relative to each mounted root) — so the clone's 246 example `.al` files used
   to leak into every symbol search and Quick Open (E-006 finding **B-9**). The
-  fix: `.external/` is the mounted root, and `bcquality/` is a **directory
-  junction** (Windows) / symlink (macOS, Linux) **one level inside it** —
-  `.external/bcquality`. Because the junction is now a genuine subfolder of the
-  mounted root, `search.exclude` + `files.watcherExclude` on `bcquality/**`
-  finally resolve, and the clone disappears from search while staying fully
-  readable by path. **Never `files.exclude`** — that would hide the folder
-  outright and break the read path the agents depend on. `.external/README.md`
-  is tracked and ships with every project; it explains the junction and the
-  manual creation/removal commands if the extension is unavailable.
+  fix: the constant workspace root `{ "name": ".external", "uri": "aldc-external:/" }`
+  (D-54), a **virtual, read-only** root served by the Aproda extension that
+  shows the clone as `bcquality/`. Nothing is created on disk and the entry is
+  identical in every project. It never reaches the search index, while staying
+  fully readable by path. **Never `files.exclude`** — that would block the read
+  path the agents depend on. `.external/README.md` is tracked and ships with
+  every project; it explains the mount modes and the manual junction route.
+- **Mount modes** (`aprodaAldc.external.mount`, user setting): `virtual`
+  (default) serves the clone through `aldc-external:/`; `junction` additionally
+  maintains the real link `.external/bcquality` (a **directory junction** on
+  Windows / symlink on macOS, Linux — a genuine subfolder, so the
+  `bcquality/**` `search.exclude` + `files.watcherExclude` globs resolve);
+  `none` mounts nothing. Use `junction` only if a tool needs a real path; the
+  virtual root also avoids junction trouble on network drives.
+- **Migration.** Opening an older project reconciles its `*.code-workspace`:
+  a direct clone root (`bcquality` / `bcquality-aproda`, or any folder holding
+  `skills/entry.md`) or the D-49 `.external` path root is replaced by the
+  constant virtual root, its stale exclude globs and `BCQUALITY_HOME` are
+  removed, and a missing `.external` root is added. The same migration runs from
+  `Migrate-AprodaProjectLayout.ps1` for projects opened without the extension.
 - **The source is configurable; the default is the canonical upstream.** Out of the
   box `aldc.yaml → external.bcquality.url` points at **[`microsoft/BCQuality`](https://github.com/microsoft/BCQuality)**
   (the source of truth for the upstream install scripts). Point `url` at **your
@@ -65,15 +76,19 @@ reviews.
 
 - **`#bcquality` language-model tool** — the agent channel. Serves `read` and
   `list` against the resolved clone root, the same way `#aldcConfiguration`
-  serves `aldc.yaml`. Agent prose keeps a direct path read as a documented
-  fallback for when the tool is unavailable (dual path).
+  serves `aldc.yaml`. **Access rule:** use `#bcquality` when available; otherwise
+  read `aldc-external:/bcquality/<path>`, the resolved clone path
+  (`#aldcConfiguration` → `resolvedHome`), or `.external/bcquality/<path>` in
+  junction mode — probe before trusting, never block (else the `fallback` policy).
 - **Status-bar item + `Aproda ALDC: Show BCQuality Status` command** — the
   human-facing view of the same resolver. It lists every candidate in
   precedence order with its verdict (verified / no entry point / missing /
   not set), shows the resolved root next to the *declared*
   `aldc.yaml → external.bcquality.home` value side by side (rather than ever
-  writing one into the other), and shows whether the `.external/bcquality`
-  junction currently exists.
+  writing one into the other), and shows the current mount mode and whether
+  the `.external/bcquality` junction exists.
+- **`Aproda ALDC: Reveal BCQuality Clone`** — opens the resolved clone in the
+  OS file explorer.
 
 ## Install (only if you want BCQuality-backed reviews)
 
@@ -92,17 +107,17 @@ scripts below:
    settings, where it then outranks every other rung in *every* Aproda project
    on the machine.
 3. If `aprodaAldc.bcquality.autoReconcile` is enabled (default: on), the
-   extension also maintains the Global `BCQUALITY_HOME` setting and creates
-   the `.external/bcquality` junction for you automatically once a clone is
-   verified.
+   extension also maintains the Global `BCQUALITY_HOME` setting and the
+   `.external` mount (per `aprodaAldc.external.mount`) once a clone is verified.
 4. **`autoReconcile` is deliberately asymmetric.** Turning it off only stops
    the *additive* work — updating the Global setting and creating the
-   junction. It does **not** stop *removal*: if BCQuality is disabled in
+   mount/junction. It does **not** stop *removal*: if BCQuality is disabled in
    `aldc.yaml` (`external.bcquality.enabled: false`), an existing junction is
    removed regardless of this setting, because a kill-switch must never leave
    a live BCQuality mount behind.
-5. Without the extension, create the junction by hand per
-   `.external/README.md`: `New-Item -ItemType Junction -Path .external\bcquality -Target <clone>`
+5. Without the extension, the virtual root is simply absent; for a real path
+   create the junction by hand per `.external/README.md`:
+   `New-Item -ItemType Junction -Path .external\bcquality -Target <clone>`
    (Windows, no elevation) / `ln -s <clone> .external/bcquality` (macOS, Linux).
 6. The upstream scripts `tools/bcquality/install.sh` / `install.ps1` still
    exist and read `url` / `ref` / `pinnedCommit` from `aldc.yaml`, but are not
@@ -112,15 +127,15 @@ scripts below:
 **Then use it.** Run a review/audit as usual:
 
 - `@al-conductor` review phases, `@dredd` (independent audit), `@al-triage`
-  (diagnosis) each probe BCQuality (via `#bcquality` or the direct-read
-  fallback), read `entry.md`, and fold cited findings into their output.
+  (diagnosis) each probe BCQuality (via `#bcquality` or the access-rule
+  paths above), read `entry.md`, and fold cited findings into their output.
 - If the probe fails (not installed / disabled), they record BCQuality as
   `not-applicable`, review against the full **A–G** native checklist, and carry
   on — nothing blocks.
 
 ## Removing a junction — link only, never recursive
 
-`.external/bcquality` is a junction/symlink, not a real directory. Delete the
+Junction mode only. `.external/bcquality` is a junction/symlink, not a real directory. Delete the
 **link only** — e.g. `(Get-Item .external\bcquality -Force).Delete()` or
 `cmd /c rmdir .external\bcquality` on Windows, `rm .external/bcquality` on
 macOS/Linux. **Never `Remove-Item -Recurse` / `rm -rf`** on it: a recursive

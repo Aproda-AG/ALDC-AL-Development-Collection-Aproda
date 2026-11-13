@@ -9,15 +9,15 @@
     //                       Rename / duplicate this entry for each app in your repo
     //                       (e.g. Base, App, Module, …). Paths are relative to the git root.
     //   3) <Test>         — Test AL extension (compiled separately; adjust name & path).
-    //   4) .external       — Wrapper root for external knowledge (currently: BCQuality). The
-    //                       clone itself is NEVER mounted directly — a workspace root cannot
-    //                       exclude itself, so its example .al files would leak into every
-    //                       project-wide search. Instead `.external/bcquality` is a directory
-    //                       junction (Windows) / symlink (macOS, Linux) onto the real clone,
-    //                       which lives outside the repo; the junction is created by the Aproda
-    //                       VS Code extension (Apply Toolkit / Install-Update BCQuality) or by
-    //                       hand — see .external/README.md. Because the junction is a genuine
-    //                       SUBFOLDER of this root, `bcquality/**` excludes below actually match.
+    //   4) .external       — Virtual root for external knowledge (currently: BCQuality). It is the
+    //                       constant `aldc-external:/` URI, identical in every project and on every
+    //                       workstation, and is served read-only by the Aproda VS Code extension
+    //                       (REQUIRED — without it the root is unavailable). The clone itself is
+    //                       NEVER mounted directly — a workspace root cannot exclude itself, so its
+    //                       example .al files would leak into every project-wide search. The mount
+    //                       mode is a workstation setting (`aprodaAldc.external.mount`: virtual |
+    //                       junction | none), never edited here; `junction` additionally creates the
+    //                       disk path `.external/bcquality` — see .external/README.md.
     //
     // Edit the placeholder entries (marked "TODO") to match your project layout, then
     // commit the file. The Init script will patch it on future pulls to keep .github and
@@ -39,14 +39,14 @@
         },
         {
             "name": ".external",
-            "path": ".external"
+            "uri": "aldc-external:/"
         }
     ],
     "settings": {
         // Let Copilot walk up to the git root to find .github customizations even when
         // only a single app folder (e.g. App/ or Test/) is opened directly.
         "chat.useCustomizationsInParentRepositories": true,
-        // Hide the BCQuality clone's ~200+ example .al files from search/watcher without
+        // Junction mode only: hide the clone's ~200+ example .al files from search/watcher without
         // hiding the folder itself — files.exclude would also block the agents' read path.
         "search.exclude": {
             "bcquality/**": true
