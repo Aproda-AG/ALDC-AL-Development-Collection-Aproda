@@ -56,6 +56,8 @@ export function activate(context: vscode.ExtensionContext): void {
             const repositoryRoot = await resolveTargetRepo();
             if (repositoryRoot) {
               await reconcileBcqualityOnStartup(repositoryRoot, logger, () => externalProvider.refresh());
+            } else {
+              logger.info("Reconcile skipped after a settings change: no target repository resolved.");
             }
           } catch (error) {
             logger.error(asMessage(error));
@@ -151,9 +153,11 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     const setupCompleted = await offerInitialSetup(context);
     if (!setupCompleted) {
+      logger.info("Reconcile skipped: initial setup not completed (Get Started).");
       return;
     }
     if (isAlProject && !isInitializedProject) {
+      logger.info("Reconcile skipped: AL project without ALDC initialization (aldc.yaml not found).");
       await offerRepositoryInitialization(context, logger, layerSource);
       return;
     }
@@ -162,6 +166,10 @@ export function activate(context: vscode.ExtensionContext): void {
     const repoRoot = isInitializedProject ? await resolveTargetRepo() : undefined;
     if (repoRoot) {
       await reconcileBcqualityOnStartup(repoRoot, logger, () => externalProvider.refresh());
+    } else {
+      logger.info(isInitializedProject
+        ? "Reconcile skipped: no target repository resolved."
+        : "Reconcile skipped: no initialized ALDC project in this window.");
     }
     startupCheck = sequenceStartupChecks(
       extensionUpdateCheck,

@@ -8,6 +8,7 @@
 - The invalid-explicit-path warning is shown once per source/path (persisted in global state), and the BCQuality install prompt is skipped when a verified clone is resolved.
 - Workspace-file migration removes array elements together with the correct comma, so comments and formatting survive.
 - `aldc-external:/` is writable: create, edit, delete and rename act on the real files (`.external/` passthrough and the BCQuality clone). The root itself and each source root (`bcquality/`) stay protected; writes stay contained (a link inside the clone cannot redirect a new file outside).
+- Every skipped startup reconcile now logs its reason (setup not completed, project not initialized, no repository resolved), and an already current workspace file logs *no migration needed*.
 
 ## 0.3.0
 

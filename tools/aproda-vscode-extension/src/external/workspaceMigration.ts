@@ -259,6 +259,7 @@ export async function migrateWorkspaceFile(repositoryRoot: string, logger: Logge
         return false;
     }
     if (result.changes.length === 0 || result.text === original) {
+        logger.info(`Workspace file ${path.basename(file)} is current; no migration needed.`);
         return false;
     }
     await fs.writeFile(file, result.text, "utf8");
