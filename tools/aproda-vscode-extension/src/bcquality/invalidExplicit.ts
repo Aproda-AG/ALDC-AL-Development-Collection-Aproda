@@ -35,17 +35,25 @@ export function findInvalidExplicitCandidates(resolution: BcqualityResolution): 
     return result;
 }
 
-// One log line and one notification per distinct value and window.
+// One log line and one notification per distinct value and window; a memento extends that across windows.
 const shownValues = new Set<string>();
+const warnedKey = "aprodaAldc.invalidExplicitWarned";
 
-export async function warnInvalidExplicitCandidates(logger: Logger, resolution?: BcqualityResolution): Promise<void> {
+export async function warnInvalidExplicitCandidates(logger: Logger, resolution?: BcqualityResolution, memento?: vscode.Memento): Promise<void> {
     const findings = findInvalidExplicitCandidates(resolution ?? await resolveBcquality());
+    const persisted = new Set(memento?.get<string[]>(warnedKey) ?? []);
     for (const finding of findings) {
         const key = `${finding.source}:${finding.path}`;
-        if (shownValues.has(key)) {
+        const persistedKey = `${finding.source}|${finding.path}`;
+        if (shownValues.has(key) || persisted.has(persistedKey)) {
+            shownValues.add(key);
             continue;
         }
         shownValues.add(key);
+        if (memento) {
+            persisted.add(persistedKey);
+            await memento.update(warnedKey, [...persisted]);
+        }
         logger.warn(finding.message);
         const openSettings = "Open Settings";
         const showStatus = "Show BCQuality Status";

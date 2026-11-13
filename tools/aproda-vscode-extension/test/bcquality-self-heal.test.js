@@ -121,6 +121,23 @@ async function testVerifiedCloneStaysQuiet(scratch) {
     assert.strictEqual(warnings.length, 0, "a verified clone must not trigger a self-heal prompt");
 }
 
+// D-4: a broken setting while another rung verifies must not raise the install prompt.
+async function testBrokenSettingButOtherRungServesStaysQuiet(scratch) {
+    const healthy = path.join(scratch, "clone-env");
+    await makeVerifiedClone(healthy);
+    const warnings = [];
+    const vscodeMock = makeVscodeMock({ bcqualityPath: path.join(scratch, "gone-too"), warnings });
+    process.env.BCQUALITY_HOME = healthy;
+    try {
+        await withHealthCheck(vscodeMock, async (checkBcqualitySelfHeal) => {
+            await checkBcqualitySelfHeal({ workspaceState: vscodeMock._workspaceState });
+        });
+    } finally {
+        delete process.env.BCQUALITY_HOME;
+    }
+    assert.strictEqual(warnings.length, 0, "install prompt must be suppressed when another rung verifies");
+}
+
 async function main() {
     const scratch = await fs.mkdtemp(path.join(os.tmpdir(), "aproda-aldc-self-heal-"));
     const previousEnv = process.env.BCQUALITY_HOME;
@@ -130,6 +147,7 @@ async function main() {
         await testBrokenCloneNotifies(scratch);
         await testUnconfiguredStaysQuiet(scratch);
         await testVerifiedCloneStaysQuiet(scratch);
+        await testBrokenSettingButOtherRungServesStaysQuiet(scratch);
     } finally {
         if (previousEnv === undefined) {
             delete process.env.BCQUALITY_HOME;

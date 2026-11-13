@@ -8,15 +8,39 @@ import { migrateWorkspaceFile } from "../external/workspaceMigration";
 
 // Junction lives at <repositoryRoot>/.external/bcquality (T-29): the wrapper is tracked and seeded by the syncer,
 // the junction itself is git-ignored and extension-managed (only for external.mount=junction).
-export async function reconcileBcquality(repositoryRoot: string, bcqualityRoot: string, logger: Logger, onReconciled?: () => void): Promise<void> {
+export interface ReconcileOptions {
+    // Delay before checking that VS Code picked up a migrated workspace file (injectable for tests).
+    readonly staleCheckDelayMs?: number;
+}
+
+const defaultStaleCheckDelayMs = 3000;
+
+export async function reconcileBcquality(repositoryRoot: string, bcqualityRoot: string, logger: Logger, onReconciled?: () => void, options?: ReconcileOptions): Promise<void> {
     try {
-        await reconcileBcqualityCore(repositoryRoot, bcqualityRoot, logger);
+        await reconcileBcqualityCore(repositoryRoot, bcqualityRoot, logger, options);
     } finally {
         onReconciled?.();
     }
 }
 
-async function reconcileBcqualityCore(repositoryRoot: string, bcqualityRoot: string, logger: Logger): Promise<void> {
+// VS Code (notably on SMB shares) can keep the old root after the workspace file was rewritten: offer a reload.
+async function checkMigrationApplied(logger: Logger, delayMs: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    const folders = vscode.workspace.workspaceFolders ?? [];
+    if (folders.some((folder) => folder.uri.scheme === "aldc-external")) {
+        logger.info("Workspace migration applied: the aldc-external root is active.");
+        return;
+    }
+    logger.warn("Workspace migration written, but VS Code still shows the previous root; offering a reload.");
+    const reload = "Reload Window";
+    const choice = await vscode.window.showInformationMessage(
+        "ALDC updated the workspace file, but VS Code has not applied it yet. Reload the window to show the new .external root.", reload);
+    if (choice === reload) {
+        await vscode.commands.executeCommand("workbench.action.reloadWindow");
+    }
+}
+
+async function reconcileBcqualityCore(repositoryRoot: string, bcqualityRoot: string, logger: Logger, options?: ReconcileOptions): Promise<void> {
     const resolution = await resolveBcquality();
     const linkPath = path.join(repositoryRoot, ".external", "bcquality");
 
@@ -34,7 +58,9 @@ async function reconcileBcqualityCore(repositoryRoot: string, bcqualityRoot: str
     }
     // Runs in every mount mode and without a resolved clone: the constant entry depends on neither (Q-9).
     try {
-        await migrateWorkspaceFile(repositoryRoot, logger);
+        if (await migrateWorkspaceFile(repositoryRoot, logger)) {
+            void checkMigrationApplied(logger, options?.staleCheckDelayMs ?? defaultStaleCheckDelayMs).catch(() => undefined);
+        }
     } catch (error) {
         logger.warn(`Workspace migration failed: ${(error as Error).message}`);
     }

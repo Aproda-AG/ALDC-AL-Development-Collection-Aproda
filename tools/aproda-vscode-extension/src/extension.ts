@@ -67,7 +67,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     }
     if (event.affectsConfiguration("aprodaAldc.bcquality.path")) {
-      void warnInvalidExplicitCandidates(logger);
+      void warnInvalidExplicitCandidates(logger, undefined, context.globalState);
     }
   }));
   context.subscriptions.push(vscode.commands.registerCommand("aprodaAldc.revealBcqualityClone", (arg?: vscode.Uri) => revealBcqualityClone(externalProvider, arg)));
@@ -146,7 +146,7 @@ export function activate(context: vscode.ExtensionContext): void {
     bcqualityStatusBar.setVisible(isAlProject);
     if (isAlProject) {
       void bcqualityStatusBar.refresh();
-      void warnInvalidExplicitCandidates(logger);
+      void warnInvalidExplicitCandidates(logger, undefined, context.globalState);
       void checkBcqualitySelfHeal(context);
     }
     const setupCompleted = await offerInitialSetup(context);

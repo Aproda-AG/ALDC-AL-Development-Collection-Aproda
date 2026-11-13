@@ -4,6 +4,8 @@
 #   Get-Content -LiteralPath tests\powershell\AprodaSyncWorkspace.Tests.ps1 -Raw | Invoke-Expression
 
 # No StrictMode: folder entries are heterogeneous (uri or path), absent properties read as $null.
+# Explicit, because the other test files run content-based in the same session and leave it on.
+Set-StrictMode -Off
 
 $repositoryRoot = $env:APRODA_TEST_REPOSITORY_ROOT
 if ([string]::IsNullOrWhiteSpace($repositoryRoot)) {
@@ -128,6 +130,32 @@ try {
         $p = New-ScratchProject -Workspace '{ "folders": [ { "name": ".github", "path": ".github" }, { "name": ".external", "uri": "aldc-external:/" } ] }'
         Invoke-SyncScript $p 'Initialize-AprodaProject.ps1' | Out-Null
         Assert-Equal (Get-ExternalEntries (Read-Workspace $p)).Count 1 'uri entries.'
+    }
+
+    # Init 4 (D-1): README refresh only for unmodified older seeds
+    Invoke-TestCase 'D1 Init refreshes an unmodified old .external/README.md seed' {
+        $p = New-ScratchProject
+        $readme = Join-Path $p.Root '.external\README.md'
+        $old = (git -C $syncRoot show 'ad66461:tools/aproda-sync/templates/external-readme.seed.md') -join "`r`n"
+        Write-TestFile $readme $old
+        $out = Invoke-SyncScript $p 'Initialize-AprodaProject.ps1'
+        $new = [System.IO.File]::ReadAllText((Join-Path $p.ScriptDir 'templates\external-readme.seed.md'))
+        Assert-Equal ([System.IO.File]::ReadAllText($readme)) $new 'README not refreshed.'
+        Assert-True ($out -match 'refreshed') 'missing refresh notice.'
+    }
+    Invoke-TestCase 'D1 Init keeps a locally edited .external/README.md' {
+        $p = New-ScratchProject
+        $readme = Join-Path $p.Root '.external\README.md'
+        Write-TestFile $readme 'my local notes'
+        $out = Invoke-SyncScript $p 'Initialize-AprodaProject.ps1'
+        Assert-Equal ([System.IO.File]::ReadAllText($readme)) 'my local notes' 'edited README was overwritten.'
+        Assert-True ($out -match 'edited locally') 'missing kept notice.'
+    }
+    Invoke-TestCase 'D1 Init skips a current .external/README.md' {
+        $p = New-ScratchProject
+        Invoke-SyncScript $p 'Initialize-AprodaProject.ps1' | Out-Null
+        $out = Invoke-SyncScript $p 'Initialize-AprodaProject.ps1'
+        Assert-True ($out -match 'is current') 'current README not reported as current.'
     }
 
     # S-11.L4: legacy .external path root

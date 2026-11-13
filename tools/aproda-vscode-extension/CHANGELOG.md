@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1
+
+- Init refreshes an unmodified older `.external/README.md` seed from the current template; a locally edited README is left untouched with a notice.
+- Reconcile: after a workspace-file migration it checks (delayed) that the entry applied and offers *Reload Window* if it did not.
+- *Reveal external sources* opens the clone in the OS file manager (explorer / `open -R` / `xdg-open`).
+- The invalid-explicit-path warning is shown once per source/path (persisted in global state), and the BCQuality install prompt is skipped when a verified clone is resolved.
+- Workspace-file migration removes array elements together with the correct comma, so comments and formatting survive.
+
 ## 0.3.0
 
 - New virtual `.external` mount: the workspace folder `{ "name": ".external", "uri": "aldc-external:/" }` serves BCQuality and other external sources through a file system provider; no junction needed. Setting `aprodaAldc.external.mount` (`virtual` default, `junction`, `none`).

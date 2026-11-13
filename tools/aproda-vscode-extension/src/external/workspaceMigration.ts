@@ -1,6 +1,6 @@
 import * as fs from "fs/promises";
 import * as path from "path";
-import { applyEdits, findNodeAtLocation, modify, parse, parseTree, Edit, FormattingOptions, Node, ParseError } from "jsonc-parser";
+import { applyEdits, createScanner, findNodeAtLocation, modify, parse, parseTree, Edit, FormattingOptions, Node, ParseError, SyntaxKind } from "jsonc-parser";
 import * as vscode from "vscode";
 import { Logger } from "../log";
 
@@ -67,6 +67,45 @@ function constantEntryText(original: Node, text: string): string {
     return `{ "name": "${externalName}", "uri": "${externalConstantUri}" }`;
 }
 
+// Offset of the first non-trivia token after `position` if it is a comma, else -1.
+function commaAfter(text: string, position: number): number {
+    const scanner = createScanner(text, true);
+    scanner.setPosition(position);
+    return scanner.scan() === SyntaxKind.CommaToken ? scanner.getTokenOffset() : -1;
+}
+
+// Removes only the element text plus one adjacent comma (and its own line if left blank); never comment trivia.
+function removeArrayElementEdits(text: string, siblings: readonly Node[], index: number): Edit[] {
+    const node = siblings[index];
+    const start = node.offset;
+    let end = node.offset + node.length;
+    const edits: Edit[] = [];
+    const following = commaAfter(text, end);
+    if (following >= 0) {
+        end = following + 1;
+    } else if (index > 0) {
+        const previous = siblings[index - 1];
+        const comma = commaAfter(text, previous.offset + previous.length);
+        if (comma >= 0) {
+            if (/^[ \t]*$/.test(text.slice(comma + 1, start))) {
+                edits.push({ offset: comma, length: end - comma, content: "" });
+                return edits;
+            }
+            edits.push({ offset: comma, length: 1, content: "" });
+        }
+    }
+    const lineStart = text.lastIndexOf("\n", start - 1) + 1;
+    let lineEnd = text.indexOf("\n", end);
+    lineEnd = lineEnd < 0 ? text.length : lineEnd;
+    if (/^[ \t]*$/.test(text.slice(lineStart, start)) && /^[ \t\r]*$/.test(text.slice(end, lineEnd))) {
+        edits.push({ offset: lineStart, length: Math.min(lineEnd + 1, text.length) - lineStart, content: "" });
+    } else {
+        const trailing = /^[ \t]*/.exec(text.slice(end))?.[0].length ?? 0;
+        edits.push({ offset: start, length: end - start + (following >= 0 ? trailing : 0), content: "" });
+    }
+    return edits;
+}
+
 function globNamesRoot(glob: string, removed: readonly { folderPath: string; name: string }[]): boolean {
     const normalized = glob.replace(/\\/g, "/").toLowerCase();
     return removed.some((root) => {
@@ -123,7 +162,12 @@ export async function migrateWorkspaceText(original: string, workspaceDir: strin
         }
         if (pathText !== undefined && await isLegacyClone(pathText, workspaceDir)) {
             removedRoots.push({ folderPath: pathText, name: lastSegment(pathText) });
-            plans.push({ kind: "remove", reason: `removed legacy BCQuality root '${pathText}'` });
+            if (hasConstant || placed) {
+                plans.push({ kind: "remove", reason: `removed legacy BCQuality root '${pathText}'` });
+            } else {
+                placed = true;
+                plans.push({ kind: "replace", reason: `replaced legacy BCQuality root '${pathText}' by ${externalConstantUri}` });
+            }
             continue;
         }
         plans.push({ kind: "keep" });
@@ -138,7 +182,8 @@ export async function migrateWorkspaceText(original: string, workspaceDir: strin
         }
         changes.push(plan.reason!);
         if (plan.kind === "remove") {
-            text = applyEdits(text, modify(text, ["folders", index], undefined, { formattingOptions: formatting }));
+            const siblings = findNodeAtLocation(parseTree(text, [], { allowTrailingComma: true })!, ["folders"])!.children ?? [];
+            text = applyEdits(text, removeArrayElementEdits(text, siblings, index));
         } else {
             const current = findNodeAtLocation(parseTree(text, [], { allowTrailingComma: true })!, ["folders", index])!;
             const edit: Edit = { offset: current.offset, length: current.length, content: constantEntryText(current, text) };

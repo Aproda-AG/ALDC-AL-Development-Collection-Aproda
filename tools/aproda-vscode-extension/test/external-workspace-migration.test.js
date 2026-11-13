@@ -143,6 +143,25 @@ async function testUnrelatedBcqualityNameUntouched() {
     assert.deepStrictEqual(folders, [{ path: "." }, { path: "my-bcquality-notes" }, { name: ".external", uri: "aldc-external:/" }]);
 }
 
+async function testLegacyReplacedInPlaceKeepsComments() {
+    // D-5: legacy root becomes the constant in place; comments stay byte-identical.
+    const before = '{\n  // header\n  "folders": [\n    { "path": "." }, // project\n    // about legacy\n    { "path": "../BCQuality-Aproda" }, // legacy clone\n    { "path": "other" }\n  ],\n  /* tail */\n  "settings": {}\n}\n';
+    const result = await migrateWorkspaceText(before, os.tmpdir());
+    const expected = before.replace('{ "path": "../BCQuality-Aproda" }', '{ "name": ".external", "uri": "aldc-external:/" }');
+    assert.strictEqual(result.text, expected);
+}
+
+async function testManualRemovalKeepsComments() {
+    // D-5: duplicate/legacy removal after the constant: element + one comma only, comments survive.
+    const before = '{\n  "folders": [\n    { "name": ".external", "uri": "aldc-external:/" }, // ext\n    // keep this\n    { "path": "../bcquality" }, // gone-line-comment\n    { "path": "x" },\n    { "path": "../bcquality-aproda" } // last\n  ]\n}\n';
+    const result = await migrateWorkspaceText(before, os.tmpdir());
+    for (const comment of ["// ext", "// keep this", "// gone-line-comment", "// last"]) {
+        assert.ok(result.text.includes(comment), comment);
+    }
+    assert.deepStrictEqual(folderPaths(result.text), [{ name: ".external", uri: "aldc-external:/" }, { path: "x" }]);
+    assert.ok(!result.text.includes("bcquality"));
+}
+
 async function testNoWorkspaceOrOutside() {
     // S-11.19
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aldc-mig-"));
@@ -193,6 +212,8 @@ async function main() {
         await testLegacyForms();
         await testLegacyPlusExternal();
         await testCopiesIdentical();
+        await testLegacyReplacedInPlaceKeepsComments();
+        await testManualRemovalKeepsComments();
         await testUnrelatedBcqualityNameUntouched();
         await testNoWorkspaceOrOutside();
         await testToolkitForkNotMigrated();

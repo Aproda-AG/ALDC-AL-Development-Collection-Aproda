@@ -16,6 +16,10 @@ export async function checkBcqualitySelfHeal(context: vscode.ExtensionContext): 
     if (settingCandidate?.verdict !== "missing" && settingCandidate?.verdict !== "noEntryPoint") {
         return;
     }
+    // Another rung already serves BCQuality: the invalid setting is reported by the invalid-explicit warning, not here.
+    if (resolution.verified && resolution.root) {
+        return;
+    }
 
     const message = settingCandidate.verdict === "missing"
         ? `The configured BCQuality clone no longer exists at ${settingCandidate.path}.`

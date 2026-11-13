@@ -8,6 +8,9 @@ const settings = {};
 let workspaceFile;
 const updates = [];
 const warnings = [];
+const infos = [];
+const executed = [];
+let infoChoice;
 const vscodeMock = {
     workspace: {
         workspaceFolders: [],
@@ -18,7 +21,8 @@ const vscodeMock = {
             update: async (key, value) => { updates.push([key, value]); }
         })
     },
-    window: { showWarningMessage: () => undefined },
+    window: { showWarningMessage: () => undefined, showInformationMessage: (...a) => { infos.push(a); return Promise.resolve(infoChoice); } },
+    commands: { executeCommand: async (...a) => { executed.push(a); } },
     ConfigurationTarget: { Global: 1 },
     Uri: { file: (fsPath) => ({ scheme: "file", fsPath }) }
 };
@@ -126,6 +130,24 @@ async function main() {
             fsp.unlink = realUnlink;
         }
         assert.ok(failLogger.lines.some((l) => l.startsWith("WARN:") && l.includes("cmd /c rmdir")), failLogger.lines.join("\n"));
+        // D-2: stale root after migration -> reload offer; applied root -> no prompt.
+        const tick = () => new Promise((r) => setTimeout(r, 30));
+        t = await setup(scratch, "f");
+        reset({ "external.mount": "virtual" });
+        infos.length = 0; executed.length = 0; infoChoice = "Reload Window";
+        const staleLogger = makeLogger();
+        await reconcileBcquality(t.repo, t.clone, staleLogger, undefined, { staleCheckDelayMs: 0 });
+        await tick();
+        assert.strictEqual(infos.length, 1, "stale root must offer a reload");
+        assert.deepStrictEqual(executed, [["workbench.action.reloadWindow"]]);
+        assert.ok(staleLogger.lines.some((l) => l.includes("still shows the previous root")));
+        t = await setup(scratch, "g");
+        reset({ "external.mount": "virtual" });
+        infos.length = 0; executed.length = 0;
+        vscodeMock.workspace.workspaceFolders.push({ uri: { scheme: "aldc-external", fsPath: "/" } });
+        await reconcileBcquality(t.repo, t.clone, makeLogger(), undefined, { staleCheckDelayMs: 0 });
+        await tick();
+        assert.strictEqual(infos.length, 0, "applied root must not prompt");
         console.log("external reconcile tests passed.");
     } finally {
         Module._load = originalLoad;

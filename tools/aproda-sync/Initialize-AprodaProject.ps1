@@ -269,6 +269,27 @@ if (-not (Test-Path $externalReadmeTarget)) {
         Write-Host "Init: .external/README.md created."
     }
 }
+elseif (Test-Path -LiteralPath $externalReadmeStubPath) {
+    # D-1: refresh only an unmodified older seed (known hashes, CRLF-normalised); local edits are never clobbered.
+    $knownOldSeedHashes = @(
+        '9834d8d786414ca655e68f6a3b2312659d6ff47d232b8470c9fb7004e71f5bf0',
+        'f00d3fac2cb49d04dd1dabcc9a22aafc2b56a783b558eeb724d8cc6e5c9b39de'
+    )
+    $normalise = { param($text) ($text -replace "`r`n", "`n").TrimEnd() }
+    $hashOf = { param($text) [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::HashData([System.Text.Encoding]::UTF8.GetBytes((& $normalise $text)))).Replace('-', '').ToLowerInvariant() }
+    $existingHash = & $hashOf ([System.IO.File]::ReadAllText($externalReadmeTarget))
+    $stub = [System.IO.File]::ReadAllText($externalReadmeStubPath)
+    if ($existingHash -eq (& $hashOf $stub)) {
+        Write-Host "Init: .external/README.md is current — skipped."
+    }
+    elseif ($knownOldSeedHashes -contains $existingHash) {
+        [System.IO.File]::WriteAllText($externalReadmeTarget, $stub, [System.Text.UTF8Encoding]::new($false))
+        Write-Host "Init: .external/README.md refreshed from the current template (previous version was an unmodified seed)."
+    }
+    else {
+        Write-Host "Init: .external/README.md was edited locally — kept; compare with templates/external-readme.seed.md if wanted." -ForegroundColor Yellow
+    }
+}
 else {
     Write-Host "Init: .external/README.md already exists — skipped."
 }

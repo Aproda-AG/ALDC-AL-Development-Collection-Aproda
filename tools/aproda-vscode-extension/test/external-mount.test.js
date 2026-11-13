@@ -207,6 +207,21 @@ async function testInvalidExplicit(scratch) {
             await new Promise((r) => setImmediate(r));
             assert.strictEqual(warnings.filter((w) => !w.startsWith("log:")).length, 1); // S-11.13
             assert.ok(warnings[0].includes("aprodaAldc.bcquality.path") || warnings[1].includes("aprodaAldc.bcquality.path"));
+            // D-4: a memento carries the dedupe across activations; a changed value warns again.
+            const store = new Map();
+            const memento = { get: (k) => store.get(k), update: async (k, v) => { store.set(k, v); } };
+            const before = warnings.length;
+            const mod = req("bcquality/invalidExplicit");
+            const resolution = await req("bcquality/resolve").resolveBcquality();
+            const other = { ...resolution, candidates: resolution.candidates.map((c) => (c.source === "setting" ? { ...c, path: c.path + "-x" } : c)) };
+            await mod.warnInvalidExplicitCandidates(logger, other, memento);
+            await mod.warnInvalidExplicitCandidates(logger, other, memento);
+            await new Promise((r) => setImmediate(r));
+            assert.strictEqual(warnings.length - before, 2, "one log + one toast, then nothing on re-activation");
+            const changed = { ...resolution, candidates: resolution.candidates.map((c) => (c.source === "setting" ? { ...c, path: c.path + "-y" } : c)) };
+            await mod.warnInvalidExplicitCandidates(logger, changed, memento);
+            await new Promise((r) => setImmediate(r));
+            assert.strictEqual(warnings.length - before, 4, "changed value warns again");
         });
         // S-11.14: devRoot/aldcYaml alone never warn
         const none = [];
@@ -256,12 +271,26 @@ async function testRevealAndDoctor(scratch) {
         const mod = req("external/externalFileSystemProvider");
         const provider = new mod.ExternalFileSystemProvider();
         const reveal = req("commands/revealBcqualityClone").revealBcqualityClone;
-        await reveal(provider);
-        assert.strictEqual(path.resolve(commands[0][1].fsPath), path.resolve(clone, "skills", "entry.md")); // S-11.26
-        await reveal(provider, u("/bcquality/skills/read.md"));
-        assert.strictEqual(path.resolve(commands[1][1].fsPath), path.resolve(clone, "skills", "read.md"));
-        await reveal(provider, u("/README.md"));
-        assert.strictEqual(path.resolve(commands[2][1].fsPath), path.resolve(repo, ".external", "README.md"));
+        const spawned = [];
+        const spawner = (command, args, options) => spawned.push({ command, args, options });
+        const target = (i) => spawned[i].args.join(" ");
+        await reveal(provider, undefined, spawner);
+        assert.ok(target(0).includes(path.join(clone, "skills", "entry.md"))); // S-11.26
+        await reveal(provider, u("/bcquality/skills/read.md"), spawner);
+        assert.ok(target(1).includes(path.join(clone, "skills", "read.md")));
+        await reveal(provider, u("/README.md"), spawner);
+        assert.ok(target(2).includes(path.join(repo, ".external", "README.md")));
+        assert.strictEqual(commands.length, 0); // no revealFileInOS
+        // D-3: paths with spaces and umlauts, per platform
+        const build = req("commands/revealBcqualityClone").buildRevealCommand;
+        const odd = "C:\\Florian Köll\\a b\\entry.md";
+        const win = build(odd, "win32");
+        assert.deepStrictEqual([win.command, win.args, win.options.windowsVerbatimArguments], ["explorer.exe", [`/select,"${odd}"`], true]);
+        assert.deepStrictEqual(build("/a b/ä.md", "darwin").args, ["-R", "/a b/ä.md"]);
+        assert.deepStrictEqual(build("/a b/ä.md", "linux").args, ["/a b"]);
+        // nonexistent path: warning, no spawn
+        await reveal(provider, u("/bcquality/skills/missing.md"), spawner);
+        assert.strictEqual(spawned.length, 3);
         // S-11.27 doctor
         const { buildExternalFindings } = req("external/doctorChecks");
         const base = { rootForm: "uri", autoReconcile: true, mount: "virtual", junction: "absent" };
