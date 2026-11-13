@@ -34,6 +34,7 @@
 .github/skills/skill-aproda-al-mcp/
 .github/skills/skill-aproda-aldc/
 .github/skills/skill-aproda-ado/
+.github/skills/skill-aproda-bc-data-access/
 .github/skills/skill-aproda-deploy-run-verify/
 .github/skills/skill-aproda-fkh/
 .github/skills/skill-contribution-assistant/

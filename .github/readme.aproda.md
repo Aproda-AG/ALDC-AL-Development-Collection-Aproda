@@ -18,6 +18,7 @@ What the Aproda layer adds on top of upstream ALDC:
 | **ADO work item integration** | `skill-aproda-ado` — maps ADO work items to `req_name`, plans folder, and document headers; controlled Azure CLI operations fetch work item/PR context and create a PR / update a work item after HITL approval |
 | **Deploy-Run-Verify Cycle** | `skill-aproda-deploy-run-verify` — publish → sync → deploy → run → review cycle for on-premises BC instances (VALIDATED, 27/27 green) |
 | **AL MCP integration** | `skill-aproda-al-mcp` — level-1 AL MCP access (`altool launchmcpserver`): `aldc.local.json` target selection, shared library, starter, tool tiers; E-010 phase 2, D-53, synthetic tests only so far |
+| **BC data access (support/RCA)** | `skill-aproda-bc-data-access` — reads live data of a customer's BC SaaS environment (sandbox or production, read-only): browser sign-in, a session-lived helper app installed and removed through the Automation API behind an identity guard; wired into `al-triage`; E-012, D-55. App source fork-only in `tools/aproda-bc-data-access/` |
 | **Fkh transport** | `skill-aproda-fkh` — verified Fkh target resolution (`fkh listcontainers`), app-state inspection (`fkh getappinfo`), recovery and the credential store; since E-010 the DRV engine publishes to Fkh through the same Dev Endpoint chain as ASINST (`altool publishapp` → direct POST, D-53), no longer through `fkh publishapp` (D-36 path 26/26 live, historical) |
 | **AI translation workflow (XLIFF)** | `skill-translate` + `tools/aproda-ps-xliffsync/` — tiered Adaptive Waterfall for XLIFF translation (Stage 0 delegated batch translation with a PoEdit approval gate; Stage 1 deterministic invariant/memory resolution); Stage 0/1 VALIDATED against a real BC app |
 | **HITL Validation instruction** | Auto-applied guardrail that wires the Deploy-Run-Verify Cycle into the HITL Validation phase |
@@ -314,6 +315,8 @@ This table **is** the Aproda index (D-17) — the one place to answer "what has 
 | ADO work-item integration skill | `skills/skill-aproda-ado/` | D-4 | live |
 | Fkh transport skill | `skills/skill-aproda-fkh/` | D-26, D-36 | **VALIDATED** (26/26 live) |
 | AL MCP integration skill (level 1, E-010 phase 2) | `skills/skill-aproda-al-mcp/` | D-53 | synthetic tests green; live validation pending |
+| BC data access skill (support/RCA, E-012) | `skills/skill-aproda-bc-data-access/` | D-55 | synthetic tests green; live validation pending |
+| BC data access app source (fork-only, never synced) | `tools/aproda-bc-data-access/` | D-55 | builds 0 errors / 0 warnings |
 | AL Translation Subagent | `agents/al-translate-subagent.aproda.agent.md` | D-32 | live |
 | Steward guardrail (HITL on layer edits) | `instructions/aproda-aldc-steward.aproda.instructions.md` | D-16 | live |
 | HITL Validation instruction | `instructions/hitl-validation.aproda.instructions.md` | D-11 | live |

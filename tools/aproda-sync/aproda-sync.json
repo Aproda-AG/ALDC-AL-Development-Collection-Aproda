@@ -166,6 +166,7 @@
         "*.code-workspace",
         "tools/aproda-vscode-extension/**",
         "tools/aproda-ps-xliffsync/test/**", // layer-internal test suite; projects get the runtime only
+        "tools/aproda-bc-data-access/**", // fork-only AL source of the data-access app; projects get the built .app via the skill (D-55)
         "skills/skill-aproda-aldc-release/**"
     ],
     // Exceptions to neverTouch: files that happen to live under a denied folder but

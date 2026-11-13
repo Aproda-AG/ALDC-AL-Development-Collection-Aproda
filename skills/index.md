@@ -51,6 +51,7 @@ The `.aproda.` fork customization on top of ALDC Core. See [`../readme.aproda.md
 | [skill-aproda-ado](skill-aproda-ado/SKILL.md) | ADO work-item conventions, `req_name` derivation, controlled `az` CLI ops | conductor, architect, triage |
 | [skill-aproda-fkh](skill-aproda-fkh/SKILL.md) | Fkh transport/target resolution for OnPrem BC containers | skill-aproda-deploy-run-verify |
 | [skill-aproda-al-mcp](skill-aproda-al-mcp/SKILL.md) | Level-1 AL MCP access (`altool launchmcpserver`): target selection (`aldc.local.json`), starter, tool tiers — E-010 phase 2 | al-developer |
+| [skill-aproda-bc-data-access](skill-aproda-bc-data-access/SKILL.md) | Live data of a customer's BC SaaS environment for support/RCA: browser sign-in, session-lived read-only helper app, table queries — E-012, D-55 | al-triage; any agent via description |
 
 
 ## Creating New Skills

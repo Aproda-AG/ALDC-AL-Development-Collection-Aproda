@@ -27,6 +27,7 @@
 | E-005 | Tiered AI translation workflow for XLIFF (Adaptive Waterfall) | Session note (Aproda) | High | In Progress |
 | E-008 | Use BCQuality for **implementation**, not only for review (shift-left) | Session note (Aproda), 2026-09-25 | High | Proposed |
 | E-010 | AL MCP integration (`altool launchmcpserver`) as a reusable skill | Prototype in Gustav Gerig AG Base, 2026-10-15 | High | Approved |
+| E-012 | BC Data Access skill — agents read live BC sandbox data via a signed API | Colleague prototype in Relesta AG, 2026-11-13 | High | Approved |
 
 ## Status Values
 
@@ -127,3 +128,14 @@
 - **Constraints:** Target is a per-call parameter of MCP `al_publish` — every call carries the complete target bundle; Tier-2/3 tool calls need HITL. No secret in any file or global environment. Missing credential must degrade to build-only, never remove the whole tool set.
 - **Acceptance Criteria:** See `E-010-plan.md` (*Acceptance criteria*) and `E-010.test-plan.md`.
 - **Approval Gate:** Passed 2026-10-15 (Phase-0 measurements complete, D-53 recorded). Each phase is gated as listed in `E-010-plan.md` → *Phases*.
+
+## E-012 - BC Data Access Skill (Read Live BC Data from Agents)
+
+- **Status:** Approved (2026-11-13, Florian; decision record D-55, D-16 confirmed)
+- **Source:** Colleague prototype in the *Relesta AG* project (`skill-aproda-data-access` + 4 AL objects + `DataAccessApi.ps1`), reviewed 2026-11-13
+- **Plans folder:** `_A-ALDC-Plans/E-012-bc-data-access-skill/` — `E-012-plan.md` (analysis, findings, decisions, live runs 1–3), `E-012.spec.md`, `E-012.test-plan.md`, evidence `E-012-evidence-run-{1,2,3}.md`
+- **Problem:** No ALDC agent can read live BC records. Support cases and root-cause analysis on customer setups depend on the user looking data up by hand.
+- **Proposal:** New `skill-aproda-bc-data-access` for SaaS: browser Entra login (auth code + PKCE) → the skill installs its own read-only app (`DA APD`, IDs 91050–91099) as a PTE through the Automation API → generic table reader via the app's API page → guarded uninstall with data deletion + unpublish. `al-triage` wired in place; generally discoverable through the skill description.
+- **Constraints:** Read-only, also on production; personal customer data never persisted in `plans/`, `documentation/` or git; identity guard (app id + name + publisher + PTE) before every uninstall/unpublish; Automation API `extensionUpload` is deprecated (removal planned 2027 wave 1); BC MCP Data Query Tools re-evaluated with BC 29.
+- **Acceptance Criteria:** See `E-012.test-plan.md` → *Acceptance*.
+- **Approval Gate:** Passed 2026-11-13. Implementation per `E-012.spec.md` (phase 3), live validation per the test plan (phase 5).

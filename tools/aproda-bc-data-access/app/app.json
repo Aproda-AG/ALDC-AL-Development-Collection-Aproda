@@ -1,0 +1,30 @@
+{
+  "id": "72b42b33-d1b0-4397-aece-10b2fa15d384",
+  "name": "Aproda BC Data Access",
+  "publisher": "Aproda AG",
+  "version": "1.0.0.0",
+  "brief": "Session-lived read-only data access for ALDC support analysis",
+  "description": "Read-only generic table reader behind an API page. Installed and removed per support session by the ALDC skill skill-aproda-bc-data-access (decision D-55). Contains no write code.",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "dependencies": [],
+  "screenshots": [],
+  "platform": "25.0.0.0",
+  "application": "25.4.0.0",
+  "idRanges": [
+    {
+      "from": 91050,
+      "to": 91099
+    }
+  ],
+  "runtime": "14.0",
+  "target": "Cloud",
+  "resourceExposurePolicy": {
+    "allowDebugging": false,
+    "allowDownloadingSource": false,
+    "includeSourceInSymbolFile": false
+  }
+}

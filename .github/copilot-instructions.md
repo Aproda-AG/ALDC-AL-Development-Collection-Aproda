@@ -4,7 +4,7 @@
 
 ## Overview
 
-This workspace contains AL (Application Language) code for Microsoft Dynamics 365 Business Central. It uses the **ALDC Core v1.2** skills-based architecture, extended by the Aproda `.aproda.` layer (rows marked 🟦 below): **11 agents (7 user-facing + 4 internal subagents) + 22 skills + 12 workflows + 10 instructions**.
+This workspace contains AL (Application Language) code for Microsoft Dynamics 365 Business Central. It uses the **ALDC Core v1.2** skills-based architecture, extended by the Aproda `.aproda.` layer (rows marked 🟦 below): **11 agents (7 user-facing + 4 internal subagents) + 23 skills + 12 workflows + 10 instructions**.
 
 ## Core Principles
 
@@ -39,6 +39,7 @@ New feature (MEDIUM/HIGH)?      → @AL Architecture & Design Specialist → al-
 New feature (LOW)?              → al-spec.create → @AL Implementation Specialist
 Bug fix / debugging?            → @AL Implementation Specialist
 Bug from a symptom (reactive)?  → @AL Triage → @AL Implementation Specialist
+Support case on customer data?  → @AL Triage (+ skill-aproda-bc-data-access, SaaS, read-only)
 Architecture review?            → @AL Architecture & Design Specialist
 Independent quality audit?      → @Dredd
 Full TDD cycle?                 → @AL Development Conductor
@@ -94,9 +95,10 @@ Build a BC agent (SDK/Designer)? → @AL Agent Builder
 | `skill-aproda-ado` 🟦 | ADO work-item conventions, `req_name` derivation, controlled `az` CLI ops (PR/work-item create) | al-conductor, al-architect, al-triage |
 | `skill-aproda-fkh` 🟦 | Fkh transport/target resolution for OnPrem BC containers | skill-aproda-deploy-run-verify |
 | `skill-aproda-al-mcp` 🟦 | Level-1 AL MCP access (`altool launchmcpserver`): target selection, starter, tool tiers (E-010 phase 2) | al-developer |
+| `skill-aproda-bc-data-access` 🟦 | Live data of a customer's BC SaaS environment for support/RCA (read-only, session-lived helper app, D-55) | al-triage; any agent via description |
 | `skill-aproda-aldc-release` 🟦 | Prepare/release the Aproda ALDC layer or VS Code extension | fork maintainer only — never syncs to consumer projects |
 
-> 🟦 = Aproda custom layer (`.aproda.` convention, 6 skills total). See [`readme.aproda.md`](readme.aproda.md) + [`decisions.aproda.md`](decisions.aproda.md). Remaining 4 skills (`skill-agent-instructions`, `skill-agent-task-patterns`, `skill-agent-toolkit`, `skill-contribution-assistant`) are BC Agents Pack / meta skills — see `docs/copilot-reference.md` → BC Agents Pack.
+> 🟦 = Aproda custom layer (`.aproda.` convention, 7 skills total). See [`readme.aproda.md`](readme.aproda.md) + [`decisions.aproda.md`](decisions.aproda.md). Remaining 4 skills (`skill-agent-instructions`, `skill-agent-task-patterns`, `skill-agent-toolkit`, `skill-contribution-assistant`) are BC Agents Pack / meta skills — see `docs/copilot-reference.md` → BC Agents Pack.
 
 ## External Knowledge: BCQuality
 
@@ -218,4 +220,4 @@ fork (`docs/` at repo root), `./docs/copilot-reference.md` in a consuming projec
 **Version**: 1.1.0
 **Last Updated**: 2026-09-22
 **Workspace**: AL Development for Business Central
-**Primitives**: 11 agents (7 user-facing + 4 internal subagents) + 22 skills (6 🟦 Aproda) + 12 workflows (1 🟦 Aproda) + 10 instructions (2 🟦 Aproda)
+**Primitives**: 11 agents (7 user-facing + 4 internal subagents) + 23 skills (7 🟦 Aproda) + 12 workflows (1 🟦 Aproda) + 10 instructions (2 🟦 Aproda)
