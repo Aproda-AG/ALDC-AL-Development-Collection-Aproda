@@ -16,6 +16,15 @@ export interface MigrationResult {
     readonly parseFailed: boolean;
 }
 
+async function isToolkitFork(repositoryRoot: string): Promise<boolean> {
+    try {
+        await fs.access(path.join(repositoryRoot, "tools", "aproda-sync", "aproda-sync.json"));
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 // Last path segment, separators and trailing slashes normalised.
 function lastSegment(folderPath: string): string {
     const parts = folderPath.replace(/\\/g, "/").split("/").filter((part) => part.length > 0);
@@ -174,6 +183,11 @@ export async function migrateWorkspaceText(original: string, workspaceDir: strin
 
 // Rewrites the tracked workspace file in place (UTF-8, no BOM). No write when nothing changes.
 export async function migrateWorkspaceFile(repositoryRoot: string, logger: Logger): Promise<boolean> {
+    // The toolkit fork ships its own upstream workspace file; only consuming projects are migrated.
+    if (await isToolkitFork(repositoryRoot)) {
+        logger.info("Toolkit fork detected (tools/aproda-sync/aproda-sync.json); its workspace file is not migrated.");
+        return false;
+    }
     const workspaceFile = vscode.workspace.workspaceFile;
     if (!workspaceFile || workspaceFile.scheme !== "file") {
         logger.info("No *.code-workspace file is open; add { \"name\": \".external\", \"uri\": \"aldc-external:/\" } to your folders to mount the external sources.");

@@ -166,6 +166,25 @@ async function testNoWorkspaceOrOutside() {
     }
 }
 
+async function testToolkitForkNotMigrated() {
+    // The fork's own aldc.code-workspace (legacy ../bcquality root) must stay untouched.
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aldc-mig-"));
+    try {
+        await fs.mkdir(path.join(dir, "tools", "aproda-sync"), { recursive: true });
+        await fs.writeFile(path.join(dir, "tools", "aproda-sync", "aproda-sync.json"), "{}");
+        const file = path.join(dir, "aldc.code-workspace");
+        const original = '{\n  // fork\n  "folders": [ { "path": "." }, { "path": "../bcquality" } ]\n}\n';
+        await fs.writeFile(file, original);
+        workspaceFile = { scheme: "file", fsPath: file };
+        messages.length = 0;
+        assert.strictEqual(await migrateWorkspaceFile(dir, logger), false);
+        assert.strictEqual(await fs.readFile(file, "utf8"), original);
+        assert.ok(messages.some((m) => m.includes("Toolkit fork detected")));
+    } finally {
+        await fs.rm(dir, { recursive: true, force: true });
+    }
+}
+
 async function main() {
     try {
         await testPathRootReplacedByteIdentical();
@@ -176,6 +195,7 @@ async function main() {
         await testCopiesIdentical();
         await testUnrelatedBcqualityNameUntouched();
         await testNoWorkspaceOrOutside();
+        await testToolkitForkNotMigrated();
         console.log("external workspace migration tests passed.");
     } finally {
         Module._load = originalLoad;
